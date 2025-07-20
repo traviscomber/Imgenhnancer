@@ -112,7 +112,7 @@ export async function GET(req: NextRequest) {
         if (model.id === "real-esrgan-4x" || model.id === "real-esrgan-2x") {
           testInput = { image: tinyImage, scale: 2 }
         } else if (model.id === "gfpgan-face") {
-          testInput = { image: tinyImage, version: "v1.4", scale: 2 }
+          testInput = { img: tinyImage, scale: 2 }
         } else if (model.id === "codeformer-face") {
           testInput = {
             image: tinyImage,

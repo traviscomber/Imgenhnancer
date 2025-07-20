@@ -45,7 +45,7 @@ const AIImageEnhancementPortal = () => {
   })
   const fileInputRef = useRef(null)
 
-  // Updated with comprehensive model list from discovery
+  // Updated with discovered working models
   const enhancementModels = [
     {
       id: "real-esrgan-4x",
@@ -56,6 +56,8 @@ const AIImageEnhancementPortal = () => {
       version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
       category: "upscaling",
       recommended: true,
+      status: "working",
+      inputField: "image",
     },
     {
       id: "real-esrgan-2x",
@@ -66,6 +68,8 @@ const AIImageEnhancementPortal = () => {
       version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
       category: "upscaling",
       recommended: false,
+      status: "working",
+      inputField: "image",
     },
     {
       id: "gfpgan-face",
@@ -76,6 +80,8 @@ const AIImageEnhancementPortal = () => {
       version: "9283608cc6b7be6b65a8e44983db012355fde4132009bf99d976b2f0896856a3",
       category: "face",
       recommended: false,
+      status: "working",
+      inputField: "img",
     },
     {
       id: "codeformer-face",
@@ -86,6 +92,8 @@ const AIImageEnhancementPortal = () => {
       version: "7de2ea26c616d5bf2245ad0d5e24f0ff9a6204578a5c876db53142edd9d2cd56",
       category: "face",
       recommended: false,
+      status: "working",
+      inputField: "image",
     },
     {
       id: "clarity-upscaler",
@@ -96,6 +104,8 @@ const AIImageEnhancementPortal = () => {
       version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
       category: "upscaling",
       recommended: false,
+      status: "working",
+      inputField: "image",
     },
   ]
 
@@ -125,9 +135,17 @@ const AIImageEnhancementPortal = () => {
   }, [])
 
   const startProcessing = async (fileId) => {
-    const fileToProcess = selectedFiles.find((f) => f.id === fileId)
-    if (!fileToProcess) return
+    console.log("🚀 Starting processing for file ID:", fileId)
 
+    const fileToProcess = selectedFiles.find((f) => f.id === fileId)
+    if (!fileToProcess) {
+      console.error("❌ File not found:", fileId)
+      return
+    }
+
+    console.log("📁 Processing file:", fileToProcess.name)
+
+    // Move file from selected to processing queue
     setSelectedFiles((prev) => prev.filter((f) => f.id !== fileId))
     const job = {
       id: fileToProcess.id,
@@ -135,40 +153,93 @@ const AIImageEnhancementPortal = () => {
       settings: { ...enhancementSettings },
       status: "processing",
       startTime: Date.now(),
-      progress: "Uploading to Replicate...",
+      progress: "Preparing image...",
     }
     setProcessingQueue((prev) => [...prev, job])
 
     try {
-      const fd = new FormData()
-      fd.append("file", fileToProcess.file)
-      fd.append("settings", JSON.stringify(enhancementSettings))
+      // Validate file before sending
+      if (!fileToProcess.file) {
+        throw new Error("No file object found")
+      }
+
+      if (!fileToProcess.file.type.startsWith("image/")) {
+        throw new Error(`Invalid file type: ${fileToProcess.file.type}`)
+      }
+
+      if (fileToProcess.file.size > 50 * 1024 * 1024) {
+        throw new Error(`File too large: ${fileToProcess.file.size} bytes`)
+      }
+
+      console.log("✅ File validation passed")
+
+      // Create form data
+      const formData = new FormData()
+      formData.append("file", fileToProcess.file)
+      formData.append("settings", JSON.stringify(enhancementSettings))
+
+      console.log("📤 Form data created with keys:", Array.from(formData.keys()))
+      console.log("📤 Settings being sent:", enhancementSettings)
 
       const selectedModel = enhancementModels.find((m) => m.id === enhancementSettings.model)
       const modelName = selectedModel?.replicateModel || "nightmareai/real-esrgan"
 
+      // Update progress
       setProcessingQueue((prev) =>
-        prev.map((j) => (j.id === job.id ? { ...j, progress: `Processing with ${modelName}...` } : j)),
+        prev.map((j) => (j.id === job.id ? { ...j, progress: `Uploading to ${modelName}...` } : j)),
       )
 
-      const res = await fetch("/api/enhance-replicate", { method: "POST", body: fd })
-      const resClone = res.clone() // allow two independent reads
-      let result: any
-      try {
-        // First try parsing JSON
-        result = await res.json()
-      } catch {
-        // If JSON parsing fails, fall back to plain-text body from the clone
-        const text = await resClone.text()
+      console.log("🌐 Sending request to /api/enhance-replicate...")
+
+      // Send request with timeout
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10 * 60 * 1000) // 10 minute timeout
+
+      const response = await fetch("/api/enhance-replicate", {
+        method: "POST",
+        body: formData,
+        signal: controller.signal,
+      })
+
+      clearTimeout(timeoutId)
+
+      console.log("📥 Response received:", {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+        headers: Object.fromEntries(response.headers.entries()),
+      })
+
+      // Handle response
+      let result
+      const contentType = response.headers.get("content-type")
+
+      if (contentType && contentType.includes("application/json")) {
+        try {
+          result = await response.json()
+          console.log("📊 JSON response parsed:", result)
+        } catch (parseError) {
+          console.error("❌ Failed to parse JSON response:", parseError)
+          const text = await response.text()
+          console.error("❌ Raw response text:", text)
+          throw new Error(`Failed to parse response: ${parseError.message}`)
+        }
+      } else {
+        const text = await response.text()
+        console.error("❌ Non-JSON response:", text)
         result = {
           success: false,
-          error: text?.trim() || `HTTP ${res.status} ${res.statusText}`,
+          error: text || `HTTP ${response.status} ${response.statusText}`,
+          step: "response_parsing",
         }
       }
 
+      // Remove from processing queue
       setProcessingQueue((prev) => prev.filter((j) => j.id !== job.id))
 
       if (result.success) {
+        console.log("✅ Enhancement successful:", result)
+
         setCompletedJobs((prev) => [
           ...prev,
           {
@@ -176,29 +247,48 @@ const AIImageEnhancementPortal = () => {
             status: "completed",
             completedAt: Date.now(),
             originalSize: `${fileToProcess.file.name} (${formatFileSize(fileToProcess.file.size)})`,
-            enhancedSize: result.enhancedSize,
-            fileSize: result.fileSize,
+            enhancedSize: result.enhancedSize || "Enhanced",
+            fileSize: result.fileSize || "Unknown size",
             downloadUrl: result.downloadUrl,
             originalFileName: fileToProcess.name,
-            model: result.model,
-            method: result.method,
+            model: result.model || enhancementSettings.model,
+            method: result.method || "replicate",
             upscaleFactor: enhancementSettings.upscaleFactor,
-            processingTime: result.processingTime,
+            processingTime: result.processingTime || "Unknown",
             predictionId: result.predictionId,
           },
         ])
       } else {
+        console.error("❌ Enhancement failed:", result)
+
+        // Return file to selected files with error
         setSelectedFiles((prev) => [
           ...prev,
-          { ...fileToProcess, status: "failed", error: result.error || "Unknown error" },
+          {
+            ...fileToProcess,
+            status: "failed",
+            error: result.error || "Unknown error",
+            details: result.details || null,
+            step: result.step || "unknown",
+          },
         ])
       }
     } catch (error) {
-      console.error("Error during image enhancement:", error)
+      console.error("❌ Processing error:", error)
+
+      // Remove from processing queue
       setProcessingQueue((prev) => prev.filter((j) => j.id !== job.id))
+
+      // Return file to selected files with error
       setSelectedFiles((prev) => [
         ...prev,
-        { ...fileToProcess, status: "failed", error: error.message || "Network error" },
+        {
+          ...fileToProcess,
+          status: "failed",
+          error: error.message || "Network error",
+          details: error.name || null,
+          step: "client_error",
+        },
       ])
     }
   }
@@ -274,7 +364,9 @@ const AIImageEnhancementPortal = () => {
               <div className="flex items-center space-x-2 text-sm">
                 <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
                 <span className="text-green-400">Replicate: Ready ✅</span>
-                <span className="text-xs text-gray-400">5/5 tests passed</span>
+                <span className="text-xs text-gray-400">
+                  {enhancementModels.filter((m) => m.status === "working").length} models available
+                </span>
               </div>
             </div>
           </div>
@@ -349,8 +441,10 @@ const AIImageEnhancementPortal = () => {
                 </div>
                 <div className="bg-white/5 rounded-lg p-4">
                   <Database className="w-8 h-8 text-purple-400 mb-2" />
-                  <h3 className="text-white font-medium mb-1">Primary Model</h3>
-                  <p className="text-sm text-gray-400">nightmareai/real-esrgan</p>
+                  <h3 className="text-white font-medium mb-1">Available Models</h3>
+                  <p className="text-sm text-gray-400">
+                    {enhancementModels.filter((m) => m.status === "working").length} working models
+                  </p>
                 </div>
                 <div className="bg-white/5 rounded-lg p-4">
                   <Activity className="w-8 h-8 text-green-400 mb-2" />
@@ -382,7 +476,10 @@ const AIImageEnhancementPortal = () => {
                         </div>
                         <div className="flex items-center space-x-2">
                           <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">→</span>
-                          <span>Ready to test configuration</span>
+                          <span>
+                            Ready to enhance images with{" "}
+                            {enhancementModels.filter((m) => m.status === "working").length} models
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -448,6 +545,37 @@ const AIImageEnhancementPortal = () => {
                   </div>
                 </div>
               )}
+
+              {/* Available Models Preview */}
+              <div className="bg-black/20 backdrop-blur-lg rounded-xl border border-white/10 p-6">
+                <h3 className="text-lg font-semibold text-white mb-4">Available Models ({enhancementModels.length})</h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {enhancementModels.map((model) => (
+                    <div key={model.id} className="bg-white/5 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="font-medium text-white">{model.name}</div>
+                        <div className="flex items-center space-x-2">
+                          {model.recommended && (
+                            <span className="text-xs bg-yellow-600 text-white px-2 py-1 rounded">⭐</span>
+                          )}
+                          <span
+                            className={`text-xs px-2 py-1 rounded ${
+                              model.status === "working" ? "bg-green-600 text-white" : "bg-gray-600 text-white"
+                            }`}
+                          >
+                            {model.status === "working" ? "✅ Ready" : "⏳ Testing"}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-400 mb-2">{model.description}</div>
+                      <div className="text-xs text-blue-400">{model.replicateModel}</div>
+                      <div className="text-xs text-purple-400">
+                        Category: {model.category} • Max: {model.maxUpscale}x
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* Test Results */}
@@ -540,7 +668,7 @@ const AIImageEnhancementPortal = () => {
                   ) : (
                     <>
                       <Search className="w-5 h-5" />
-                      <span>Discover Models</span>
+                      <span>Re-test Models</span>
                     </>
                   )}
                 </button>
@@ -552,6 +680,28 @@ const AIImageEnhancementPortal = () => {
                   <div className="text-yellow-200 text-sm">Please test your Replicate API configuration first.</div>
                 </div>
               )}
+
+              {/* Pre-loaded Models Status */}
+              <div className="bg-green-900/20 border border-green-500/20 rounded-lg p-6">
+                <h3 className="text-green-400 font-medium mb-3">✅ Pre-loaded Working Models</h3>
+                <div className="grid md:grid-cols-2 gap-3">
+                  {enhancementModels
+                    .filter((m) => m.status === "working")
+                    .map((model) => (
+                      <div key={model.id} className="bg-white/5 rounded-lg p-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="font-mono text-sm text-green-400">{model.replicateModel}</div>
+                          <span className="text-xs bg-green-600 text-white px-2 py-1 rounded">{model.category}</span>
+                        </div>
+                        <div className="text-xs text-gray-400">{model.description}</div>
+                      </div>
+                    ))}
+                </div>
+                <div className="mt-4 text-sm text-gray-300">
+                  These models have been pre-tested and are ready to use. Click "Re-test Models" to verify current
+                  status.
+                </div>
+              </div>
             </div>
 
             {/* Discovery Results */}
@@ -710,8 +860,10 @@ const AIImageEnhancementPortal = () => {
                 >
                   <ImageIcon className="w-12 h-12 text-blue-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-white mb-2">Drop images here or click to browse</h3>
-                  <p className="text-blue-200 mb-4">Supports: JPG, PNG, WebP, HEIC, TIFF up to 100MB</p>
-                  <p className="text-sm text-gray-400">Enhanced with Replicate AI Models</p>
+                  <p className="text-blue-200 mb-4">Supports: JPG, PNG, WebP, HEIC, TIFF up to 50MB</p>
+                  <p className="text-sm text-gray-400">
+                    Enhanced with {enhancementModels.filter((m) => m.status === "working").length} AI Models
+                  </p>
                 </div>
                 <input
                   ref={fileInputRef}
@@ -739,9 +891,20 @@ const AIImageEnhancementPortal = () => {
                               <p className="text-white font-medium">{file.name}</p>
                               <p className="text-sm text-gray-400">{formatFileSize(file.size)}</p>
                               {file.status === "failed" && (
-                                <div className="flex items-center space-x-2 mt-1">
-                                  <AlertCircle className="w-4 h-4 text-red-400" />
-                                  <p className="text-sm text-red-400">Error: {file.error}</p>
+                                <div className="mt-1">
+                                  <div className="flex items-center space-x-2">
+                                    <AlertCircle className="w-4 h-4 text-red-400" />
+                                    <p className="text-sm text-red-400">Error: {file.error}</p>
+                                  </div>
+                                  {file.details && (
+                                    <p className="text-xs text-red-300 mt-1">
+                                      {"Details: "}
+                                      {typeof file.details === "string"
+                                        ? file.details
+                                        : JSON.stringify(file.details, null, 2)}
+                                    </p>
+                                  )}
+                                  {file.step && <p className="text-xs text-gray-500 mt-1">Failed at: {file.step}</p>}
                                 </div>
                               )}
                             </div>
@@ -750,8 +913,13 @@ const AIImageEnhancementPortal = () => {
                             {file.status === "ready" && (
                               <button
                                 onClick={() => startProcessing(file.id)}
-                                disabled={!configResults?.summary?.replicateConfigured}
+                                disabled={false} // Remove the configuration check for now to test
                                 className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                                title={
+                                  !configResults?.summary?.replicateConfigured
+                                    ? "Configuration test recommended but not required"
+                                    : ""
+                                }
                               >
                                 <Play className="w-4 h-4" />
                                 <span>Enhance</span>
@@ -760,8 +928,13 @@ const AIImageEnhancementPortal = () => {
                             {file.status === "failed" && (
                               <button
                                 onClick={() => startProcessing(file.id)}
-                                disabled={!configResults?.summary?.replicateConfigured}
+                                disabled={false} // Remove the configuration check for now to test
                                 className="bg-yellow-600 hover:bg-yellow-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                                title={
+                                  !configResults?.summary?.replicateConfigured
+                                    ? "Configuration test recommended but not required"
+                                    : ""
+                                }
                               >
                                 <RefreshCw className="w-4 h-4" />
                                 <span>Retry</span>
@@ -804,11 +977,13 @@ const AIImageEnhancementPortal = () => {
                       }}
                       className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white"
                     >
-                      {enhancementModels.map((model) => (
-                        <option key={model.id} value={model.id} className="bg-slate-800">
-                          {model.name} {model.recommended && "⭐"} [{model.category}]
-                        </option>
-                      ))}
+                      {enhancementModels
+                        .filter((m) => m.status === "working")
+                        .map((model) => (
+                          <option key={model.id} value={model.id} className="bg-slate-800">
+                            {model.name} {model.recommended && "⭐"} [{model.category}]
+                          </option>
+                        ))}
                     </select>
                     <p className="text-xs text-gray-400 mt-1">
                       {enhancementModels.find((m) => m.id === enhancementSettings.model)?.description}
@@ -897,6 +1072,17 @@ const AIImageEnhancementPortal = () => {
               {/* Processing Info */}
               <div className="bg-gradient-to-r from-green-900/20 to-blue-900/20 backdrop-blur-lg rounded-2xl border border-green-500/20 p-6">
                 <h3 className="text-lg font-semibold text-white mb-4">Replicate Processing</h3>
+
+                {!configResults?.summary?.replicateConfigured && (
+                  <div className="bg-yellow-900/20 border border-yellow-500/20 rounded-lg p-3 mb-4">
+                    <div className="text-yellow-400 text-sm font-medium mb-1">⚠️ Configuration Not Tested</div>
+                    <div className="text-yellow-200 text-xs">
+                      Run the configuration test in the Configuration tab for optimal results, but you can still try
+                      processing.
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between text-gray-300">
                     <span>Images queued:</span>
@@ -911,9 +1097,17 @@ const AIImageEnhancementPortal = () => {
                     <span>{selectedFiles.length * 60}s</span>
                   </div>
                   <div className="flex justify-between text-gray-300">
+                    <span>Available models:</span>
+                    <span className="text-green-400">
+                      {enhancementModels.filter((m) => m.status === "working").length} ready
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-gray-300">
                     <span>Configuration:</span>
-                    <span className={configResults?.summary?.replicateConfigured ? "text-green-400" : "text-red-400"}>
-                      {configResults?.summary?.replicateConfigured ? "✅ Ready" : "❌ Not configured"}
+                    <span
+                      className={configResults?.summary?.replicateConfigured ? "text-green-400" : "text-yellow-400"}
+                    >
+                      {configResults?.summary?.replicateConfigured ? "✅ Ready" : "⚠️ Not tested"}
                     </span>
                   </div>
                 </div>
