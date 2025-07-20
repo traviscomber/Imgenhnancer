@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import * as fal from "@fal-ai/serverless"
+import * as fal from "@fal-ai/serverless-client"
 
 /**
  * Test Fal AI configuration and basic connectivity.
