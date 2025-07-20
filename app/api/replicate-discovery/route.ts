@@ -7,8 +7,7 @@ import Replicate from "replicate"
  * Discovers and tests available Replicate models for image enhancement
  */
 export async function GET(req: NextRequest) {
-  const token = process.env.REPLICATE_API_TOKEN
-  if (!token) return NextResponse.json({ error: "REPLICATE_API_TOKEN not set" }, { status: 500 })
+  console.log("🔍 Starting Replicate model discovery...")
 
   const results = {
     timestamp: new Date().toISOString(),
