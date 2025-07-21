@@ -84,6 +84,11 @@ CREATE INDEX IF NOT EXISTS idx_api_keys_hash ON api_keys(key_hash);
 CREATE INDEX IF NOT EXISTS idx_file_storage_user_id ON file_storage(user_id);
 CREATE INDEX IF NOT EXISTS idx_file_storage_job_id ON file_storage(job_id);
 
--- Add triggers for updated_at
-CREATE TRIGGER update_usage_analytics_updated_at BEFORE UPDATE ON usage_analytics FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_api_keys_updated_at BEFORE UPDATE ON api_keys FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+-- Add triggers for updated_at (assuming update_updated_at_column function exists from script 01)
+CREATE TRIGGER update_usage_analytics_updated_at 
+    BEFORE UPDATE ON usage_analytics 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_api_keys_updated_at 
+    BEFORE UPDATE ON api_keys 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
