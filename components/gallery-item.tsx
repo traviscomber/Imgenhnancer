@@ -1,162 +1,96 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Download, RefreshCw } from "lucide-react"
-import Image from "next/image"
+import { useState } from "react"
+import { Download, RefreshCw, AlertCircle } from "lucide-react"
+import { cn } from "@/lib/utils"
 
-interface GalleryItemProps {
-  imageUrl: string
-  title: string
-  description?: string
-  onDownload?: () => void
+export interface GalleryJob {
+  id: number | string
+  downloadUrl: string
+  originalPreview: string
+  originalFileName: string
+  model: string
+  method: string
+  upscaleFactor: number
+  processingTime?: string
+  wasCompressed?: boolean
+  apiEndpoint?: string
 }
 
-function GalleryItem({ imageUrl, title, description, onDownload }: GalleryItemProps) {
-  const [imageLoaded, setImageLoaded] = useState(false)
-  const [imageError, setImageError] = useState(false)
-  const [retryCount, setRetryCount] = useState(0)
-  const [isDownloading, setIsDownloading] = useState(false)
+interface GalleryItemProps {
+  job: GalleryJob
+}
 
-  // Check if the URL is from a known problematic domain that needs proxying
-  const needsProxy = (url: string): boolean => {
-    const problematicDomains = ["replicate.delivery", "replicate.com", "api.replicate.com", "fal.ai", "api.fal.ai"]
-    try {
-      const parsedUrl = new URL(url)
-      return problematicDomains.some((domain) => parsedUrl.hostname.includes(domain))
-    } catch {
-      return false
+export function GalleryItem({ job }: GalleryItemProps) {
+  const [loaded, setLoaded] = useState(false)
+  const [errored, setErrored] = useState(false)
+  const proxiedUrl = `/api/image-proxy?url=${encodeURIComponent(job.downloadUrl)}`
+
+  const retry = () => {
+    setErrored(false)
+    // force image reload by appending a cache-buster
+    const img = document.querySelector<HTMLImageElement>(`img[data-id="${job.id}"]`)
+    if (img) {
+      img.src = `${proxiedUrl}&t=${Date.now()}`
     }
   }
-
-  // Get the appropriate image URL (proxied if needed)
-  const getImageUrl = (url: string): string => {
-    // Always use proxy for known problematic domains
-    if (needsProxy(url)) {
-      return `/api/image-proxy?url=${encodeURIComponent(url)}`
-    }
-    return url
-  }
-
-  // Handle image load success
-  const handleImageLoad = () => {
-    setImageLoaded(true)
-    setImageError(false)
-  }
-
-  // Handle image load error
-  const handleImageError = () => {
-    console.error(`Image failed to load: ${getImageUrl(imageUrl)}`)
-    setImageError(true)
-    setImageLoaded(false)
-  }
-
-  // Retry loading the image
-  const retryLoadImage = () => {
-    setRetryCount((prev) => prev + 1)
-    setImageError(false)
-  }
-
-  // Handle download button click
-  const handleDownload = async () => {
-    if (onDownload) {
-      onDownload()
-      return
-    }
-
-    try {
-      setIsDownloading(true)
-
-      // Use the image proxy for downloading as well
-      const url = getImageUrl(imageUrl)
-
-      const response = await fetch(url)
-      if (!response.ok) throw new Error(`Failed to download: ${response.status}`)
-
-      const blob = await response.blob()
-      const blobUrl = URL.createObjectURL(blob)
-
-      const link = document.createElement("a")
-      link.href = blobUrl
-      link.download = title || "enhanced-image.png"
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-
-      // Clean up the blob URL
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 100)
-    } catch (error) {
-      console.error("Download failed:", error)
-    } finally {
-      setIsDownloading(false)
-    }
-  }
-
-  // Reset state when image URL changes
-  useEffect(() => {
-    setImageLoaded(false)
-    setImageError(false)
-    setRetryCount(0)
-  }, [imageUrl])
 
   return (
-    <Card className="overflow-hidden">
-      <div className="relative aspect-square w-full">
-        {!imageLoaded && !imageError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-primary"></div>
-          </div>
+    <div className="relative group bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+      {!loaded && !errored && (
+        <div className="absolute inset-0 flex items-center justify-center text-blue-300 text-sm">Loading…</div>
+      )}
+
+      {/* Enhanced image */}
+      <img
+        data-id={job.id}
+        src={proxiedUrl || "/placeholder.svg"}
+        alt={job.originalFileName}
+        className={cn(
+          "w-full h-56 object-cover transition-opacity duration-300",
+          loaded && !errored ? "opacity-100" : "opacity-0",
         )}
+        onLoad={() => setLoaded(true)}
+        onError={() => {
+          setErrored(true)
+          setLoaded(true)
+        }}
+        crossOrigin="anonymous"
+      />
 
-        {imageError && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 p-4">
-            <p className="mb-4 text-center text-sm text-gray-500">Failed to load image</p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={retryLoadImage}
-              className="flex items-center gap-1 bg-transparent"
-            >
-              <RefreshCw className="h-4 w-4" />
-              Retry
-            </Button>
-          </div>
-        )}
-
-        <Image
-          src={getImageUrl(imageUrl) || "/placeholder.svg"}
-          alt={title}
-          fill
-          className={`object-cover transition-opacity duration-300 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
-          onLoad={handleImageLoad}
-          onError={handleImageError}
-          key={`${imageUrl}-${retryCount}`} // Force reload on retry
-        />
-      </div>
-
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-medium">{title}</h3>
-            {description && <p className="text-sm text-gray-500">{description}</p>}
-          </div>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleDownload}
-            disabled={isDownloading || imageError}
-            title="Download image"
+      {/* Error state */}
+      {errored && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 text-red-300 p-4 space-y-2">
+          <AlertCircle className="w-6 h-6" />
+          <span className="text-sm text-center">Failed to load image</span>
+          <button
+            onClick={retry}
+            className="inline-flex items-center text-xs text-yellow-300 hover:text-yellow-200 transition-colors"
           >
-            <Download className={`h-4 w-4 ${isDownloading ? "animate-pulse" : ""}`} />
-          </Button>
+            <RefreshCw className="w-4 h-4 mr-1" /> Retry
+          </button>
         </div>
-      </CardContent>
-    </Card>
+      )}
+
+      {/* Footer with info + download */}
+      <div className="absolute bottom-0 left-0 right-0 bg-black/60 backdrop-blur-md p-3 flex items-center justify-between text-xs text-white">
+        <div className="space-x-1">
+          <span className="font-medium">{job.upscaleFactor}×</span>
+          <span>{job.model}</span>
+          <span className="opacity-70">via {job.method}</span>
+        </div>
+        <a
+          href={job.downloadUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center hover:text-blue-400 transition-colors"
+        >
+          <Download className="w-4 h-4 mr-1" /> Download
+        </a>
+      </div>
+    </div>
   )
 }
 
-// Export both named and default for flexibility
-export { GalleryItem }
+/* also keep default export for flexibility */
 export default GalleryItem

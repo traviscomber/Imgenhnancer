@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server"
 import sharp from "sharp"
 
+// Force Node.js runtime so native modules like `sharp` work
+export const runtime = "nodejs"
+
 // Define the Replicate models with their versions
 const REPLICATE_MODELS = {
   "real-esrgan-4x": {
