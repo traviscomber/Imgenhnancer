@@ -13,7 +13,7 @@ interface GalleryItemProps {
   onDownload?: () => void
 }
 
-export default function GalleryItem({ imageUrl, title, description, onDownload }: GalleryItemProps) {
+function GalleryItem({ imageUrl, title, description, onDownload }: GalleryItemProps) {
   const [imageLoaded, setImageLoaded] = useState(false)
   const [imageError, setImageError] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
@@ -156,3 +156,7 @@ export default function GalleryItem({ imageUrl, title, description, onDownload }
     </Card>
   )
 }
+
+// Export both named and default for flexibility
+export { GalleryItem }
+export default GalleryItem
