@@ -1,13 +1,9 @@
 import { createClient } from "@supabase/supabase-js"
 
-// Initialize Supabase client with service role key for full database access
-const supabaseUrl = process.env.SUPABASE_URL!
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
-if (!supabaseUrl || !supabaseServiceKey) {
-  throw new Error("Missing Supabase environment variables")
-}
-
+// Create Supabase client with service role key for full database access
 export const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
     autoRefreshToken: false,
@@ -17,7 +13,7 @@ export const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 
 // Database helper functions
 export class Database {
-  // User management
+  // User operations
   static async createUser(userData: {
     email: string
     name: string
@@ -32,16 +28,16 @@ export class Database {
   }
 
   static async getUserByEmail(email: string) {
-    const { data, error } = await supabase.from("users").select("*").eq("email", email).eq("status", "active").single()
+    const { data, error } = await supabase.from("users").select("*").eq("email", email).single()
 
     if (error && error.code !== "PGRST116") throw error
     return data
   }
 
   static async getUserById(id: string) {
-    const { data, error } = await supabase.from("users").select("*").eq("id", id).eq("status", "active").single()
+    const { data, error } = await supabase.from("users").select("*").eq("id", id).single()
 
-    if (error && error.code !== "PGRST116") throw error
+    if (error) throw error
     return data
   }
 
@@ -52,24 +48,24 @@ export class Database {
     return data
   }
 
-  static async updateUserCredits(userId: string, creditsUsed: number) {
-    const { data, error } = await supabase.rpc("update_user_credits", {
-      user_id: userId,
-      credits_to_deduct: creditsUsed,
-    })
+  static async getAllUsers(limit = 50, offset = 0) {
+    const { data, error } = await supabase
+      .from("users")
+      .select("*")
+      .range(offset, offset + limit - 1)
+      .order("created_at", { ascending: false })
 
     if (error) throw error
     return data
   }
 
-  // AI Models
-  static async getActiveModels() {
+  // AI Model operations
+  static async getAllModels() {
     const { data, error } = await supabase
       .from("ai_models")
       .select("*")
       .eq("status", "active")
       .order("is_recommended", { ascending: false })
-      .order("name")
 
     if (error) throw error
     return data
@@ -89,7 +85,21 @@ export class Database {
     return data
   }
 
-  // Processing Jobs
+  static async createModel(modelData: any) {
+    const { data, error } = await supabase.from("ai_models").insert([modelData]).select().single()
+
+    if (error) throw error
+    return data
+  }
+
+  static async updateModel(id: string, updates: any) {
+    const { data, error } = await supabase.from("ai_models").update(updates).eq("id", id).select().single()
+
+    if (error) throw error
+    return data
+  }
+
+  // Processing Job operations
   static async createJob(jobData: {
     user_id: string
     model_id: string
@@ -121,7 +131,7 @@ export class Database {
     return data
   }
 
-  static async getUserJobs(userId: string, limit = 50) {
+  static async getUserJobs(userId: string, limit = 20, offset = 0) {
     const { data, error } = await supabase
       .from("processing_jobs")
       .select(`
@@ -129,8 +139,8 @@ export class Database {
         ai_models(name, model_id, icon_name)
       `)
       .eq("user_id", userId)
+      .range(offset, offset + limit - 1)
       .order("created_at", { ascending: false })
-      .limit(limit)
 
     if (error) throw error
     return data
@@ -143,24 +153,97 @@ export class Database {
     return data
   }
 
-  static async getPendingJobs(limit = 10) {
+  static async getJobsByStatus(status: string, limit = 50) {
     const { data, error } = await supabase
       .from("processing_jobs")
       .select(`
         *,
         users(email, name),
-        ai_models(name, model_id, provider, provider_model_name)
+        ai_models(name, model_id, provider)
       `)
-      .eq("status", "pending")
+      .eq("status", status)
+      .limit(limit)
       .order("priority", { ascending: false })
       .order("created_at", { ascending: true })
-      .limit(limit)
 
     if (error) throw error
     return data
   }
 
-  // User Sessions
+  // Analytics operations
+  static async createSystemLog(logData: {
+    user_id?: string
+    action: string
+    resource_type?: string
+    resource_id?: string
+    details?: any
+    severity?: string
+    ip_address?: string
+    user_agent?: string
+  }) {
+    const { data, error } = await supabase.from("system_logs").insert([logData]).select().single()
+
+    if (error) throw error
+    return data
+  }
+
+  static async getSystemLogs(limit = 100, offset = 0) {
+    const { data, error } = await supabase
+      .from("system_logs")
+      .select(`
+        *,
+        users(email, name)
+      `)
+      .range(offset, offset + limit - 1)
+      .order("created_at", { ascending: false })
+
+    if (error) throw error
+    return data
+  }
+
+  static async getUserStats(userId: string) {
+    const { data, error } = await supabase.from("user_stats").select("*").eq("id", userId).single()
+
+    if (error) throw error
+    return data
+  }
+
+  static async getModelPerformance() {
+    const { data, error } = await supabase
+      .from("model_performance")
+      .select("*")
+      .order("total_jobs_processed", { ascending: false })
+
+    if (error) throw error
+    return data
+  }
+
+  static async getDailyUsageStats(days = 30) {
+    const { data, error } = await supabase
+      .from("daily_usage_stats")
+      .select("*")
+      .limit(days)
+      .order("date", { ascending: false })
+
+    if (error) throw error
+    return data
+  }
+
+  static async getSystemHealth() {
+    const { data, error } = await supabase.from("system_health").select("*")
+
+    if (error) throw error
+    return data
+  }
+
+  static async getQueueStatus() {
+    const { data, error } = await supabase.from("queue_status").select("*")
+
+    if (error) throw error
+    return data
+  }
+
+  // Session operations
   static async createSession(sessionData: {
     user_id: string
     session_token: string
@@ -183,7 +266,7 @@ export class Database {
       `)
       .eq("session_token", token)
       .eq("is_active", true)
-      .gt("expires_at", new Date().toISOString())
+      .gte("expires_at", new Date().toISOString())
       .single()
 
     if (error && error.code !== "PGRST116") throw error
@@ -196,152 +279,25 @@ export class Database {
     if (error) throw error
   }
 
-  // Analytics
-  static async logSystemEvent(eventData: {
-    user_id?: string
-    action: string
-    resource_type?: string
-    resource_id?: string
-    details?: any
-    ip_address?: string
-    user_agent?: string
-    severity?: string
-  }) {
-    const { error } = await supabase.from("system_logs").insert([eventData])
-
-    if (error) throw error
-  }
-
-  static async updateUsageAnalytics(
-    userId: string,
-    date: string,
-    updates: {
-      images_processed?: number
-      credits_used?: number
-      processing_time_total?: number
-      models_used?: any
-    },
-  ) {
-    const { data, error } = await supabase
-      .from("usage_analytics")
-      .upsert([
-        {
-          user_id: userId,
-          date,
-          ...updates,
-        },
-      ])
-      .select()
-      .single()
-
-    if (error) throw error
-    return data
-  }
-
-  static async getSystemHealth() {
-    const { data, error } = await supabase.from("system_health").select("*")
-
-    if (error) throw error
-    return data
-  }
-
-  static async getUserStats(userId?: string) {
-    let query = supabase.from("user_stats").select("*")
-
-    if (userId) {
-      query = query.eq("id", userId)
-    }
-
-    const { data, error } = await query
-
-    if (error) throw error
-    return data
-  }
-
-  static async getModelPerformance() {
-    const { data, error } = await supabase
-      .from("model_performance")
-      .select("*")
-      .order("total_jobs", { ascending: false })
-
-    if (error) throw error
-    return data
-  }
-
-  static async getDailyUsageStats(days = 30) {
-    const { data, error } = await supabase.from("daily_usage_stats").select("*").limit(days)
-
-    if (error) throw error
-    return data
-  }
-
-  // File Storage
-  static async createFileRecord(fileData: {
-    user_id: string
-    job_id?: string
-    file_type: string
-    filename: string
-    file_path: string
-    file_size: number
-    mime_type?: string
-    storage_provider?: string
-    storage_url?: string
-  }) {
-    const { data, error } = await supabase.from("file_storage").insert([fileData]).select().single()
-
-    if (error) throw error
-    return data
-  }
-
-  // Admin functions
-  static async getAllUsers(limit = 100, offset = 0) {
-    const { data, error } = await supabase
-      .from("user_stats")
-      .select("*")
-      .order("user_since", { ascending: false })
-      .range(offset, offset + limit - 1)
-
-    if (error) throw error
-    return data
-  }
-
-  static async getAllJobs(limit = 100, offset = 0) {
-    const { data, error } = await supabase
-      .from("processing_jobs")
-      .select(`
-        *,
-        users(email, name),
-        ai_models(name, model_id)
-      `)
-      .order("created_at", { ascending: false })
-      .range(offset, offset + limit - 1)
-
-    if (error) throw error
-    return data
-  }
-
-  // Database health check
-  static async healthCheck() {
+  // Utility functions
+  static async testConnection() {
     try {
       const { data, error } = await supabase.from("users").select("count").limit(1)
 
       if (error) throw error
-
-      return {
-        status: "healthy",
-        timestamp: new Date().toISOString(),
-        database: "connected",
-      }
+      return { success: true, message: "Database connection successful" }
     } catch (error) {
-      return {
-        status: "unhealthy",
-        timestamp: new Date().toISOString(),
-        database: "disconnected",
-        error: error instanceof Error ? error.message : "Unknown error",
-      }
+      return { success: false, message: `Database connection failed: ${error}` }
+    }
+  }
+
+  static async checkTableExists(tableName: string) {
+    try {
+      const { data, error } = await supabase.from(tableName).select("*").limit(1)
+
+      return { exists: true, error: null }
+    } catch (error) {
+      return { exists: false, error: error }
     }
   }
 }
-
-// Export default instance
-export default Database
