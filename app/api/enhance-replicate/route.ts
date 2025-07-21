@@ -188,15 +188,43 @@ export async function POST(request: NextRequest) {
 
       if (status.status === "succeeded") {
         console.log("✅ Enhancement completed successfully")
+        console.log("📊 Full status object:", status)
+        console.log("🔗 Output URLs:", status.output)
+
+        const downloadUrl = Array.isArray(status.output) ? status.output[0] : status.output
+
+        if (!downloadUrl || typeof downloadUrl !== "string") {
+          console.error("❌ Invalid download URL received:", downloadUrl)
+          return NextResponse.json(
+            {
+              success: false,
+              error: "Invalid download URL received from AI service",
+              step: "url-validation",
+              debug: {
+                output: status.output,
+                outputType: typeof status.output,
+              },
+            },
+            { status: 500 },
+          )
+        }
+
+        console.log("🎯 Final download URL:", downloadUrl)
 
         return NextResponse.json({
           success: true,
-          downloadUrl: status.output?.[0] || status.output,
+          downloadUrl: downloadUrl,
           predictionId: prediction.id,
           model: settings.model,
           upscaleFactor: settings.upscaleFactor,
           processingTime: `${attempts * 10}s`,
           method: "replicate",
+          enhancedSize: "Enhanced",
+          debug: {
+            fullOutput: status.output,
+            outputType: typeof status.output,
+            isArray: Array.isArray(status.output),
+          },
         })
       }
 

@@ -973,12 +973,13 @@ const AIImageEnhancementPortal = () => {
                             alt={`Enhanced ${job.originalFileName}`}
                             className="w-full h-full object-contain"
                             onError={(e) => {
-                              console.error("Failed to load enhanced image:", job.downloadUrl)
+                              console.error("❌ Failed to load enhanced image:", job.downloadUrl)
+                              console.error("❌ Job details:", job)
                               e.target.style.display = "none"
                               e.target.nextSibling.style.display = "flex"
                             }}
                             onLoad={() => {
-                              console.log("Successfully loaded enhanced image:", job.downloadUrl)
+                              console.log("✅ Successfully loaded enhanced image:", job.downloadUrl)
                             }}
                           />
                         ) : null}
@@ -991,6 +992,13 @@ const AIImageEnhancementPortal = () => {
                             <p className="text-sm text-gray-400">Enhanced image</p>
                             {job.downloadUrl && <p className="text-xs text-red-400 mt-1">Failed to load</p>}
                           </div>
+                        </div>
+                        <div className="absolute top-2 right-2">
+                          {job.downloadUrl ? (
+                            <div className="bg-green-500 text-white px-2 py-1 rounded text-xs">Ready</div>
+                          ) : (
+                            <div className="bg-yellow-500 text-white px-2 py-1 rounded text-xs">No URL</div>
+                          )}
                         </div>
                       </div>
                       <div className="p-4 space-y-3">
@@ -1022,9 +1030,12 @@ const AIImageEnhancementPortal = () => {
                           </button>
                           <button
                             onClick={() => {
-                              console.log("Job details:", job)
+                              console.log("🔍 Full job details:", job)
+                              console.log("🔗 Download URL:", job.downloadUrl)
+                              console.log("📊 Job status:", job.status)
+                              console.log("🤖 Model used:", job.model)
                               alert(
-                                `Job Details:\nID: ${job.id}\nModel: ${job.model}\nURL: ${job.downloadUrl || "No URL"}\nStatus: ${job.status}`,
+                                `Job Details:\nID: ${job.id}\nModel: ${job.model}\nURL: ${job.downloadUrl || "❌ No URL"}\nStatus: ${job.status}\nProcessing Time: ${job.processingTime}`,
                               )
                             }}
                             className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all"
