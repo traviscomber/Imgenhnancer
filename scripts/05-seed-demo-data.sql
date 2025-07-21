@@ -1,134 +1,120 @@
--- Demo data for testing the AI Image Enhancer
+-- Demo data for testing
 
--- Insert demo users (passwords are hashed versions of 'password123')
-INSERT INTO users (email, name, password_hash, role, subscription_tier, credits_remaining, email_verified, total_images_processed) VALUES
-('admin@example.com', 'Admin User', '$2b$10$rOzJqQZQQQQQQQQQQQQQQu', 'admin', 'business', 1000, true, 50),
-('demo@example.com', 'Demo User', '$2b$10$rOzJqQZQQQQQQQQQQQQQQu', 'user', 'pro', 200, true, 25),
-('john@example.com', 'John Doe', '$2b$10$rOzJqQZQQQQQQQQQQQQQQu', 'user', 'free', 95, true, 5),
-('jane@example.com', 'Jane Smith', '$2b$10$rOzJqQZQQQQQQQQQQQQQQu', 'user', 'pro', 150, true, 30)
-ON CONFLICT (email) DO NOTHING;
+-- Insert sample AI models
+INSERT INTO ai_models (model_id, name, description, category, provider, provider_model_name, provider_version, max_upscale, processing_time_estimate, credits_per_use, best_for, is_recommended, icon_name, configuration) VALUES
+('real-esrgan-x4', 'Real-ESRGAN 4x', 'High-quality image upscaling using Real-ESRGAN', 'upscaling', 'replicate', 'nightmareai/real-esrgan', 'latest', 4, 45, 2, ARRAY['photos', 'artwork', 'general'], true, 'Zap', '{"scale": 4, "face_enhance": false}'),
+('gfpgan-face', 'GFPGAN Face Restoration', 'AI-powered face restoration and enhancement', 'restoration', 'replicate', 'tencentarc/gfpgan', 'latest', 2, 30, 3, ARRAY['portraits', 'faces', 'old photos'], true, 'User', '{"version": "v1.4", "scale": 2}'),
+('esrgan-general', 'ESRGAN General', 'General purpose image super-resolution', 'upscaling', 'replicate', 'xinntao/esrgan', 'latest', 4, 60, 2, ARRAY['general', 'artwork'], false, 'Image', '{"model_name": "RealESRGAN_x4plus"}'),
+('waifu2x-anime', 'Waifu2x Anime', 'Specialized upscaling for anime and artwork', 'upscaling', 'replicate', 'logerzhu/waifu2x', 'latest', 2, 25, 1, ARRAY['anime', 'artwork', 'illustrations'], true, 'Sparkles', '{"scale": 2, "noise": 1}'),
+('fal-upscaler', 'FAL AI Upscaler', 'Fast AI-powered image upscaling', 'upscaling', 'fal', 'fal-ai/imageutils/upscale', 'latest', 4, 20, 2, ARRAY['general', 'photos'], false, 'Zap', '{"upscale_factor": 4}')
+ON CONFLICT (model_id) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    updated_at = NOW();
 
--- Insert some demo processing jobs
+-- Insert demo users
+INSERT INTO users (email, name, password_hash, role, subscription_tier, credits_remaining, email_verified) VALUES
+('admin@example.com', 'System Admin', '$2b$10$example_hash_admin', 'admin', 'enterprise', 1000, true),
+('user@example.com', 'Demo User', '$2b$10$example_hash_user', 'user', 'free', 10, true),
+('premium@example.com', 'Premium User', '$2b$10$example_hash_premium', 'premium', 'pro', 100, true)
+ON CONFLICT (email) DO UPDATE SET
+    name = EXCLUDED.name,
+    updated_at = NOW();
+
+-- Insert sample processing jobs
 DO $$
 DECLARE
-    admin_user_id UUID;
-    demo_user_id UUID;
-    john_user_id UUID;
-    jane_user_id UUID;
-    real_esrgan_model_id UUID;
-    gfpgan_model_id UUID;
+    admin_id UUID;
+    user_id UUID;
+    premium_id UUID;
+    model_id UUID;
 BEGIN
     -- Get user IDs
-    SELECT id INTO admin_user_id FROM users WHERE email = 'admin@example.com';
-    SELECT id INTO demo_user_id FROM users WHERE email = 'demo@example.com';
-    SELECT id INTO john_user_id FROM users WHERE email = 'john@example.com';
-    SELECT id INTO jane_user_id FROM users WHERE email = 'jane@example.com';
-    
-    -- Get model IDs
-    SELECT id INTO real_esrgan_model_id FROM ai_models WHERE model_id = 'real-esrgan-4x';
-    SELECT id INTO gfpgan_model_id FROM ai_models WHERE model_id = 'gfpgan-face';
-    
-    -- Insert demo jobs if users and models exist
-    IF admin_user_id IS NOT NULL AND real_esrgan_model_id IS NOT NULL THEN
-        INSERT INTO processing_jobs (user_id, original_filename, original_file_size, original_file_type, model_id, settings, upscale_factor, status, progress_percentage, processing_time_seconds, credits_used, completed_at) VALUES
-        (admin_user_id, 'landscape.jpg', 2048576, 'image/jpeg', real_esrgan_model_id, '{"targetUse": "display", "format": "PNG"}', 4, 'completed', 100, 45, 2, NOW() - INTERVAL '2 hours'),
-        (admin_user_id, 'portrait.png', 1536000, 'image/png', gfpgan_model_id, '{"targetUse": "print", "faceEnhance": true}', 2, 'completed', 100, 67, 3, NOW() - INTERVAL '1 hour');
-    END IF;
-    
-    IF demo_user_id IS NOT NULL AND real_esrgan_model_id IS NOT NULL THEN
-        INSERT INTO processing_jobs (user_id, original_filename, original_file_size, original_file_type, model_id, settings, upscale_factor, status, progress_percentage, processing_time_seconds, credits_used, completed_at) VALUES
-        (demo_user_id, 'artwork.jpg', 3072000, 'image/jpeg', real_esrgan_model_id, '{"targetUse": "display", "format": "PNG"}', 4, 'completed', 100, 52, 2, NOW() - INTERVAL '30 minutes'),
-        (demo_user_id, 'photo.jpg', 2560000, 'image/jpeg', real_esrgan_model_id, '{"targetUse": "print", "format": "TIFF"}', 2, 'processing', 75, NULL, 1, NULL);
-    END IF;
-    
-    IF john_user_id IS NOT NULL AND real_esrgan_model_id IS NOT NULL THEN
-        INSERT INTO processing_jobs (user_id, original_filename, original_file_size, original_file_type, model_id, settings, upscale_factor, status, error_message, credits_used) VALUES
-        (john_user_id, 'test.jpg', 1024000, 'image/jpeg', real_esrgan_model_id, '{"targetUse": "display"}', 2, 'failed', 'File format not supported', 0);
-    END IF;
+    SELECT id INTO admin_id FROM users WHERE email = 'admin@example.com';
+    SELECT id INTO user_id FROM users WHERE email = 'user@example.com';
+    SELECT id INTO premium_id FROM users WHERE email = 'premium@example.com';
+    SELECT id INTO model_id FROM ai_models WHERE model_id = 'real-esrgan-x4';
+
+    -- Insert sample jobs
+    INSERT INTO processing_jobs (user_id, model_id, status, original_filename, original_file_size, original_file_type, upscale_factor, settings, processing_time_seconds, credits_used, progress_percentage) VALUES
+    (user_id, model_id, 'completed', 'sample_photo.jpg', 1024000, 'image/jpeg', 4, '{"scale": 4}', 45, 2, 100),
+    (user_id, model_id, 'processing', 'another_image.png', 2048000, 'image/png', 2, '{"scale": 2}', NULL, 0, 75),
+    (premium_id, model_id, 'completed', 'artwork.jpg', 3072000, 'image/jpeg', 4, '{"scale": 4, "face_enhance": true}', 52, 3, 100),
+    (premium_id, model_id, 'failed', 'corrupted.jpg', 512000, 'image/jpeg', 2, '{"scale": 2}', NULL, 0, 0);
 END $$;
 
--- Insert demo usage analytics
+-- Insert sample usage analytics
 DO $$
 DECLARE
-    demo_user_id UUID;
-    john_user_id UUID;
-    jane_user_id UUID;
+    user_id UUID;
+    premium_id UUID;
 BEGIN
-    SELECT id INTO demo_user_id FROM users WHERE email = 'demo@example.com';
-    SELECT id INTO john_user_id FROM users WHERE email = 'john@example.com';
-    SELECT id INTO jane_user_id FROM users WHERE email = 'jane@example.com';
-    
-    IF demo_user_id IS NOT NULL THEN
-        INSERT INTO usage_analytics (user_id, date, images_processed, credits_used, processing_time_total, models_used) VALUES
-        (demo_user_id, CURRENT_DATE, 3, 5, 180, '{"real-esrgan-4x": 2, "gfpgan-face": 1}'),
-        (demo_user_id, CURRENT_DATE - 1, 2, 4, 120, '{"real-esrgan-4x": 2}'),
-        (demo_user_id, CURRENT_DATE - 2, 1, 2, 45, '{"real-esrgan-4x": 1}')
-        ON CONFLICT (user_id, date) DO NOTHING;
-    END IF;
-    
-    IF john_user_id IS NOT NULL THEN
-        INSERT INTO usage_analytics (user_id, date, images_processed, credits_used, processing_time_total, models_used) VALUES
-        (john_user_id, CURRENT_DATE, 1, 0, 0, '{}'),
-        (john_user_id, CURRENT_DATE - 3, 2, 4, 90, '{"real-esrgan-4x": 2}')
-        ON CONFLICT (user_id, date) DO NOTHING;
-    END IF;
+    SELECT id INTO user_id FROM users WHERE email = 'user@example.com';
+    SELECT id INTO premium_id FROM users WHERE email = 'premium@example.com';
+
+    INSERT INTO usage_analytics (user_id, date, images_processed, credits_used, processing_time_total, models_used) VALUES
+    (user_id, CURRENT_DATE, 2, 2, 45, '{"real-esrgan-x4": 2}'),
+    (user_id, CURRENT_DATE - 1, 1, 2, 30, '{"real-esrgan-x4": 1}'),
+    (premium_id, CURRENT_DATE, 3, 5, 120, '{"real-esrgan-x4": 2, "gfpgan-face": 1}'),
+    (premium_id, CURRENT_DATE - 1, 2, 4, 90, '{"real-esrgan-x4": 2}');
 END $$;
 
--- Insert demo system logs
+-- Insert sample system logs
 DO $$
 DECLARE
-    admin_user_id UUID;
-    demo_user_id UUID;
+    user_id UUID;
+    admin_id UUID;
 BEGIN
-    SELECT id INTO admin_user_id FROM users WHERE email = 'admin@example.com';
-    SELECT id INTO demo_user_id FROM users WHERE email = 'demo@example.com';
-    
+    SELECT id INTO user_id FROM users WHERE email = 'user@example.com';
+    SELECT id INTO admin_id FROM users WHERE email = 'admin@example.com';
+
     INSERT INTO system_logs (user_id, action, resource_type, details, severity) VALUES
-    (admin_user_id, 'user_login', 'authentication', '{"ip": "192.168.1.1", "success": true}', 'info'),
-    (demo_user_id, 'job_created', 'processing_job', '{"model": "real-esrgan-4x", "upscale": 4}', 'info'),
-    (demo_user_id, 'job_completed', 'processing_job', '{"processing_time": 45, "success": true}', 'info'),
-    (NULL, 'system_startup', 'system', '{"version": "1.0.0", "environment": "production"}', 'info'),
-    (NULL, 'model_discovery', 'ai_model', '{"provider": "replicate", "models_found": 4}', 'info');
+    (user_id, 'user_login', 'authentication', '{"ip": "192.168.1.100", "user_agent": "Mozilla/5.0"}', 'info'),
+    (user_id, 'job_created', 'processing_job', '{"model": "real-esrgan-x4", "filename": "sample_photo.jpg"}', 'info'),
+    (user_id, 'job_completed', 'processing_job', '{"processing_time": 45, "credits_used": 2}', 'info'),
+    (admin_id, 'admin_login', 'authentication', '{"ip": "10.0.0.1", "user_agent": "Mozilla/5.0"}', 'info'),
+    (NULL, 'system_startup', 'system', '{"version": "1.0.0", "environment": "production"}', 'info');
 END $$;
 
--- Insert demo system metrics
-INSERT INTO system_metrics (metric_name, metric_value, metric_type, tags) VALUES
-('jobs_processed_total', 150, 'counter', '{"period": "all_time"}'),
-('active_users', 25, 'gauge', '{"period": "30_days"}'),
-('avg_processing_time', 52.5, 'gauge', '{"unit": "seconds"}'),
-('success_rate', 94.2, 'gauge', '{"unit": "percentage"}'),
-('credits_consumed_total', 500, 'counter', '{"period": "all_time"}'),
-('storage_used_mb', 2048, 'gauge', '{"unit": "megabytes"}');
+-- Insert sample system metrics
+INSERT INTO system_metrics (metric_name, metric_value, metric_unit, tags) VALUES
+('cpu_usage', 45.2, 'percentage', '{"server": "web-1"}'),
+('memory_usage', 68.5, 'percentage', '{"server": "web-1"}'),
+('disk_usage', 23.1, 'percentage', '{"server": "web-1", "mount": "/"}'),
+('active_connections', 12, 'count', '{"database": "primary"}'),
+('queue_length', 3, 'count', '{"queue": "image_processing"}'),
+('response_time', 245.5, 'milliseconds', '{"endpoint": "/api/enhance"}');
 
--- Update model statistics based on demo jobs
+-- Update model statistics based on sample jobs
 UPDATE ai_models SET 
     total_jobs_processed = (
-        SELECT COUNT(*) FROM processing_jobs pj WHERE pj.model_id = ai_models.id
+        SELECT COUNT(*) FROM processing_jobs WHERE model_id = ai_models.id
     ),
     success_rate = (
         SELECT CASE 
             WHEN COUNT(*) > 0 THEN 
-                ROUND((COUNT(CASE WHEN pj.status = 'completed' THEN 1 END)::DECIMAL / COUNT(*)) * 100, 2)
+                ROUND((COUNT(CASE WHEN status = 'completed' THEN 1 END)::DECIMAL / COUNT(*)) * 100, 2)
             ELSE 0 
         END
-        FROM processing_jobs pj WHERE pj.model_id = ai_models.id
+        FROM processing_jobs WHERE model_id = ai_models.id
     ),
     average_processing_time = (
-        SELECT COALESCE(AVG(pj.processing_time_seconds), 0)::INTEGER
-        FROM processing_jobs pj 
-        WHERE pj.model_id = ai_models.id AND pj.status = 'completed'
+        SELECT COALESCE(AVG(processing_time_seconds), 0)
+        FROM processing_jobs 
+        WHERE model_id = ai_models.id AND status = 'completed'
+    ),
+    last_used_at = (
+        SELECT MAX(created_at)
+        FROM processing_jobs WHERE model_id = ai_models.id
     );
 
--- Create a demo API key for testing
+-- Create a sample API key
 DO $$
 DECLARE
-    demo_user_id UUID;
+    user_id UUID;
 BEGIN
-    SELECT id INTO demo_user_id FROM users WHERE email = 'demo@example.com';
+    SELECT id INTO user_id FROM users WHERE email = 'premium@example.com';
     
-    IF demo_user_id IS NOT NULL THEN
-        INSERT INTO api_keys (user_id, key_name, key_hash, key_prefix, permissions, rate_limit_per_hour) VALUES
-        (demo_user_id, 'Demo API Key', '$2b$10$demokeyhashforexample', 'aie_demo', '["upload_images", "view_jobs", "download_results"]', 50)
-        ON CONFLICT (key_hash) DO NOTHING;
-    END IF;
+    INSERT INTO api_keys (user_id, key_name, key_hash, key_prefix, permissions, rate_limit_per_hour) VALUES
+    (user_id, 'Production API Key', '$2b$10$example_api_key_hash', 'aie_prod_', '{"enhance_images": true, "view_history": true}', 500);
 END $$;

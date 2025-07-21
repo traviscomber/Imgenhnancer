@@ -12,11 +12,11 @@ export async function GET() {
         {
           success: false,
           error: "Database connection failed",
-          details: "Could not connect to the database. Please check your connection string.",
+          details: "Could not connect to Supabase database. Please check your connection configuration.",
           troubleshooting: [
-            "Verify POSTGRES_URL environment variable is set correctly",
-            "Check if the database server is running and accessible",
-            "Ensure SSL settings match your database configuration",
+            "Verify SUPABASE_URL environment variable is set correctly",
+            "Check if SUPABASE_SERVICE_ROLE_KEY is valid and has proper permissions",
+            "Ensure your Supabase project is active and accessible",
             "Confirm database credentials are correct",
           ],
         },
@@ -35,7 +35,7 @@ export async function GET() {
       instructions: tablesExist
         ? null
         : [
-            "Run the following SQL scripts in order:",
+            "Run the following SQL scripts in Supabase SQL Editor in order:",
             "1. scripts/01-create-database-schema.sql",
             "2. scripts/02-add-analytics-tables.sql",
             "3. scripts/03-add-missing-columns.sql",
@@ -44,8 +44,9 @@ export async function GET() {
           ],
       environment: {
         nodeEnv: process.env.NODE_ENV,
-        hasPostgresUrl: !!process.env.POSTGRES_URL,
         hasSupabaseUrl: !!process.env.SUPABASE_URL,
+        hasSupabaseServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+        hasPostgresUrl: !!process.env.POSTGRES_URL,
       },
     })
   } catch (error: any) {
@@ -57,16 +58,17 @@ export async function GET() {
         error: "Database initialization failed",
         details: error.message,
         troubleshooting: [
-          "Check if POSTGRES_URL environment variable is set",
-          "Verify database credentials and connection",
-          "Ensure database exists and is accessible",
+          "Check if SUPABASE_URL environment variable is set",
+          "Verify SUPABASE_SERVICE_ROLE_KEY has proper permissions",
+          "Ensure Supabase project is active and accessible",
           "Check if SSL settings are correct for your environment",
-          "Try connecting to the database directly with a SQL client",
+          "Try connecting to Supabase directly through their dashboard",
         ],
         environment: {
           nodeEnv: process.env.NODE_ENV,
-          hasPostgresUrl: !!process.env.POSTGRES_URL,
           hasSupabaseUrl: !!process.env.SUPABASE_URL,
+          hasSupabaseServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+          hasPostgresUrl: !!process.env.POSTGRES_URL,
         },
       },
       { status: 500 },
@@ -88,7 +90,7 @@ export async function POST() {
         {
           success: false,
           error: "Database initialization failed",
-          message: "Please run the SQL scripts manually",
+          message: "Please run the SQL scripts manually in Supabase SQL Editor",
         },
         { status: 500 },
       )
