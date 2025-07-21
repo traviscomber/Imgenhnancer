@@ -1,44 +1,81 @@
--- Add missing columns and constraints to existing tables
+-- Add any missing columns and constraints
 
--- Add additional columns to processing_jobs table
-ALTER TABLE processing_jobs ADD COLUMN IF NOT EXISTS priority INTEGER DEFAULT 5 CHECK (priority >= 1 AND priority <= 10);
-ALTER TABLE processing_jobs ADD COLUMN IF NOT EXISTS retry_count INTEGER DEFAULT 0;
-ALTER TABLE processing_jobs ADD COLUMN IF NOT EXISTS max_retries INTEGER DEFAULT 3;
-ALTER TABLE processing_jobs ADD COLUMN IF NOT EXISTS batch_id UUID;
-ALTER TABLE processing_jobs ADD COLUMN IF NOT EXISTS webhook_url TEXT;
-ALTER TABLE processing_jobs ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}';
+-- Add billing information to users if not exists
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'billing_address') THEN
+        ALTER TABLE users ADD COLUMN billing_address JSONB DEFAULT '{}';
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'payment_method_id') THEN
+        ALTER TABLE users ADD COLUMN payment_method_id VARCHAR(255);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'total_credits_purchased') THEN
+        ALTER TABLE users ADD COLUMN total_credits_purchased INTEGER DEFAULT 0;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'total_images_processed') THEN
+        ALTER TABLE users ADD COLUMN total_images_processed INTEGER DEFAULT 0;
+    END IF;
+END $$;
 
--- Add additional columns to users table
-ALTER TABLE users ADD COLUMN IF NOT EXISTS timezone VARCHAR(50) DEFAULT 'UTC';
-ALTER TABLE users ADD COLUMN IF NOT EXISTS language VARCHAR(10) DEFAULT 'en';
-ALTER TABLE users ADD COLUMN IF NOT EXISTS notification_preferences JSONB DEFAULT '{"email": true, "push": false}';
-ALTER TABLE users ADD COLUMN IF NOT EXISTS api_access_enabled BOOLEAN DEFAULT FALSE;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_enabled BOOLEAN DEFAULT FALSE;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_secret VARCHAR(255);
+-- Add batch processing support to jobs
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'processing_jobs' AND column_name = 'batch_id') THEN
+        ALTER TABLE processing_jobs ADD COLUMN batch_id UUID;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'processing_jobs' AND column_name = 'is_batch_job') THEN
+        ALTER TABLE processing_jobs ADD COLUMN is_batch_job BOOLEAN DEFAULT false;
+    END IF;
+END $$;
 
--- Add additional columns to ai_models table
-ALTER TABLE ai_models ADD COLUMN IF NOT EXISTS cost_per_credit DECIMAL(10,4) DEFAULT 1.0;
-ALTER TABLE ai_models ADD COLUMN IF NOT EXISTS average_processing_time INTEGER; -- in seconds
-ALTER TABLE ai_models ADD COLUMN IF NOT EXISTS success_rate DECIMAL(5,2) DEFAULT 99.0;
-ALTER TABLE ai_models ADD COLUMN IF NOT EXISTS supported_formats TEXT[] DEFAULT ARRAY['jpeg', 'png', 'webp'];
-ALTER TABLE ai_models ADD COLUMN IF NOT EXISTS max_file_size BIGINT DEFAULT 50000000; -- 50MB
-ALTER TABLE ai_models ADD COLUMN IF NOT EXISTS min_resolution INTEGER DEFAULT 64;
-ALTER TABLE ai_models ADD COLUMN IF NOT EXISTS max_resolution INTEGER DEFAULT 8192;
+-- Add model performance tracking
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'ai_models' AND column_name = 'success_rate') THEN
+        ALTER TABLE ai_models ADD COLUMN success_rate DECIMAL(5,2) DEFAULT 0.0;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'ai_models' AND column_name = 'average_processing_time') THEN
+        ALTER TABLE ai_models ADD COLUMN average_processing_time INTEGER DEFAULT 0;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'ai_models' AND column_name = 'total_jobs_processed') THEN
+        ALTER TABLE ai_models ADD COLUMN total_jobs_processed INTEGER DEFAULT 0;
+    END IF;
+END $$;
 
--- Create additional indexes
-CREATE INDEX IF NOT EXISTS idx_processing_jobs_priority ON processing_jobs(priority DESC, created_at ASC);
-CREATE INDEX IF NOT EXISTS idx_processing_jobs_batch_id ON processing_jobs(batch_id);
-CREATE INDEX IF NOT EXISTS idx_processing_jobs_retry ON processing_jobs(retry_count, max_retries);
-
-CREATE INDEX IF NOT EXISTS idx_users_subscription ON users(subscription_plan, subscription_expires_at);
-CREATE INDEX IF NOT EXISTS idx_users_api_access ON users(api_access_enabled);
-
--- Add check constraints
-ALTER TABLE processing_jobs ADD CONSTRAINT IF NOT EXISTS chk_retry_count CHECK (retry_count <= max_retries);
-ALTER TABLE users ADD CONSTRAINT IF NOT EXISTS chk_credits CHECK (credits_remaining >= 0);
-ALTER TABLE users ADD CONSTRAINT IF NOT EXISTS chk_subscription_expires CHECK (
-    (subscription_plan = 'free' AND subscription_expires_at IS NULL) OR 
-    (subscription_plan != 'free' AND subscription_expires_at IS NOT NULL)
+-- Create batch jobs table if not exists
+CREATE TABLE IF NOT EXISTS batch_jobs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(255),
+    total_images INTEGER NOT NULL,
+    completed_images INTEGER DEFAULT 0,
+    failed_images INTEGER DEFAULT 0,
+    status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed', 'cancelled')),
+    settings JSONB DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    completed_at TIMESTAMP WITH TIME ZONE
 );
 
-COMMIT;
+-- Add indexes for new columns
+CREATE INDEX IF NOT EXISTS idx_processing_jobs_batch_id ON processing_jobs(batch_id) WHERE batch_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_batch_jobs_user_id ON batch_jobs(user_id);
+CREATE INDEX IF NOT EXISTS idx_batch_jobs_status ON batch_jobs(status);
+
+-- Add foreign key constraint for batch_id
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_processing_jobs_batch_id') THEN
+        ALTER TABLE processing_jobs ADD CONSTRAINT fk_processing_jobs_batch_id FOREIGN KEY (batch_id) REFERENCES batch_jobs(id) ON DELETE SET NULL;
+    END IF;
+END $$;
+
+-- Add trigger for batch_jobs updated_at
+DROP TRIGGER IF EXISTS update_batch_jobs_updated_at ON batch_jobs;
+CREATE TRIGGER update_batch_jobs_updated_at BEFORE UPDATE ON batch_jobs FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

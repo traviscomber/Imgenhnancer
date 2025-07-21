@@ -13,6 +13,12 @@ export async function GET() {
           success: false,
           error: "Database connection failed",
           details: "Could not connect to the database. Please check your connection string.",
+          troubleshooting: [
+            "Verify POSTGRES_URL environment variable is set correctly",
+            "Check if the database server is running and accessible",
+            "Ensure SSL settings match your database configuration",
+            "Confirm database credentials are correct",
+          ],
         },
         { status: 500 },
       )
@@ -36,8 +42,13 @@ export async function GET() {
             "4. scripts/04-create-views.sql",
             "5. scripts/05-seed-demo-data.sql",
           ],
+      environment: {
+        nodeEnv: process.env.NODE_ENV,
+        hasPostgresUrl: !!process.env.POSTGRES_URL,
+        hasSupabaseUrl: !!process.env.SUPABASE_URL,
+      },
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error("❌ Database initialization error:", error)
 
     return NextResponse.json(
@@ -50,7 +61,13 @@ export async function GET() {
           "Verify database credentials and connection",
           "Ensure database exists and is accessible",
           "Check if SSL settings are correct for your environment",
+          "Try connecting to the database directly with a SQL client",
         ],
+        environment: {
+          nodeEnv: process.env.NODE_ENV,
+          hasPostgresUrl: !!process.env.POSTGRES_URL,
+          hasSupabaseUrl: !!process.env.SUPABASE_URL,
+        },
       },
       { status: 500 },
     )
@@ -76,7 +93,7 @@ export async function POST() {
         { status: 500 },
       )
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("❌ Database initialization error:", error)
 
     return NextResponse.json(

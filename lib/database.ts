@@ -1,56 +1,26 @@
-import { Pool } from "pg"
+import { neon } from "@neondatabase/serverless"
 
-// Database connection configuration
-const dbConfig = {
-  connectionString: process.env.POSTGRES_URL || process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-}
-
-// Create connection pool
-let pool: Pool | null = null
-
-export function getPool(): Pool {
-  if (!pool) {
-    pool = new Pool(dbConfig)
-
-    // Handle pool errors
-    pool.on("error", (err) => {
-      console.error("Unexpected error on idle client", err)
-    })
-  }
-
-  return pool
-}
+// Use Neon serverless driver for better compatibility with Supabase
+const sql = neon(process.env.POSTGRES_URL!)
 
 // Database query helper
-export async function query(text: string, params?: any[]) {
-  const client = getPool()
+export async function query(text: string, params: any[] = []) {
   try {
-    const result = await client.query(text, params)
-    return result
-  } catch (error) {
-    console.error("Database query error:", error)
-    throw error
-  }
-}
+    console.log("🔍 Executing query:", text.substring(0, 100) + "...")
+    console.log("📊 Parameters:", params)
 
-// Transaction helper
-export async function transaction<T>(callback: (client: any) => Promise<T>): Promise<T> {
-  const client = await getPool().connect()
+    const result = await sql(text, params)
+    console.log("✅ Query successful, rows:", Array.isArray(result) ? result.length : "N/A")
 
-  try {
-    await client.query("BEGIN")
-    const result = await callback(client)
-    await client.query("COMMIT")
-    return result
+    return {
+      rows: Array.isArray(result) ? result : [result],
+      rowCount: Array.isArray(result) ? result.length : 1,
+    }
   } catch (error) {
-    await client.query("ROLLBACK")
+    console.error("❌ Database query error:", error)
+    console.error("📝 Query:", text)
+    console.error("📊 Parameters:", params)
     throw error
-  } finally {
-    client.release()
   }
 }
 
@@ -58,7 +28,7 @@ export async function transaction<T>(callback: (client: any) => Promise<T>): Pro
 export async function checkDatabaseConnection(): Promise<boolean> {
   try {
     const result = await query("SELECT NOW() as current_time")
-    console.log("✅ Database connected successfully:", result.rows[0].current_time)
+    console.log("✅ Database connected successfully:", result.rows[0]?.current_time)
     return true
   } catch (error) {
     console.error("❌ Database connection failed:", error)
@@ -77,7 +47,7 @@ export async function checkTablesExist(): Promise<boolean> {
     `)
 
     const expectedTables = ["users", "ai_models", "processing_jobs", "user_roles"]
-    const existingTables = result.rows.map((row) => row.table_name)
+    const existingTables = result.rows.map((row: any) => row.table_name)
     const missingTables = expectedTables.filter((table) => !existingTables.includes(table))
 
     if (missingTables.length > 0) {
@@ -151,7 +121,7 @@ export async function getUserByEmail(email: string) {
   const result = await query(
     `
     SELECT id, email, name, password_hash, role, status, credits_remaining, 
-           created_at, last_login, email_verified
+           created_at, last_login, email_verified, subscription_tier
     FROM users 
     WHERE email = $1 AND status = 'active'
   `,
@@ -177,7 +147,8 @@ export async function getActiveAIModels() {
   const result = await query(`
     SELECT model_id, name, description, category, provider, provider_model_name,
            provider_version, input_field, max_upscale, processing_time_estimate,
-           best_for, is_recommended, icon_name, configuration
+           best_for, is_recommended, icon_name, configuration, status,
+           success_rate, average_processing_time, total_jobs_processed
     FROM ai_models 
     WHERE status = 'active'
     ORDER BY is_recommended DESC, name ASC
@@ -291,4 +262,55 @@ export async function getUserProcessingJobs(userId: string, limit = 50) {
   )
 
   return result.rows
+}
+
+// System logs
+export async function createSystemLog(logData: {
+  userId?: string
+  action: string
+  resourceType?: string
+  resourceId?: string
+  details?: object
+  ipAddress?: string
+  userAgent?: string
+  severity?: string
+}) {
+  const { userId, action, resourceType, resourceId, details, ipAddress, userAgent, severity = "info" } = logData
+
+  await query(
+    `
+    INSERT INTO system_logs (user_id, action, resource_type, resource_id, details, ip_address, user_agent, severity)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+  `,
+    [userId, action, resourceType, resourceId, JSON.stringify(details || {}), ipAddress, userAgent, severity],
+  )
+}
+
+// Usage analytics
+export async function updateUsageAnalytics(
+  userId: string,
+  date: string,
+  updates: {
+    imagesProcessed?: number
+    creditsUsed?: number
+    processingTimeTotal?: number
+    modelsUsed?: object
+  },
+) {
+  const { imagesProcessed = 0, creditsUsed = 0, processingTimeTotal = 0, modelsUsed = {} } = updates
+
+  await query(
+    `
+    INSERT INTO usage_analytics (user_id, date, images_processed, credits_used, processing_time_total, models_used)
+    VALUES ($1, $2, $3, $4, $5, $6)
+    ON CONFLICT (user_id, date) 
+    DO UPDATE SET 
+      images_processed = usage_analytics.images_processed + $3,
+      credits_used = usage_analytics.credits_used + $4,
+      processing_time_total = usage_analytics.processing_time_total + $5,
+      models_used = $6,
+      updated_at = NOW()
+  `,
+    [userId, date, imagesProcessed, creditsUsed, processingTimeTotal, JSON.stringify(modelsUsed)],
+  )
 }

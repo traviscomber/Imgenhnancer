@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@fal-ai/serverless-client": "latest",
+    "@neondatabase/serverless": "latest",
     "@radix-ui/react-accordion": "latest",
     "@radix-ui/react-alert-dialog": "latest",
     "@radix-ui/react-aspect-ratio": "latest",
@@ -46,8 +47,6 @@
     "lucide-react": "^0.454.0",
     "next": "15.2.4",
     "next-themes": "latest",
-    "pg": "latest",
-    "pg-native": "latest",
     "react": "^19",
     "react-day-picker": "latest",
     "react-dom": "^19",
