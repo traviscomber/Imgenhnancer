@@ -214,6 +214,7 @@ export async function POST(req: NextRequest) {
       headers: {
         Authorization: `Token ${token}`,
         "Content-Type": "application/json",
+        Accept: "application/json",
       },
       body: JSON.stringify({
         version: modelConfig.version,
@@ -247,10 +248,27 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const prediction = (await createRes.json()) as {
-      id: string
-      status: string
+    // --- SAFER JSON PARSE -----------------------------------------------
+    let prediction: { id: string; status: string } | null = null
+    try {
+      prediction = (await createRes.json()) as { id: string; status: string }
+    } catch (jsonErr) {
+      // Replicate sometimes returns text (e.g. “Request Entity Too Large”)
+      const text = await createRes.text()
+      console.error("❌ Prediction creation JSON parse failed:", jsonErr)
+      console.error("❌ Raw response text:", text.slice(0, 200))
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Prediction creation returned non-JSON response",
+          step,
+          details: text.slice(0, 500),
+          statusCode: createRes.status,
+        },
+        { status: 502 },
+      )
     }
+    // --------------------------------------------------------------------
 
     console.log("✅ Prediction creation response received")
     console.log(`📊 Prediction keys: ${Object.keys(prediction || {}).join(", ")}`)
