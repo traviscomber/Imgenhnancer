@@ -1,6 +1,18 @@
 import { type NextRequest, NextResponse } from "next/server"
 
 /**
+ * Attempt to parse JSON – fall back to raw text if it fails.
+ */
+async function safeJson(res: Response) {
+  const raw = await res.text()
+  try {
+    return JSON.parse(raw)
+  } catch {
+    return { __raw: raw }
+  }
+}
+
+/**
  * POST /api/enhance-replicate
  *
  * Enhanced image processing with Replicate AI models
@@ -354,47 +366,49 @@ export async function POST(req: NextRequest) {
     })
 
     if (createRes.status === 413) {
-      console.error("❌ Image too large for Replicate (413)")
+      // Image too large for Replicate
       return NextResponse.json(
         {
           success: false,
           error: "Image too large for Replicate (413)",
           step,
-          suggestions: [
-            "Try compressing your image",
-            "Use a model with higher capacity",
-            "Reduce image dimensions before uploading",
-          ],
         },
         { status: 413 },
       )
     }
 
+    /* ❗ NEW – never assume the body is JSON  */
     if (!createRes.ok) {
-      const t = await createRes.text()
-      console.error(`❌ Prediction creation failed: ${t}`)
+      const body = await safeJson(createRes)
       return NextResponse.json(
         {
           success: false,
           error: "Prediction creation failed",
           step,
-          details: t.slice(0, 500),
+          details: body,
+          status: createRes.status,
         },
         { status: createRes.status },
       )
     }
 
-    const prediction = (await createRes.json()) as {
-      id: string
-      status: string
-    }
+    const prediction = await safeJson(createRes)
 
-    console.log("✅ Prediction creation response received")
-    console.log(`📊 Prediction keys: ${Object.keys(prediction || {}).join(", ")}`)
-
+    /* Validate prediction structure */
     if (!prediction || !prediction.id) {
-      throw new Error("No prediction ID returned from Replicate")
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Replicate returned an unexpected response",
+          step,
+          details: prediction,
+        },
+        { status: 500 },
+      )
     }
+
+    console.log(`✅ Prediction creation response received`)
+    console.log(`📊 Prediction keys: ${Object.keys(prediction || {}).join(", ")}`)
 
     console.log(`🔮 Prediction created: ${prediction.id}`)
     console.log(`📊 Initial status: ${prediction.status}`)
@@ -448,7 +462,7 @@ export async function POST(req: NextRequest) {
         )
       }
 
-      poll = await pollRes.json()
+      poll = await safeJson(pollRes)
       console.log(`📊 Updated status: ${poll.status} (attempt ${attempts})`)
 
       if (poll.logs) {
