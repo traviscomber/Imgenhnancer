@@ -106,14 +106,14 @@ const AIImageEnhancementPortal = () => {
   // Check if user is admin (simple check for demo)
   const isAdmin = user?.email === "admin@example.com" || user?.email === "demo@example.com"
 
-  // Updated with discovered working models and file size limits
+  // Updated with higher file size limits for AI-generated images
   const enhancementModels = [
     {
       id: "real-esrgan-4x",
       name: "Real-ESRGAN 4x",
       description: "Professional upscaling for photos and artwork",
       maxUpscale: 4,
-      maxFileSize: 5 * 1024 * 1024, // 5MB
+      maxFileSize: 8 * 1024 * 1024, // Increased to 8MB
       replicateModel: "nightmareai/real-esrgan",
       version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
       category: "General Purpose",
@@ -129,7 +129,7 @@ const AIImageEnhancementPortal = () => {
       name: "GFPGAN",
       description: "Specialized face restoration and enhancement",
       maxUpscale: 4,
-      maxFileSize: 3 * 1024 * 1024, // 3MB
+      maxFileSize: 6 * 1024 * 1024, // Increased to 6MB
       replicateModel: "tencentarc/gfpgan",
       version: "9283608cc6b7be6b65a8e44983db012355fde4132009bf99d976b2f0896856a3",
       category: "Face Enhancement",
@@ -145,7 +145,7 @@ const AIImageEnhancementPortal = () => {
       name: "CodeFormer",
       description: "Advanced face restoration with fidelity control",
       maxUpscale: 4,
-      maxFileSize: 3 * 1024 * 1024, // 3MB
+      maxFileSize: 6 * 1024 * 1024, // Increased to 6MB
       replicateModel: "sczhou/codeformer",
       version: "7de2ea26c616d5bf2245ad0d5e24f0ff9a6204578a5c876db53142edd9d2cd56",
       category: "Portrait Enhancement",
@@ -161,7 +161,7 @@ const AIImageEnhancementPortal = () => {
       name: "Clarity Upscaler",
       description: "High-quality upscaling with clarity enhancement",
       maxUpscale: 4,
-      maxFileSize: 4 * 1024 * 1024, // 4MB
+      maxFileSize: 8 * 1024 * 1024, // Increased to 8MB
       replicateModel: "philz1337x/clarity-upscaler",
       version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
       category: "Professional",
@@ -212,6 +212,59 @@ const AIImageEnhancementPortal = () => {
     e.preventDefault()
   }, [])
 
+  const compressImage = async (file, maxSizeBytes = 3 * 1024 * 1024, quality = 0.8) => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement("canvas")
+      const ctx = canvas.getContext("2d")
+      const img = new Image()
+
+      img.onload = () => {
+        // Calculate new dimensions to reduce file size if needed
+        let { width, height } = img
+        const aspectRatio = width / height
+
+        // Reduce dimensions if file is too large
+        const targetPixels = Math.sqrt(maxSizeBytes / (file.size / (width * height)))
+        if (targetPixels < 1) {
+          width = Math.floor(width * targetPixels)
+          height = Math.floor(height * targetPixels)
+        }
+
+        // Set canvas size
+        canvas.width = width
+        canvas.height = height
+
+        // Draw and compress
+        ctx.drawImage(img, 0, 0, width, height)
+
+        // Convert to blob
+        canvas.toBlob(
+          (blob) => {
+            if (blob && blob.size < file.size) {
+              // Create new file object with compressed data
+              const compressedFile = new File([blob], file.name, {
+                type: "image/jpeg",
+                lastModified: Date.now(),
+              })
+              console.log(
+                `🗜️ Compressed ${file.name}: ${formatFileSize(file.size)} → ${formatFileSize(compressedFile.size)}`,
+              )
+              resolve(compressedFile)
+            } else {
+              // Return original if compression didn't help
+              resolve(file)
+            }
+          },
+          "image/jpeg",
+          quality,
+        )
+      }
+
+      img.onerror = () => resolve(file)
+      img.src = URL.createObjectURL(file)
+    })
+  }
+
   const startProcessing = async (fileId) => {
     if (!user) {
       setShowAuth(true)
@@ -251,23 +304,44 @@ const AIImageEnhancementPortal = () => {
       }
 
       const selectedModel = enhancementModels.find((m) => m.id === enhancementSettings.model)
-      const maxSize = selectedModel?.maxFileSize || 5 * 1024 * 1024
+      const maxSize = selectedModel?.maxFileSize || 8 * 1024 * 1024
 
-      if (fileToProcess.file.size > maxSize) {
-        throw new Error(
-          `File too large: ${formatFileSize(fileToProcess.file.size)} (max: ${formatFileSize(maxSize)} for ${selectedModel?.name})`,
+      let processFile = fileToProcess.file
+
+      // Auto-compress if file is too large
+      if (processFile.size > maxSize) {
+        console.log(`📏 File size ${formatFileSize(processFile.size)} exceeds limit ${formatFileSize(maxSize)}`)
+
+        // Update progress
+        setProcessingQueue((prev) =>
+          prev.map((j) => (j.id === job.id ? { ...j, progress: "Compressing image..." } : j)),
         )
+
+        try {
+          processFile = await compressImage(processFile, maxSize * 0.8) // Target 80% of max size
+          console.log(`✅ Compression result: ${formatFileSize(processFile.size)}`)
+
+          if (processFile.size > maxSize) {
+            throw new Error(
+              `File still too large after compression: ${formatFileSize(processFile.size)} (max: ${formatFileSize(maxSize)} for ${selectedModel?.name}). Try reducing image dimensions manually.`,
+            )
+          }
+        } catch (compressionError) {
+          console.error("❌ Compression failed:", compressionError)
+          throw new Error(`Failed to compress image: ${compressionError.message}`)
+        }
       }
 
       console.log("✅ File validation passed")
 
       // Create form data
       const formData = new FormData()
-      formData.append("file", fileToProcess.file)
+      formData.append("file", processFile)
       formData.append("settings", JSON.stringify(enhancementSettings))
 
       console.log("📤 Form data created with keys:", Array.from(formData.keys()))
       console.log("📤 Settings being sent:", enhancementSettings)
+      console.log("📤 Final file size:", formatFileSize(processFile.size))
 
       const modelName = selectedModel?.replicateModel || "nightmareai/real-esrgan"
 
@@ -349,16 +423,18 @@ const AIImageEnhancementPortal = () => {
             status: "completed",
             completedAt: Date.now(),
             originalSize: `${fileToProcess.file.name} (${formatFileSize(fileToProcess.file.size)})`,
+            processedSize: `${processFile.name} (${formatFileSize(processFile.size)})`,
             enhancedSize: result.enhancedSize || "Enhanced",
             fileSize: result.fileSize || "Unknown size",
             downloadUrl: result.downloadUrl,
             originalFileName: fileToProcess.name,
-            originalPreview: fileToProcess.preview, // Keep original for comparison
+            originalPreview: fileToProcess.preview,
             model: result.model || enhancementSettings.model,
             method: result.method || "replicate",
             upscaleFactor: enhancementSettings.upscaleFactor,
             processingTime: result.processingTime || "Unknown",
             predictionId: result.predictionId,
+            wasCompressed: processFile.size < fileToProcess.file.size,
           },
         ])
 

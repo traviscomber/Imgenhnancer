@@ -44,31 +44,31 @@ export async function POST(request: NextRequest) {
       type: file.type,
     })
 
-    // Model configurations
+    // Model configurations with increased file size limits
     const modelConfigs = {
       "real-esrgan-4x": {
         model: "nightmareai/real-esrgan",
         version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
         inputField: "image",
-        maxSize: 5 * 1024 * 1024, // 5MB
+        maxSize: 8 * 1024 * 1024, // Increased to 8MB
       },
       "gfpgan-face": {
         model: "tencentarc/gfpgan",
         version: "9283608cc6b7be6b65a8e44983db012355fde4132009bf99d976b2f0896856a3",
         inputField: "img",
-        maxSize: 3 * 1024 * 1024, // 3MB
+        maxSize: 6 * 1024 * 1024, // Increased to 6MB
       },
       "codeformer-face": {
         model: "sczhou/codeformer",
         version: "7de2ea26c616d5bf2245ad0d5e24f0ff9a6204578a5c876db53142edd9d2cd56",
         inputField: "image",
-        maxSize: 3 * 1024 * 1024, // 3MB
+        maxSize: 6 * 1024 * 1024, // Increased to 6MB
       },
       "clarity-upscaler": {
         model: "philz1337x/clarity-upscaler",
         version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
         inputField: "image",
-        maxSize: 4 * 1024 * 1024, // 4MB
+        maxSize: 8 * 1024 * 1024, // Increased to 8MB
       },
     }
 
