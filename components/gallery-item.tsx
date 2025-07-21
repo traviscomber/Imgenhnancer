@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { AlertCircle, Check, Download, ImageIcon, Loader2 } from "lucide-react"
 
 export interface GalleryJob {
@@ -20,9 +20,40 @@ interface GalleryItemProps {
 export function GalleryItem({ job }: GalleryItemProps) {
   const [imageLoaded, setImageLoaded] = useState(false)
   const [imageError, setImageError] = useState(false)
+  const [proxyUrl, setProxyUrl] = useState<string | null>(null)
+
+  // Try to use a proxy for images that might have CORS issues
+  useEffect(() => {
+    if (!job.downloadUrl) return
+
+    // First try direct URL
+    const img = new Image()
+    img.crossOrigin = "anonymous"
+    img.onload = () => {
+      setProxyUrl(job.downloadUrl)
+      setImageLoaded(true)
+    }
+    img.onerror = () => {
+      // If direct URL fails, try with a proxy
+      const proxiedUrl = `/api/image-proxy?url=${encodeURIComponent(job.downloadUrl)}`
+      const proxyImg = new Image()
+      proxyImg.crossOrigin = "anonymous"
+      proxyImg.onload = () => {
+        setProxyUrl(proxiedUrl)
+        setImageLoaded(true)
+      }
+      proxyImg.onerror = () => {
+        setImageError(true)
+      }
+      proxyImg.src = proxiedUrl
+    }
+    img.src = job.downloadUrl
+  }, [job.downloadUrl])
 
   const handleDownload = () => {
     if (!job.downloadUrl) return
+
+    // Create a temporary anchor element
     const link = document.createElement("a")
     link.href = job.downloadUrl
     link.download = `enhanced_${job.originalFileName}`
@@ -39,7 +70,7 @@ export function GalleryItem({ job }: GalleryItemProps) {
         {job.downloadUrl && !imageError ? (
           <>
             <img
-              src={job.downloadUrl || "/placeholder.svg"}
+              src={proxyUrl || "/placeholder.svg"}
               alt={`Enhanced ${job.originalFileName}`}
               className={`w-full h-full object-contain transition-opacity duration-300 ${
                 imageLoaded ? "opacity-100" : "opacity-0"
