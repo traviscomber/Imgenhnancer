@@ -1,6 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { Buffer } from "buffer"
-import sharp from "sharp"
 
 /**
  * Reads the body once, tries JSON.parse → returns `{ ok, json?, text }`.
@@ -20,27 +19,37 @@ const RAW_COMPRESSION_THRESHOLD = 6 * 1024 * 1024 // 6 MB (trigger compression)
 const MAX_REPLICATE_PAYLOAD = 8 * 1024 * 1024 // 8 MB JSON body cap
 const BASE64_MULTIPLIER = 1.37 // base-64 blow-up
 
-async function compressImage(input: ArrayBuffer, targetBytes: number, initialQuality = 85) {
-  let quality = initialQuality
-  let img = sharp(Buffer.from(input)).rotate()
+async function compressImage(
+  input: ArrayBuffer,
+  targetBytes: number,
+  initialQuality = 85,
+): Promise<{ buffer: Buffer; mime: string; ok: boolean }> {
+  try {
+    // ⬇️  dynamic import avoids Vercel bundle failures if sharp isn’t present
+    const sharp = (await import("sharp")).default
+    let quality = initialQuality
+    let img = sharp(Buffer.from(input)).rotate()
 
-  // Down-scale very large images (4K+)
-  const meta = await img.metadata()
-  if ((meta.width ?? 0) > 4096) {
-    img = img.resize(4096)
-  }
+    // Down-scale ultra-large images
+    const meta = await img.metadata()
+    if ((meta.width ?? 0) > 4096) img = img.resize(4096)
 
-  while (quality >= 50) {
-    const buf = await img.jpeg({ quality, mozjpeg: true }).toBuffer()
-    if (buf.byteLength <= targetBytes) {
-      return { buffer: buf, mime: "image/jpeg" }
+    while (quality >= 50) {
+      const buf = await img.jpeg({ quality, mozjpeg: true }).toBuffer()
+      if (buf.byteLength <= targetBytes) {
+        return { buffer: buf, mime: "image/jpeg", ok: true }
+      }
+      quality -= 5
     }
-    quality -= 5
-  }
 
-  // fallback: return best-effort buffer
-  const fallback = await img.jpeg({ quality: 50, mozjpeg: true }).toBuffer()
-  return { buffer: fallback, mime: "image/jpeg" }
+    // Best-effort result
+    const fallback = await img.jpeg({ quality: 50, mozjpeg: true }).toBuffer()
+    return { buffer: fallback, mime: "image/jpeg", ok: true }
+  } catch (err) {
+    // sharp unavailable or failed → skip compression
+    console.warn("⚠️  sharp compression skipped:", (err as Error).message)
+    return { buffer: Buffer.from(input), mime: "application/octet-stream", ok: false }
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -113,11 +122,11 @@ export async function POST(req: NextRequest) {
 
     const estimatedEncoded = Math.ceil(file.size * BASE64_MULTIPLIER)
     if (file.size > RAW_COMPRESSION_THRESHOLD || estimatedEncoded > MAX_REPLICATE_PAYLOAD) {
-      console.log(`🗜️  Server-side compression triggered – original ${file.size} B, est. encoded ${estimatedEncoded} B`)
+      console.log(`🗜️  Compression attempt – original ${file.size} B, est. encoded ${estimatedEncoded} B`)
       const compressed = await compressImage(fileBuffer, MAX_REPLICATE_PAYLOAD / BASE64_MULTIPLIER)
       fileBuffer = compressed.buffer
-      finalMime = compressed.mime
-      console.log(`✅ Compressed to ${fileBuffer.byteLength} B`)
+      if (compressed.ok) finalMime = compressed.mime
+      console.log(`✅ Using buffer of ${fileBuffer.byteLength} B after compression step`)
     }
 
     /* ----------------------------- encode ------------------------------- */
@@ -206,7 +215,12 @@ export async function POST(req: NextRequest) {
   } catch (err: any) {
     console.error("❌ Uncaught route error:", err)
     return NextResponse.json(
-      { success: false, error: err.message ?? "Internal server error", step: "server-error" },
+      {
+        success: false,
+        error: err instanceof Error ? err.message : String(err),
+        stack: process.env.NODE_ENV !== "production" ? err?.stack : undefined,
+        step: "server-error",
+      },
       { status: 500 },
     )
   }
