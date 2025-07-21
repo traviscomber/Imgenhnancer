@@ -4,17 +4,8 @@ import { useState, useRef, useCallback, useEffect } from "react"
 import {
   Upload,
   ImageIcon,
-  Settings,
-  Download,
   Zap,
-  Monitor,
-  Printer,
-  Loader2,
-  X,
-  RefreshCw,
-  AlertCircle,
   Shield,
-  LogIn,
   Star,
   ArrowRight,
   Check,
@@ -115,13 +106,14 @@ const AIImageEnhancementPortal = () => {
   // Check if user is admin (simple check for demo)
   const isAdmin = user?.email === "admin@example.com" || user?.email === "demo@example.com"
 
-  // Updated with discovered working models
+  // Updated with discovered working models and file size limits
   const enhancementModels = [
     {
       id: "real-esrgan-4x",
       name: "Real-ESRGAN 4x",
       description: "Professional upscaling for photos and artwork",
       maxUpscale: 4,
+      maxFileSize: 5 * 1024 * 1024, // 5MB
       replicateModel: "nightmareai/real-esrgan",
       version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
       category: "General Purpose",
@@ -137,6 +129,7 @@ const AIImageEnhancementPortal = () => {
       name: "GFPGAN",
       description: "Specialized face restoration and enhancement",
       maxUpscale: 4,
+      maxFileSize: 3 * 1024 * 1024, // 3MB
       replicateModel: "tencentarc/gfpgan",
       version: "9283608cc6b7be6b65a8e44983db012355fde4132009bf99d976b2f0896856a3",
       category: "Face Enhancement",
@@ -152,6 +145,7 @@ const AIImageEnhancementPortal = () => {
       name: "CodeFormer",
       description: "Advanced face restoration with fidelity control",
       maxUpscale: 4,
+      maxFileSize: 3 * 1024 * 1024, // 3MB
       replicateModel: "sczhou/codeformer",
       version: "7de2ea26c616d5bf2245ad0d5e24f0ff9a6204578a5c876db53142edd9d2cd56",
       category: "Portrait Enhancement",
@@ -167,6 +161,7 @@ const AIImageEnhancementPortal = () => {
       name: "Clarity Upscaler",
       description: "High-quality upscaling with clarity enhancement",
       maxUpscale: 4,
+      maxFileSize: 4 * 1024 * 1024, // 4MB
       replicateModel: "philz1337x/clarity-upscaler",
       version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
       category: "Professional",
@@ -179,25 +174,89 @@ const AIImageEnhancementPortal = () => {
     },
   ]
 
+  // Image compression helper
+  const compressImage = async (file, targetSize = 2 * 1024 * 1024) => {
+    if (file.size <= targetSize) {
+      return file // No compression needed
+    }
+
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+      formData.append("targetSize", targetSize.toString())
+      formData.append("quality", "80")
+
+      const response = await fetch("/api/compress-image", {
+        method: "POST",
+        body: formData,
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        // Convert data URL back to File object
+        const response = await fetch(result.dataUrl)
+        const blob = await response.blob()
+        const compressedFile = new File([blob], file.name, { type: "image/jpeg" })
+        
+        console.log("✅ Image compressed:", {
+          original: formatFileSize(file.size),
+          compressed: formatFileSize(compressedFile.size),
+          reduction: result.reduction + "%",
+        })
+        
+        return compressedFile
+      } else {
+        console.warn("⚠️ Compression failed, using original file")
+        return file
+      }
+    } catch (error) {
+      console.warn("⚠️ Compression error, using original file:", error)
+      return file
+    }
+  }
+
   const handleFileSelect = useCallback(
-    (files) => {
+    async (files) => {
       if (!user) {
         setShowAuth(true)
         return
       }
 
-      const newFiles = Array.from(files).map((file) => ({
-        id: Date.now() + Math.random(),
-        file,
-        name: file.name,
-        size: file.size,
-        preview: URL.createObjectURL(file),
-        status: "ready",
-        error: null,
-      }))
+      const newFiles = await Promise.all(
+        Array.from(files).map(async (file) => {
+          // Check file size and compress if needed
+          const selectedModel = enhancementModels.find((m) => m.id === enhancementSettings.model)
+          const maxSize = selectedModel?.maxFileSize || 5 * 1024 * 1024
+          
+          let processedFile = file
+          let compressionApplied = false
+          
+          if (file.size > maxSize) {
+            console.log(`🗜️ File ${file.name} is ${formatFileSize(file.size)}, compressing to fit ${selectedModel?.name} limit of ${formatFileSize(maxSize)}`)
+            processedFile = await compressImage(file, maxSize * 0.8) // Compress to 80% of limit for safety
+            compressionApplied = true
+          }
+
+          return {
+            id: Date.now() + Math.random(),
+            file: processedFile,
+            originalFile: file,
+            name: file.name,
+            size: processedFile.size,
+            originalSize: file.size,
+            preview: URL.createObjectURL(processedFile),
+            status: "ready",
+            error: null,
+            compressionApplied,
+            compressionSavings: compressionApplied ? Math.round((1 - processedFile.size / file.size) * 100) : 0,
+          }
+        })
+      )
+      
       setSelectedFiles((prev) => [...prev, ...newFiles])
     },
-    [user],
+    [user, enhancementSettings.model],
   )
 
   const handleDrop = useCallback(
@@ -250,8 +309,11 @@ const AIImageEnhancementPortal = () => {
         throw new Error(`Invalid file type: ${fileToProcess.file.type}`)
       }
 
-      if (fileToProcess.file.size > 50 * 1024 * 1024) {
-        throw new Error(`File too large: ${fileToProcess.file.size} bytes`)
+      const selectedModel = enhancementModels.find((m) => m.id === enhancementSettings.model)
+      const maxSize = selectedModel?.maxFileSize || 5 * 1024 * 1024
+
+      if (fileToProcess.file.size > maxSize) {
+        throw new Error(`File too large: ${formatFileSize(fileToProcess.file.size)} (max: ${formatFileSize(maxSize)} for ${selectedModel?.name})`)
       }
 
       console.log("✅ File validation passed")
@@ -264,7 +326,6 @@ const AIImageEnhancementPortal = () => {
       console.log("📤 Form data created with keys:", Array.from(formData.keys()))
       console.log("📤 Settings being sent:", enhancementSettings)
 
-      const selectedModel = enhancementModels.find((m) => m.id === enhancementSettings.model)
       const modelName = selectedModel?.replicateModel || "nightmareai/real-esrgan"
 
       // Update progress
@@ -339,6 +400,8 @@ const AIImageEnhancementPortal = () => {
             upscaleFactor: enhancementSettings.upscaleFactor,
             processingTime: result.processingTime || "Unknown",
             predictionId: result.predictionId,
+            compressionApplied: fileToProcess.compressionApplied,
+            compressionSavings: fileToProcess.compressionSavings,
           },
         ])
       } else {
@@ -353,6 +416,7 @@ const AIImageEnhancementPortal = () => {
             error: result.error || "Unknown error",
             details: result.details || null,
             step: result.step || "unknown",
+            suggestions: result.suggestions || [],
           },
         ])
       }
@@ -436,6 +500,11 @@ const AIImageEnhancementPortal = () => {
   const getMaxUpscale = () => {
     const selectedModel = enhancementModels.find((m) => m.id === enhancementSettings.model)
     return selectedModel?.maxUpscale || 4
+  }
+
+  const getMaxFileSize = () => {
+    const selectedModel = enhancementModels.find((m) => m.id === enhancementSettings.model)
+    return selectedModel?.maxFileSize || 5 * 1024 * 1024
   }
 
   // Show authentication modal if not logged in
@@ -687,6 +756,10 @@ const AIImageEnhancementPortal = () => {
                         <span className="text-green-400">{model.maxUpscale}x</span>
                       </div>
                       <div className="flex justify-between text-gray-300">
+                        <span>Max File Size:</span>
+                        <span className="text-orange-400">{formatFileSize(model.maxFileSize)}</span>
+                      </div>
+                      <div className="flex justify-between text-gray-300">
                         <span>Processing:</span>
                         <span className="text-purple-400">{model.processingTime}</span>
                       </div>
@@ -750,8 +823,8 @@ const AIImageEnhancementPortal = () => {
                   },
                   {
                     icon: Crown,
-                    title: "Batch Processing",
-                    description: "Process multiple images simultaneously with Pro plans",
+                    title: "Smart Compression",
+                    description: "Automatic image optimization to fit model requirements",
                     color: "from-indigo-500 to-purple-500",
                   },
                 ].map((feature, index) => (
@@ -964,452 +1037,4 @@ const AIImageEnhancementPortal = () => {
                     }}
                   >
                     <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
-                      <Upload className="w-10 h-10 text-white" />
-                    </div>
-                    <h3 className="text-2xl font-semibold text-white mb-3">
-                      {user ? "Drop images here or click to browse" : "Sign in to upload images"}
-                    </h3>
-                    <p className="text-blue-200 mb-4 text-lg">Supports JPEG, PNG, WebP, HEIC, TIFF up to 50MB</p>
-                    <div className="flex items-center justify-center space-x-6 text-sm text-gray-400">
-                      <div className="flex items-center space-x-2">
-                        <Zap className="w-4 h-4" />
-                        <span>Fast Processing</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Shield className="w-4 h-4" />
-                        <span>Secure Upload</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Award className="w-4 h-4" />
-                        <span>Pro Quality</span>
-                      </div>
-                    </div>
-                    {!user && (
-                      <button
-                        onClick={() => setShowAuth(true)}
-                        className="mt-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl transition-all inline-flex items-center space-x-2 font-medium"
-                      >
-                        <LogIn className="w-5 h-5" />
-                        <span>Sign In to Continue</span>
-                      </button>
-                    )}
-                  </div>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={(e) => handleFileSelect(e.target.files)}
-                    className="hidden"
-                  />
-
-                  {/* Enhanced File List */}
-                  {selectedFiles.length > 0 && (
-                    <div className="mt-8">
-                      <h3 className="text-xl font-semibold text-white mb-6">Selected Files ({selectedFiles.length})</h3>
-                      <div className="space-y-4">
-                        {selectedFiles.map((file) => (
-                          <div
-                            key={file.id}
-                            className="bg-white/5 rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all"
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-4">
-                                <div className="relative">
-                                  <img
-                                    src={file.preview || "/placeholder.svg"}
-                                    alt=""
-                                    className="w-16 h-16 object-cover rounded-xl"
-                                  />
-                                  {file.status === "ready" && (
-                                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                                      <Check className="w-3 h-3 text-white" />
-                                    </div>
-                                  )}
-                                </div>
-                                <div>
-                                  <p className="text-white font-semibold text-lg">{file.name}</p>
-                                  <p className="text-blue-200">{formatFileSize(file.size)}</p>
-                                  {file.status === "failed" && (
-                                    <div className="mt-2">
-                                      <div className="flex items-center space-x-2">
-                                        <AlertCircle className="w-4 h-4 text-red-400" />
-                                        <p className="text-sm text-red-400">Error: {file.error}</p>
-                                      </div>
-                                      {file.details && (
-                                        <p className="text-xs text-red-300 mt-1">
-                                          Details:{" "}
-                                          {typeof file.details === "string"
-                                            ? file.details
-                                            : JSON.stringify(file.details, null, 2)}
-                                        </p>
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="flex items-center space-x-3">
-                                {file.status === "ready" && (
-                                  <button
-                                    onClick={() => startProcessing(file.id)}
-                                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-lg transition-all flex items-center space-x-2 font-medium"
-                                  >
-                                    <Sparkles className="w-4 h-4" />
-                                    <span>Enhance</span>
-                                  </button>
-                                )}
-                                {file.status === "failed" && (
-                                  <button
-                                    onClick={() => startProcessing(file.id)}
-                                    className="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-3 rounded-lg transition-all flex items-center space-x-2 font-medium"
-                                  >
-                                    <RefreshCw className="w-4 h-4" />
-                                    <span>Retry</span>
-                                  </button>
-                                )}
-                                <button
-                                  onClick={() => setSelectedFiles((prev) => prev.filter((f) => f.id !== file.id))}
-                                  className="text-gray-400 hover:text-red-400 transition-colors p-2"
-                                >
-                                  <X className="w-5 h-5" />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Enhanced Settings Panel */}
-              <div className="space-y-6">
-                <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-6">
-                  <h3 className="text-xl font-semibold text-white mb-6">Enhancement Settings</h3>
-
-                  <div className="space-y-6">
-                    {/* AI Model Selection */}
-                    <div>
-                      <label className="block text-sm font-medium text-white mb-4">AI Model</label>
-                      <div className="space-y-3">
-                        {enhancementModels
-                          .filter((m) => m.status === "working")
-                          .map((model) => (
-                            <div
-                              key={model.id}
-                              className={`border rounded-xl p-4 cursor-pointer transition-all ${
-                                enhancementSettings.model === model.id
-                                  ? "border-blue-500 bg-blue-500/10"
-                                  : "border-white/20 hover:border-white/40"
-                              }`}
-                              onClick={() => {
-                                const maxUpscale = model.maxUpscale || 4
-                                setEnhancementSettings((prev) => ({
-                                  ...prev,
-                                  model: model.id,
-                                  upscaleFactor: Math.min(prev.upscaleFactor, maxUpscale),
-                                }))
-                              }}
-                            >
-                              <div className="flex items-center space-x-3">
-                                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                                  <model.icon className="w-5 h-5 text-white" />
-                                </div>
-                                <div className="flex-1">
-                                  <div className="flex items-center space-x-2">
-                                    <h4 className="font-medium text-white">{model.name}</h4>
-                                    {model.recommended && <Star className="w-4 h-4 text-yellow-400 fill-current" />}
-                                  </div>
-                                  <p className="text-sm text-blue-200">{model.category}</p>
-                                  <p className="text-xs text-gray-400 mt-1">{model.processingTime}</p>
-                                </div>
-                                <div className="w-4 h-4 border-2 border-white/40 rounded-full flex items-center justify-center">
-                                  {enhancementSettings.model === model.id && (
-                                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-
-                    {/* Target Use Case */}
-                    <div>
-                      <label className="block text-sm font-medium text-white mb-4">Target Use</label>
-                      <div className="grid grid-cols-3 gap-3">
-                        {[
-                          { id: "display", label: "Display", icon: Monitor, desc: "4K screens" },
-                          { id: "print", label: "Print", icon: Printer, desc: "High-res print" },
-                          { id: "dome", label: "Dome", icon: Globe, desc: "8K projection" },
-                        ].map((use) => (
-                          <button
-                            key={use.id}
-                            onClick={() => setEnhancementSettings((prev) => ({ ...prev, targetUse: use.id }))}
-                            className={`flex flex-col items-center p-4 rounded-xl transition-all ${
-                              enhancementSettings.targetUse === use.id
-                                ? "bg-blue-600 text-white"
-                                : "bg-white/5 text-gray-300 hover:bg-white/10"
-                            }`}
-                          >
-                            <use.icon className="w-6 h-6 mb-2" />
-                            <span className="text-sm font-medium">{use.label}</span>
-                            <span className="text-xs opacity-75">{use.desc}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Upscale Factor */}
-                    <div>
-                      <label className="block text-sm font-medium text-white mb-4">
-                        Upscale Factor: {enhancementSettings.upscaleFactor}x
-                      </label>
-                      <input
-                        type="range"
-                        min="2"
-                        max={getMaxUpscale()}
-                        step="1"
-                        value={enhancementSettings.upscaleFactor}
-                        onChange={(e) =>
-                          setEnhancementSettings((prev) => ({
-                            ...prev,
-                            upscaleFactor: Number.parseInt(e.target.value),
-                          }))
-                        }
-                        className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer"
-                      />
-                      <div className="flex justify-between text-xs text-gray-400 mt-2">
-                        <span>2x</span>
-                        <span className="text-blue-400">Target: {getTargetResolution()}</span>
-                        <span>{getMaxUpscale()}x</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Processing Status */}
-                <div className="bg-gradient-to-r from-green-900/20 to-blue-900/20 backdrop-blur-lg rounded-2xl border border-green-500/20 p-6">
-                  <h3 className="text-lg font-semibold text-white mb-4">Processing Status</h3>
-
-                  {!user && (
-                    <div className="bg-blue-900/20 border border-blue-500/20 rounded-lg p-4 mb-4">
-                      <div className="text-blue-400 text-sm font-medium mb-1">🔐 Authentication Required</div>
-                      <div className="text-blue-200 text-xs">
-                        Sign in to access image enhancement features and track your processing history.
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="space-y-3 text-sm">
-                    <div className="flex justify-between text-gray-300">
-                      <span>Images queued:</span>
-                      <span className="font-medium">{selectedFiles.length}</span>
-                    </div>
-                    <div className="flex justify-between text-gray-300">
-                      <span>Selected model:</span>
-                      <span className="text-blue-400 font-medium">
-                        {enhancementModels.find((m) => m.id === enhancementSettings.model)?.name}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-white font-medium">
-                      <span>Est. processing time:</span>
-                      <span className="text-green-400">{selectedFiles.length * 60}s</span>
-                    </div>
-                    <div className="flex justify-between text-gray-300">
-                      <span>Available models:</span>
-                      <span className="text-green-400 font-medium">
-                        {enhancementModels.filter((m) => m.status === "working").length} ready
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-gray-300">
-                      <span>User status:</span>
-                      <span className={user ? "text-green-400 font-medium" : "text-yellow-400 font-medium"}>
-                        {user ? "✅ Authenticated" : "⚠️ Not signed in"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "processing" && (
-          <div className="py-12">
-            <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-8">
-              <h2 className="text-2xl font-semibold text-white mb-6">Processing Queue</h2>
-
-              {!user ? (
-                <div className="text-center py-16">
-                  <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <LogIn className="w-10 h-10 text-white" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-white mb-2">Sign in to view processing queue</h3>
-                  <p className="text-blue-200 mb-6">Track your image enhancement jobs and progress</p>
-                  <button
-                    onClick={() => setShowAuth(true)}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl transition-all inline-flex items-center space-x-2 font-medium"
-                  >
-                    <LogIn className="w-5 h-5" />
-                    <span>Sign In</span>
-                  </button>
-                </div>
-              ) : processingQueue.length === 0 ? (
-                <div className="text-center py-16">
-                  <div className="w-20 h-20 bg-gradient-to-r from-gray-600 to-gray-700 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <Settings className="w-10 h-10 text-white" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-white mb-2">No images currently processing</h3>
-                  <p className="text-blue-200 mb-6">Start processing from the Enhance tab</p>
-                  <button
-                    onClick={() => setActiveTab("enhance")}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl transition-all inline-flex items-center space-x-2 font-medium"
-                  >
-                    <Upload className="w-5 h-5" />
-                    <span>Upload Images</span>
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {processingQueue.map((job) => (
-                    <div key={job.id} className="bg-white/5 rounded-xl border border-white/10 p-6">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                          <img
-                            src={job.file.preview || "/placeholder.svg"}
-                            alt=""
-                            className="w-16 h-16 object-cover rounded-xl"
-                          />
-                          <div>
-                            <p className="text-white font-semibold text-lg">{job.file.name}</p>
-                            <p className="text-blue-200">
-                              {enhancementModels.find((m) => m.id === job.settings.model)?.name} •{" "}
-                              {job.settings.upscaleFactor}x upscale
-                            </p>
-                            <p className="text-sm text-gray-400 mt-1">
-                              Model: {enhancementModels.find((m) => m.id === job.settings.model)?.replicateModel}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-3">
-                          <div className="flex items-center space-x-2">
-                            <Loader2 className="w-6 h-6 text-blue-400 animate-spin" />
-                            <div className="text-right">
-                              <div className="text-sm font-medium text-white">Processing...</div>
-                              <div className="text-xs text-blue-400">{job.progress || "Enhancing image..."}</div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {activeTab === "results" && (
-          <div className="py-12">
-            <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-8">
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl font-semibold text-white">Enhanced Images Gallery</h2>
-                {completedJobs.length > 0 && (
-                  <div className="text-sm text-blue-200">{completedJobs.length} images enhanced</div>
-                )}
-              </div>
-
-              {!user ? (
-                <div className="text-center py-16">
-                  <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <Download className="w-10 h-10 text-white" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-white mb-2">Sign in to view enhanced images</h3>
-                  <p className="text-blue-200 mb-6">Access your completed image enhancements and downloads</p>
-                  <button
-                    onClick={() => setShowAuth(true)}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl transition-all inline-flex items-center space-x-2 font-medium"
-                  >
-                    <LogIn className="w-5 h-5" />
-                    <span>Sign In</span>
-                  </button>
-                </div>
-              ) : completedJobs.length === 0 ? (
-                <div className="text-center py-16">
-                  <div className="w-20 h-20 bg-gradient-to-r from-gray-600 to-gray-700 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <ImageIcon className="w-10 h-10 text-white" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-white mb-2">No enhanced images yet</h3>
-                  <p className="text-blue-200 mb-6">Completed enhancements will appear here</p>
-                  <button
-                    onClick={() => setActiveTab("enhance")}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl transition-all inline-flex items-center space-x-2 font-medium"
-                  >
-                    <Upload className="w-5 h-5" />
-                    <span>Enhance Images</span>
-                  </button>
-                </div>
-              ) : (
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {completedJobs.map((job) => (
-                    <div key={job.id} className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
-                      <div className="aspect-video bg-gradient-to-br from-blue-900/20 to-purple-900/20 flex items-center justify-center">
-                        <img
-                          src={job.downloadUrl || "/placeholder.svg"}
-                          alt={`Enhanced ${job.originalFileName}`}
-                          className="w-full h-full object-contain"
-                          crossOrigin="anonymous"
-                        />
-                      </div>
-                      <div className="p-4 space-y-3">
-                        <p className="text-white font-semibold">{job.originalFileName}</p>
-                        <div className="flex items-center space-x-2 text-sm text-green-400">
-                          <Check className="w-4 h-4" />
-                          <span>Enhanced • {job.upscaleFactor}x</span>
-                        </div>
-                        <button
-                          onClick={() => window.open(job.downloadUrl, "_blank")}
-                          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-2 rounded-lg transition-all flex items-center justify-center space-x-2 font-medium"
-                        >
-                          <Download className="w-4 h-4" />
-                          <span>Download</span>
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-        {/* ---- END OF MAIN CONTENT ---- */}
-      </main>
-
-      {/* Footer */}
-      <footer className="bg-black/20 backdrop-blur-lg border-t border-white/10">
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-8 md:space-y-0">
-            <div className="text-center md:text-left">
-              <h3 className="text-white font-semibold text-lg mb-2">AI Enhancer Pro</h3>
-              <p className="text-blue-200 text-sm">© {new Date().getFullYear()} All rights reserved.</p>
-            </div>
-            <div className="flex items-center justify-center space-x-6">
-              <a href="#" className="text-blue-200 hover:text-white text-sm">
-                Privacy
-              </a>
-              <a href="#" className="text-blue-200 hover:text-white text-sm">
-                Terms
-              </a>
-              <a href="#" className="text-blue-200 hover:text-white text-sm">
-                Support
-              </a>
-            </div>
-          </div>
-        </div>
-      </footer>
-    </div>
-  )
-} // ← close the function body
-export default AIImageEnhancementPortal
+                      <Upload className="w-10\
