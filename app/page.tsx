@@ -52,7 +52,7 @@ const AIImageEnhancementPortal = () => {
     denoise: true,
     sharpen: false,
     faceEnhance: false,
-    apiEndpoint: "replicate", // New: allow switching between APIs
+    apiEndpoint: "replicate", // Default to replicate
   })
   const fileInputRef = useRef(null)
 
@@ -107,7 +107,7 @@ const AIImageEnhancementPortal = () => {
   // Check if user is admin (simple check for demo)
   const isAdmin = user?.email === "admin@example.com" || user?.email === "demo@example.com"
 
-  // Enhanced API endpoints with better file size support
+  // Simplified API endpoints - only Replicate and Simple
   const apiEndpoints = [
     {
       id: "replicate",
@@ -118,26 +118,6 @@ const AIImageEnhancementPortal = () => {
       processingTime: "60-120s",
       reliability: "High",
       recommended: true,
-    },
-    {
-      id: "fal-v2",
-      name: "Fal AI V2",
-      description: "Enhanced Fal AI with larger file support",
-      maxFileSize: 12 * 1024 * 1024, // 12MB
-      endpoint: "/api/enhance-v2",
-      processingTime: "45-90s",
-      reliability: "High",
-      recommended: false,
-    },
-    {
-      id: "fal-multi",
-      name: "Fal AI Multi-Model",
-      description: "Multiple Fal AI models with fallbacks",
-      maxFileSize: 10 * 1024 * 1024, // 10MB
-      endpoint: "/api/enhance-fal",
-      processingTime: "30-90s",
-      reliability: "Medium",
-      recommended: false,
     },
     {
       id: "simple",
@@ -158,7 +138,7 @@ const AIImageEnhancementPortal = () => {
       name: "Real-ESRGAN 4x",
       description: "Professional upscaling for photos and artwork",
       maxUpscale: 4,
-      maxFileSize: 12 * 1024 * 1024, // Increased to 12MB
+      maxFileSize: 9 * 1024 * 1024, // 9MB for Replicate
       replicateModel: "nightmareai/real-esrgan",
       version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
       category: "General Purpose",
@@ -174,7 +154,7 @@ const AIImageEnhancementPortal = () => {
       name: "GFPGAN",
       description: "Specialized face restoration and enhancement",
       maxUpscale: 4,
-      maxFileSize: 8 * 1024 * 1024, // Increased to 8MB
+      maxFileSize: 6 * 1024 * 1024, // 6MB for face models
       replicateModel: "tencentarc/gfpgan",
       version: "9283608cc6b7be6b65a8e44983db012355fde4132009bf99d976b2f0896856a3",
       category: "Face Enhancement",
@@ -190,7 +170,7 @@ const AIImageEnhancementPortal = () => {
       name: "CodeFormer",
       description: "Advanced face restoration with fidelity control",
       maxUpscale: 4,
-      maxFileSize: 8 * 1024 * 1024, // Increased to 8MB
+      maxFileSize: 6 * 1024 * 1024, // 6MB for face models
       replicateModel: "sczhou/codeformer",
       version: "7de2ea26c616d5bf2245ad0d5e24f0ff9a6204578a5c876db53142edd9d2cd56",
       category: "Portrait Enhancement",
@@ -206,7 +186,7 @@ const AIImageEnhancementPortal = () => {
       name: "Clarity Upscaler",
       description: "High-quality upscaling with clarity enhancement",
       maxUpscale: 4,
-      maxFileSize: 10 * 1024 * 1024, // Increased to 10MB
+      maxFileSize: 8 * 1024 * 1024, // 8MB
       replicateModel: "philz1337x/clarity-upscaler",
       version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
       category: "Professional",
@@ -684,7 +664,7 @@ const AIImageEnhancementPortal = () => {
 
                 <p className="text-xl text-blue-100 mb-12 max-w-3xl mx-auto leading-relaxed">
                   Transform your images with cutting-edge AI models. Upscale, enhance clarity, and restore photos with
-                  professional quality results in seconds. Now supporting files up to 12MB!
+                  professional quality results in seconds. Now supporting files up to 10MB!
                 </p>
 
                 <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6 mb-16">
@@ -745,7 +725,7 @@ const AIImageEnhancementPortal = () => {
                     <h3 className="text-2xl font-semibold text-white mb-3">
                       {user ? "Drop images here or click to browse" : "Sign in to upload images"}
                     </h3>
-                    <p className="text-blue-200 mb-4 text-lg">Supports JPEG, PNG, WebP, HEIC, TIFF up to 12MB</p>
+                    <p className="text-blue-200 mb-4 text-lg">Supports JPEG, PNG, WebP, HEIC, TIFF up to 10MB</p>
                     <div className="flex items-center justify-center space-x-6 text-sm text-gray-400">
                       <div className="flex items-center space-x-2">
                         <Zap className="w-4 h-4" />
@@ -1352,7 +1332,7 @@ const AIImageEnhancementPortal = () => {
                 <ul className="space-y-4 mb-8">
                   {[
                     "200 images per month",
-                    "Up to 12MP resolution",
+                    "Up to 10MP resolution",
                     "All AI models",
                     "Priority processing",
                     "All output formats",
