@@ -1384,8 +1384,7 @@ const AIImageEnhancementPortal = () => {
             </div>
           </div>
         )}
-      {/* ---- END OF MAIN CONTENT ---- */}
-
+        {/* ---- END OF MAIN CONTENT ---- */}
       </main>
 
       {/* Footer */}
@@ -1411,6 +1410,6 @@ const AIImageEnhancementPortal = () => {
         </div>
       </footer>
     </div>
-)
-
+  )
+} // ← close the function body
 export default AIImageEnhancementPortal
