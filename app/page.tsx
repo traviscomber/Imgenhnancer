@@ -28,6 +28,7 @@ import {
 import { LoginForm } from "@/components/auth/login-form"
 import { SignupForm } from "@/components/auth/signup-form"
 import { UserMenu } from "@/components/auth/user-menu"
+import { GalleryItem } from "@/components/gallery-item"
 
 const AIImageEnhancementPortal = () => {
   // Authentication state
@@ -1142,121 +1143,9 @@ const AIImageEnhancementPortal = () => {
                 </div>
               ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {completedJobs.map((job) => {
-                    const [imageLoaded, setImageLoaded] = useState(false)
-                    const [imageError, setImageError] = useState(false)
-
-                    return (
-                      <div key={job.id} className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
-                        <div className="aspect-video bg-gradient-to-br from-blue-900/20 to-purple-900/20 flex items-center justify-center relative">
-                          {job.downloadUrl && !imageError ? (
-                            <>
-                              <img
-                                src={job.downloadUrl || "/placeholder.svg"}
-                                alt={`Enhanced ${job.originalFileName}`}
-                                className={`w-full h-full object-contain transition-opacity duration-300 ${
-                                  imageLoaded ? "opacity-100" : "opacity-0"
-                                }`}
-                                onLoad={() => {
-                                  console.log("✅ Successfully loaded enhanced image:", job.downloadUrl)
-                                  setImageLoaded(true)
-                                }}
-                                onError={(e) => {
-                                  console.error("❌ Failed to load enhanced image:", job.downloadUrl)
-                                  console.error("❌ Job details:", job)
-                                  setImageError(true)
-                                }}
-                                crossOrigin="anonymous"
-                              />
-                              {!imageLoaded && (
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                  <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
-                                </div>
-                              )}
-                            </>
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-white">
-                              <div className="text-center">
-                                {imageError ? (
-                                  <>
-                                    <AlertCircle className="w-12 h-12 mx-auto mb-2 text-red-400" />
-                                    <p className="text-sm text-red-400">Failed to load image</p>
-                                    <p className="text-xs text-gray-400 mt-1">URL: {job.downloadUrl}</p>
-                                  </>
-                                ) : (
-                                  <>
-                                    <ImageIcon className="w-12 h-12 mx-auto mb-2 text-gray-400" />
-                                    <p className="text-sm text-gray-400">No image URL</p>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                          <div className="absolute top-2 right-2">
-                            {job.downloadUrl && !imageError ? (
-                              <div className="bg-green-500 text-white px-2 py-1 rounded text-xs">Ready</div>
-                            ) : (
-                              <div className="bg-red-500 text-white px-2 py-1 rounded text-xs">Error</div>
-                            )}
-                          </div>
-                        </div>
-                        <div className="p-4 space-y-3">
-                          <div>
-                            <p className="text-white font-semibold">{job.originalFileName}</p>
-                            <p className="text-xs text-gray-400">
-                              {job.apiEndpoint} • {job.model}
-                            </p>
-                          </div>
-                          <div className="flex items-center justify-between text-sm">
-                            <div className="flex items-center space-x-2 text-green-400">
-                              <Check className="w-4 h-4" />
-                              <span>Enhanced • {job.upscaleFactor}x</span>
-                            </div>
-                            <span className="text-blue-400">{job.processingTime}</span>
-                          </div>
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={() => {
-                                if (job.downloadUrl) {
-                                  const link = document.createElement("a")
-                                  link.href = job.downloadUrl
-                                  link.download = `enhanced_${job.originalFileName}`
-                                  link.target = "_blank"
-                                  document.body.appendChild(link)
-                                  link.click()
-                                  document.body.removeChild(link)
-                                } else {
-                                  console.error("No download URL available for job:", job)
-                                }
-                              }}
-                              disabled={!job.downloadUrl}
-                              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white py-2 rounded-lg transition-all flex items-center justify-center space-x-2 font-medium"
-                            >
-                              <Download className="w-4 h-4" />
-                              <span>Download</span>
-                            </button>
-                            <button
-                              onClick={() => {
-                                console.log("🔍 Full job details:", job)
-                                console.log("🔗 Download URL:", job.downloadUrl)
-                                console.log("📊 Job status:", job.status)
-                                console.log("🤖 Model used:", job.model)
-                                console.log("🖼️ Image loaded:", imageLoaded)
-                                console.log("❌ Image error:", imageError)
-                                alert(
-                                  `Job Details:\nID: ${job.id}\nAPI: ${job.apiEndpoint}\nModel: ${job.model}\nURL: ${job.downloadUrl || "❌ No URL"}\nStatus: ${job.status}\nProcessing Time: ${job.processingTime}\nImage Loaded: ${imageLoaded}\nImage Error: ${imageError}`,
-                                )
-                              }}
-                              className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all"
-                              title="Debug Info"
-                            >
-                              <AlertCircle className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
+                  {completedJobs.map((job) => (
+                    <GalleryItem key={job.id} job={job} />
+                  ))}
                 </div>
               )}
             </div>

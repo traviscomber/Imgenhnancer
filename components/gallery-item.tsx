@@ -13,7 +13,7 @@ export function GalleryItem({ job }: GalleryItemProps) {
 
   return (
     <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
-      {/* Image area */}
+      {/* Preview */}
       <div className="aspect-video bg-gradient-to-br from-blue-900/20 to-purple-900/20 flex items-center justify-center relative">
         {job.downloadUrl && !imageError ? (
           <>
@@ -50,6 +50,7 @@ export function GalleryItem({ job }: GalleryItemProps) {
             </div>
           </div>
         )}
+
         <div className="absolute top-2 right-2">
           {job.downloadUrl && !imageError ? (
             <div className="bg-green-500 text-white px-2 py-1 rounded text-xs">Ready</div>
@@ -59,7 +60,7 @@ export function GalleryItem({ job }: GalleryItemProps) {
         </div>
       </div>
 
-      {/* Meta + actions */}
+      {/* Meta & actions */}
       <div className="p-4 space-y-3">
         <div>
           <p className="text-white font-semibold">{job.originalFileName}</p>
@@ -95,13 +96,11 @@ export function GalleryItem({ job }: GalleryItemProps) {
             <Download className="w-4 h-4" />
             <span>Download</span>
           </button>
+
           <button
-            onClick={() => {
-              console.log("Job details:", job)
-              alert(JSON.stringify(job, null, 2))
-            }}
+            onClick={() => alert(JSON.stringify(job, null, 2))}
             className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all"
-            title="Debug Info"
+            title="Debug info"
           >
             <AlertCircle className="w-4 h-4" />
           </button>
