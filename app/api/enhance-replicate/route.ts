@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { Buffer } from "buffer"
+import sharp from "sharp"
 
 /**
  * Reads the body once, tries JSON.parse → returns `{ ok, json?, text }`.
@@ -14,8 +15,33 @@ async function consume(res: Response) {
 }
 
 /* Base-64 increases payload by ~37 %. We keep a little buffer under 10 MB. */
-const BASE64_MULTIPLIER = 1.37
-const MAX_REPLICATE_PAYLOAD = 9 * 1024 * 1024 // 9 MB
+/* ---------- size limits ---------- */
+const RAW_COMPRESSION_THRESHOLD = 6 * 1024 * 1024 // 6 MB (trigger compression)
+const MAX_REPLICATE_PAYLOAD = 8 * 1024 * 1024 // 8 MB JSON body cap
+const BASE64_MULTIPLIER = 1.37 // base-64 blow-up
+
+async function compressImage(input: ArrayBuffer, targetBytes: number, initialQuality = 85) {
+  let quality = initialQuality
+  let img = sharp(Buffer.from(input)).rotate()
+
+  // Down-scale very large images (4K+)
+  const meta = await img.metadata()
+  if ((meta.width ?? 0) > 4096) {
+    img = img.resize(4096)
+  }
+
+  while (quality >= 50) {
+    const buf = await img.jpeg({ quality, mozjpeg: true }).toBuffer()
+    if (buf.byteLength <= targetBytes) {
+      return { buffer: buf, mime: "image/jpeg" }
+    }
+    quality -= 5
+  }
+
+  // fallback: return best-effort buffer
+  const fallback = await img.jpeg({ quality: 50, mozjpeg: true }).toBuffer()
+  return { buffer: fallback, mime: "image/jpeg" }
+}
 
 export async function POST(req: NextRequest) {
   console.log("🚀 /api/enhance-replicate: request received")
@@ -81,26 +107,22 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    /* ---------- encoded-size gate (prevents 413 from Replicate) ---------- */
+    /* --------------------- read + (optional) compress --------------------- */
+    let fileBuffer = await file.arrayBuffer()
+    let finalMime = file.type
+
     const estimatedEncoded = Math.ceil(file.size * BASE64_MULTIPLIER)
-    if (estimatedEncoded > MAX_REPLICATE_PAYLOAD) {
-      console.warn(
-        `⚠️  Base-64 payload would be ${estimatedEncoded} B (> ${MAX_REPLICATE_PAYLOAD}). Rejecting to avoid Replicate 413.`,
-      )
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "Image still too large after client-side compression. Please reduce dimensions or quality further (target < 9 MB).",
-          step: "encoded-size-check",
-        },
-        { status: 413 },
-      )
+    if (file.size > RAW_COMPRESSION_THRESHOLD || estimatedEncoded > MAX_REPLICATE_PAYLOAD) {
+      console.log(`🗜️  Server-side compression triggered – original ${file.size} B, est. encoded ${estimatedEncoded} B`)
+      const compressed = await compressImage(fileBuffer, MAX_REPLICATE_PAYLOAD / BASE64_MULTIPLIER)
+      fileBuffer = compressed.buffer
+      finalMime = compressed.mime
+      console.log(`✅ Compressed to ${fileBuffer.byteLength} B`)
     }
 
     /* ----------------------------- encode ------------------------------- */
-    const base64 = Buffer.from(await file.arrayBuffer()).toString("base64")
-    const dataUrl = `data:${file.type};base64,${base64}`
+    const base64 = Buffer.from(fileBuffer).toString("base64")
+    const dataUrl = `data:${finalMime};base64,${base64}`
 
     /* ---------------------- create prediction --------------------------- */
     console.log("📡  Creating Replicate prediction")
