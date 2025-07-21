@@ -1,5 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
 
+function isJsonResponse(res: Response) {
+  const ct = res.headers.get("content-type") ?? ""
+  return ct.includes("application/json")
+}
+
 export async function POST(request: NextRequest) {
   console.log("🚀 Starting enhance-replicate API call")
 
@@ -158,7 +163,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const prediction = await predictionResponse.json()
+    let prediction: any
+    try {
+      prediction = isJsonResponse(predictionResponse)
+        ? await predictionResponse.json()
+        : JSON.parse(await predictionResponse.text()) // fallback if it actually is JSON but wrong header
+    } catch (err) {
+      const raw = await predictionResponse.text()
+      console.error("❌ Could not parse prediction response:", raw)
+      return NextResponse.json(
+        {
+          success: false,
+          error: raw.slice(0, 300) || "Upstream returned non-JSON response",
+          step: "create-prediction-parse",
+        },
+        { status: 502 },
+      )
+    }
     console.log("✅ Prediction created:", prediction.id)
 
     // Poll for completion
@@ -182,7 +203,24 @@ export async function POST(request: NextRequest) {
         continue
       }
 
-      const status = await statusResponse.json()
+      let status: any
+      try {
+        status = isJsonResponse(statusResponse)
+          ? await statusResponse.json()
+          : JSON.parse(await statusResponse.text())
+      } catch (err) {
+        const rawStatus = await statusResponse.text()
+        console.error("❌ Could not parse status response:", rawStatus)
+        return NextResponse.json(
+          {
+            success: false,
+            error: rawStatus.slice(0, 300) || "Upstream returned non-JSON status",
+            step: "status-parse",
+            predictionId: prediction.id,
+          },
+          { status: 502 },
+        )
+      }
       console.log("📊 Status:", status.status)
 
       if (status.status === "succeeded") {
