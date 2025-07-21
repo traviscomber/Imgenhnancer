@@ -139,17 +139,20 @@ export async function POST(request: NextRequest) {
       ok: createRes.ok,
     })
 
+    // Get response text first, then try to parse as JSON
+    const createResponseText = await createRes.text()
+    console.log("📄 Raw create response:", createResponseText.substring(0, 500))
+
     let createData
     try {
-      createData = await createRes.json()
+      createData = JSON.parse(createResponseText)
     } catch (parseError) {
       console.error("❌ Failed to parse create prediction response as JSON:", parseError)
-      const textResponse = await createRes.text()
-      console.error("❌ Raw response text:", textResponse)
+      console.error("❌ Raw response text:", createResponseText)
       return NextResponse.json(
         {
           success: false,
-          error: `Failed to create prediction: ${textResponse}`,
+          error: `Failed to create prediction: ${createResponseText}`,
           step: "create-prediction",
         },
         { status: createRes.status },
@@ -191,11 +194,15 @@ export async function POST(request: NextRequest) {
         },
       })
 
+      // Get response text first, then try to parse as JSON
+      const pollResponseText = await pollRes.text()
+
       let pollData
       try {
-        pollData = await pollRes.json()
+        pollData = JSON.parse(pollResponseText)
       } catch (parseError) {
         console.error("❌ Failed to parse poll response as JSON:", parseError)
+        console.error("❌ Raw poll response:", pollResponseText.substring(0, 500))
         continue // Try again
       }
 
