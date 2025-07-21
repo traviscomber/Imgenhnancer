@@ -63,44 +63,37 @@ export async function checkDatabaseHealth() {
 
   try {
     // Test basic connection with a simple query
-    const { data: connectionTest, error: connectionError } = await supabase.rpc("get_table_list").single()
+    try {
+      const { data: connectionTest, error: connectionError } = await supabase.rpc("get_table_list").single()
 
-    // If the RPC doesn't exist, try a direct table query as fallback
-    if (connectionError && connectionError.message.includes("could not find function")) {
-      // Try to query a system table directly
-      const { data: fallbackTest, error: fallbackError } = await supabase
-        .from("information_schema.tables")
-        .select("table_name")
-        .limit(1)
+      // If the RPC doesn't exist, try a direct table query as fallback
+      if (connectionError && connectionError.message.includes("could not find function")) {
+        // Try to query a system table directly
+        try {
+          const { data: fallbackTest, error: fallbackError } = await supabase.from("users").select("id").limit(1)
 
-      if (fallbackError) {
-        // Last resort: try to query any existing table
-        const { data: lastTest, error: lastError } = await supabase.from("users").select("id").limit(1)
-
-        results.connection = !lastError
-
-        if (lastError) {
-          results.issues.push({
-            type: "connection",
-            severity: "critical",
-            message: `Database connection failed: ${lastError.message}`,
-            autoFixable: false,
-          })
-          results.overallHealth = "critical"
-          return results
+          results.connection = !fallbackError
+        } catch (e) {
+          results.connection = false
         }
       } else {
-        results.connection = true
+        results.connection = !connectionError
       }
-    } else {
-      results.connection = !connectionError
+    } catch (e) {
+      // Last resort: try to query any existing table
+      try {
+        const { data: lastTest, error: lastError } = await supabase.from("users").select("id").limit(1)
+        results.connection = !lastError
+      } catch (e) {
+        results.connection = false
+      }
     }
 
-    if (connectionError && !results.connection) {
+    if (!results.connection) {
       results.issues.push({
         type: "connection",
         severity: "critical",
-        message: `Database connection failed: ${connectionError.message}`,
+        message: `Database connection failed: Could not connect to database`,
         autoFixable: false,
       })
       results.overallHealth = "critical"
