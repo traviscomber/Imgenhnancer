@@ -4,82 +4,86 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
     const file = formData.get("file") as File
-    const targetSizeStr = formData.get("targetSize") as string
-    const qualityStr = formData.get("quality") as string
+    const targetSize = Number.parseInt(formData.get("targetSize") as string) || 2 * 1024 * 1024 // 2MB default
+    const quality = Number.parseInt(formData.get("quality") as string) || 80
 
     if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 })
+      return NextResponse.json({ success: false, error: "No file provided" }, { status: 400 })
     }
 
-    const targetSize = Number.parseInt(targetSizeStr) || 2 * 1024 * 1024 // Default 2MB
-    const quality = Number.parseInt(qualityStr) || 80 // Default 80% quality
+    // Convert file to buffer
+    const buffer = await file.arrayBuffer()
+    const uint8Array = new Uint8Array(buffer)
 
-    console.log("🗜️ Compressing image:", {
-      originalSize: file.size,
-      targetSize,
-      quality,
-    })
-
-    // Create canvas for image processing
-    const arrayBuffer = await file.arrayBuffer()
-    const blob = new Blob([arrayBuffer], { type: file.type })
-
-    // Create image bitmap for processing
-    const imageBitmap = await createImageBitmap(blob)
-
-    // Calculate new dimensions to reduce file size
-    let { width, height } = imageBitmap
-    const aspectRatio = width / height
-
-    // Reduce dimensions if file is too large
-    if (file.size > targetSize) {
-      const reductionFactor = Math.sqrt(targetSize / file.size)
-      width = Math.floor(width * reductionFactor)
-      height = Math.floor(height * reductionFactor)
-    }
-
-    // Create canvas and draw resized image
-    const canvas = new OffscreenCanvas(width, height)
+    // Create canvas and context
+    const canvas = document.createElement("canvas")
     const ctx = canvas.getContext("2d")
 
     if (!ctx) {
-      throw new Error("Could not get canvas context")
+      return NextResponse.json({ success: false, error: "Canvas context not available" }, { status: 500 })
     }
 
-    ctx.drawImage(imageBitmap, 0, 0, width, height)
+    // Create image from buffer
+    const img = new Image()
+    const blob = new Blob([uint8Array], { type: file.type })
+    const imageUrl = URL.createObjectURL(blob)
 
-    // Convert to blob with compression
-    const compressedBlob = await canvas.convertToBlob({
-      type: "image/jpeg",
-      quality: quality / 100,
-    })
+    return new Promise((resolve) => {
+      img.onload = () => {
+        // Calculate new dimensions to reduce file size
+        let { width, height } = img
+        const aspectRatio = width / height
 
-    console.log("✅ Image compressed:", {
-      originalSize: file.size,
-      compressedSize: compressedBlob.size,
-      reduction: `${Math.round((1 - compressedBlob.size / file.size) * 100)}%`,
-      newDimensions: `${width}x${height}`,
-    })
+        // Reduce dimensions if file is too large
+        const maxDimension = Math.sqrt(targetSize / (file.size / (width * height)))
+        if (maxDimension < 1) {
+          width = Math.floor(width * maxDimension)
+          height = Math.floor(height * maxDimension)
+        }
 
-    // Convert to base64 for response
-    const arrayBufferCompressed = await compressedBlob.arrayBuffer()
-    const base64 = Buffer.from(arrayBufferCompressed).toString("base64")
-    const dataUrl = `data:image/jpeg;base64,${base64}`
+        // Set canvas size
+        canvas.width = width
+        canvas.height = height
 
-    return NextResponse.json({
-      success: true,
-      originalSize: file.size,
-      compressedSize: compressedBlob.size,
-      reduction: Math.round((1 - compressedBlob.size / file.size) * 100),
-      dataUrl,
-      dimensions: { width, height },
+        // Draw and compress
+        ctx.drawImage(img, 0, 0, width, height)
+
+        // Convert to data URL with compression
+        const dataUrl = canvas.toDataURL("image/jpeg", quality / 100)
+
+        // Calculate compression ratio
+        const originalSize = file.size
+        const compressedSize = Math.round((dataUrl.length * 3) / 4) // Approximate size from base64
+        const reduction = Math.round((1 - compressedSize / originalSize) * 100)
+
+        URL.revokeObjectURL(imageUrl)
+
+        resolve(
+          NextResponse.json({
+            success: true,
+            dataUrl,
+            originalSize,
+            compressedSize,
+            reduction,
+            dimensions: { width, height },
+          }),
+        )
+      }
+
+      img.onerror = () => {
+        URL.revokeObjectURL(imageUrl)
+        resolve(NextResponse.json({ success: false, error: "Failed to load image" }, { status: 500 }))
+      }
+
+      img.src = imageUrl
     })
   } catch (error) {
-    console.error("❌ Image compression error:", error)
+    console.error("Compression error:", error)
     return NextResponse.json(
       {
         success: false,
-        error: error.message || "Failed to compress image",
+        error: "Compression failed",
+        details: error.message,
       },
       { status: 500 },
     )
