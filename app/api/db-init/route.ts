@@ -1,97 +1,119 @@
 import { NextResponse } from "next/server"
-import { Database } from "@/lib/database"
+import { db, supabase } from "@/lib/database"
 
 export async function GET() {
   try {
-    // Test database connection
-    const connectionTest = await Database.testConnection()
+    console.log("🔍 Checking database connection...")
 
-    if (!connectionTest.success) {
+    // Test basic connection
+    const { data: connectionTest, error: connectionError } = await supabase
+      .from("information_schema.tables")
+      .select("table_name")
+      .eq("table_schema", "public")
+      .limit(1)
+
+    if (connectionError) {
+      console.error("❌ Database connection failed:", connectionError)
       return NextResponse.json(
         {
           success: false,
-          message: "Database connection failed",
-          error: connectionTest.message,
+          error: "Database connection failed",
+          details: connectionError.message,
         },
         { status: 500 },
       )
     }
 
+    console.log("✅ Database connection successful")
+
     // Check if core tables exist
-    const tables = ["users", "ai_models", "processing_jobs", "user_roles", "user_sessions"]
-    const tableStatus = {}
+    const coreTableChecks = await Promise.all([
+      db.checkTableExists("users"),
+      db.checkTableExists("ai_models"),
+      db.checkTableExists("processing_jobs"),
+      db.checkTableExists("user_sessions"),
+      db.checkTableExists("system_logs"),
+      db.checkTableExists("usage_analytics"),
+    ])
 
-    for (const table of tables) {
-      const result = await Database.checkTableExists(table)
-      tableStatus[table] = result.exists
+    const tableStatus = {
+      users: coreTableChecks[0],
+      ai_models: coreTableChecks[1],
+      processing_jobs: coreTableChecks[2],
+      user_sessions: coreTableChecks[3],
+      system_logs: coreTableChecks[4],
+      usage_analytics: coreTableChecks[5],
     }
 
-    // Check environment variables
-    const envVars = {
-      NEXT_PUBLIC_SUPABASE_URL: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-      SUPABASE_SERVICE_ROLE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      REPLICATE_API_TOKEN: !!process.env.REPLICATE_API_TOKEN,
-      FAL_API_KEY: !!process.env.FAL_API_KEY,
-    }
+    console.log("📊 Table status:", tableStatus)
 
-    // Get basic stats if tables exist
-    let stats = null
-    if (tableStatus["users"] && tableStatus["processing_jobs"]) {
-      try {
-        const [userCount, jobCount, modelCount] = await Promise.all([
-          Database.supabase.from("users").select("count").single(),
-          Database.supabase.from("processing_jobs").select("count").single(),
-          Database.supabase.from("ai_models").select("count").single(),
-        ])
-
-        stats = {
-          users: userCount.data?.count || 0,
-          jobs: jobCount.data?.count || 0,
-          models: modelCount.data?.count || 0,
+    // Get table counts if tables exist
+    const tableCounts: any = {}
+    for (const [tableName, exists] of Object.entries(tableStatus)) {
+      if (exists) {
+        try {
+          tableCounts[tableName] = await db.getTableCount(tableName)
+        } catch (error) {
+          console.warn(`⚠️ Could not get count for ${tableName}:`, error)
+          tableCounts[tableName] = "unknown"
         }
-      } catch (error) {
-        console.error("Error getting stats:", error)
+      } else {
+        tableCounts[tableName] = 0
       }
     }
 
+    console.log("📈 Table counts:", tableCounts)
+
+    // Check if views exist
+    const { data: viewsData, error: viewsError } = await supabase
+      .from("information_schema.views")
+      .select("table_name")
+      .eq("table_schema", "public")
+      .in("table_name", ["user_stats", "model_performance", "daily_usage_stats", "system_health"])
+
+    const viewsExist = viewsData?.map((v) => v.table_name) || []
+    console.log("👁️ Views found:", viewsExist)
+
+    // Environment check
+    const envCheck = {
+      SUPABASE_URL: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+      SUPABASE_SERVICE_ROLE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+      SUPABASE_ANON_KEY: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    }
+
+    console.log("🔐 Environment variables:", envCheck)
+
+    const allTablesExist = Object.values(tableStatus).every((exists) => exists)
+    const hasData = Object.values(tableCounts).some((count) => typeof count === "number" && count > 0)
+
     return NextResponse.json({
       success: true,
-      message: "Database initialized successfully",
-      connection: connectionTest,
-      tables: tableStatus,
-      environment: envVars,
-      stats,
-      timestamp: new Date().toISOString(),
-    })
-  } catch (error) {
-    console.error("Database initialization error:", error)
-
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Database initialization failed",
-        error: error instanceof Error ? error.message : "Unknown error",
-        timestamp: new Date().toISOString(),
+      database: {
+        connected: true,
+        tables: tableStatus,
+        tableCounts,
+        views: viewsExist,
+        allTablesExist,
+        hasData,
       },
-      { status: 500 },
-    )
-  }
-}
-
-export async function POST() {
-  try {
-    // This endpoint could be used to run database migrations or setup
-    return NextResponse.json({
-      success: true,
-      message: "Database setup endpoint - not implemented yet",
+      environment: envCheck,
+      recommendations: allTablesExist
+        ? hasData
+          ? ["Database is ready to use!"]
+          : ["Run the seed data script to populate demo data"]
+        : [
+            "Run the SQL scripts in order: 01-create-database-schema.sql, 02-add-analytics-tables.sql, 03-add-missing-columns.sql, 04-create-views.sql, 05-seed-demo-data.sql",
+          ],
     })
-  } catch (error) {
+  } catch (error: any) {
+    console.error("💥 Database initialization check failed:", error)
+
     return NextResponse.json(
       {
         success: false,
-        message: "Database setup failed",
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: "Database check failed",
+        details: error.message,
+        stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
       },
       { status: 500 },
     )

@@ -12,9 +12,9 @@ export const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 })
 
 // Database helper functions
-export class Database {
+export const db = {
   // User operations
-  static async createUser(userData: {
+  async createUser(userData: {
     email: string
     name: string
     password_hash: string
@@ -25,190 +25,197 @@ export class Database {
 
     if (error) throw error
     return data
-  }
+  },
 
-  static async getUserByEmail(email: string) {
+  async getUserByEmail(email: string) {
     const { data, error } = await supabase.from("users").select("*").eq("email", email).single()
 
     if (error && error.code !== "PGRST116") throw error
     return data
-  }
+  },
 
-  static async getUserById(id: string) {
+  async getUserById(id: string) {
     const { data, error } = await supabase.from("users").select("*").eq("id", id).single()
 
     if (error) throw error
     return data
-  }
+  },
 
-  static async updateUser(id: string, updates: any) {
+  async updateUser(id: string, updates: any) {
     const { data, error } = await supabase.from("users").update(updates).eq("id", id).select().single()
 
     if (error) throw error
     return data
-  }
-
-  static async getAllUsers(limit = 50, offset = 0) {
-    const { data, error } = await supabase
-      .from("users")
-      .select("*")
-      .range(offset, offset + limit - 1)
-      .order("created_at", { ascending: false })
-
-    if (error) throw error
-    return data
-  }
+  },
 
   // AI Model operations
-  static async getAllModels() {
-    const { data, error } = await supabase
-      .from("ai_models")
-      .select("*")
-      .eq("status", "active")
-      .order("is_recommended", { ascending: false })
+  async getAIModels(filters?: { category?: string; provider?: string; is_active?: boolean }) {
+    let query = supabase.from("ai_models").select("*")
+
+    if (filters?.category) query = query.eq("category", filters.category)
+    if (filters?.provider) query = query.eq("provider", filters.provider)
+    if (filters?.is_active !== undefined) query = query.eq("is_active", filters.is_active)
+
+    const { data, error } = await query.order("is_recommended", { ascending: false })
 
     if (error) throw error
     return data
-  }
+  },
 
-  static async getModelById(id: string) {
+  async getAIModelById(id: string) {
     const { data, error } = await supabase.from("ai_models").select("*").eq("id", id).single()
 
     if (error) throw error
     return data
-  }
+  },
 
-  static async getModelByModelId(modelId: string) {
-    const { data, error } = await supabase.from("ai_models").select("*").eq("model_id", modelId).single()
-
-    if (error) throw error
-    return data
-  }
-
-  static async createModel(modelData: any) {
-    const { data, error } = await supabase.from("ai_models").insert([modelData]).select().single()
-
-    if (error) throw error
-    return data
-  }
-
-  static async updateModel(id: string, updates: any) {
+  async updateAIModel(id: string, updates: any) {
     const { data, error } = await supabase.from("ai_models").update(updates).eq("id", id).select().single()
 
     if (error) throw error
     return data
-  }
+  },
 
-  // Processing Job operations
-  static async createJob(jobData: {
+  // Processing job operations
+  async createProcessingJob(jobData: {
     user_id: string
     model_id: string
     original_filename: string
-    original_file_size: number
-    original_file_type: string
-    settings: any
+    original_file_size?: number
+    original_file_type?: string
     upscale_factor?: number
-    priority?: number
+    settings?: any
+    priority?: string
   }) {
     const { data, error } = await supabase.from("processing_jobs").insert([jobData]).select().single()
 
     if (error) throw error
     return data
-  }
+  },
 
-  static async getJobById(id: string) {
+  async getProcessingJob(id: string) {
     const { data, error } = await supabase
       .from("processing_jobs")
       .select(`
         *,
-        users(email, name),
-        ai_models(name, model_id, provider)
+        users(name, email),
+        ai_models(name, model_id, category)
       `)
       .eq("id", id)
       .single()
 
     if (error) throw error
     return data
-  }
+  },
 
-  static async getUserJobs(userId: string, limit = 20, offset = 0) {
+  async getUserJobs(userId: string, limit = 50, offset = 0) {
     const { data, error } = await supabase
       .from("processing_jobs")
       .select(`
         *,
-        ai_models(name, model_id, icon_name)
+        ai_models(name, model_id, category)
       `)
       .eq("user_id", userId)
-      .range(offset, offset + limit - 1)
       .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1)
 
     if (error) throw error
     return data
-  }
+  },
 
-  static async updateJob(id: string, updates: any) {
+  async updateProcessingJob(id: string, updates: any) {
     const { data, error } = await supabase.from("processing_jobs").update(updates).eq("id", id).select().single()
 
     if (error) throw error
     return data
-  }
+  },
 
-  static async getJobsByStatus(status: string, limit = 50) {
+  async getJobsByStatus(status: string, limit = 100) {
     const { data, error } = await supabase
       .from("processing_jobs")
       .select(`
         *,
-        users(email, name),
-        ai_models(name, model_id, provider)
+        users(name, email),
+        ai_models(name, model_id)
       `)
       .eq("status", status)
-      .limit(limit)
-      .order("priority", { ascending: false })
       .order("created_at", { ascending: true })
+      .limit(limit)
 
     if (error) throw error
     return data
-  }
+  },
 
   // Analytics operations
-  static async createSystemLog(logData: {
+  async createUsageAnalytics(analyticsData: {
+    user_id: string
+    date: string
+    images_processed?: number
+    credits_used?: number
+    processing_time_total?: number
+    models_used?: any
+  }) {
+    const { data, error } = await supabase.from("usage_analytics").upsert([analyticsData]).select().single()
+
+    if (error) throw error
+    return data
+  },
+
+  async getUserAnalytics(userId: string, days = 30) {
+    const { data, error } = await supabase
+      .from("usage_analytics")
+      .select("*")
+      .eq("user_id", userId)
+      .gte("date", new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().split("T")[0])
+      .order("date", { ascending: false })
+
+    if (error) throw error
+    return data
+  },
+
+  // System logs
+  async createSystemLog(logData: {
     user_id?: string
     action: string
     resource_type?: string
     resource_id?: string
     details?: any
-    severity?: string
     ip_address?: string
     user_agent?: string
+    severity?: string
   }) {
     const { data, error } = await supabase.from("system_logs").insert([logData]).select().single()
 
     if (error) throw error
     return data
-  }
+  },
 
-  static async getSystemLogs(limit = 100, offset = 0) {
-    const { data, error } = await supabase
-      .from("system_logs")
-      .select(`
-        *,
-        users(email, name)
-      `)
-      .range(offset, offset + limit - 1)
-      .order("created_at", { ascending: false })
-
-    if (error) throw error
-    return data
-  }
-
-  static async getUserStats(userId: string) {
-    const { data, error } = await supabase.from("user_stats").select("*").eq("id", userId).single()
+  // System metrics
+  async createSystemMetric(metricData: {
+    metric_name: string
+    metric_value: number
+    metric_unit?: string
+    tags?: any
+  }) {
+    const { data, error } = await supabase.from("system_metrics").insert([metricData]).select().single()
 
     if (error) throw error
     return data
-  }
+  },
 
-  static async getModelPerformance() {
+  // Views
+  async getUserStats(userId?: string) {
+    let query = supabase.from("user_stats").select("*")
+
+    if (userId) query = query.eq("id", userId)
+
+    const { data, error } = await query
+
+    if (error) throw error
+    return data
+  },
+
+  async getModelPerformance() {
     const { data, error } = await supabase
       .from("model_performance")
       .select("*")
@@ -216,88 +223,46 @@ export class Database {
 
     if (error) throw error
     return data
-  }
+  },
 
-  static async getDailyUsageStats(days = 30) {
-    const { data, error } = await supabase
-      .from("daily_usage_stats")
-      .select("*")
-      .limit(days)
-      .order("date", { ascending: false })
+  async getDailyUsageStats(days = 30) {
+    const { data, error } = await supabase.from("daily_usage_stats").select("*").limit(days)
 
     if (error) throw error
     return data
-  }
+  },
 
-  static async getSystemHealth() {
+  async getSystemHealth() {
     const { data, error } = await supabase.from("system_health").select("*")
 
     if (error) throw error
     return data
-  }
+  },
 
-  static async getQueueStatus() {
+  async getQueueStatus() {
     const { data, error } = await supabase.from("queue_status").select("*")
 
     if (error) throw error
     return data
-  }
-
-  // Session operations
-  static async createSession(sessionData: {
-    user_id: string
-    session_token: string
-    expires_at: string
-    ip_address?: string
-    user_agent?: string
-  }) {
-    const { data, error } = await supabase.from("user_sessions").insert([sessionData]).select().single()
-
-    if (error) throw error
-    return data
-  }
-
-  static async getSessionByToken(token: string) {
-    const { data, error } = await supabase
-      .from("user_sessions")
-      .select(`
-        *,
-        users(*)
-      `)
-      .eq("session_token", token)
-      .eq("is_active", true)
-      .gte("expires_at", new Date().toISOString())
-      .single()
-
-    if (error && error.code !== "PGRST116") throw error
-    return data
-  }
-
-  static async deleteSession(token: string) {
-    const { error } = await supabase.from("user_sessions").update({ is_active: false }).eq("session_token", token)
-
-    if (error) throw error
-  }
+  },
 
   // Utility functions
-  static async testConnection() {
-    try {
-      const { data, error } = await supabase.from("users").select("count").limit(1)
+  async checkTableExists(tableName: string) {
+    const { data, error } = await supabase
+      .from("information_schema.tables")
+      .select("table_name")
+      .eq("table_schema", "public")
+      .eq("table_name", tableName)
 
-      if (error) throw error
-      return { success: true, message: "Database connection successful" }
-    } catch (error) {
-      return { success: false, message: `Database connection failed: ${error}` }
-    }
-  }
+    return data && data.length > 0
+  },
 
-  static async checkTableExists(tableName: string) {
-    try {
-      const { data, error } = await supabase.from(tableName).select("*").limit(1)
+  async getTableCount(tableName: string) {
+    const { count, error } = await supabase.from(tableName).select("*", { count: "exact", head: true })
 
-      return { exists: true, error: null }
-    } catch (error) {
-      return { exists: false, error: error }
-    }
-  }
+    if (error) throw error
+    return count || 0
+  },
 }
+
+export default db
