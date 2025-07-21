@@ -95,6 +95,9 @@ importers:
       '@supabase/supabase-js':
         specifier: latest
         version: 2.52.0
+      buffer:
+        specifier: latest
+        version: 6.0.3
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -2914,8 +2917,7 @@ snapshots:
 
   balanced-match@1.0.2: {}
 
-  base64-js@1.5.1:
-    optional: true
+  base64-js@1.5.1: {}
 
   binary-extensions@2.3.0: {}
 
@@ -2931,7 +2933,6 @@ snapshots:
     dependencies:
       base64-js: 1.5.1
       ieee754: 1.2.1
-    optional: true
 
   busboy@1.6.0:
     dependencies:
@@ -3135,8 +3136,7 @@ snapshots:
     dependencies:
       function-bind: 1.1.2
 
-  ieee754@1.2.1:
-    optional: true
+  ieee754@1.2.1: {}
 
   immer@10.1.1: {}
 
