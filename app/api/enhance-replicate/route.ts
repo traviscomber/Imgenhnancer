@@ -1,5 +1,4 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { Buffer } from "buffer"
 
 export async function POST(request: NextRequest) {
   console.log("🚀 Starting enhance-replicate API call")
@@ -210,6 +209,25 @@ export async function POST(request: NextRequest) {
         }
 
         console.log("🎯 Final download URL:", downloadUrl)
+
+        // Validate URL format
+        try {
+          new URL(downloadUrl)
+        } catch (urlError) {
+          console.error("❌ Invalid URL format:", downloadUrl)
+          return NextResponse.json(
+            {
+              success: false,
+              error: "Invalid URL format received from AI service",
+              step: "url-format-validation",
+              debug: {
+                url: downloadUrl,
+                error: urlError.message,
+              },
+            },
+            { status: 500 },
+          )
+        }
 
         return NextResponse.json({
           success: true,
