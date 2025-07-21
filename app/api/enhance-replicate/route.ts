@@ -13,6 +13,26 @@ async function consume(res: Response) {
   }
 }
 
+/* ----------------------------- model map ------------------------------ */
+const REPLICATE_MODELS: Record<string, { version: string; inputField: string }> = {
+  "real-esrgan-4x": {
+    version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
+    inputField: "image",
+  },
+  "gfpgan-face": {
+    version: "9283608cc6b7be6b65a8e44983db012355fde4132009bf99d976b2f0896856a3",
+    inputField: "img",
+  },
+  "codeformer-face": {
+    version: "7de2ea26c616d5bf2245ad0d5e24f0ff9a6204578a5c876db53142edd9d2cd56",
+    inputField: "image",
+  },
+  "clarity-upscaler": {
+    version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
+    inputField: "image",
+  },
+}
+
 /* Base-64 increases payload by ~37 %. We keep a little buffer under 10 MB. */
 /* ---------- size limits ---------- */
 const RAW_COMPRESSION_THRESHOLD = 6 * 1024 * 1024 // 6 MB (trigger compression)
@@ -92,6 +112,27 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    /* -------------------- enrich settings from server map -------------------- */
+    if (!settings?.model || !(settings.model in REPLICATE_MODELS)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Unknown or missing model "${settings?.model}"`,
+          step: "settings_validation",
+        },
+        { status: 400 },
+      )
+    }
+
+    // Merge defaults from map
+    const modelInfo = REPLICATE_MODELS[settings.model]
+    settings = {
+      upscaleFactor: 2,
+      ...settings,
+      version: settings.version ?? modelInfo.version,
+      input: settings.input ?? modelInfo.inputField,
+    }
+
     /* --------------------------- raw-file gate --------------------------- */
     const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
     if (file.size > MAX_FILE_SIZE) {
@@ -129,7 +170,7 @@ export async function POST(req: NextRequest) {
       method: "POST",
       headers: { Authorization: `Token ${process.env.REPLICATE_API_TOKEN}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        version: settings.version,
+        version: settings.version, // ✅ always present now
         input: {
           [settings.input]: dataUrl,
           scale: settings.upscaleFactor ?? 2,
