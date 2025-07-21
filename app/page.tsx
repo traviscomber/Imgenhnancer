@@ -52,6 +52,7 @@ const AIImageEnhancementPortal = () => {
     denoise: true,
     sharpen: false,
     faceEnhance: false,
+    apiEndpoint: "replicate", // New: allow switching between APIs
   })
   const fileInputRef = useRef(null)
 
@@ -106,6 +107,50 @@ const AIImageEnhancementPortal = () => {
   // Check if user is admin (simple check for demo)
   const isAdmin = user?.email === "admin@example.com" || user?.email === "demo@example.com"
 
+  // Enhanced API endpoints with better file size support
+  const apiEndpoints = [
+    {
+      id: "replicate",
+      name: "Replicate API",
+      description: "High-quality models with reliable processing",
+      maxFileSize: 9 * 1024 * 1024, // 9MB (safe under 10MB limit)
+      endpoint: "/api/enhance-replicate",
+      processingTime: "60-120s",
+      reliability: "High",
+      recommended: true,
+    },
+    {
+      id: "fal-v2",
+      name: "Fal AI V2",
+      description: "Enhanced Fal AI with larger file support",
+      maxFileSize: 12 * 1024 * 1024, // 12MB
+      endpoint: "/api/enhance-v2",
+      processingTime: "45-90s",
+      reliability: "High",
+      recommended: false,
+    },
+    {
+      id: "fal-multi",
+      name: "Fal AI Multi-Model",
+      description: "Multiple Fal AI models with fallbacks",
+      maxFileSize: 10 * 1024 * 1024, // 10MB
+      endpoint: "/api/enhance-fal",
+      processingTime: "30-90s",
+      reliability: "Medium",
+      recommended: false,
+    },
+    {
+      id: "simple",
+      name: "Simple Enhancement",
+      description: "Fast processing with basic models",
+      maxFileSize: 10 * 1024 * 1024, // 10MB
+      endpoint: "/api/simple-enhance",
+      processingTime: "15-60s",
+      reliability: "Medium",
+      recommended: false,
+    },
+  ]
+
   // Updated with higher file size limits for AI-generated images
   const enhancementModels = [
     {
@@ -113,7 +158,7 @@ const AIImageEnhancementPortal = () => {
       name: "Real-ESRGAN 4x",
       description: "Professional upscaling for photos and artwork",
       maxUpscale: 4,
-      maxFileSize: 8 * 1024 * 1024, // Increased to 8MB
+      maxFileSize: 12 * 1024 * 1024, // Increased to 12MB
       replicateModel: "nightmareai/real-esrgan",
       version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
       category: "General Purpose",
@@ -129,7 +174,7 @@ const AIImageEnhancementPortal = () => {
       name: "GFPGAN",
       description: "Specialized face restoration and enhancement",
       maxUpscale: 4,
-      maxFileSize: 6 * 1024 * 1024, // Increased to 6MB
+      maxFileSize: 8 * 1024 * 1024, // Increased to 8MB
       replicateModel: "tencentarc/gfpgan",
       version: "9283608cc6b7be6b65a8e44983db012355fde4132009bf99d976b2f0896856a3",
       category: "Face Enhancement",
@@ -145,7 +190,7 @@ const AIImageEnhancementPortal = () => {
       name: "CodeFormer",
       description: "Advanced face restoration with fidelity control",
       maxUpscale: 4,
-      maxFileSize: 6 * 1024 * 1024, // Increased to 6MB
+      maxFileSize: 8 * 1024 * 1024, // Increased to 8MB
       replicateModel: "sczhou/codeformer",
       version: "7de2ea26c616d5bf2245ad0d5e24f0ff9a6204578a5c876db53142edd9d2cd56",
       category: "Portrait Enhancement",
@@ -161,7 +206,7 @@ const AIImageEnhancementPortal = () => {
       name: "Clarity Upscaler",
       description: "High-quality upscaling with clarity enhancement",
       maxUpscale: 4,
-      maxFileSize: 8 * 1024 * 1024, // Increased to 8MB
+      maxFileSize: 10 * 1024 * 1024, // Increased to 10MB
       replicateModel: "philz1337x/clarity-upscaler",
       version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
       category: "Professional",
@@ -303,14 +348,17 @@ const AIImageEnhancementPortal = () => {
         throw new Error(`Invalid file type: ${fileToProcess.file.type}`)
       }
 
-      const selectedModel = enhancementModels.find((m) => m.id === enhancementSettings.model)
-      const maxSize = selectedModel?.maxFileSize || 8 * 1024 * 1024
+      // Get the selected API endpoint
+      const selectedEndpoint = apiEndpoints.find((ep) => ep.id === enhancementSettings.apiEndpoint) || apiEndpoints[0]
+      const maxSize = selectedEndpoint.maxFileSize
 
       let processFile = fileToProcess.file
 
-      // Auto-compress if file is too large
+      // Auto-compress if file is too large for the selected endpoint
       if (processFile.size > maxSize) {
-        console.log(`📏 File size ${formatFileSize(processFile.size)} exceeds limit ${formatFileSize(maxSize)}`)
+        console.log(
+          `📏 File size ${formatFileSize(processFile.size)} exceeds ${selectedEndpoint.name} limit ${formatFileSize(maxSize)}`,
+        )
 
         // Update progress
         setProcessingQueue((prev) =>
@@ -323,7 +371,7 @@ const AIImageEnhancementPortal = () => {
 
           if (processFile.size > maxSize) {
             throw new Error(
-              `File still too large after compression: ${formatFileSize(processFile.size)} (max: ${formatFileSize(maxSize)} for ${selectedModel?.name}). Try reducing image dimensions manually.`,
+              `File still too large after compression: ${formatFileSize(processFile.size)} (max: ${formatFileSize(maxSize)} for ${selectedEndpoint.name}). Try a different API endpoint or reduce image dimensions manually.`,
             )
           }
         } catch (compressionError) {
@@ -342,21 +390,20 @@ const AIImageEnhancementPortal = () => {
       console.log("📤 Form data created with keys:", Array.from(formData.keys()))
       console.log("📤 Settings being sent:", enhancementSettings)
       console.log("📤 Final file size:", formatFileSize(processFile.size))
-
-      const modelName = selectedModel?.replicateModel || "nightmareai/real-esrgan"
+      console.log("📤 Using API endpoint:", selectedEndpoint.name, selectedEndpoint.endpoint)
 
       // Update progress
       setProcessingQueue((prev) =>
-        prev.map((j) => (j.id === job.id ? { ...j, progress: `Uploading to ${modelName}...` } : j)),
+        prev.map((j) => (j.id === job.id ? { ...j, progress: `Processing with ${selectedEndpoint.name}...` } : j)),
       )
 
-      console.log("🌐 Sending request to /api/enhance-replicate...")
+      console.log("🌐 Sending request to", selectedEndpoint.endpoint)
 
       // Send request with timeout
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 10 * 60 * 1000) // 10 minute timeout
+      const timeoutId = setTimeout(() => controller.abort(), 15 * 60 * 1000) // 15 minute timeout
 
-      const response = await fetch("/api/enhance-replicate", {
+      const response = await fetch(selectedEndpoint.endpoint, {
         method: "POST",
         body: formData,
         signal: controller.signal,
@@ -371,9 +418,7 @@ const AIImageEnhancementPortal = () => {
         headers: Object.fromEntries(response.headers.entries()),
       })
 
-      // ──────────────────────────────────────────────────────────
-      // SAFER RESPONSE-PARSE: accept JSON or plain-text errors
-      // ──────────────────────────────────────────────────────────
+      // Parse response safely
       let result: any
       const rawContentType = response.headers.get("content-type") ?? ""
       const isJSON = rawContentType.includes("application/json")
@@ -381,7 +426,6 @@ const AIImageEnhancementPortal = () => {
       try {
         result = isJSON ? await response.json() : await response.text()
       } catch (parseErr) {
-        // Fallback → treat as text when JSON parsing blows up
         console.warn("⚠️  JSON parse failed, treating as text:", parseErr)
         result = await response.text()
       }
@@ -426,11 +470,12 @@ const AIImageEnhancementPortal = () => {
             originalFileName: fileToProcess.name,
             originalPreview: fileToProcess.preview,
             model: result.model || enhancementSettings.model,
-            method: result.method || "replicate",
+            method: result.method || selectedEndpoint.id,
             upscaleFactor: enhancementSettings.upscaleFactor,
             processingTime: result.processingTime || "Unknown",
             predictionId: result.predictionId,
             wasCompressed: processFile.size < fileToProcess.file.size,
+            apiEndpoint: selectedEndpoint.name,
           },
         ])
 
@@ -451,6 +496,7 @@ const AIImageEnhancementPortal = () => {
             details: result.details || null,
             step: result.step || "unknown",
             suggestions: result.suggestions || [],
+            apiEndpoint: selectedEndpoint.name,
           },
         ])
       }
@@ -497,8 +543,8 @@ const AIImageEnhancementPortal = () => {
   }
 
   const getMaxFileSize = () => {
-    const selectedModel = enhancementModels.find((m) => m.id === enhancementSettings.model)
-    return selectedModel?.maxFileSize || 5 * 1024 * 1024
+    const selectedEndpoint = apiEndpoints.find((ep) => ep.id === enhancementSettings.apiEndpoint) || apiEndpoints[0]
+    return selectedEndpoint.maxFileSize
   }
 
   // Show authentication modal if not logged in
@@ -582,9 +628,7 @@ const AIImageEnhancementPortal = () => {
             <div className="flex items-center space-x-4">
               <div className="hidden md:flex items-center space-x-2 text-sm">
                 <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
-                <span className="text-green-400">
-                  {enhancementModels.filter((m) => m.status === "working").length} AI Models Ready
-                </span>
+                <span className="text-green-400">{apiEndpoints.length} API Endpoints Ready</span>
               </div>
 
               {user ? (
@@ -640,7 +684,7 @@ const AIImageEnhancementPortal = () => {
 
                 <p className="text-xl text-blue-100 mb-12 max-w-3xl mx-auto leading-relaxed">
                   Transform your images with cutting-edge AI models. Upscale, enhance clarity, and restore photos with
-                  professional quality results in seconds.
+                  professional quality results in seconds. Now supporting files up to 12MB!
                 </p>
 
                 <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6 mb-16">
@@ -701,7 +745,7 @@ const AIImageEnhancementPortal = () => {
                     <h3 className="text-2xl font-semibold text-white mb-3">
                       {user ? "Drop images here or click to browse" : "Sign in to upload images"}
                     </h3>
-                    <p className="text-blue-200 mb-4 text-lg">Supports JPEG, PNG, WebP, HEIC, TIFF up to 50MB</p>
+                    <p className="text-blue-200 mb-4 text-lg">Supports JPEG, PNG, WebP, HEIC, TIFF up to 12MB</p>
                     <div className="flex items-center justify-center space-x-6 text-sm text-gray-400">
                       <div className="flex items-center space-x-2">
                         <Zap className="w-4 h-4" />
@@ -768,6 +812,9 @@ const AIImageEnhancementPortal = () => {
                                         <AlertCircle className="w-4 h-4 text-red-400" />
                                         <p className="text-sm text-red-400">Error: {file.error}</p>
                                       </div>
+                                      {file.apiEndpoint && (
+                                        <p className="text-xs text-red-300 mt-1">API: {file.apiEndpoint}</p>
+                                      )}
                                       {file.details && (
                                         <p className="text-xs text-red-300 mt-1">
                                           Details:{" "}
@@ -836,7 +883,7 @@ const AIImageEnhancementPortal = () => {
                                     {job.settings.upscaleFactor}x upscale
                                   </p>
                                   <p className="text-sm text-gray-400 mt-1">
-                                    Model: {enhancementModels.find((m) => m.id === job.settings.model)?.replicateModel}
+                                    API: {apiEndpoints.find((ep) => ep.id === job.settings.apiEndpoint)?.name}
                                   </p>
                                 </div>
                               </div>
@@ -864,6 +911,50 @@ const AIImageEnhancementPortal = () => {
                   <h3 className="text-xl font-semibold text-white mb-6">Enhancement Settings</h3>
 
                   <div className="space-y-6">
+                    {/* API Endpoint Selection */}
+                    <div>
+                      <label className="block text-sm font-medium text-white mb-4">API Endpoint</label>
+                      <div className="space-y-3">
+                        {apiEndpoints.map((endpoint) => (
+                          <div
+                            key={endpoint.id}
+                            className={`border rounded-xl p-4 cursor-pointer transition-all ${
+                              enhancementSettings.apiEndpoint === endpoint.id
+                                ? "border-blue-500 bg-blue-500/10"
+                                : "border-white/20 hover:border-white/40"
+                            }`}
+                            onClick={() => {
+                              setEnhancementSettings((prev) => ({
+                                ...prev,
+                                apiEndpoint: endpoint.id,
+                              }))
+                            }}
+                          >
+                            <div className="flex items-center space-x-3">
+                              <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-600 rounded-lg flex items-center justify-center">
+                                <Zap className="w-5 h-5 text-white" />
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-2">
+                                  <h4 className="font-medium text-white">{endpoint.name}</h4>
+                                  {endpoint.recommended && <Star className="w-4 h-4 text-yellow-400 fill-current" />}
+                                </div>
+                                <p className="text-sm text-blue-200">{endpoint.description}</p>
+                                <p className="text-xs text-gray-400 mt-1">
+                                  Max: {Math.round(endpoint.maxFileSize / 1024 / 1024)}MB • {endpoint.processingTime}
+                                </p>
+                              </div>
+                              <div className="w-4 h-4 border-2 border-white/40 rounded-full flex items-center justify-center">
+                                {enhancementSettings.apiEndpoint === endpoint.id && (
+                                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
                     {/* AI Model Selection */}
                     <div>
                       <label className="block text-sm font-medium text-white mb-4">AI Model</label>
@@ -897,7 +988,9 @@ const AIImageEnhancementPortal = () => {
                                     {model.recommended && <Star className="w-4 h-4 text-yellow-400 fill-current" />}
                                   </div>
                                   <p className="text-sm text-blue-200">{model.category}</p>
-                                  <p className="text-xs text-gray-400 mt-1">{model.processingTime}</p>
+                                  <p className="text-xs text-gray-400 mt-1">
+                                    Max: {Math.round(model.maxFileSize / 1024 / 1024)}MB • {model.processingTime}
+                                  </p>
                                 </div>
                                 <div className="w-4 h-4 border-2 border-white/40 rounded-full flex items-center justify-center">
                                   {enhancementSettings.model === model.id && (
@@ -991,20 +1084,28 @@ const AIImageEnhancementPortal = () => {
                       <span className="font-medium text-green-400">{completedJobs.length}</span>
                     </div>
                     <div className="flex justify-between text-gray-300">
+                      <span>Selected API:</span>
+                      <span className="text-blue-400 font-medium">
+                        {apiEndpoints.find((ep) => ep.id === enhancementSettings.apiEndpoint)?.name}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-gray-300">
                       <span>Selected model:</span>
                       <span className="text-blue-400 font-medium">
                         {enhancementModels.find((m) => m.id === enhancementSettings.model)?.name}
                       </span>
+                    </div>
+                    <div className="flex justify-between text-gray-300">
+                      <span>Max file size:</span>
+                      <span className="text-green-400 font-medium">{Math.round(getMaxFileSize() / 1024 / 1024)}MB</span>
                     </div>
                     <div className="flex justify-between text-white font-medium">
                       <span>Est. processing time:</span>
                       <span className="text-green-400">{selectedFiles.length * 60}s</span>
                     </div>
                     <div className="flex justify-between text-gray-300">
-                      <span>Available models:</span>
-                      <span className="text-green-400 font-medium">
-                        {enhancementModels.filter((m) => m.status === "working").length} ready
-                      </span>
+                      <span>Available endpoints:</span>
+                      <span className="text-green-400 font-medium">{apiEndpoints.length} ready</span>
                     </div>
                     <div className="flex justify-between text-gray-300">
                       <span>User status:</span>
@@ -1122,7 +1223,9 @@ const AIImageEnhancementPortal = () => {
                         <div className="p-4 space-y-3">
                           <div>
                             <p className="text-white font-semibold">{job.originalFileName}</p>
-                            <p className="text-xs text-gray-400">Model: {job.model}</p>
+                            <p className="text-xs text-gray-400">
+                              {job.apiEndpoint} • {job.model}
+                            </p>
                           </div>
                           <div className="flex items-center justify-between text-sm">
                             <div className="flex items-center space-x-2 text-green-400">
@@ -1161,7 +1264,7 @@ const AIImageEnhancementPortal = () => {
                                 console.log("🖼️ Image loaded:", imageLoaded)
                                 console.log("❌ Image error:", imageError)
                                 alert(
-                                  `Job Details:\nID: ${job.id}\nModel: ${job.model}\nURL: ${job.downloadUrl || "❌ No URL"}\nStatus: ${job.status}\nProcessing Time: ${job.processingTime}\nImage Loaded: ${imageLoaded}\nImage Error: ${imageError}`,
+                                  `Job Details:\nID: ${job.id}\nAPI: ${job.apiEndpoint}\nModel: ${job.model}\nURL: ${job.downloadUrl || "❌ No URL"}\nStatus: ${job.status}\nProcessing Time: ${job.processingTime}\nImage Loaded: ${imageLoaded}\nImage Error: ${imageError}`,
                                 )
                               }}
                               className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all"
@@ -1249,7 +1352,7 @@ const AIImageEnhancementPortal = () => {
                 <ul className="space-y-4 mb-8">
                   {[
                     "200 images per month",
-                    "Up to 8MP resolution",
+                    "Up to 12MP resolution",
                     "All AI models",
                     "Priority processing",
                     "All output formats",
