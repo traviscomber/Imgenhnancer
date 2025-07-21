@@ -3,11 +3,15 @@
 import { useState, useRef, useCallback, useEffect } from "react"
 import {
   Upload,
+  ImageIcon,
   Settings,
   Download,
   Zap,
   Loader2,
   CheckCircle,
+  Play,
+  RefreshCw,
+  AlertCircle,
   Search,
   Database,
   Activity,
@@ -27,6 +31,9 @@ import {
 import { LoginForm } from "@/components/auth/login-form"
 import { SignupForm } from "@/components/auth/signup-form"
 import { UserMenu } from "@/components/auth/user-menu"
+import { ProfileDialog } from "@/components/auth/profile-dialog"
+import { UserManagement } from "@/components/admin/user-management"
+import { RoleManagement } from "@/components/admin/role-management"
 
 const AIImageEnhancementPortal = () => {
   // Authentication state
@@ -351,7 +358,9 @@ const AIImageEnhancementPortal = () => {
     // Check if file size is compatible with selected model
     const selectedModel = enhancementModels.find((m) => m.id === enhancementSettings.model)
     if (selectedModel && fileToProcess.file.size > selectedModel.maxFileSize) {
-      alert(`File too large for ${selectedModel.name}. Maximum size: ${Math.round(selectedModel.maxFileSize / 1024 / 1024)}MB. Please choose a model with higher capacity or compress your image.`)
+      alert(
+        `File too large for ${selectedModel.name}. Maximum size: ${Math.round(selectedModel.maxFileSize / 1024 / 1024)}MB. Please choose a model with higher capacity or compress your image.`,
+      )
       return
     }
 
@@ -598,7 +607,9 @@ const AIImageEnhancementPortal = () => {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-white">AI Enhancement Portal</h1>
-                <p className="text-sm text-blue-200">Professional Image Enhancement with {enhancementModels.length} AI Models</p>
+                <p className="text-sm text-blue-200">
+                  Professional Image Enhancement with {enhancementModels.length} AI Models
+                </p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
@@ -781,9 +792,7 @@ const AIImageEnhancementPortal = () => {
                             </div>
                             <div className="flex items-center space-x-2">
                               <span className="bg-purple-600 text-white text-xs px-2 py-1 rounded">🚀</span>
-                              <span>
-                                Support for files up to 100MB with high-capacity models
-                              </span>
+                              <span>Support for files up to 100MB with high-capacity models</span>
                             </div>
                           </div>
                         </div>
@@ -855,15 +864,24 @@ const AIImageEnhancementPortal = () => {
                     <h4 className="text-lg font-semibold text-white mb-4">
                       Available Models ({enhancementModels.length}) - Enhanced Collection
                     </h4>
-                    
+
                     {/* Model Categories */}
-                    {["General Purpose", "High Capacity", "Professional", "Face Enhancement", "Specialized", "Anime/Cartoon"].map((category) => {
+                    {[
+                      "General Purpose",
+                      "High Capacity",
+                      "Professional",
+                      "Face Enhancement",
+                      "Specialized",
+                      "Anime/Cartoon",
+                    ].map((category) => {
                       const categoryModels = enhancementModels.filter((m) => m.category === category)
                       if (categoryModels.length === 0) return null
-                      
+
                       return (
                         <div key={category} className="mb-6">
-                          <h5 className="text-md font-medium text-blue-400 mb-3">{category} ({categoryModels.length})</h5>
+                          <h5 className="text-md font-medium text-blue-400 mb-3">
+                            {category} ({categoryModels.length})
+                          </h5>
                           <div className="grid md:grid-cols-2 gap-4">
                             {categoryModels.map((model) => (
                               <div key={model.id} className="bg-white/5 rounded-lg p-4">
@@ -878,7 +896,9 @@ const AIImageEnhancementPortal = () => {
                                     )}
                                     <span
                                       className={`text-xs px-2 py-1 rounded ${
-                                        model.status === "working" ? "bg-green-600 text-white" : "bg-gray-600 text-white"
+                                        model.status === "working"
+                                          ? "bg-green-600 text-white"
+                                          : "bg-gray-600 text-white"
                                       }`}
                                     >
                                       {model.status === "working" ? "✅ Ready" : "⏳ Testing"}
@@ -886,4 +906,471 @@ const AIImageEnhancementPortal = () => {
                                   </div>
                                 </div>
                                 <div className="text-xs text-gray-400 mb-2">{model.description}</div>
-                                <div className="text-xs text-\
+                                <div className="text-xs text-gray-500 space-y-1">
+                                  <div>Max upscale: {model.maxUpscale}x</div>
+                                  <div>Max file size: {Math.round(model.maxFileSize / 1024 / 1024)}MB</div>
+                                  <div>Processing time: {model.processingTime}</div>
+                                  <div>Best for: {model.bestFor}</div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {/* Test Results */}
+                  {configResults && (
+                    <div className="bg-black/20 backdrop-blur-lg rounded-xl border border-white/10 p-6">
+                      <h4 className="text-lg font-semibold text-white mb-4">Configuration Test Results</h4>
+                      <pre className="bg-black/40 rounded-lg p-4 text-sm text-gray-300 overflow-auto max-h-96">
+                        {JSON.stringify(configResults, null, 2)}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {adminSubTab === "discovery" && (
+              <div className="space-y-8">
+                {/* Model Discovery */}
+                <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-8">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="text-xl font-semibold text-white mb-2">Model Discovery & Testing</h3>
+                      <p className="text-gray-300">Discover available models and test their capabilities</p>
+                    </div>
+                    <button
+                      onClick={runReplicateDiscovery}
+                      disabled={isDiscovering}
+                      className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 text-white px-6 py-3 rounded-lg transition-all flex items-center space-x-2"
+                    >
+                      {isDiscovering ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          <span>Discovering...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Search className="w-5 h-5" />
+                          <span>Run Discovery</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Discovery Results */}
+                  {discoveryResults && (
+                    <div className="bg-black/20 backdrop-blur-lg rounded-xl border border-white/10 p-6">
+                      <h4 className="text-lg font-semibold text-white mb-4">Discovery Results</h4>
+                      <pre className="bg-black/40 rounded-lg p-4 text-sm text-gray-300 overflow-auto max-h-96">
+                        {JSON.stringify(discoveryResults, null, 2)}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {adminSubTab === "users" && <UserManagement />}
+            {adminSubTab === "roles" && <RoleManagement />}
+          </div>
+        )}
+
+        {activeTab === "upload" && (
+          <div className="space-y-8">
+            {/* Model Selection */}
+            <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-8">
+              <div className="flex items-center space-x-3 mb-6">
+                <Settings className="w-6 h-6 text-blue-400" />
+                <h2 className="text-xl font-semibold text-white">Enhancement Settings</h2>
+                <span className="text-sm text-blue-400 bg-blue-400/10 px-2 py-1 rounded">
+                  {enhancementModels.length} Models Available
+                </span>
+              </div>
+
+              <div className="grid lg:grid-cols-2 gap-8">
+                {/* Model Selection */}
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-3">AI Model</label>
+                    <div className="space-y-3">
+                      {enhancementModels.map((model) => (
+                        <div
+                          key={model.id}
+                          className={`relative p-4 rounded-lg border cursor-pointer transition-all ${
+                            enhancementSettings.model === model.id
+                              ? "border-blue-500 bg-blue-500/10"
+                              : "border-gray-600 bg-white/5 hover:border-gray-500"
+                          }`}
+                          onClick={() => setEnhancementSettings((prev) => ({ ...prev, model: model.id }))}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-start space-x-3">
+                              <model.icon className="w-5 h-5 text-blue-400 mt-0.5" />
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-2">
+                                  <h3 className="font-medium text-white">{model.name}</h3>
+                                  {model.recommended && (
+                                    <span className="text-xs bg-yellow-600 text-white px-2 py-1 rounded">
+                                      ⭐ Recommended
+                                    </span>
+                                  )}
+                                  <span className="text-xs bg-gray-600 text-white px-2 py-1 rounded">
+                                    {model.category}
+                                  </span>
+                                </div>
+                                <p className="text-sm text-gray-400 mt-1">{model.description}</p>
+                                <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
+                                  <span>Max: {model.maxUpscale}x</span>
+                                  <span>Size: {Math.round(model.maxFileSize / 1024 / 1024)}MB</span>
+                                  <span>Time: {model.processingTime}</span>
+                                </div>
+                                <div className="text-xs text-gray-500 mt-1">Best for: {model.bestFor}</div>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span
+                                className={`text-xs px-2 py-1 rounded ${
+                                  model.status === "working" ? "bg-green-600 text-white" : "bg-gray-600 text-white"
+                                }`}
+                              >
+                                {model.status === "working" ? "✅" : "⏳"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Settings */}
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-3">
+                      Upscale Factor (Max: {getMaxUpscale()}x)
+                    </label>
+                    <select
+                      value={enhancementSettings.upscaleFactor}
+                      onChange={(e) =>
+                        setEnhancementSettings((prev) => ({ ...prev, upscaleFactor: Number(e.target.value) }))
+                      }
+                      className="w-full bg-white/10 border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                    >
+                      {Array.from({ length: getMaxUpscale() }, (_, i) => i + 1).map((factor) => (
+                        <option key={factor} value={factor} className="bg-gray-800">
+                          {factor}x ({factor === 1 ? "Original size" : `${factor}x larger`})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-3">Target Use</label>
+                    <select
+                      value={enhancementSettings.targetUse}
+                      onChange={(e) => setEnhancementSettings((prev) => ({ ...prev, targetUse: e.target.value }))}
+                      className="w-full bg-white/10 border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                    >
+                      <option value="display" className="bg-gray-800">
+                        Display (4K) - Web, screens
+                      </option>
+                      <option value="print" className="bg-gray-800">
+                        Print (16K) - High-quality printing
+                      </option>
+                      <option value="dome" className="bg-gray-800">
+                        Dome (8K) - Planetarium, VR
+                      </option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-3">Output Format</label>
+                    <select
+                      value={enhancementSettings.format}
+                      onChange={(e) => setEnhancementSettings((prev) => ({ ...prev, format: e.target.value }))}
+                      className="w-full bg-white/10 border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                    >
+                      <option value="PNG" className="bg-gray-800">
+                        PNG - Lossless, transparency
+                      </option>
+                      <option value="JPEG" className="bg-gray-800">
+                        JPEG - Smaller file size
+                      </option>
+                      <option value="WEBP" className="bg-gray-800">
+                        WebP - Modern, efficient
+                      </option>
+                    </select>
+                  </div>
+
+                  {/* Advanced Options */}
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-medium text-gray-300">Advanced Options</h4>
+
+                    <label className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        checked={enhancementSettings.denoise}
+                        onChange={(e) => setEnhancementSettings((prev) => ({ ...prev, denoise: e.target.checked }))}
+                        className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-300">Noise Reduction</span>
+                    </label>
+
+                    <label className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        checked={enhancementSettings.faceEnhance}
+                        onChange={(e) => setEnhancementSettings((prev) => ({ ...prev, faceEnhance: e.target.checked }))}
+                        className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-300">Face Enhancement</span>
+                    </label>
+
+                    <label className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        checked={enhancementSettings.sharpen}
+                        onChange={(e) => setEnhancementSettings((prev) => ({ ...prev, sharpen: e.target.checked }))}
+                        className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-300">Sharpening</span>
+                    </label>
+                  </div>
+
+                  {/* Model Info */}
+                  <div className="bg-blue-900/20 border border-blue-500/20 rounded-lg p-4">
+                    <h4 className="text-blue-400 font-medium mb-2">Selected Model Info</h4>
+                    <div className="text-sm text-gray-300 space-y-1">
+                      <div>Max file size: {Math.round(getMaxFileSize() / 1024 / 1024)}MB</div>
+                      <div>Target resolution: {getTargetResolution()}</div>
+                      <div>
+                        Estimated processing:{" "}
+                        {enhancementModels.find((m) => m.id === enhancementSettings.model)?.processingTime || "30-90s"}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* File Upload */}
+            <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-8">
+              <div className="flex items-center space-x-3 mb-6">
+                <Upload className="w-6 h-6 text-green-400" />
+                <h2 className="text-xl font-semibold text-white">Upload Images</h2>
+                <span className="text-sm text-green-400 bg-green-400/10 px-2 py-1 rounded">
+                  Up to {Math.round(getMaxFileSize() / 1024 / 1024)}MB per file
+                </span>
+              </div>
+
+              <div
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                className="border-2 border-dashed border-gray-600 rounded-xl p-12 text-center hover:border-gray-500 transition-colors cursor-pointer"
+                onClick={() => {
+                  if (!user) {
+                    setShowAuth(true)
+                    return
+                  }
+                  fileInputRef.current?.click()
+                }}
+              >
+                <ImageIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-white mb-2">
+                  {user ? "Drop images here or click to browse" : "Sign in to upload images"}
+                </h3>
+                <p className="text-gray-400 mb-4">
+                  Supports JPEG, PNG, WebP • Up to {Math.round(getMaxFileSize() / 1024 / 1024)}MB per file
+                </p>
+                <div className="text-sm text-gray-500">
+                  Selected model: {enhancementModels.find((m) => m.id === enhancementSettings.model)?.name} • Max{" "}
+                  {getMaxUpscale()}x upscaling
+                </div>
+              </div>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={(e) => handleFileSelect(e.target.files)}
+                className="hidden"
+              />
+
+              {/* Selected Files */}
+              {selectedFiles.length > 0 && (
+                <div className="mt-8">
+                  <h3 className="text-lg font-semibold text-white mb-4">Selected Files ({selectedFiles.length})</h3>
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {selectedFiles.map((file) => (
+                      <div key={file.id} className="bg-white/5 rounded-lg p-4">
+                        <div className="aspect-video bg-gray-800 rounded-lg mb-3 overflow-hidden">
+                          <img
+                            src={file.preview || "/placeholder.svg"}
+                            alt={file.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <h4 className="font-medium text-white truncate">{file.name}</h4>
+                          <p className="text-sm text-gray-400">{formatFileSize(file.size)}</p>
+
+                          {file.status === "failed" && (
+                            <div className="bg-red-900/20 border border-red-500/20 rounded p-3">
+                              <div className="flex items-center space-x-2 mb-2">
+                                <AlertCircle className="w-4 h-4 text-red-400" />
+                                <span className="text-red-400 text-sm font-medium">Enhancement Failed</span>
+                              </div>
+                              <p className="text-red-300 text-xs mb-2">{file.error}</p>
+                              {file.step && <p className="text-red-400 text-xs">Failed at: {file.step}</p>}
+                              {file.suggestions && file.suggestions.length > 0 && (
+                                <div className="mt-2">
+                                  <p className="text-red-400 text-xs font-medium mb-1">Suggestions:</p>
+                                  <ul className="text-red-300 text-xs space-y-1">
+                                    {file.suggestions.map((suggestion, idx) => (
+                                      <li key={idx}>• {suggestion}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              <button
+                                onClick={() => startProcessing(file.id)}
+                                className="mt-2 bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1 rounded flex items-center space-x-1"
+                              >
+                                <RefreshCw className="w-3 h-3" />
+                                <span>Retry</span>
+                              </button>
+                            </div>
+                          )}
+
+                          {file.status !== "failed" && (
+                            <button
+                              onClick={() => startProcessing(file.id)}
+                              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-2 px-4 rounded-lg transition-all flex items-center justify-center space-x-2"
+                            >
+                              <Play className="w-4 h-4" />
+                              <span>
+                                Enhance with {enhancementModels.find((m) => m.id === enhancementSettings.model)?.name}
+                              </span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === "processing" && (
+          <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-8">
+            <div className="flex items-center space-x-3 mb-6">
+              <Settings className="w-6 h-6 text-orange-400" />
+              <h2 className="text-xl font-semibold text-white">Processing Queue</h2>
+              <span className="text-sm text-orange-400 bg-orange-400/10 px-2 py-1 rounded">
+                {processingQueue.length} active
+              </span>
+            </div>
+
+            {processingQueue.length === 0 ? (
+              <div className="text-center py-12">
+                <Settings className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-white mb-2">No Active Processing</h3>
+                <p className="text-gray-400">Upload images to start enhancing them</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {processingQueue.map((job) => (
+                  <div key={job.id} className="bg-white/5 rounded-lg p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="font-medium text-white">{job.file.name}</h3>
+                        <p className="text-sm text-gray-400">
+                          {formatFileSize(job.file.file.size)} • {job.settings.model}
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
+                        <span className="text-blue-400">Processing...</span>
+                      </div>
+                    </div>
+                    <div className="bg-gray-700 rounded-full h-2 mb-2">
+                      <div className="bg-blue-600 h-2 rounded-full animate-pulse" style={{ width: "60%" }}></div>
+                    </div>
+                    <p className="text-sm text-gray-400">{job.progress}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === "results" && (
+          <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-8">
+            <div className="flex items-center space-x-3 mb-6">
+              <Download className="w-6 h-6 text-purple-400" />
+              <h2 className="text-xl font-semibold text-white">Enhanced Images</h2>
+              <span className="text-sm text-purple-400 bg-purple-400/10 px-2 py-1 rounded">
+                {completedJobs.length} completed
+              </span>
+            </div>
+
+            {completedJobs.length === 0 ? (
+              <div className="text-center py-12">
+                <Download className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-white mb-2">No Enhanced Images</h3>
+                <p className="text-gray-400">Complete some enhancements to see results here</p>
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {completedJobs.map((job) => (
+                  <div key={job.id} className="bg-white/5 rounded-lg p-4">
+                    <div className="aspect-video bg-gray-800 rounded-lg mb-4 overflow-hidden">
+                      <img
+                        src={job.downloadUrl || "/placeholder.svg"}
+                        alt={job.originalFileName}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="font-medium text-white truncate">{job.originalFileName}</h3>
+                      <div className="text-sm text-gray-400 space-y-1">
+                        <div>Model: {job.model}</div>
+                        <div>Upscale: {job.upscaleFactor}x</div>
+                        <div>Processing: {job.processingTime}</div>
+                        <div>Size: {job.fileSize}</div>
+                        {job.modelCapacity && <div>Model capacity: {job.modelCapacity}</div>}
+                        {job.attempts && <div>Attempts: {job.attempts}</div>}
+                      </div>
+                      <a
+                        href={job.downloadUrl}
+                        download={`enhanced_${job.originalFileName}`}
+                        className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white py-2 px-4 rounded-lg transition-all flex items-center justify-center space-x-2"
+                      >
+                        <Download className="w-4 h-4" />
+                        <span>Download Enhanced</span>
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Profile Dialog */}
+      {showProfile && (
+        <ProfileDialog user={user} onClose={() => setShowProfile(false)} onUpdateProfile={handleUpdateProfile} />
+      )}
+    </div>
+  )
+}
+
+export default AIImageEnhancementPortal
