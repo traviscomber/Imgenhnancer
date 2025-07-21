@@ -1,50 +1,30 @@
 import { NextResponse } from "next/server"
-import { checkDatabaseHealth, autoFixDatabaseIssues } from "@/lib/database-manager"
+import { autoFixDatabaseIssues, checkDatabaseHealth } from "@/lib/database-manager"
 
 export async function POST(request: Request) {
   try {
-    // Get issues to fix from request body or run a health check
-    let issues
+    const body = await request.json()
+    const { issues } = body
 
-    try {
-      const body = await request.json()
-      issues = body.issues
-    } catch {
-      // If no issues provided, run a health check
-      const healthResult = await checkDatabaseHealth()
-      issues = healthResult.issues
+    if (!issues || !Array.isArray(issues)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Missing or invalid issues array",
+          timestamp: new Date().toISOString(),
+        },
+        { status: 400 },
+      )
     }
 
-    if (!issues || !Array.isArray(issues) || issues.length === 0) {
-      return NextResponse.json({
-        success: false,
-        message: "No issues to fix",
-        timestamp: new Date().toISOString(),
-      })
-    }
-
-    // Filter for auto-fixable issues
-    const fixableIssues = issues.filter((issue) => issue.autoFixable)
-
-    if (fixableIssues.length === 0) {
-      return NextResponse.json({
-        success: false,
-        message: "No auto-fixable issues found",
-        timestamp: new Date().toISOString(),
-      })
-    }
-
-    // Run auto-fix
-    const fixResult = await autoFixDatabaseIssues(fixableIssues)
-
-    // Run another health check to verify fixes
-    const updatedHealth = await checkDatabaseHealth()
+    const fixResult = await autoFixDatabaseIssues(issues)
+    const currentHealth = await checkDatabaseHealth()
 
     return NextResponse.json({
       success: true,
-      timestamp: new Date().toISOString(),
       fixResult,
-      currentHealth: updatedHealth,
+      currentHealth,
+      timestamp: new Date().toISOString(),
     })
   } catch (error) {
     console.error("Database auto-fix failed:", error)

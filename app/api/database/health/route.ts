@@ -3,12 +3,12 @@ import { checkDatabaseHealth } from "@/lib/database-manager"
 
 export async function GET() {
   try {
-    const healthResult = await checkDatabaseHealth()
+    const health = await checkDatabaseHealth()
 
     return NextResponse.json({
       success: true,
+      health,
       timestamp: new Date().toISOString(),
-      health: healthResult,
     })
   } catch (error) {
     console.error("Database health check failed:", error)
