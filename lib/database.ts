@@ -1,421 +1,347 @@
 import { createClient } from "@supabase/supabase-js"
-import { neon } from "@neondatabase/serverless"
 
-// Create Supabase client
+// Initialize Supabase client with service role key for full database access
 const supabaseUrl = process.env.SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+if (!supabaseUrl || !supabaseServiceKey) {
+  throw new Error("Missing Supabase environment variables")
+}
+
+export const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
     autoRefreshToken: false,
     persistSession: false,
   },
 })
 
-// Use Neon serverless driver for better compatibility with Supabase
-const sql = neon(process.env.POSTGRES_URL!)
+// Database helper functions
+export class Database {
+  // User management
+  static async createUser(userData: {
+    email: string
+    name: string
+    password_hash: string
+    role?: string
+    subscription_tier?: string
+  }) {
+    const { data, error } = await supabase.from("users").insert([userData]).select().single()
 
-// Database query helper using Supabase
-export async function query(text: string, params: any[] = []) {
-  try {
-    console.log("🔍 Executing query:", text.substring(0, 100) + "...")
-    console.log("📊 Parameters:", params)
-
-    // Convert parameterized query to Supabase format
-    let processedQuery = text
-    params.forEach((param, index) => {
-      processedQuery = processedQuery.replace(`$${index + 1}`, typeof param === "string" ? `'${param}'` : param)
-    })
-
-    const { data, error } = await supabase.rpc("execute_sql", {
-      query: processedQuery,
-    })
-
-    if (error) {
-      throw error
-    }
-
-    console.log("✅ Query successful, rows:", Array.isArray(data) ? data.length : "N/A")
-
-    return {
-      rows: Array.isArray(data) ? data : [data],
-      rowCount: Array.isArray(data) ? data.length : 1,
-    }
-  } catch (error) {
-    console.error("❌ Database query error:", error)
-    console.error("📝 Query:", text)
-    console.error("📊 Parameters:", params)
-    throw error
+    if (error) throw error
+    return data
   }
-}
 
-// Alternative direct query method for simple operations
-export async function directQuery(
-  tableName: string,
-  operation: "select" | "insert" | "update" | "delete",
-  options: any = {},
-) {
-  try {
-    let query = supabase.from(tableName)
+  static async getUserByEmail(email: string) {
+    const { data, error } = await supabase.from("users").select("*").eq("email", email).eq("status", "active").single()
 
-    switch (operation) {
-      case "select":
-        if (options.select) query = query.select(options.select)
-        if (options.eq) query = query.eq(options.eq.column, options.eq.value)
-        if (options.order) query = query.order(options.order.column, { ascending: options.order.ascending })
-        if (options.limit) query = query.limit(options.limit)
-        break
+    if (error && error.code !== "PGRST116") throw error
+    return data
+  }
 
-      case "insert":
-        query = query.insert(options.data)
-        break
+  static async getUserById(id: string) {
+    const { data, error } = await supabase.from("users").select("*").eq("id", id).eq("status", "active").single()
 
-      case "update":
-        query = query.update(options.data)
-        if (options.eq) query = query.eq(options.eq.column, options.eq.value)
-        break
+    if (error && error.code !== "PGRST116") throw error
+    return data
+  }
 
-      case "delete":
-        if (options.eq) query = query.eq(options.eq.column, options.eq.value)
-        query = query.delete()
-        break
+  static async updateUser(id: string, updates: any) {
+    const { data, error } = await supabase.from("users").update(updates).eq("id", id).select().single()
+
+    if (error) throw error
+    return data
+  }
+
+  static async updateUserCredits(userId: string, creditsUsed: number) {
+    const { data, error } = await supabase.rpc("update_user_credits", {
+      user_id: userId,
+      credits_to_deduct: creditsUsed,
+    })
+
+    if (error) throw error
+    return data
+  }
+
+  // AI Models
+  static async getActiveModels() {
+    const { data, error } = await supabase
+      .from("ai_models")
+      .select("*")
+      .eq("status", "active")
+      .order("is_recommended", { ascending: false })
+      .order("name")
+
+    if (error) throw error
+    return data
+  }
+
+  static async getModelById(id: string) {
+    const { data, error } = await supabase.from("ai_models").select("*").eq("id", id).single()
+
+    if (error) throw error
+    return data
+  }
+
+  static async getModelByModelId(modelId: string) {
+    const { data, error } = await supabase.from("ai_models").select("*").eq("model_id", modelId).single()
+
+    if (error) throw error
+    return data
+  }
+
+  // Processing Jobs
+  static async createJob(jobData: {
+    user_id: string
+    model_id: string
+    original_filename: string
+    original_file_size: number
+    original_file_type: string
+    settings: any
+    upscale_factor?: number
+    priority?: number
+  }) {
+    const { data, error } = await supabase.from("processing_jobs").insert([jobData]).select().single()
+
+    if (error) throw error
+    return data
+  }
+
+  static async getJobById(id: string) {
+    const { data, error } = await supabase
+      .from("processing_jobs")
+      .select(`
+        *,
+        users(email, name),
+        ai_models(name, model_id, provider)
+      `)
+      .eq("id", id)
+      .single()
+
+    if (error) throw error
+    return data
+  }
+
+  static async getUserJobs(userId: string, limit = 50) {
+    const { data, error } = await supabase
+      .from("processing_jobs")
+      .select(`
+        *,
+        ai_models(name, model_id, icon_name)
+      `)
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(limit)
+
+    if (error) throw error
+    return data
+  }
+
+  static async updateJob(id: string, updates: any) {
+    const { data, error } = await supabase.from("processing_jobs").update(updates).eq("id", id).select().single()
+
+    if (error) throw error
+    return data
+  }
+
+  static async getPendingJobs(limit = 10) {
+    const { data, error } = await supabase
+      .from("processing_jobs")
+      .select(`
+        *,
+        users(email, name),
+        ai_models(name, model_id, provider, provider_model_name)
+      `)
+      .eq("status", "pending")
+      .order("priority", { ascending: false })
+      .order("created_at", { ascending: true })
+      .limit(limit)
+
+    if (error) throw error
+    return data
+  }
+
+  // User Sessions
+  static async createSession(sessionData: {
+    user_id: string
+    session_token: string
+    expires_at: string
+    ip_address?: string
+    user_agent?: string
+  }) {
+    const { data, error } = await supabase.from("user_sessions").insert([sessionData]).select().single()
+
+    if (error) throw error
+    return data
+  }
+
+  static async getSessionByToken(token: string) {
+    const { data, error } = await supabase
+      .from("user_sessions")
+      .select(`
+        *,
+        users(*)
+      `)
+      .eq("session_token", token)
+      .eq("is_active", true)
+      .gt("expires_at", new Date().toISOString())
+      .single()
+
+    if (error && error.code !== "PGRST116") throw error
+    return data
+  }
+
+  static async deleteSession(token: string) {
+    const { error } = await supabase.from("user_sessions").update({ is_active: false }).eq("session_token", token)
+
+    if (error) throw error
+  }
+
+  // Analytics
+  static async logSystemEvent(eventData: {
+    user_id?: string
+    action: string
+    resource_type?: string
+    resource_id?: string
+    details?: any
+    ip_address?: string
+    user_agent?: string
+    severity?: string
+  }) {
+    const { error } = await supabase.from("system_logs").insert([eventData])
+
+    if (error) throw error
+  }
+
+  static async updateUsageAnalytics(
+    userId: string,
+    date: string,
+    updates: {
+      images_processed?: number
+      credits_used?: number
+      processing_time_total?: number
+      models_used?: any
+    },
+  ) {
+    const { data, error } = await supabase
+      .from("usage_analytics")
+      .upsert([
+        {
+          user_id: userId,
+          date,
+          ...updates,
+        },
+      ])
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  }
+
+  static async getSystemHealth() {
+    const { data, error } = await supabase.from("system_health").select("*")
+
+    if (error) throw error
+    return data
+  }
+
+  static async getUserStats(userId?: string) {
+    let query = supabase.from("user_stats").select("*")
+
+    if (userId) {
+      query = query.eq("id", userId)
     }
 
     const { data, error } = await query
 
-    if (error) {
-      throw error
-    }
-
-    return {
-      rows: Array.isArray(data) ? data : [data],
-      rowCount: Array.isArray(data) ? data.length : 1,
-    }
-  } catch (error) {
-    console.error("❌ Direct query error:", error)
-    throw error
+    if (error) throw error
+    return data
   }
-}
 
-// Database initialization check
-export async function checkDatabaseConnection(): Promise<boolean> {
-  try {
-    const { data, error } = await supabase.rpc("get_current_time")
-
-    if (error) {
-      throw error
-    }
-
-    console.log("✅ Database connected successfully:", data)
-    return true
-  } catch (error) {
-    console.error("❌ Database connection failed:", error)
-    return false
-  }
-}
-
-// Check if tables exist
-export async function checkTablesExist(): Promise<boolean> {
-  try {
+  static async getModelPerformance() {
     const { data, error } = await supabase
-      .from("information_schema.tables")
-      .select("table_name")
-      .eq("table_schema", "public")
-      .in("table_name", ["users", "ai_models", "processing_jobs", "user_roles"])
+      .from("model_performance")
+      .select("*")
+      .order("total_jobs", { ascending: false })
 
-    if (error) {
-      throw error
+    if (error) throw error
+    return data
+  }
+
+  static async getDailyUsageStats(days = 30) {
+    const { data, error } = await supabase.from("daily_usage_stats").select("*").limit(days)
+
+    if (error) throw error
+    return data
+  }
+
+  // File Storage
+  static async createFileRecord(fileData: {
+    user_id: string
+    job_id?: string
+    file_type: string
+    filename: string
+    file_path: string
+    file_size: number
+    mime_type?: string
+    storage_provider?: string
+    storage_url?: string
+  }) {
+    const { data, error } = await supabase.from("file_storage").insert([fileData]).select().single()
+
+    if (error) throw error
+    return data
+  }
+
+  // Admin functions
+  static async getAllUsers(limit = 100, offset = 0) {
+    const { data, error } = await supabase
+      .from("user_stats")
+      .select("*")
+      .order("user_since", { ascending: false })
+      .range(offset, offset + limit - 1)
+
+    if (error) throw error
+    return data
+  }
+
+  static async getAllJobs(limit = 100, offset = 0) {
+    const { data, error } = await supabase
+      .from("processing_jobs")
+      .select(`
+        *,
+        users(email, name),
+        ai_models(name, model_id)
+      `)
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1)
+
+    if (error) throw error
+    return data
+  }
+
+  // Database health check
+  static async healthCheck() {
+    try {
+      const { data, error } = await supabase.from("users").select("count").limit(1)
+
+      if (error) throw error
+
+      return {
+        status: "healthy",
+        timestamp: new Date().toISOString(),
+        database: "connected",
+      }
+    } catch (error) {
+      return {
+        status: "unhealthy",
+        timestamp: new Date().toISOString(),
+        database: "disconnected",
+        error: error instanceof Error ? error.message : "Unknown error",
+      }
     }
-
-    const expectedTables = ["users", "ai_models", "processing_jobs", "user_roles"]
-    const existingTables = data.map((row: any) => row.table_name)
-    const missingTables = expectedTables.filter((table) => !existingTables.includes(table))
-
-    if (missingTables.length > 0) {
-      console.warn("⚠️ Missing database tables:", missingTables)
-      return false
-    }
-
-    console.log("✅ All required database tables exist")
-    return true
-  } catch (error) {
-    console.error("❌ Error checking database tables:", error)
-    return false
   }
 }
 
-// Initialize database (create tables if they don't exist)
-export async function initializeDatabase(): Promise<boolean> {
-  try {
-    console.log("🔄 Initializing database...")
-
-    // Check connection first
-    const connected = await checkDatabaseConnection()
-    if (!connected) {
-      return false
-    }
-
-    // Check if tables exist
-    const tablesExist = await checkTablesExist()
-    if (tablesExist) {
-      console.log("✅ Database already initialized")
-      return true
-    }
-
-    console.log("⚠️ Database tables missing, but cannot auto-create in production")
-    console.log("Please run the SQL scripts manually in Supabase SQL Editor:")
-    console.log("1. scripts/01-create-database-schema.sql")
-    console.log("2. scripts/02-add-analytics-tables.sql")
-    console.log("3. scripts/03-add-missing-columns.sql")
-    console.log("4. scripts/04-create-views.sql")
-    console.log("5. scripts/05-seed-demo-data.sql")
-
-    return false
-  } catch (error) {
-    console.error("❌ Database initialization failed:", error)
-    return false
-  }
-}
-
-// User management functions
-export async function createUser(userData: {
-  email: string
-  name: string
-  passwordHash: string
-  role?: string
-}) {
-  const { email, name, passwordHash, role = "user" } = userData
-
-  const { data, error } = await supabase
-    .from("users")
-    .insert({
-      email,
-      name,
-      password_hash: passwordHash,
-      role,
-      email_verified: true,
-    })
-    .select("id, email, name, role, created_at")
-    .single()
-
-  if (error) {
-    throw error
-  }
-
-  return data
-}
-
-export async function getUserByEmail(email: string) {
-  const { data, error } = await supabase
-    .from("users")
-    .select(
-      "id, email, name, password_hash, role, status, credits_remaining, created_at, last_login, email_verified, subscription_tier",
-    )
-    .eq("email", email)
-    .eq("status", "active")
-    .single()
-
-  if (error && error.code !== "PGRST116") {
-    // PGRST116 is "not found"
-    throw error
-  }
-
-  return data || null
-}
-
-export async function updateUserLastLogin(userId: string) {
-  const { error } = await supabase.from("users").update({ last_login: new Date().toISOString() }).eq("id", userId)
-
-  if (error) {
-    throw error
-  }
-}
-
-// AI Models functions
-export async function getActiveAIModels() {
-  const { data, error } = await supabase
-    .from("ai_models")
-    .select(`
-      model_id, name, description, category, provider, provider_model_name,
-      provider_version, input_field, max_upscale, processing_time_estimate,
-      best_for, is_recommended, icon_name, configuration, status,
-      success_rate, average_processing_time, total_jobs_processed
-    `)
-    .eq("status", "active")
-    .order("is_recommended", { ascending: false })
-    .order("name", { ascending: true })
-
-  if (error) {
-    throw error
-  }
-
-  return data || []
-}
-
-// Processing jobs functions
-export async function createProcessingJob(jobData: {
-  userId: string
-  originalFilename: string
-  originalFileSize: number
-  originalFileType: string
-  modelId: string
-  settings: object
-  upscaleFactor: number
-}) {
-  const { userId, originalFilename, originalFileSize, originalFileType, modelId, settings, upscaleFactor } = jobData
-
-  // Get model UUID from model_id
-  const { data: modelData, error: modelError } = await supabase
-    .from("ai_models")
-    .select("id")
-    .eq("model_id", modelId)
-    .single()
-
-  if (modelError || !modelData) {
-    throw new Error(`Model not found: ${modelId}`)
-  }
-
-  const { data, error } = await supabase
-    .from("processing_jobs")
-    .insert({
-      user_id: userId,
-      original_filename: originalFilename,
-      original_file_size: originalFileSize,
-      original_file_type: originalFileType,
-      model_id: modelData.id,
-      settings: settings,
-      upscale_factor: upscaleFactor,
-      status: "pending",
-    })
-    .select("id, created_at")
-    .single()
-
-  if (error) {
-    throw error
-  }
-
-  return data
-}
-
-export async function updateProcessingJob(
-  jobId: string,
-  updates: {
-    status?: string
-    progressMessage?: string
-    progressPercentage?: number
-    providerJobId?: string
-    outputFileUrl?: string
-    enhancedFileSize?: number
-    processingTimeSeconds?: number
-    creditsUsed?: number
-    errorMessage?: string
-    errorDetails?: object
-  },
-) {
-  const updateData: any = {}
-
-  Object.entries(updates).forEach(([key, value]) => {
-    if (value !== undefined) {
-      const dbField = key.replace(/([A-Z])/g, "_$1").toLowerCase()
-      updateData[dbField] = value
-    }
-  })
-
-  if (Object.keys(updateData).length === 0) return
-
-  // Add completed_at if status is completed
-  if (updates.status === "completed") {
-    updateData.completed_at = new Date().toISOString()
-  }
-
-  const { error } = await supabase.from("processing_jobs").update(updateData).eq("id", jobId)
-
-  if (error) {
-    throw error
-  }
-}
-
-export async function getUserProcessingJobs(userId: string, limit = 50) {
-  const { data, error } = await supabase
-    .from("processing_jobs")
-    .select(`
-      *,
-      ai_models!inner(model_id, name)
-    `)
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false })
-    .limit(limit)
-
-  if (error) {
-    throw error
-  }
-
-  // Transform the data to match expected format
-  return (
-    data?.map((job) => ({
-      ...job,
-      model_name: job.ai_models.name,
-    })) || []
-  )
-}
-
-// System logs
-export async function createSystemLog(logData: {
-  userId?: string
-  action: string
-  resourceType?: string
-  resourceId?: string
-  details?: object
-  ipAddress?: string
-  userAgent?: string
-  severity?: string
-}) {
-  const { userId, action, resourceType, resourceId, details, ipAddress, userAgent, severity = "info" } = logData
-
-  const { error } = await supabase.from("system_logs").insert({
-    user_id: userId,
-    action,
-    resource_type: resourceType,
-    resource_id: resourceId,
-    details: details || {},
-    ip_address: ipAddress,
-    user_agent: userAgent,
-    severity,
-  })
-
-  if (error) {
-    throw error
-  }
-}
-
-// Usage analytics
-export async function updateUsageAnalytics(
-  userId: string,
-  date: string,
-  updates: {
-    imagesProcessed?: number
-    creditsUsed?: number
-    processingTimeTotal?: number
-    modelsUsed?: object
-  },
-) {
-  const { imagesProcessed = 0, creditsUsed = 0, processingTimeTotal = 0, modelsUsed = {} } = updates
-
-  const { error } = await supabase.from("usage_analytics").upsert(
-    {
-      user_id: userId,
-      date,
-      images_processed: imagesProcessed,
-      credits_used: creditsUsed,
-      processing_time_total: processingTimeTotal,
-      models_used: modelsUsed,
-    },
-    {
-      onConflict: "user_id,date",
-    },
-  )
-
-  if (error) {
-    throw error
-  }
-}
+// Export default instance
+export default Database

@@ -1,108 +1,117 @@
-import { NextResponse } from "next/server"
-import { initializeDatabase, checkDatabaseConnection, checkTablesExist } from "@/lib/database"
+import { type NextRequest, NextResponse } from "next/server"
+import { Database } from "@/lib/database"
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    console.log("🔄 Database initialization check...")
+    // Check database connection
+    const healthCheck = await Database.healthCheck()
 
-    // Check basic connection
-    const connected = await checkDatabaseConnection()
-    if (!connected) {
+    if (healthCheck.status !== "healthy") {
       return NextResponse.json(
         {
           success: false,
-          error: "Database connection failed",
-          details: "Could not connect to Supabase database. Please check your connection configuration.",
-          troubleshooting: [
-            "Verify SUPABASE_URL environment variable is set correctly",
-            "Check if SUPABASE_SERVICE_ROLE_KEY is valid and has proper permissions",
-            "Ensure your Supabase project is active and accessible",
-            "Confirm database credentials are correct",
-          ],
+          message: "Database connection failed",
+          details: healthCheck,
+          timestamp: new Date().toISOString(),
         },
         { status: 500 },
       )
     }
 
-    // Check if tables exist
-    const tablesExist = await checkTablesExist()
+    // Check if tables exist by trying to query them
+    const tableChecks = []
+
+    try {
+      const users = await Database.getUserStats()
+      tableChecks.push({ table: "users", status: "exists", count: users?.length || 0 })
+    } catch (error) {
+      tableChecks.push({
+        table: "users",
+        status: "missing",
+        error: error instanceof Error ? error.message : "Unknown error",
+      })
+    }
+
+    try {
+      const models = await Database.getActiveModels()
+      tableChecks.push({ table: "ai_models", status: "exists", count: models?.length || 0 })
+    } catch (error) {
+      tableChecks.push({
+        table: "ai_models",
+        status: "missing",
+        error: error instanceof Error ? error.message : "Unknown error",
+      })
+    }
+
+    try {
+      const jobs = await Database.getAllJobs(1)
+      tableChecks.push({ table: "processing_jobs", status: "exists", count: jobs?.length || 0 })
+    } catch (error) {
+      tableChecks.push({
+        table: "processing_jobs",
+        status: "missing",
+        error: error instanceof Error ? error.message : "Unknown error",
+      })
+    }
+
+    try {
+      const health = await Database.getSystemHealth()
+      tableChecks.push({ table: "system_health (view)", status: "exists", count: health?.length || 0 })
+    } catch (error) {
+      tableChecks.push({
+        table: "system_health (view)",
+        status: "missing",
+        error: error instanceof Error ? error.message : "Unknown error",
+      })
+    }
+
+    // Check environment variables
+    const envCheck = {
+      SUPABASE_URL: !!process.env.SUPABASE_URL,
+      SUPABASE_SERVICE_ROLE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+      NEXT_PUBLIC_SUPABASE_URL: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      REPLICATE_API_TOKEN: !!process.env.REPLICATE_API_TOKEN,
+      FAL_API_KEY: !!process.env.FAL_API_KEY,
+    }
+
+    const missingTables = tableChecks.filter((check) => check.status === "missing")
+    const allTablesExist = missingTables.length === 0
 
     return NextResponse.json({
       success: true,
-      connected: true,
-      tablesExist: tablesExist,
-      message: tablesExist ? "Database is properly initialized" : "Database connected but tables need to be created",
-      instructions: tablesExist
-        ? null
+      message: allTablesExist ? "Database is properly initialized" : "Some tables are missing",
+      database_connection: healthCheck,
+      tables: tableChecks,
+      environment_variables: envCheck,
+      missing_tables: missingTables,
+      recommendations: allTablesExist
+        ? []
         : [
-            "Run the following SQL scripts in Supabase SQL Editor in order:",
+            "Run the SQL scripts in Supabase SQL Editor in this order:",
             "1. scripts/01-create-database-schema.sql",
             "2. scripts/02-add-analytics-tables.sql",
             "3. scripts/03-add-missing-columns.sql",
             "4. scripts/04-create-views.sql",
             "5. scripts/05-seed-demo-data.sql",
           ],
-      environment: {
-        nodeEnv: process.env.NODE_ENV,
-        hasSupabaseUrl: !!process.env.SUPABASE_URL,
-        hasSupabaseServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-        hasPostgresUrl: !!process.env.POSTGRES_URL,
-      },
+      timestamp: new Date().toISOString(),
     })
-  } catch (error: any) {
-    console.error("❌ Database initialization error:", error)
+  } catch (error) {
+    console.error("Database initialization check failed:", error)
 
     return NextResponse.json(
       {
         success: false,
-        error: "Database initialization failed",
-        details: error.message,
+        message: "Database initialization check failed",
+        error: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString(),
         troubleshooting: [
-          "Check if SUPABASE_URL environment variable is set",
-          "Verify SUPABASE_SERVICE_ROLE_KEY has proper permissions",
-          "Ensure Supabase project is active and accessible",
-          "Check if SSL settings are correct for your environment",
-          "Try connecting to Supabase directly through their dashboard",
+          "Check that your Supabase environment variables are correct",
+          "Verify that your Supabase project is active",
+          "Ensure the database tables have been created",
+          "Check the Supabase logs for any errors",
         ],
-        environment: {
-          nodeEnv: process.env.NODE_ENV,
-          hasSupabaseUrl: !!process.env.SUPABASE_URL,
-          hasSupabaseServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-          hasPostgresUrl: !!process.env.POSTGRES_URL,
-        },
-      },
-      { status: 500 },
-    )
-  }
-}
-
-export async function POST() {
-  try {
-    const initialized = await initializeDatabase()
-
-    if (initialized) {
-      return NextResponse.json({
-        success: true,
-        message: "Database initialized successfully",
-      })
-    } else {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Database initialization failed",
-          message: "Please run the SQL scripts manually in Supabase SQL Editor",
-        },
-        { status: 500 },
-      )
-    }
-  } catch (error: any) {
-    console.error("❌ Database initialization error:", error)
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Database initialization failed",
-        details: error.message,
       },
       { status: 500 },
     )
