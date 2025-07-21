@@ -955,9 +955,7 @@ const AIImageEnhancementPortal = () => {
                     <h3 className="text-2xl font-semibold text-white mb-3">
                       {user ? "Drop images here or click to browse" : "Sign in to upload images"}
                     </h3>
-                    <p className="text-blue-200 mb-4 text-lg">
-                      Supports JPEG, PNG, WebP, HEIC, TIFF up to 50MB
-                    </p>
+                    <p className="text-blue-200 mb-4 text-lg">Supports JPEG, PNG, WebP, HEIC, TIFF up to 50MB</p>
                     <div className="flex items-center justify-center space-x-6 text-sm text-gray-400">
                       <div className="flex items-center space-x-2">
                         <Zap className="w-4 h-4" />
@@ -994,9 +992,7 @@ const AIImageEnhancementPortal = () => {
                   {/* Enhanced File List */}
                   {selectedFiles.length > 0 && (
                     <div className="mt-8">
-                      <h3 className="text-xl font-semibold text-white mb-6">
-                        Selected Files ({selectedFiles.length})
-                      </h3>
+                      <h3 className="text-xl font-semibold text-white mb-6">Selected Files ({selectedFiles.length})</h3>
                       <div className="space-y-4">
                         {selectedFiles.map((file) => (
                           <div
@@ -1028,7 +1024,10 @@ const AIImageEnhancementPortal = () => {
                                       </div>
                                       {file.details && (
                                         <p className="text-xs text-red-300 mt-1">
-                                          Details: {typeof file.details === "string" ? file.details : JSON.stringify(file.details, null, 2)}
+                                          Details:{" "}
+                                          {typeof file.details === "string"
+                                            ? file.details
+                                            : JSON.stringify(file.details, null, 2)}
                                         </p>
                                       )}
                                     </div>
@@ -1106,9 +1105,7 @@ const AIImageEnhancementPortal = () => {
                                 <div className="flex-1">
                                   <div className="flex items-center space-x-2">
                                     <h4 className="font-medium text-white">{model.name}</h4>
-                                    {model.recommended && (
-                                      <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                                    )}
+                                    {model.recommended && <Star className="w-4 h-4 text-yellow-400 fill-current" />}
                                   </div>
                                   <p className="text-sm text-blue-200">{model.category}</p>
                                   <p className="text-xs text-gray-400 mt-1">{model.processingTime}</p>
@@ -1162,7 +1159,10 @@ const AIImageEnhancementPortal = () => {
                         step="1"
                         value={enhancementSettings.upscaleFactor}
                         onChange={(e) =>
-                          setEnhancementSettings((prev) => ({ ...prev, upscaleFactor: Number.parseInt(e.target.value) }))
+                          setEnhancementSettings((prev) => ({
+                            ...prev,
+                            upscaleFactor: Number.parseInt(e.target.value),
+                          }))
                         }
                         className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer"
                       />
@@ -1328,4 +1328,74 @@ const AIImageEnhancementPortal = () => {
                     <ImageIcon className="w-10 h-10 text-white" />
                   </div>
                   <h3 className="text-xl font-semibold text-white mb-2">No enhanced images yet</h3>
-                  <p className="text-blue-\
+                  <p className="text-blue-200 mb-6">Completed enhancements will appear here</p>
+                  <button
+                    onClick={() => setActiveTab("enhance")}
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl transition-all inline-flex items-center space-x-2 font-medium"
+                  >
+                    <Upload className="w-5 h-5" />
+                    <span>Enhance Images</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {completedJobs.map((job) => (
+                    <div key={job.id} className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
+                      <div className="aspect-video bg-gradient-to-br from-blue-900/20 to-purple-900/20 flex items-center justify-center">
+                        <img
+                          src={job.downloadUrl || "/placeholder.svg"}
+                          alt={`Enhanced ${job.originalFileName}`}
+                          className="w-full h-full object-contain"
+                          crossOrigin="anonymous"
+                        />
+                      </div>
+                      <div className="p-4 space-y-3">
+                        <p className="text-white font-semibold">{job.originalFileName}</p>
+                        <div className="flex items-center space-x-2 text-sm text-green-400">
+                          <Check className="w-4 h-4" />
+                          <span>Enhanced • {job.upscaleFactor}x</span>
+                        </div>
+                        <button
+                          onClick={() => window.open(job.downloadUrl, "_blank")}
+                          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-2 rounded-lg transition-all flex items-center justify-center space-x-2 font-medium"
+                        >
+                          <Download className="w-4 h-4" />
+                          <span>Download</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-black/20 backdrop-blur-lg border-t border-white/10">
+        <div className="max-w-7xl mx-auto px-6 py-12">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-8 md:space-y-0">
+            <div className="text-center md:text-left">
+              <h3 className="text-white font-semibold text-lg mb-2">AI Enhancer Pro</h3>
+              <p className="text-blue-200 text-sm">© {new Date().getFullYear()} All rights reserved.</p>
+            </div>
+            <div className="flex items-center justify-center space-x-6">
+              <a href="#" className="text-blue-200 hover:text-white text-sm">
+                Privacy
+              </a>
+              <a href="#" className="text-blue-200 hover:text-white text-sm">
+                Terms
+              </a>
+              <a href="#" className="text-blue-200 hover:text-white text-sm">
+                Support
+              </a>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  )
+}
+
+export default AIImageEnhancementPortal
