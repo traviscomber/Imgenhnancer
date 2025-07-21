@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef, useCallback, useEffect } from "react"
 import {
   Upload,
   ImageIcon,
@@ -21,13 +21,31 @@ import {
   TestTube,
   Key,
   ExternalLink,
+  Shield,
+  LogIn,
+  Users,
 } from "lucide-react"
+import { LoginForm } from "@/components/auth/login-form"
+import { SignupForm } from "@/components/auth/signup-form"
+import { UserMenu } from "@/components/auth/user-menu"
+import { ProfileDialog } from "@/components/auth/profile-dialog"
+import { UserManagement } from "@/components/admin/user-management"
+import { RoleManagement } from "@/components/admin/role-management"
 
 const AIImageEnhancementPortal = () => {
+  // Authentication state
+  const [user, setUser] = useState(null)
+  const [authMode, setAuthMode] = useState("login") // "login" | "signup"
+  const [showAuth, setShowAuth] = useState(false)
+  const [isAuthLoading, setIsAuthLoading] = useState(false)
+  const [showProfile, setShowProfile] = useState(false)
+
+  // Existing state
   const [selectedFiles, setSelectedFiles] = useState([])
   const [processingQueue, setProcessingQueue] = useState([])
   const [completedJobs, setCompletedJobs] = useState([])
-  const [activeTab, setActiveTab] = useState("config")
+  const [activeTab, setActiveTab] = useState("upload")
+  const [adminSubTab, setAdminSubTab] = useState("config")
   const [discoveryResults, setDiscoveryResults] = useState(null)
   const [configResults, setConfigResults] = useState(null)
   const [isDiscovering, setIsDiscovering] = useState(false)
@@ -44,6 +62,57 @@ const AIImageEnhancementPortal = () => {
     faceEnhance: false,
   })
   const fileInputRef = useRef(null)
+
+  // Check for existing session on mount
+  useEffect(() => {
+    const savedUser = localStorage.getItem("ai-enhancer-user")
+    if (savedUser) {
+      try {
+        setUser(JSON.parse(savedUser))
+      } catch (error) {
+        localStorage.removeItem("ai-enhancer-user")
+      }
+    }
+  }, [])
+
+  // Authentication handlers
+  const handleLogin = (userData) => {
+    setIsAuthLoading(true)
+    setTimeout(() => {
+      setUser(userData)
+      localStorage.setItem("ai-enhancer-user", JSON.stringify(userData))
+      setShowAuth(false)
+      setIsAuthLoading(false)
+    }, 1000)
+  }
+
+  const handleSignup = (userData) => {
+    setIsAuthLoading(true)
+    setTimeout(() => {
+      setUser(userData)
+      localStorage.setItem("ai-enhancer-user", JSON.stringify(userData))
+      setShowAuth(false)
+      setIsAuthLoading(false)
+    }, 1000)
+  }
+
+  const handleLogout = () => {
+    setUser(null)
+    localStorage.removeItem("ai-enhancer-user")
+    setActiveTab("upload")
+    setSelectedFiles([])
+    setProcessingQueue([])
+    setCompletedJobs([])
+  }
+
+  const handleUpdateProfile = (updates) => {
+    const updatedUser = { ...user, ...updates }
+    setUser(updatedUser)
+    localStorage.setItem("ai-enhancer-user", JSON.stringify(updatedUser))
+  }
+
+  // Check if user is admin (simple check for demo)
+  const isAdmin = user?.email === "admin@example.com" || user?.email === "demo@example.com"
 
   // Updated with discovered working models
   const enhancementModels = [
@@ -109,18 +178,26 @@ const AIImageEnhancementPortal = () => {
     },
   ]
 
-  const handleFileSelect = useCallback((files) => {
-    const newFiles = Array.from(files).map((file) => ({
-      id: Date.now() + Math.random(),
-      file,
-      name: file.name,
-      size: file.size,
-      preview: URL.createObjectURL(file),
-      status: "ready",
-      error: null,
-    }))
-    setSelectedFiles((prev) => [...prev, ...newFiles])
-  }, [])
+  const handleFileSelect = useCallback(
+    (files) => {
+      if (!user) {
+        setShowAuth(true)
+        return
+      }
+
+      const newFiles = Array.from(files).map((file) => ({
+        id: Date.now() + Math.random(),
+        file,
+        name: file.name,
+        size: file.size,
+        preview: URL.createObjectURL(file),
+        status: "ready",
+        error: null,
+      }))
+      setSelectedFiles((prev) => [...prev, ...newFiles])
+    },
+    [user],
+  )
 
   const handleDrop = useCallback(
     (e) => {
@@ -135,6 +212,11 @@ const AIImageEnhancementPortal = () => {
   }, [])
 
   const startProcessing = async (fileId) => {
+    if (!user) {
+      setShowAuth(true)
+      return
+    }
+
     console.log("🚀 Starting processing for file ID:", fileId)
 
     const fileToProcess = selectedFiles.find((f) => f.id === fileId)
@@ -294,6 +376,11 @@ const AIImageEnhancementPortal = () => {
   }
 
   const testReplicateConfig = async () => {
+    if (!user) {
+      setShowAuth(true)
+      return
+    }
+
     setIsTesting(true)
     try {
       const response = await fetch("/api/test-replicate-config")
@@ -309,6 +396,11 @@ const AIImageEnhancementPortal = () => {
   }
 
   const runReplicateDiscovery = async () => {
+    if (!user) {
+      setShowAuth(true)
+      return
+    }
+
     setIsDiscovering(true)
     try {
       const response = await fetch("/api/replicate-discovery")
@@ -345,6 +437,19 @@ const AIImageEnhancementPortal = () => {
     return selectedModel?.maxUpscale || 4
   }
 
+  // Show authentication modal if not logged in
+  if (!user && showAuth) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-6">
+        {authMode === "login" ? (
+          <LoginForm onLogin={handleLogin} onSwitchToSignup={() => setAuthMode("signup")} isLoading={isAuthLoading} />
+        ) : (
+          <SignupForm onSignup={handleSignup} onSwitchToLogin={() => setAuthMode("login")} isLoading={isAuthLoading} />
+        )}
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       {/* Header */}
@@ -368,6 +473,23 @@ const AIImageEnhancementPortal = () => {
                   {enhancementModels.filter((m) => m.status === "working").length} models available
                 </span>
               </div>
+
+              {user ? (
+                <UserMenu
+                  user={user}
+                  onLogout={handleLogout}
+                  onOpenProfile={() => setShowProfile(true)}
+                  isAdmin={isAdmin}
+                />
+              ) : (
+                <button
+                  onClick={() => setShowAuth(true)}
+                  className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  <LogIn className="w-4 h-4" />
+                  <span>Sign In</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -377,15 +499,20 @@ const AIImageEnhancementPortal = () => {
       <div className="max-w-7xl mx-auto px-6 py-6">
         <div className="flex space-x-1 bg-black/20 backdrop-blur-lg rounded-xl p-1">
           {[
-            { id: "config", label: "Configuration", icon: Key },
-            { id: "discovery", label: "Model Discovery", icon: Search },
             { id: "upload", label: "Upload & Enhance", icon: Upload },
             { id: "processing", label: "Processing Queue", icon: Settings },
             { id: "results", label: "Enhanced Images", icon: Download },
+            ...(isAdmin ? [{ id: "admin", label: "Admin", icon: Shield }] : []),
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => {
+                if (!user && tab.id !== "upload") {
+                  setShowAuth(true)
+                  return
+                }
+                setActiveTab(tab.id)
+              }}
               className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ${
                 activeTab === tab.id ? "bg-blue-600 text-white" : "text-blue-200 hover:text-white hover:bg-white/10"
               }`}
@@ -399,449 +526,499 @@ const AIImageEnhancementPortal = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 pb-12">
-        {activeTab === "config" && (
+        {activeTab === "admin" && isAdmin && (
           <div className="space-y-8">
-            {/* Configuration Test */}
-            <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-8">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-xl font-semibold text-white mb-2">Replicate API Configuration</h2>
-                  <p className="text-gray-300">Test your Replicate API token and verify model access permissions</p>
-                </div>
-                <button
-                  onClick={testReplicateConfig}
-                  disabled={isTesting}
-                  className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 disabled:opacity-50 text-white px-6 py-3 rounded-lg transition-all flex items-center space-x-2"
-                >
-                  {isTesting ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      <span>Testing...</span>
-                    </>
-                  ) : (
-                    <>
-                      <TestTube className="w-5 h-5" />
-                      <span>Test Configuration</span>
-                    </>
-                  )}
-                </button>
+            {/* Admin Sub-Navigation */}
+            <div className="bg-black/20 backdrop-blur-lg rounded-xl border border-white/10 p-6">
+              <div className="flex items-center space-x-3 mb-6">
+                <Shield className="w-6 h-6 text-orange-400" />
+                <h2 className="text-xl font-semibold text-white">Admin Panel</h2>
+                <span className="text-sm text-orange-400 bg-orange-400/10 px-2 py-1 rounded">System Management</span>
               </div>
 
-              {/* Configuration Status */}
-              <div className="grid md:grid-cols-3 gap-4 mb-6">
-                <div className="bg-white/5 rounded-lg p-4">
-                  <Key className="w-8 h-8 text-blue-400 mb-2" />
-                  <h3 className="text-white font-medium mb-1">API Token</h3>
-                  <p className="text-sm text-gray-400">
-                    {configResults?.configuration?.hasApiKey ? "✅ Configured" : "❌ Missing"}
-                  </p>
-                  {configResults?.configuration?.keyPrefix && (
-                    <p className="text-xs text-gray-500 mt-1">{configResults.configuration.keyPrefix}</p>
-                  )}
-                </div>
-                <div className="bg-white/5 rounded-lg p-4">
-                  <Database className="w-8 h-8 text-purple-400 mb-2" />
-                  <h3 className="text-white font-medium mb-1">Available Models</h3>
-                  <p className="text-sm text-gray-400">
-                    {enhancementModels.filter((m) => m.status === "working").length} working models
-                  </p>
-                </div>
-                <div className="bg-white/5 rounded-lg p-4">
-                  <Activity className="w-8 h-8 text-green-400 mb-2" />
-                  <h3 className="text-white font-medium mb-1">Status</h3>
-                  <p className="text-sm text-gray-400">
-                    {configResults?.summary?.replicateConfigured ? "✅ Ready" : "⏳ Testing"}
-                  </p>
-                </div>
-              </div>
-
-              {/* Setup Instructions */}
-              {configResults?.configuration?.hasApiKey ? (
-                /* Token Configured Successfully */
-                <div className="bg-green-900/20 border border-green-500/20 rounded-lg p-6 mb-6">
-                  <div className="flex items-start space-x-4">
-                    <div className="flex-shrink-0">
-                      <CheckCircle className="w-8 h-8 text-green-400" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-green-400 font-medium mb-3">✅ API Token Configured</h3>
-                      <div className="space-y-3 text-sm text-gray-300">
-                        <div className="flex items-center space-x-2">
-                          <span className="bg-green-600 text-white text-xs px-2 py-1 rounded">✓</span>
-                          <span>REPLICATE_API_TOKEN is configured</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="bg-green-600 text-white text-xs px-2 py-1 rounded">✓</span>
-                          <span>Token: r8_brsNoyAv...04DrJmT (secured)</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">→</span>
-                          <span>
-                            Ready to enhance images with{" "}
-                            {enhancementModels.filter((m) => m.status === "working").length} models
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-gradient-to-r from-blue-900/20 to-purple-900/20 border border-blue-500/20 rounded-lg p-6 mb-6">
-                  <div className="flex items-start space-x-4">
-                    <div className="flex-shrink-0">
-                      <Key className="w-8 h-8 text-blue-400" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-blue-400 font-medium mb-3">🔑 Get Your Replicate API Token</h3>
-                      <div className="space-y-3 text-sm text-gray-300">
-                        <div className="flex items-center space-x-2">
-                          <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">1</span>
-                          <span>
-                            Visit{" "}
-                            <a
-                              href="https://replicate.com/account/api-tokens"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-400 underline hover:text-blue-300 inline-flex items-center space-x-1"
-                            >
-                              <span>replicate.com/account/api-tokens</span>
-                              <ExternalLink className="w-3 h-3" />
-                            </a>
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">2</span>
-                          <span>Sign in with GitHub (you'll see the login screen like below)</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">3</span>
-                          <span>Create a new API token</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">4</span>
-                          <span>Add it as REPLICATE_API_TOKEN environment variable</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">5</span>
-                          <span>Click "Test Configuration" above</span>
-                        </div>
-                      </div>
-
-                      {/* Replicate Login Screenshot */}
-                      <div className="mt-4 p-4 bg-black/20 rounded-lg">
-                        <p className="text-xs text-gray-400 mb-2">
-                          What you'll see when you visit the API tokens page:
-                        </p>
-                        <img
-                          src="/replicate-login-screenshot.jpeg"
-                          alt="Replicate login screen showing 'Welcome to Replicate' with GitHub sign-in button"
-                          className="w-full max-w-md rounded-lg border border-gray-600"
-                        />
-                        <p className="text-xs text-gray-500 mt-2">
-                          Click "Sign in with GitHub" to access your API tokens
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Available Models Preview */}
-              <div className="bg-black/20 backdrop-blur-lg rounded-xl border border-white/10 p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Available Models ({enhancementModels.length})</h3>
-                <div className="grid md:grid-cols-2 gap-4">
-                  {enhancementModels.map((model) => (
-                    <div key={model.id} className="bg-white/5 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="font-medium text-white">{model.name}</div>
-                        <div className="flex items-center space-x-2">
-                          {model.recommended && (
-                            <span className="text-xs bg-yellow-600 text-white px-2 py-1 rounded">⭐</span>
-                          )}
-                          <span
-                            className={`text-xs px-2 py-1 rounded ${
-                              model.status === "working" ? "bg-green-600 text-white" : "bg-gray-600 text-white"
-                            }`}
-                          >
-                            {model.status === "working" ? "✅ Ready" : "⏳ Testing"}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="text-xs text-gray-400 mb-2">{model.description}</div>
-                      <div className="text-xs text-blue-400">{model.replicateModel}</div>
-                      <div className="text-xs text-purple-400">
-                        Category: {model.category} • Max: {model.maxUpscale}x
-                      </div>
-                    </div>
-                  ))}
-                </div>
+              <div className="flex space-x-1 bg-white/5 rounded-lg p-1">
+                {[
+                  { id: "config", label: "Configuration", icon: Key },
+                  { id: "discovery", label: "Model Discovery", icon: Search },
+                  { id: "users", label: "User Management", icon: Users },
+                  { id: "roles", label: "Role Management", icon: Shield },
+                ].map((subTab) => (
+                  <button
+                    key={subTab.id}
+                    onClick={() => setAdminSubTab(subTab.id)}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-all ${
+                      adminSubTab === subTab.id
+                        ? "bg-orange-600 text-white"
+                        : "text-gray-300 hover:text-white hover:bg-white/10"
+                    }`}
+                  >
+                    <subTab.icon className="w-4 h-4" />
+                    <span>{subTab.label}</span>
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Test Results */}
-            {configResults && (
-              <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Configuration Test Results</h3>
-
-                {configResults.error ? (
-                  <div className="bg-red-900/20 border border-red-500/20 rounded-lg p-4">
-                    <div className="text-red-400 font-medium mb-2">❌ Configuration Error</div>
-                    <div className="text-red-300 text-sm">{configResults.error}</div>
+            {/* Admin Content */}
+            {adminSubTab === "config" && (
+              <div className="space-y-8">
+                {/* Configuration Test */}
+                <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-8">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="text-xl font-semibold text-white mb-2">Replicate API Configuration</h3>
+                      <p className="text-gray-300">Test your Replicate API token and verify model access permissions</p>
+                    </div>
+                    <button
+                      onClick={testReplicateConfig}
+                      disabled={isTesting}
+                      className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 disabled:opacity-50 text-white px-6 py-3 rounded-lg transition-all flex items-center space-x-2"
+                    >
+                      {isTesting ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          <span>Testing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <TestTube className="w-5 h-5" />
+                          <span>Test Configuration</span>
+                        </>
+                      )}
+                    </button>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    {/* Summary */}
-                    {configResults.summary && (
-                      <div
-                        className={`border rounded-lg p-4 ${
-                          configResults.summary.replicateConfigured
-                            ? "bg-green-900/20 border-green-500/20"
-                            : "bg-yellow-900/20 border-yellow-500/20"
-                        }`}
-                      >
-                        <div
-                          className={`font-medium mb-2 ${
-                            configResults.summary.replicateConfigured ? "text-green-400" : "text-yellow-400"
-                          }`}
-                        >
-                          {configResults.summary.replicateConfigured ? "✅" : "⚠️"}{" "}
-                          {configResults.summary.recommendation}
-                        </div>
-                        <div className="text-sm text-gray-300">
-                          Tests: {configResults.summary.successful}/{configResults.summary.totalTests} successful
-                        </div>
-                      </div>
-                    )}
 
-                    {/* Individual Test Results */}
-                    <div className="space-y-3">
-                      {configResults.tests?.map((test, index) => (
-                        <div
-                          key={index}
-                          className={`border rounded-lg p-4 ${
-                            test.status === "success"
-                              ? "bg-green-900/10 border-green-500/20"
-                              : "bg-red-900/10 border-red-500/20"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="font-mono text-sm text-white">{test.test}</div>
-                            <div
-                              className={`text-xs px-2 py-1 rounded ${
-                                test.status === "success" ? "bg-green-600 text-white" : "bg-red-600 text-white"
-                              }`}
-                            >
-                              {test.status === "success" ? "✅ Success" : "❌ Failed"}
+                  {/* Configuration Status */}
+                  <div className="grid md:grid-cols-3 gap-4 mb-6">
+                    <div className="bg-white/5 rounded-lg p-4">
+                      <Key className="w-8 h-8 text-blue-400 mb-2" />
+                      <h4 className="text-white font-medium mb-1">API Token</h4>
+                      <p className="text-sm text-gray-400">
+                        {configResults?.configuration?.hasApiKey ? "✅ Configured" : "❌ Missing"}
+                      </p>
+                      {configResults?.configuration?.keyPrefix && (
+                        <p className="text-xs text-gray-500 mt-1">{configResults.configuration.keyPrefix}</p>
+                      )}
+                    </div>
+                    <div className="bg-white/5 rounded-lg p-4">
+                      <Database className="w-8 h-8 text-purple-400 mb-2" />
+                      <h4 className="text-white font-medium mb-1">Available Models</h4>
+                      <p className="text-sm text-gray-400">
+                        {enhancementModels.filter((m) => m.status === "working").length} working models
+                      </p>
+                    </div>
+                    <div className="bg-white/5 rounded-lg p-4">
+                      <Activity className="w-8 h-8 text-green-400 mb-2" />
+                      <h4 className="text-white font-medium mb-1">Status</h4>
+                      <p className="text-sm text-gray-400">
+                        {configResults?.summary?.replicateConfigured ? "✅ Ready" : "⏳ Testing"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Setup Instructions */}
+                  {configResults?.configuration?.hasApiKey ? (
+                    /* Token Configured Successfully */
+                    <div className="bg-green-900/20 border border-green-500/20 rounded-lg p-6 mb-6">
+                      <div className="flex items-start space-x-4">
+                        <div className="flex-shrink-0">
+                          <CheckCircle className="w-8 h-8 text-green-400" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-green-400 font-medium mb-3">✅ API Token Configured</h4>
+                          <div className="space-y-3 text-sm text-gray-300">
+                            <div className="flex items-center space-x-2">
+                              <span className="bg-green-600 text-white text-xs px-2 py-1 rounded">✓</span>
+                              <span>REPLICATE_API_TOKEN is configured</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="bg-green-600 text-white text-xs px-2 py-1 rounded">✓</span>
+                              <span>Token: r8_brsNoyAv...04DrJmT (secured)</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">→</span>
+                              <span>
+                                Ready to enhance images with{" "}
+                                {enhancementModels.filter((m) => m.status === "working").length} models
+                              </span>
                             </div>
                           </div>
-                          <div className="text-sm text-gray-300">Result: {test.result}</div>
-                          {test.error && <div className="text-sm text-red-300 mt-1">Error: {test.error}</div>}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-gradient-to-r from-blue-900/20 to-purple-900/20 border border-blue-500/20 rounded-lg p-6 mb-6">
+                      <div className="flex items-start space-x-4">
+                        <div className="flex-shrink-0">
+                          <Key className="w-8 h-8 text-blue-400" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-blue-400 font-medium mb-3">🔑 Get Your Replicate API Token</h4>
+                          <div className="space-y-3 text-sm text-gray-300">
+                            <div className="flex items-center space-x-2">
+                              <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">1</span>
+                              <span>
+                                Visit{" "}
+                                <a
+                                  href="https://replicate.com/account/api-tokens"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-400 underline hover:text-blue-300 inline-flex items-center space-x-1"
+                                >
+                                  <span>replicate.com/account/api-tokens</span>
+                                  <ExternalLink className="w-3 h-3" />
+                                </a>
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">2</span>
+                              <span>Sign in with GitHub (you'll see the login screen like below)</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">3</span>
+                              <span>Create a new API token</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">4</span>
+                              <span>Add it as REPLICATE_API_TOKEN environment variable</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">5</span>
+                              <span>Click "Test Configuration" above</span>
+                            </div>
+                          </div>
+
+                          {/* Replicate Login Screenshot */}
+                          <div className="mt-4 p-4 bg-black/20 rounded-lg">
+                            <p className="text-xs text-gray-400 mb-2">
+                              What you'll see when you visit the API tokens page:
+                            </p>
+                            <img
+                              src="/replicate-login-screenshot.jpeg"
+                              alt="Replicate login screen showing 'Welcome to Replicate' with GitHub sign-in button"
+                              className="w-full max-w-md rounded-lg border border-gray-600"
+                            />
+                            <p className="text-xs text-gray-500 mt-2">
+                              Click "Sign in with GitHub" to access your API tokens
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Available Models Preview */}
+                  <div className="bg-black/20 backdrop-blur-lg rounded-xl border border-white/10 p-6">
+                    <h4 className="text-lg font-semibold text-white mb-4">
+                      Available Models ({enhancementModels.length})
+                    </h4>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {enhancementModels.map((model) => (
+                        <div key={model.id} className="bg-white/5 rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="font-medium text-white">{model.name}</div>
+                            <div className="flex items-center space-x-2">
+                              {model.recommended && (
+                                <span className="text-xs bg-yellow-600 text-white px-2 py-1 rounded">⭐</span>
+                              )}
+                              <span
+                                className={`text-xs px-2 py-1 rounded ${
+                                  model.status === "working" ? "bg-green-600 text-white" : "bg-gray-600 text-white"
+                                }`}
+                              >
+                                {model.status === "working" ? "✅ Ready" : "⏳ Testing"}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="text-xs text-gray-400 mb-2">{model.description}</div>
+                          <div className="text-xs text-blue-400">{model.replicateModel}</div>
+                          <div className="text-xs text-purple-400">
+                            Category: {model.category} • Max: {model.maxUpscale}x
+                          </div>
                         </div>
                       ))}
                     </div>
                   </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === "discovery" && (
-          <div className="space-y-8">
-            {/* Discovery Control Panel */}
-            <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-8">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-xl font-semibold text-white mb-2">Model Discovery</h2>
-                  <p className="text-gray-300">Test available Replicate models for image enhancement</p>
                 </div>
-                <button
-                  onClick={runReplicateDiscovery}
-                  disabled={isDiscovering || !configResults?.summary?.replicateConfigured}
-                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 text-white px-6 py-3 rounded-lg transition-all flex items-center space-x-2"
-                >
-                  {isDiscovering ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      <span>Discovering...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Search className="w-5 h-5" />
-                      <span>Re-test Models</span>
-                    </>
-                  )}
-                </button>
-              </div>
 
-              {!configResults?.summary?.replicateConfigured && (
-                <div className="bg-yellow-900/20 border border-yellow-500/20 rounded-lg p-4 mb-6">
-                  <div className="text-yellow-400 font-medium mb-2">⚠️ Configuration Required</div>
-                  <div className="text-yellow-200 text-sm">Please test your Replicate API configuration first.</div>
-                </div>
-              )}
+                {/* Test Results */}
+                {configResults && (
+                  <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-6">
+                    <h4 className="text-lg font-semibold text-white mb-4">Configuration Test Results</h4>
 
-              {/* Pre-loaded Models Status */}
-              <div className="bg-green-900/20 border border-green-500/20 rounded-lg p-6">
-                <h3 className="text-green-400 font-medium mb-3">✅ Pre-loaded Working Models</h3>
-                <div className="grid md:grid-cols-2 gap-3">
-                  {enhancementModels
-                    .filter((m) => m.status === "working")
-                    .map((model) => (
-                      <div key={model.id} className="bg-white/5 rounded-lg p-3">
-                        <div className="flex items-center justify-between mb-1">
-                          <div className="font-mono text-sm text-green-400">{model.replicateModel}</div>
-                          <span className="text-xs bg-green-600 text-white px-2 py-1 rounded">{model.category}</span>
-                        </div>
-                        <div className="text-xs text-gray-400">{model.description}</div>
+                    {configResults.error ? (
+                      <div className="bg-red-900/20 border border-red-500/20 rounded-lg p-4">
+                        <div className="text-red-400 font-medium mb-2">❌ Configuration Error</div>
+                        <div className="text-red-300 text-sm">{configResults.error}</div>
                       </div>
-                    ))}
-                </div>
-                <div className="mt-4 text-sm text-gray-300">
-                  These models have been pre-tested and are ready to use. Click "Re-test Models" to verify current
-                  status.
-                </div>
-              </div>
-            </div>
-
-            {/* Discovery Results */}
-            {discoveryResults && (
-              <div className="space-y-6">
-                {discoveryResults.error ? (
-                  <div className="bg-red-900/20 border border-red-500/20 rounded-lg p-6">
-                    <div className="text-red-400 font-medium mb-2">❌ Discovery Error</div>
-                    <div className="text-red-300">{discoveryResults.error}</div>
-                  </div>
-                ) : (
-                  <>
-                    {/* Summary */}
-                    <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-6">
-                      <h3 className="text-lg font-semibold text-white mb-4">Discovery Summary</h3>
-                      <div className="grid md:grid-cols-3 gap-4">
-                        <div className="bg-green-900/20 border border-green-500/20 rounded-lg p-4">
-                          <div className="text-2xl font-bold text-green-400">
-                            {discoveryResults.workingModels?.length || 0}
-                          </div>
-                          <div className="text-sm text-green-300">Working Models</div>
-                        </div>
-                        <div className="bg-red-900/20 border border-red-500/20 rounded-lg p-4">
-                          <div className="text-2xl font-bold text-red-400">
-                            {discoveryResults.failedModels?.length || 0}
-                          </div>
-                          <div className="text-sm text-red-300">Failed Models</div>
-                        </div>
-                        <div className="bg-blue-900/20 border border-blue-500/20 rounded-lg p-4">
-                          <div className="text-2xl font-bold text-blue-400">
-                            {discoveryResults.configuration?.testedModels || 0}
-                          </div>
-                          <div className="text-sm text-blue-300">Total Tested</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Working Models */}
-                    {discoveryResults.workingModels?.length > 0 && (
-                      <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-6">
-                        <h3 className="text-lg font-semibold text-white mb-4">✅ Working Models</h3>
-                        <div className="space-y-3">
-                          {discoveryResults.workingModels.map((model, index) => (
+                    ) : (
+                      <div className="space-y-4">
+                        {/* Summary */}
+                        {configResults.summary && (
+                          <div
+                            className={`border rounded-lg p-4 ${
+                              configResults.summary.replicateConfigured
+                                ? "bg-green-900/20 border-green-500/20"
+                                : "bg-yellow-900/20 border-yellow-500/20"
+                            }`}
+                          >
                             <div
-                              key={index}
-                              className={`border rounded-lg p-4 ${
-                                model.isPrimary
-                                  ? "bg-blue-900/20 border-blue-500/30"
-                                  : "bg-green-900/10 border-green-500/20"
+                              className={`font-medium mb-2 ${
+                                configResults.summary.replicateConfigured ? "text-green-400" : "text-yellow-400"
                               }`}
                             >
-                              <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center space-x-2">
-                                  <div
-                                    className={`font-mono text-sm ${
-                                      model.isPrimary ? "text-blue-400" : "text-green-400"
-                                    }`}
-                                  >
-                                    {model.modelId}
-                                  </div>
-                                  {model.isPrimary && (
-                                    <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded">PRIMARY</span>
-                                  )}
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  <span className="text-xs bg-green-600 text-white px-2 py-1 rounded">
-                                    {model.category}
-                                  </span>
-                                  <span
-                                    className={`text-xs px-2 py-1 rounded ${
-                                      model.priority === "high" ? "bg-red-600 text-white" : "bg-gray-600 text-white"
-                                    }`}
-                                  >
-                                    {model.priority.toUpperCase()}
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="text-xs text-gray-400 mb-1">{model.description}</div>
-                              <div className="text-xs text-gray-500">Prediction: {model.predictionId}</div>
+                              {configResults.summary.replicateConfigured ? "✅" : "⚠️"}{" "}
+                              {configResults.summary.recommendation}
                             </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                            <div className="text-sm text-gray-300">
+                              Tests: {configResults.summary.successful}/{configResults.summary.totalTests} successful
+                            </div>
+                          </div>
+                        )}
 
-                    {/* Recommendations */}
-                    {discoveryResults.recommendations?.length > 0 && (
-                      <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-6">
-                        <h3 className="text-lg font-semibold text-white mb-4">🎯 Recommendations</h3>
+                        {/* Individual Test Results */}
                         <div className="space-y-3">
-                          {discoveryResults.recommendations.map((rec, index) => (
+                          {configResults.tests?.map((test, index) => (
                             <div
                               key={index}
                               className={`border rounded-lg p-4 ${
-                                rec.priority === "high"
-                                  ? "bg-blue-900/20 border-blue-500/30"
-                                  : rec.priority === "critical"
-                                    ? "bg-red-900/20 border-red-500/30"
-                                    : "bg-gray-900/20 border-gray-500/20"
+                                test.status === "success"
+                                  ? "bg-green-900/10 border-green-500/20"
+                                  : "bg-red-900/10 border-red-500/20"
                               }`}
                             >
                               <div className="flex items-center justify-between mb-2">
+                                <div className="font-mono text-sm text-white">{test.test}</div>
                                 <div
-                                  className={`font-medium ${
-                                    rec.priority === "high"
-                                      ? "text-blue-400"
-                                      : rec.priority === "critical"
-                                        ? "text-red-400"
-                                        : "text-gray-400"
+                                  className={`text-xs px-2 py-1 rounded ${
+                                    test.status === "success" ? "bg-green-600 text-white" : "bg-red-600 text-white"
                                   }`}
                                 >
-                                  {rec.type}
+                                  {test.status === "success" ? "✅ Success" : "❌ Failed"}
                                 </div>
-                                {rec.priority && (
-                                  <span
-                                    className={`text-xs px-2 py-1 rounded ${
-                                      rec.priority === "high"
-                                        ? "bg-blue-600 text-white"
-                                        : rec.priority === "critical"
-                                          ? "bg-red-600 text-white"
-                                          : "bg-gray-600 text-white"
-                                    }`}
-                                  >
-                                    {rec.priority.toUpperCase()}
-                                  </span>
-                                )}
                               </div>
-                              {rec.modelId && <div className="font-mono text-sm text-white mb-1">{rec.modelId}</div>}
-                              <div className="text-sm text-gray-300">{rec.reason}</div>
-                              {rec.usage && <div className="text-xs text-gray-400 mt-1">Usage: {rec.usage}</div>}
-                              {rec.solution && <div className="text-xs text-yellow-400 mt-1">💡 {rec.solution}</div>}
+                              <div className="text-sm text-gray-300">Result: {test.result}</div>
+                              {test.error && <div className="text-sm text-red-300 mt-1">Error: {test.error}</div>}
                             </div>
                           ))}
                         </div>
                       </div>
                     )}
-                  </>
+                  </div>
                 )}
               </div>
             )}
+
+            {adminSubTab === "discovery" && (
+              <div className="space-y-8">
+                {/* Discovery Control Panel */}
+                <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-8">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="text-xl font-semibold text-white mb-2">Model Discovery</h3>
+                      <p className="text-gray-300">Test available Replicate models for image enhancement</p>
+                    </div>
+                    <button
+                      onClick={runReplicateDiscovery}
+                      disabled={isDiscovering || !configResults?.summary?.replicateConfigured}
+                      className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 text-white px-6 py-3 rounded-lg transition-all flex items-center space-x-2"
+                    >
+                      {isDiscovering ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          <span>Discovering...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Search className="w-5 h-5" />
+                          <span>Re-test Models</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {!configResults?.summary?.replicateConfigured && (
+                    <div className="bg-yellow-900/20 border border-yellow-500/20 rounded-lg p-4 mb-6">
+                      <div className="text-yellow-400 font-medium mb-2">⚠️ Configuration Required</div>
+                      <div className="text-yellow-200 text-sm">Please test your Replicate API configuration first.</div>
+                    </div>
+                  )}
+
+                  {/* Pre-loaded Models Status */}
+                  <div className="bg-green-900/20 border border-green-500/20 rounded-lg p-6">
+                    <h4 className="text-green-400 font-medium mb-3">✅ Pre-loaded Working Models</h4>
+                    <div className="grid md:grid-cols-2 gap-3">
+                      {enhancementModels
+                        .filter((m) => m.status === "working")
+                        .map((model) => (
+                          <div key={model.id} className="bg-white/5 rounded-lg p-3">
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="font-mono text-sm text-green-400">{model.replicateModel}</div>
+                              <span className="text-xs bg-green-600 text-white px-2 py-1 rounded">
+                                {model.category}
+                              </span>
+                            </div>
+                            <div className="text-xs text-gray-400">{model.description}</div>
+                          </div>
+                        ))}
+                    </div>
+                    <div className="mt-4 text-sm text-gray-300">
+                      These models have been pre-tested and are ready to use. Click "Re-test Models" to verify current
+                      status.
+                    </div>
+                  </div>
+                </div>
+
+                {/* Discovery Results */}
+                {discoveryResults && (
+                  <div className="space-y-6">
+                    {discoveryResults.error ? (
+                      <div className="bg-red-900/20 border border-red-500/20 rounded-lg p-6">
+                        <div className="text-red-400 font-medium mb-2">❌ Discovery Error</div>
+                        <div className="text-red-300">{discoveryResults.error}</div>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Summary */}
+                        <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-6">
+                          <h4 className="text-lg font-semibold text-white mb-4">Discovery Summary</h4>
+                          <div className="grid md:grid-cols-3 gap-4">
+                            <div className="bg-green-900/20 border border-green-500/20 rounded-lg p-4">
+                              <div className="text-2xl font-bold text-green-400">
+                                {discoveryResults.workingModels?.length || 0}
+                              </div>
+                              <div className="text-sm text-green-300">Working Models</div>
+                            </div>
+                            <div className="bg-red-900/20 border border-red-500/20 rounded-lg p-4">
+                              <div className="text-2xl font-bold text-red-400">
+                                {discoveryResults.failedModels?.length || 0}
+                              </div>
+                              <div className="text-sm text-red-300">Failed Models</div>
+                            </div>
+                            <div className="bg-blue-900/20 border border-blue-500/20 rounded-lg p-4">
+                              <div className="text-2xl font-bold text-blue-400">
+                                {discoveryResults.configuration?.testedModels || 0}
+                              </div>
+                              <div className="text-sm text-blue-300">Total Tested</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Working Models */}
+                        {discoveryResults.workingModels?.length > 0 && (
+                          <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-6">
+                            <h4 className="text-lg font-semibold text-white mb-4">✅ Working Models</h4>
+                            <div className="space-y-3">
+                              {discoveryResults.workingModels.map((model, index) => (
+                                <div
+                                  key={index}
+                                  className={`border rounded-lg p-4 ${
+                                    model.isPrimary
+                                      ? "bg-blue-900/20 border-blue-500/30"
+                                      : "bg-green-900/10 border-green-500/20"
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center space-x-2">
+                                      <div
+                                        className={`font-mono text-sm ${
+                                          model.isPrimary ? "text-blue-400" : "text-green-400"
+                                        }`}
+                                      >
+                                        {model.modelId}
+                                      </div>
+                                      {model.isPrimary && (
+                                        <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded">
+                                          PRIMARY
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                      <span className="text-xs bg-green-600 text-white px-2 py-1 rounded">
+                                        {model.category}
+                                      </span>
+                                      <span
+                                        className={`text-xs px-2 py-1 rounded ${
+                                          model.priority === "high" ? "bg-red-600 text-white" : "bg-gray-600 text-white"
+                                        }`}
+                                      >
+                                        {model.priority.toUpperCase()}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="text-xs text-gray-400 mb-1">{model.description}</div>
+                                  <div className="text-xs text-gray-500">Prediction: {model.predictionId}</div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Recommendations */}
+                        {discoveryResults.recommendations?.length > 0 && (
+                          <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-6">
+                            <h4 className="text-lg font-semibold text-white mb-4">🎯 Recommendations</h4>
+                            <div className="space-y-3">
+                              {discoveryResults.recommendations.map((rec, index) => (
+                                <div
+                                  key={index}
+                                  className={`border rounded-lg p-4 ${
+                                    rec.priority === "high"
+                                      ? "bg-blue-900/20 border-blue-500/30"
+                                      : rec.priority === "critical"
+                                        ? "bg-red-900/20 border-red-500/30"
+                                        : "bg-gray-900/20 border-gray-500/20"
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div
+                                      className={`font-medium ${
+                                        rec.priority === "high"
+                                          ? "text-blue-400"
+                                          : rec.priority === "critical"
+                                            ? "text-red-400"
+                                            : "text-gray-400"
+                                      }`}
+                                    >
+                                      {rec.type}
+                                    </div>
+                                    {rec.priority && (
+                                      <span
+                                        className={`text-xs px-2 py-1 rounded ${
+                                          rec.priority === "high"
+                                            ? "bg-blue-600 text-white"
+                                            : rec.priority === "critical"
+                                              ? "bg-red-600 text-white"
+                                              : "bg-gray-600 text-white"
+                                        }`}
+                                      >
+                                        {rec.priority.toUpperCase()}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {rec.modelId && (
+                                    <div className="font-mono text-sm text-white mb-1">{rec.modelId}</div>
+                                  )}
+                                  <div className="text-sm text-gray-300">{rec.reason}</div>
+                                  {rec.usage && <div className="text-xs text-gray-400 mt-1">Usage: {rec.usage}</div>}
+                                  {rec.solution && (
+                                    <div className="text-xs text-yellow-400 mt-1">💡 {rec.solution}</div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {adminSubTab === "users" && <UserManagement currentUser={user} />}
+
+            {adminSubTab === "roles" && <RoleManagement />}
           </div>
         )}
 
@@ -856,14 +1033,31 @@ const AIImageEnhancementPortal = () => {
                   onDrop={handleDrop}
                   onDragOver={handleDragOver}
                   className="border-2 border-dashed border-blue-400/50 rounded-xl p-12 text-center hover:border-blue-400 transition-colors cursor-pointer"
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={() => {
+                    if (!user) {
+                      setShowAuth(true)
+                      return
+                    }
+                    fileInputRef.current?.click()
+                  }}
                 >
                   <ImageIcon className="w-12 h-12 text-blue-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-white mb-2">Drop images here or click to browse</h3>
+                  <h3 className="text-lg font-medium text-white mb-2">
+                    {user ? "Drop images here or click to browse" : "Sign in to upload images"}
+                  </h3>
                   <p className="text-blue-200 mb-4">Supports: JPG, PNG, WebP, HEIC, TIFF up to 50MB</p>
                   <p className="text-sm text-gray-400">
                     Enhanced with {enhancementModels.filter((m) => m.status === "working").length} AI Models
                   </p>
+                  {!user && (
+                    <button
+                      onClick={() => setShowAuth(true)}
+                      className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors inline-flex items-center space-x-2"
+                    >
+                      <LogIn className="w-4 h-4" />
+                      <span>Sign In to Continue</span>
+                    </button>
+                  )}
                 </div>
                 <input
                   ref={fileInputRef}
@@ -913,13 +1107,7 @@ const AIImageEnhancementPortal = () => {
                             {file.status === "ready" && (
                               <button
                                 onClick={() => startProcessing(file.id)}
-                                disabled={false} // Remove the configuration check for now to test
-                                className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
-                                title={
-                                  !configResults?.summary?.replicateConfigured
-                                    ? "Configuration test recommended but not required"
-                                    : ""
-                                }
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
                               >
                                 <Play className="w-4 h-4" />
                                 <span>Enhance</span>
@@ -928,13 +1116,7 @@ const AIImageEnhancementPortal = () => {
                             {file.status === "failed" && (
                               <button
                                 onClick={() => startProcessing(file.id)}
-                                disabled={false} // Remove the configuration check for now to test
-                                className="bg-yellow-600 hover:bg-yellow-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
-                                title={
-                                  !configResults?.summary?.replicateConfigured
-                                    ? "Configuration test recommended but not required"
-                                    : ""
-                                }
+                                className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
                               >
                                 <RefreshCw className="w-4 h-4" />
                                 <span>Retry</span>
@@ -1071,14 +1253,13 @@ const AIImageEnhancementPortal = () => {
 
               {/* Processing Info */}
               <div className="bg-gradient-to-r from-green-900/20 to-blue-900/20 backdrop-blur-lg rounded-2xl border border-green-500/20 p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Replicate Processing</h3>
+                <h3 className="text-lg font-semibold text-white mb-4">Processing Status</h3>
 
-                {!configResults?.summary?.replicateConfigured && (
-                  <div className="bg-yellow-900/20 border border-yellow-500/20 rounded-lg p-3 mb-4">
-                    <div className="text-yellow-400 text-sm font-medium mb-1">⚠️ Configuration Not Tested</div>
-                    <div className="text-yellow-200 text-xs">
-                      Run the configuration test in the Configuration tab for optimal results, but you can still try
-                      processing.
+                {!user && (
+                  <div className="bg-blue-900/20 border border-blue-500/20 rounded-lg p-3 mb-4">
+                    <div className="text-blue-400 text-sm font-medium mb-1">🔐 Authentication Required</div>
+                    <div className="text-blue-200 text-xs">
+                      Sign in to access image enhancement features and track your processing history.
                     </div>
                   </div>
                 )}
@@ -1103,11 +1284,9 @@ const AIImageEnhancementPortal = () => {
                     </span>
                   </div>
                   <div className="flex justify-between text-gray-300">
-                    <span>Configuration:</span>
-                    <span
-                      className={configResults?.summary?.replicateConfigured ? "text-green-400" : "text-yellow-400"}
-                    >
-                      {configResults?.summary?.replicateConfigured ? "✅ Ready" : "⚠️ Not tested"}
+                    <span>User status:</span>
+                    <span className={user ? "text-green-400" : "text-yellow-400"}>
+                      {user ? "✅ Authenticated" : "⚠️ Not signed in"}
                     </span>
                   </div>
                 </div>
@@ -1120,7 +1299,20 @@ const AIImageEnhancementPortal = () => {
           <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-8">
             <h2 className="text-xl font-semibold text-white mb-6">Processing Queue</h2>
 
-            {processingQueue.length === 0 ? (
+            {!user ? (
+              <div className="text-center py-12">
+                <LogIn className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-400 mb-2">Sign in to view processing queue</p>
+                <p className="text-sm text-gray-500 mb-4">Track your image enhancement jobs and progress</p>
+                <button
+                  onClick={() => setShowAuth(true)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors inline-flex items-center space-x-2"
+                >
+                  <LogIn className="w-4 h-4" />
+                  <span>Sign In</span>
+                </button>
+              </div>
+            ) : processingQueue.length === 0 ? (
               <div className="text-center py-12">
                 <Settings className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-400">No images currently processing</p>
@@ -1161,7 +1353,20 @@ const AIImageEnhancementPortal = () => {
           <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-8">
             <h2 className="text-xl font-semibold text-white mb-6">Enhanced Images</h2>
 
-            {completedJobs.length === 0 ? (
+            {!user ? (
+              <div className="text-center py-12">
+                <LogIn className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-400 mb-2">Sign in to view enhanced images</p>
+                <p className="text-sm text-gray-500 mb-4">Access your completed image enhancements and downloads</p>
+                <button
+                  onClick={() => setShowAuth(true)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors inline-flex items-center space-x-2"
+                >
+                  <LogIn className="w-4 h-4" />
+                  <span>Sign In</span>
+                </button>
+              </div>
+            ) : completedJobs.length === 0 ? (
               <div className="text-center py-12">
                 <Download className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-400">No enhanced images yet</p>
@@ -1227,6 +1432,18 @@ const AIImageEnhancementPortal = () => {
           </div>
         )}
       </div>
+
+      {/* Profile Dialog */}
+      {user && (
+        <ProfileDialog
+          user={user}
+          isOpen={showProfile}
+          onClose={() => setShowProfile(false)}
+          onUpdateProfile={handleUpdateProfile}
+          completedJobs={completedJobs.length}
+          totalProcessingTime={`${Math.floor(completedJobs.length * 1.5)}m`}
+        />
+      )}
     </div>
   )
 }
