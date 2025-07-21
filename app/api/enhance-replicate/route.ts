@@ -1,400 +1,269 @@
 import { type NextRequest, NextResponse } from "next/server"
 
-/**
- * POST /api/enhance-replicate
- *
- * Enhanced image processing with Replicate AI models
- */
-export async function POST(req: NextRequest) {
-  const startTime = Date.now()
-  let step = "initialization"
-
-  console.log("🚀 Starting Replicate image enhancement...")
-  console.log("📊 Request method:", req.method)
-  console.log("📊 Request headers:", Object.fromEntries(req.headers.entries()))
-
+export async function POST(request: NextRequest) {
   try {
-    /* ------------------------------------------------------------------ */
-    step = "validate-token"
-    const token = process.env.REPLICATE_API_TOKEN
-    if (!token) {
-      console.error("❌ REPLICATE_API_TOKEN not configured")
+    console.log("🚀 Starting Replicate enhancement request")
+
+    // Check for API token
+    const replicateToken = process.env.REPLICATE_API_TOKEN
+    if (!replicateToken) {
+      console.error("❌ REPLICATE_API_TOKEN not found")
       return NextResponse.json(
         {
           success: false,
           error: "Replicate API token not configured",
-          step,
-          details: "Environment variable REPLICATE_API_TOKEN is missing",
+          step: "configuration",
         },
         { status: 500 },
       )
     }
-    if (!token.startsWith("r8_")) {
-      console.error("❌ Invalid REPLICATE_API_TOKEN format")
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Invalid Replicate API token format",
-          step,
-          details: "Token should start with 'r8_'",
-        },
-        { status: 500 },
-      )
-    }
-    console.log("✅ API token is configured and has correct format")
 
-    /* ------------------------------------------------------------------ */
-    step = "parse-form"
-    const formData = await req.formData().catch((e) => {
-      console.error("❌ Failed to parse form data:", e)
-      throw new Error(`Could not parse multipart form: ${e}`)
-    })
+    // Parse form data
+    const formData = await request.formData()
+    const file = formData.get("file") as File
+    const settingsStr = formData.get("settings") as string
 
-    const file = formData.get("file") as File | null
-    const settingsRaw = (formData.get("settings") as string) || "{}"
     if (!file) {
-      console.error("❌ No file field in form-data")
+      console.error("❌ No file provided")
       return NextResponse.json(
         {
           success: false,
           error: "No file provided",
-          step,
-          details: "File field is missing from form data",
+          step: "validation",
         },
         { status: 400 },
       )
     }
 
-    if (!file.type.startsWith("image/")) {
-      console.error("❌ Invalid file type:", file.type)
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Invalid file type",
-          step,
-          details: `Expected image file, got ${file.type}`,
-        },
-        { status: 400 },
-      )
-    }
-
-    if (file.size > 50 * 1024 * 1024) {
-      console.error("❌ File too large:", file.size)
-      return NextResponse.json(
-        {
-          success: false,
-          error: "File too large",
-          step,
-          details: `File size ${file.size} bytes exceeds 50MB limit`,
-        },
-        { status: 400 },
-      )
-    }
-
-    const settings = JSON.parse(settingsRaw) as {
-      model?: string
-      upscaleFactor?: number
-    }
-
-    console.log("📊 File info:", {
-      name: file?.name,
-      size: file?.size,
-      type: file?.type,
-      hasFile: !!file,
+    console.log("📁 File received:", {
+      name: file.name,
+      size: file.size,
+      type: file.type,
     })
-    console.log("📊 Settings:", settings)
 
-    /* ------------------------------------------------------------------ */
-    step = "buffer→b64"
-    const buffer = Buffer.from(await file.arrayBuffer())
-    const base64Image = `data:${file.type};base64,${buffer.toString("base64")}`
-    if (base64Image.length > 10 * 1024 * 1024) {
-      console.error("❌ Base64 image too large:", base64Image.length)
+    // Parse settings
+    let settings
+    try {
+      settings = JSON.parse(settingsStr || "{}")
+    } catch (error) {
+      console.error("❌ Invalid settings JSON:", error)
       return NextResponse.json(
         {
           success: false,
-          error: "Image too large for processing",
-          step,
-          details: `Base64 size ${base64Image.length} exceeds limit`,
+          error: "Invalid settings format",
+          step: "validation",
         },
         { status: 400 },
       )
     }
-    console.log(`✅ Converted to base64: ${base64Image.length} characters`)
 
-    /* ------------------------------------------------------------------ */
-    step = "model-map"
-    const modelMap = {
+    console.log("⚙️ Settings parsed:", settings)
+
+    // Model configuration
+    const modelConfigs = {
       "real-esrgan-4x": {
         model: "nightmareai/real-esrgan",
         version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
         inputField: "image",
-        /*  NEW: use tiling so the GPU never has to hold the whole frame.      *
-         *  512 is the official value recommended in the Replicate README.    */
-        getInput: (image, settings) => ({
-          image,
-          scale: 4,
-          tile: settings.tile || 512, // ✨ NEW
-          face_enhance: false, // ✨ keeps VRAM lower
-          fp32: false, // ✨ use half-precision
-        }),
-      },
-      "real-esrgan-2x": {
-        model: "nightmareai/real-esrgan",
-        version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
-        inputField: "image",
-        getInput: (image, settings) => ({
-          image,
-          scale: 2,
-          tile: settings.tile || 512, // ✨ NEW
-          face_enhance: false, // ✨
-          fp32: false, // ✨
-        }),
       },
       "gfpgan-face": {
         model: "tencentarc/gfpgan",
         version: "9283608cc6b7be6b65a8e44983db012355fde4132009bf99d976b2f0896856a3",
         inputField: "img",
-        getInput: (image, settings) => ({
-          img: image, // Note: GFPGAN uses 'img' not 'image'
-          scale: Math.min(settings.upscaleFactor || 2, 4),
-        }),
       },
       "codeformer-face": {
         model: "sczhou/codeformer",
         version: "7de2ea26c616d5bf2245ad0d5e24f0ff9a6204578a5c876db53142edd9d2cd56",
         inputField: "image",
-        getInput: (image, settings) => ({
-          image,
-          fidelity: 0.7,
-          upscale: Math.min(settings.upscaleFactor || 2, 4),
-          face_upsample: true,
-          background_enhance: true,
-          codeformer_fidelity: 0.7,
-        }),
       },
       "clarity-upscaler": {
         model: "philz1337x/clarity-upscaler",
         version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
         inputField: "image",
-        getInput: (image, settings) => ({
-          image,
-          scale_factor: Math.min(settings.upscaleFactor || 2, 4),
-          dynamic: 6,
-          creativity: 0.35,
-          resemblance: 0.6,
-          tiling: false,
-          sd_model: "juggernaut_reborn.safetensors [338b85bc4f]",
-        }),
       },
     }
 
     const selectedModel = settings.model || "real-esrgan-4x"
-    const modelConfig = modelMap[selectedModel]
+    const modelConfig = modelConfigs[selectedModel]
 
     if (!modelConfig) {
-      console.error(`❌ Unknown model: ${selectedModel}`)
-      console.error(`❌ Available models: ${Object.keys(modelMap).join(", ")}`)
+      console.error("❌ Unknown model:", selectedModel)
       return NextResponse.json(
         {
           success: false,
           error: `Unknown model: ${selectedModel}`,
-          step,
-          details: `Available models: ${Object.keys(modelMap).join(", ")}`,
+          step: "model-selection",
         },
         { status: 400 },
       )
     }
-    console.log(`✅ Using model: ${modelConfig.model} (${selectedModel})`)
 
-    /* ------------------------------------------------------------------ */
-    step = "create-prediction"
-    const createRes = await fetch("https://api.replicate.com/v1/predictions", {
-      method: "POST",
-      headers: {
-        Authorization: `Token ${token}`,
-        "Content-Type": "application/json",
-        Accept: "application/json",
+    console.log("🤖 Using model config:", modelConfig)
+
+    // Convert file to base64 data URL
+    const bytes = await file.arrayBuffer()
+    const buffer = Buffer.from(bytes)
+    const base64 = buffer.toString("base64")
+    const dataUrl = `data:${file.type};base64,${base64}`
+
+    console.log("📤 File converted to data URL, size:", dataUrl.length)
+
+    // Create prediction
+    const createUrl = "https://api.replicate.com/v1/predictions"
+    const createPayload = {
+      version: modelConfig.version,
+      input: {
+        [modelConfig.inputField]: dataUrl,
+        scale: settings.upscaleFactor || 2,
       },
-      body: JSON.stringify({
-        version: modelConfig.version,
-        input: modelConfig.getInput(base64Image, settings),
-      }),
-    })
-
-    if (createRes.status === 413) {
-      console.error("❌ Image too large for Replicate (413)")
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Image too large for Replicate (413)",
-          step,
-        },
-        { status: 413 },
-      )
     }
 
-    if (!createRes.ok) {
-      const t = await createRes.text()
-      console.error(`❌ Prediction creation failed: ${t}`)
+    console.log("🌐 Creating prediction with payload:", {
+      version: modelConfig.version,
+      inputField: modelConfig.inputField,
+      scale: settings.upscaleFactor || 2,
+    })
+
+    const createRes = await fetch(createUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Token ${replicateToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(createPayload),
+    })
+
+    console.log("📥 Create prediction response:", {
+      status: createRes.status,
+      statusText: createRes.statusText,
+      ok: createRes.ok,
+    })
+
+    let createData
+    try {
+      createData = await createRes.json()
+    } catch (parseError) {
+      console.error("❌ Failed to parse create prediction response as JSON:", parseError)
+      const textResponse = await createRes.text()
+      console.error("❌ Raw response text:", textResponse)
       return NextResponse.json(
         {
           success: false,
-          error: "Prediction creation failed",
-          step,
-          details: t.slice(0, 500),
+          error: `Failed to create prediction: ${textResponse}`,
+          step: "create-prediction",
         },
         { status: createRes.status },
       )
     }
 
-    // --- SAFER JSON PARSE -----------------------------------------------
-    let prediction: { id: string; status: string } | null = null
-    try {
-      prediction = (await createRes.json()) as { id: string; status: string }
-    } catch (jsonErr) {
-      // Replicate sometimes returns text (e.g. “Request Entity Too Large”)
-      const text = await createRes.text()
-      console.error("❌ Prediction creation JSON parse failed:", jsonErr)
-      console.error("❌ Raw response text:", text.slice(0, 200))
+    if (!createRes.ok) {
+      console.error("❌ Create prediction failed:", createData)
       return NextResponse.json(
         {
           success: false,
-          error: "Prediction creation returned non-JSON response",
-          step,
-          details: text.slice(0, 500),
-          statusCode: createRes.status,
+          error: createData.detail || createData.error || "Failed to create prediction",
+          step: "create-prediction",
+          details: createData,
         },
-        { status: 502 },
+        { status: createRes.status },
       )
     }
-    // --------------------------------------------------------------------
 
-    console.log("✅ Prediction creation response received")
-    console.log(`📊 Prediction keys: ${Object.keys(prediction || {}).join(", ")}`)
+    console.log("✅ Prediction created:", {
+      id: createData.id,
+      status: createData.status,
+    })
 
-    if (!prediction || !prediction.id) {
-      throw new Error("No prediction ID returned from Replicate")
-    }
+    // Poll for completion
+    const predictionId = createData.id
+    const maxAttempts = 60 // 5 minutes with 5-second intervals
+    let attempts = 0
 
-    console.log(`🔮 Prediction created: ${prediction.id}`)
-    console.log(`📊 Initial status: ${prediction.status}`)
+    while (attempts < maxAttempts) {
+      await new Promise((resolve) => setTimeout(resolve, 5000)) // Wait 5 seconds
+      attempts++
 
-    /* ------------------------------------------------------------------ */
-    step = "poll"
-    const deadline = Date.now() + 5 * 60 * 1000
-    let poll = prediction
-    while (["starting", "processing"].includes(poll.status)) {
-      if (Date.now() > deadline) {
-        console.error("❌ Prediction timed out after maximum attempts")
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Prediction timed out",
-            step,
-            details: {
-              predictionId: poll.id,
-              finalStatus: poll.status,
-              attempts: 0,
-              maxWaitTime: "300s",
-            },
-          },
-          { status: 408 },
-        )
-      }
+      console.log(`🔄 Polling attempt ${attempts}/${maxAttempts}`)
 
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-
-      const pollRes = await fetch(`https://api.replicate.com/v1/predictions/${poll.id}`, {
+      const pollRes = await fetch(`https://api.replicate.com/v1/predictions/${predictionId}`, {
         headers: {
-          Authorization: `Token ${token}`,
-          "Content-Type": "application/json",
+          Authorization: `Token ${replicateToken}`,
         },
       })
 
-      if (!pollRes.ok) {
-        const t = await pollRes.text()
-        console.error(`❌ Polling failed: ${t}`)
+      let pollData
+      try {
+        pollData = await pollRes.json()
+      } catch (parseError) {
+        console.error("❌ Failed to parse poll response as JSON:", parseError)
+        continue // Try again
+      }
+
+      console.log("📊 Poll response:", {
+        status: pollData.status,
+        progress: pollData.progress,
+      })
+
+      if (pollData.status === "succeeded") {
+        console.log("✅ Enhancement completed successfully")
+        return NextResponse.json({
+          success: true,
+          downloadUrl: pollData.output?.[0] || pollData.output,
+          predictionId: predictionId,
+          model: selectedModel,
+          method: "replicate",
+          processingTime: `${attempts * 5}s`,
+          enhancedSize: "Enhanced",
+        })
+      }
+
+      if (pollData.status === "failed") {
+        console.error("❌ Enhancement failed:", pollData.error)
         return NextResponse.json(
           {
             success: false,
-            error: "Polling failed",
-            step,
-            details: t.slice(0, 500),
+            error: pollData.error || "Enhancement failed",
+            step: "processing",
+            predictionId: predictionId,
           },
-          { status: pollRes.status },
+          { status: 500 },
         )
       }
 
-      poll = await pollRes.json()
-      console.log(`📊 Updated status: ${poll.status}`)
-
-      if (poll.logs) {
-        const recentLogs = poll.logs.slice(-200) // Last 200 chars
-        console.log(`📝 Recent logs: ${recentLogs}`)
+      if (pollData.status === "canceled") {
+        console.error("❌ Enhancement was canceled")
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Enhancement was canceled",
+            step: "processing",
+            predictionId: predictionId,
+          },
+          { status: 500 },
+        )
       }
+
+      // Continue polling for "starting" and "processing" statuses
     }
 
-    if (poll.status !== "succeeded" || !poll.output) {
-      console.error("❌ Prediction finished without output", poll)
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Prediction finished without output",
-          step,
-          details: poll,
-        },
-        { status: 500 },
-      )
-    }
-
-    const outputUrl = Array.isArray(poll.output) ? poll.output[0] : poll.output
-
-    console.log(`🎯 Enhanced image URL: ${outputUrl}`)
-
-    /* ------------------------------------------------------------------ */
-    step = "done"
-    const processingTime = `${Math.round((Date.now() - startTime) / 1000)}s`
-
-    const result = {
-      success: true,
-      downloadUrl: outputUrl,
-      model: selectedModel,
-      modelName: modelConfig.model,
-      replicateModel: modelConfig.model,
-      predictionId: poll.id,
-      processingTime,
-      originalFileName: file.name,
-      fileSize: `${Math.round(buffer.length / 1024)}KB`,
-      enhancedSize: `Enhanced with ${modelConfig.model}`,
-      upscaleFactor: settings.upscaleFactor || 2,
-      logs: poll.logs,
-      step: "completed",
-    }
-
-    console.log(`🎉 Enhancement completed successfully in ${processingTime}`)
-    console.log(`📊 Final result keys: ${Object.keys(result).join(", ")}`)
-
-    return NextResponse.json(result)
-  } catch (error) {
-    const processingTime = `${Math.round((Date.now() - startTime) / 1000)}s`
-
-    console.error(`❌ Enhancement failed at step ${step}:`, error)
-    console.error(`❌ Error name: ${error.name}`)
-    console.error(`❌ Error message: ${error.message}`)
-    console.error(`❌ Error stack: ${error.stack}`)
-
+    // Timeout
+    console.error("❌ Enhancement timed out")
     return NextResponse.json(
       {
         success: false,
-        error: error.message || "Unknown error occurred",
-        step,
-        processingTime,
-        timestamp: new Date().toISOString(),
-        details: {
-          errorName: error.name,
-          errorStack: error.stack?.split("\n").slice(0, 5).join("\n"), // First 5 lines of stack
-        },
+        error: "Enhancement timed out after 5 minutes",
+        step: "timeout",
+        predictionId: predictionId,
+      },
+      { status: 408 },
+    )
+  } catch (error) {
+    console.error("❌ Unexpected error:", error)
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message || "Internal server error",
+        step: "unexpected",
       },
       { status: 500 },
     )

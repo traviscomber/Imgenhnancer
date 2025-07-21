@@ -603,31 +603,45 @@ const AIImageEnhancementPortal = () => {
                   </button>
                 </div>
 
-                {/* Before/After Preview */}
+                {/* Before/After Preview with Real Images */}
                 <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-8 max-w-4xl mx-auto">
                   <h3 className="text-2xl font-semibold text-white mb-6">See the Difference</h3>
                   <div className="grid md:grid-cols-2 gap-8">
                     <div className="space-y-4">
                       <div className="bg-red-900/20 border border-red-500/20 rounded-lg p-4">
-                        <h4 className="text-red-400 font-medium mb-2">Before Enhancement</h4>
-                        <div className="aspect-video bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg flex items-center justify-center">
-                          <div className="text-gray-400 text-center">
-                            <ImageIcon className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                            <p className="text-sm">Low Resolution Image</p>
-                          </div>
+                        <h4 className="text-red-400 font-medium mb-4">Before Enhancement</h4>
+                        <div className="aspect-video bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg overflow-hidden">
+                          <img
+                            src="/before-example.png"
+                            alt="Low resolution image before AI enhancement"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="mt-3 text-center">
+                          <p className="text-sm text-gray-400">Original: 480x320 • Blurry & Low Detail</p>
                         </div>
                       </div>
                     </div>
                     <div className="space-y-4">
                       <div className="bg-green-900/20 border border-green-500/20 rounded-lg p-4">
-                        <h4 className="text-green-400 font-medium mb-2">After AI Enhancement</h4>
-                        <div className="aspect-video bg-gradient-to-br from-blue-900/20 to-purple-900/20 rounded-lg flex items-center justify-center">
-                          <div className="text-blue-400 text-center">
-                            <Sparkles className="w-12 h-12 mx-auto mb-2" />
-                            <p className="text-sm">4K Enhanced Quality</p>
-                          </div>
+                        <h4 className="text-green-400 font-medium mb-4">After AI Enhancement</h4>
+                        <div className="aspect-video bg-gradient-to-br from-blue-900/20 to-purple-900/20 rounded-lg overflow-hidden">
+                          <img
+                            src="/after-example.png"
+                            alt="High resolution image after AI enhancement"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="mt-3 text-center">
+                          <p className="text-sm text-blue-400">Enhanced: 1920x1280 • Sharp & Detailed</p>
                         </div>
                       </div>
+                    </div>
+                  </div>
+                  <div className="mt-6 text-center">
+                    <div className="inline-flex items-center space-x-2 bg-blue-600/10 border border-blue-500/20 rounded-full px-4 py-2">
+                      <Sparkles className="w-4 h-4 text-blue-400" />
+                      <span className="text-sm text-blue-200">4x upscaling with Real-ESRGAN AI model</span>
                     </div>
                   </div>
                 </div>
