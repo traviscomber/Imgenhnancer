@@ -1,5 +1,51 @@
 import { NextResponse } from "next/server"
-import { db, supabase } from "@/lib/database"
+import { createClient } from "@supabase/supabase-js"
+
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+
+// Database helper functions
+const db = {
+  async checkTableExists(tableName: string): Promise<boolean> {
+    try {
+      const { data, error } = await supabase
+        .from("information_schema.tables")
+        .select("table_name")
+        .eq("table_schema", "public")
+        .eq("table_name", tableName)
+        .single()
+
+      return !error && !!data
+    } catch {
+      return false
+    }
+  },
+
+  async getTableCount(tableName: string): Promise<number> {
+    try {
+      const { count, error } = await supabase.from(tableName).select("*", { count: "exact", head: true })
+
+      return error ? 0 : count || 0
+    } catch {
+      return 0
+    }
+  },
+
+  async createSystemLog(logData: any) {
+    const { data, error } = await supabase.from("system_logs").insert({
+      user_id: null,
+      action: logData.action,
+      resource_type: logData.resourceType,
+      resource_id: logData.resourceId || null,
+      details: logData.details,
+      ip_address: "127.0.0.1",
+      user_agent: "Database Health Check",
+      severity: logData.severity || "info",
+    })
+
+    if (error) throw error
+    return data
+  },
+}
 
 export async function GET() {
   try {
@@ -29,6 +75,7 @@ export async function GET() {
     // Check if core tables exist
     const coreTableChecks = await Promise.all([
       db.checkTableExists("users"),
+      db.checkTableExists("user_roles"),
       db.checkTableExists("ai_models"),
       db.checkTableExists("processing_jobs"),
       db.checkTableExists("user_sessions"),
@@ -42,15 +89,16 @@ export async function GET() {
 
     const tableStatus = {
       users: coreTableChecks[0],
-      ai_models: coreTableChecks[1],
-      processing_jobs: coreTableChecks[2],
-      user_sessions: coreTableChecks[3],
-      system_logs: coreTableChecks[4],
-      usage_analytics: coreTableChecks[5],
-      system_metrics: coreTableChecks[6],
-      api_keys: coreTableChecks[7],
-      file_storage: coreTableChecks[8],
-      batch_jobs: coreTableChecks[9],
+      user_roles: coreTableChecks[1],
+      ai_models: coreTableChecks[2],
+      processing_jobs: coreTableChecks[3],
+      user_sessions: coreTableChecks[4],
+      system_logs: coreTableChecks[5],
+      usage_analytics: coreTableChecks[6],
+      system_metrics: coreTableChecks[7],
+      api_keys: coreTableChecks[8],
+      file_storage: coreTableChecks[9],
+      batch_jobs: coreTableChecks[10],
     }
 
     console.log("📊 Table status:", tableStatus)
@@ -97,34 +145,49 @@ export async function GET() {
     let demoDataStatus = {}
     try {
       // Check demo users
-      const { data: users, error: usersError } = await supabase.from("users").select("id, email, name, role").limit(5)
+      const { data: users, error: usersError } = await supabase
+        .from("users")
+        .select("id, email, name, role, subscription_tier, credits_remaining")
+        .limit(5)
 
       if (!usersError && users) {
         demoDataStatus = {
           ...demoDataStatus,
           users: users.length,
-          demoUsers: users.map((u) => ({ email: u.email, name: u.name, role: u.role })),
+          demoUsers: users.map((u) => ({
+            email: u.email,
+            name: u.name,
+            role: u.role,
+            tier: u.subscription_tier,
+            credits: u.credits_remaining,
+          })),
         }
       }
 
       // Check AI models
       const { data: models, error: modelsError } = await supabase
         .from("ai_models")
-        .select("model_id, name, provider, status")
+        .select("model_id, name, provider, status, pricing_tier")
         .eq("status", "active")
 
       if (!modelsError && models) {
         demoDataStatus = {
           ...demoDataStatus,
           activeModels: models.length,
-          models: models.map((m) => ({ id: m.model_id, name: m.name, provider: m.provider })),
+          models: models.map((m) => ({
+            id: m.model_id,
+            name: m.name,
+            provider: m.provider,
+            pricing: m.pricing_tier,
+          })),
         }
       }
 
       // Check processing jobs
       const { data: jobs, error: jobsError } = await supabase
         .from("processing_jobs")
-        .select("id, status, original_filename")
+        .select("id, status, original_filename, model_used, upscale_factor, created_at")
+        .order("created_at", { ascending: false })
         .limit(10)
 
       if (!jobsError && jobs) {
@@ -137,6 +200,13 @@ export async function GET() {
           ...demoDataStatus,
           totalJobs: jobs.length,
           jobsByStatus: statusCounts,
+          recentJobs: jobs.slice(0, 3).map((j) => ({
+            id: j.id,
+            status: j.status,
+            filename: j.original_filename,
+            model: j.model_used,
+            upscale: j.upscale_factor,
+          })),
         }
       }
 
@@ -147,7 +217,31 @@ export async function GET() {
         demoDataStatus = {
           ...demoDataStatus,
           userStatsView: userStatsData.length > 0,
-          sampleUserStats: userStatsData.slice(0, 2),
+          sampleUserStats: userStatsData.slice(0, 2).map((u) => ({
+            name: u.name,
+            totalJobs: u.total_jobs,
+            completedJobs: u.completed_jobs,
+            successRate: u.success_rate,
+          })),
+        }
+      }
+
+      // Check system logs
+      const { data: logs, error: logsError } = await supabase
+        .from("system_logs")
+        .select("action, severity, created_at")
+        .order("created_at", { ascending: false })
+        .limit(5)
+
+      if (!logsError && logs) {
+        demoDataStatus = {
+          ...demoDataStatus,
+          systemLogs: logs.length,
+          recentLogs: logs.map((l) => ({
+            action: l.action,
+            severity: l.severity,
+            time: l.created_at,
+          })),
         }
       }
     } catch (error) {
@@ -172,23 +266,43 @@ export async function GET() {
 
     // Generate recommendations
     const recommendations = []
-    if (!allTablesExist) {
-      recommendations.push("❌ Run missing SQL scripts to create all tables")
+    const missingTables = Object.entries(tableStatus)
+      .filter(([_, exists]) => !exists)
+      .map(([name, _]) => name)
+
+    if (missingTables.length > 0) {
+      recommendations.push(`❌ Missing tables: ${missingTables.join(", ")}`)
+      recommendations.push("📝 Run SQL scripts 01-05 in order to create all tables")
     }
-    if (!hasData) {
-      recommendations.push("📝 Run 05-seed-demo-data.sql to populate demo data")
+
+    if (!hasData && allTablesExist) {
+      recommendations.push("📝 Tables exist but no data found - run 05-seed-demo-data.sql")
     }
-    if (!hasViews) {
-      recommendations.push("👁️ Run 04-create-views.sql to create analytics views")
+
+    if (!hasViews && allTablesExist) {
+      recommendations.push("👁️ Views missing - run 04-create-views.sql")
     }
+
     if (allTablesExist && hasData && hasViews) {
       recommendations.push("✅ Database is fully configured and ready!")
       recommendations.push("🚀 You can now test authentication and image processing")
     }
 
+    // Calculate setup progress
+    const tablesProgress = (Object.values(tableStatus).filter(Boolean).length / Object.keys(tableStatus).length) * 100
+    const dataProgress = hasData ? 100 : 0
+    const viewsProgress = (viewsExist.length / 10) * 100
+    const overallProgress = Math.round((tablesProgress + dataProgress + viewsProgress) / 3)
+
     return NextResponse.json({
       success: true,
       timestamp: new Date().toISOString(),
+      setupProgress: {
+        overall: overallProgress,
+        tables: Math.round(tablesProgress),
+        data: dataProgress,
+        views: Math.round(viewsProgress),
+      },
       database: {
         connected: true,
         tables: tableStatus,
@@ -199,6 +313,7 @@ export async function GET() {
         hasViews,
         totalTables: Object.keys(tableStatus).length,
         totalViews: viewsExist.length,
+        missingTables,
       },
       demoData: demoDataStatus,
       environment: envCheck,
@@ -206,15 +321,17 @@ export async function GET() {
       nextSteps:
         allTablesExist && hasData
           ? [
-              "Test user authentication with demo users",
-              "Try image enhancement with available AI models",
-              "Explore the admin dashboard for analytics",
-              "Test API endpoints for job processing",
+              "✅ Database setup complete!",
+              "🔐 Test user authentication with demo users",
+              "🖼️ Try image enhancement with available AI models",
+              "📊 Explore the admin dashboard for analytics",
+              "🔌 Test API endpoints for job processing",
             ]
           : [
-              "Complete database setup by running remaining SQL scripts",
-              "Verify all tables and views are created",
-              "Populate demo data for testing",
+              "📋 Complete database setup by running remaining SQL scripts",
+              "✔️ Verify all tables and views are created",
+              "🎯 Populate demo data for testing",
+              "🔍 Run this endpoint again to verify setup",
             ],
     })
   } catch (error: any) {
@@ -231,6 +348,7 @@ export async function GET() {
           "Verify Supabase connection credentials",
           "Ensure database permissions are correct",
           "Check Supabase project status and billing",
+          "Try running the scripts again in Supabase SQL Editor",
         ],
       },
       { status: 500 },
