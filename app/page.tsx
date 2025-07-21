@@ -371,28 +371,24 @@ const AIImageEnhancementPortal = () => {
         headers: Object.fromEntries(response.headers.entries()),
       })
 
-      // Handle response
-      let result
-      const contentType = response.headers.get("content-type")
+      // ──────────────────────────────────────────────────────────
+      // SAFER RESPONSE-PARSE: accept JSON or plain-text errors
+      // ──────────────────────────────────────────────────────────
+      let result: any
+      const rawContentType = response.headers.get("content-type") ?? ""
+      const isJSON = rawContentType.includes("application/json")
 
-      if (contentType && contentType.includes("application/json")) {
-        try {
-          result = await response.json()
-          console.log("📊 JSON response parsed:", result)
-        } catch (parseError) {
-          console.error("❌ Failed to parse JSON response:", parseError)
-          const text = await response.text()
-          console.error("❌ Raw response text:", text)
-          throw new Error(`Failed to parse response: ${parseError.message}`)
-        }
-      } else {
-        const text = await response.text()
-        console.error("❌ Non-JSON response:", text)
-        result = {
-          success: false,
-          error: text || `HTTP ${response.status} ${response.statusText}`,
-          step: "response_parsing",
-        }
+      try {
+        result = isJSON ? await response.json() : await response.text()
+      } catch (parseErr) {
+        // Fallback → treat as text when JSON parsing blows up
+        console.warn("⚠️  JSON parse failed, treating as text:", parseErr)
+        result = await response.text()
+      }
+
+      // Force uniform object shape
+      if (typeof result === "string") {
+        result = { success: false, error: result.trim(), step: "response" }
       }
 
       // Remove from processing queue
