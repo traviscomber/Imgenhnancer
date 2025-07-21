@@ -966,27 +966,73 @@ const AIImageEnhancementPortal = () => {
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {completedJobs.map((job) => (
                     <div key={job.id} className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
-                      <div className="aspect-video bg-gradient-to-br from-blue-900/20 to-purple-900/20 flex items-center justify-center">
-                        <img
-                          src={job.downloadUrl || "/placeholder.svg"}
-                          alt={`Enhanced ${job.originalFileName}`}
-                          className="w-full h-full object-contain"
-                          crossOrigin="anonymous"
-                        />
+                      <div className="aspect-video bg-gradient-to-br from-blue-900/20 to-purple-900/20 flex items-center justify-center relative">
+                        {job.downloadUrl ? (
+                          <img
+                            src={job.downloadUrl || "/placeholder.svg"}
+                            alt={`Enhanced ${job.originalFileName}`}
+                            className="w-full h-full object-contain"
+                            onError={(e) => {
+                              console.error("Failed to load enhanced image:", job.downloadUrl)
+                              e.target.style.display = "none"
+                              e.target.nextSibling.style.display = "flex"
+                            }}
+                            onLoad={() => {
+                              console.log("Successfully loaded enhanced image:", job.downloadUrl)
+                            }}
+                          />
+                        ) : null}
+                        <div
+                          className="w-full h-full flex items-center justify-center text-white"
+                          style={{ display: job.downloadUrl ? "none" : "flex" }}
+                        >
+                          <div className="text-center">
+                            <ImageIcon className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+                            <p className="text-sm text-gray-400">Enhanced image</p>
+                            {job.downloadUrl && <p className="text-xs text-red-400 mt-1">Failed to load</p>}
+                          </div>
+                        </div>
                       </div>
                       <div className="p-4 space-y-3">
-                        <p className="text-white font-semibold">{job.originalFileName}</p>
-                        <div className="flex items-center space-x-2 text-sm text-green-400">
-                          <Check className="w-4 h-4" />
-                          <span>Enhanced • {job.upscaleFactor}x</span>
+                        <div>
+                          <p className="text-white font-semibold">{job.originalFileName}</p>
+                          <p className="text-xs text-gray-400">Model: {job.model}</p>
                         </div>
-                        <button
-                          onClick={() => window.open(job.downloadUrl, "_blank")}
-                          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-2 rounded-lg transition-all flex items-center justify-center space-x-2 font-medium"
-                        >
-                          <Download className="w-4 h-4" />
-                          <span>Download</span>
-                        </button>
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center space-x-2 text-green-400">
+                            <Check className="w-4 h-4" />
+                            <span>Enhanced • {job.upscaleFactor}x</span>
+                          </div>
+                          <span className="text-blue-400">{job.processingTime}</span>
+                        </div>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => {
+                              if (job.downloadUrl) {
+                                window.open(job.downloadUrl, "_blank")
+                              } else {
+                                console.error("No download URL available for job:", job)
+                              }
+                            }}
+                            disabled={!job.downloadUrl}
+                            className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white py-2 rounded-lg transition-all flex items-center justify-center space-x-2 font-medium"
+                          >
+                            <Download className="w-4 h-4" />
+                            <span>Download</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              console.log("Job details:", job)
+                              alert(
+                                `Job Details:\nID: ${job.id}\nModel: ${job.model}\nURL: ${job.downloadUrl || "No URL"}\nStatus: ${job.status}`,
+                              )
+                            }}
+                            className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all"
+                            title="Debug Info"
+                          >
+                            <AlertCircle className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}
