@@ -4,31 +4,33 @@ import { useState, useRef, useCallback, useEffect } from "react"
 import {
   Upload,
   ImageIcon,
+  Settings,
   Download,
   Zap,
   Monitor,
   Printer,
   Loader2,
+  CheckCircle,
+  Play,
   X,
   RefreshCw,
   AlertCircle,
+  Search,
+  Database,
+  Activity,
+  TestTube,
+  Key,
+  ExternalLink,
   Shield,
   LogIn,
-  Star,
-  Check,
-  Sparkles,
-  TrendingUp,
-  Award,
-  Globe,
-  Camera,
-  Palette,
-  Wand2,
-  Rocket,
+  Users,
 } from "lucide-react"
 import { LoginForm } from "@/components/auth/login-form"
 import { SignupForm } from "@/components/auth/signup-form"
 import { UserMenu } from "@/components/auth/user-menu"
-import { GalleryItem } from "@/components/gallery-item"
+import { ProfileDialog } from "@/components/auth/profile-dialog"
+import { UserManagement } from "@/components/admin/user-management"
+import { RoleManagement } from "@/components/admin/role-management"
 
 const AIImageEnhancementPortal = () => {
   // Authentication state
@@ -38,11 +40,16 @@ const AIImageEnhancementPortal = () => {
   const [isAuthLoading, setIsAuthLoading] = useState(false)
   const [showProfile, setShowProfile] = useState(false)
 
-  // Processing state
+  // Existing state
   const [selectedFiles, setSelectedFiles] = useState([])
   const [processingQueue, setProcessingQueue] = useState([])
   const [completedJobs, setCompletedJobs] = useState([])
-  const [activeTab, setActiveTab] = useState("home")
+  const [activeTab, setActiveTab] = useState("upload")
+  const [adminSubTab, setAdminSubTab] = useState("config")
+  const [discoveryResults, setDiscoveryResults] = useState(null)
+  const [configResults, setConfigResults] = useState(null)
+  const [isDiscovering, setIsDiscovering] = useState(false)
+  const [isTesting, setIsTesting] = useState(false)
   const [enhancementSettings, setEnhancementSettings] = useState({
     model: "real-esrgan-4x",
     upscaleFactor: 2,
@@ -53,7 +60,6 @@ const AIImageEnhancementPortal = () => {
     denoise: true,
     sharpen: false,
     faceEnhance: false,
-    apiEndpoint: "replicate", // Default to replicate
   })
   const fileInputRef = useRef(null)
 
@@ -93,7 +99,7 @@ const AIImageEnhancementPortal = () => {
   const handleLogout = () => {
     setUser(null)
     localStorage.removeItem("ai-enhancer-user")
-    setActiveTab("home")
+    setActiveTab("upload")
     setSelectedFiles([])
     setProcessingQueue([])
     setCompletedJobs([])
@@ -108,119 +114,86 @@ const AIImageEnhancementPortal = () => {
   // Check if user is admin (simple check for demo)
   const isAdmin = user?.email === "admin@example.com" || user?.email === "demo@example.com"
 
-  // Simplified API endpoints - only Replicate and Simple
-  const apiEndpoints = [
-    {
-      id: "replicate",
-      name: "Replicate API",
-      description: "High-quality models with reliable processing",
-      maxFileSize: 9 * 1024 * 1024, // 9MB (safe under 10MB limit)
-      endpoint: "/api/enhance-replicate",
-      processingTime: "60-120s",
-      reliability: "High",
-      recommended: true,
-    },
-    {
-      id: "simple",
-      name: "Simple Enhancement",
-      description: "Fast processing with basic models",
-      maxFileSize: 10 * 1024 * 1024, // 10MB
-      endpoint: "/api/simple-enhance",
-      processingTime: "15-60s",
-      reliability: "Medium",
-      recommended: false,
-    },
-  ]
-
-  // Updated with higher file size limits for AI-generated images
+  // Updated with discovered working models
   const enhancementModels = [
     {
       id: "real-esrgan-4x",
-      name: "Real-ESRGAN 4x",
-      description: "Professional upscaling for photos and artwork",
+      name: "Real-ESRGAN 4x (nightmareai)",
+      description: "AI-powered image upscaling using Real-ESRGAN (2x-4x upscaling)",
       maxUpscale: 4,
-      maxFileSize: 9 * 1024 * 1024, // 9MB for Replicate
       replicateModel: "nightmareai/real-esrgan",
       version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
-      category: "General Purpose",
+      category: "upscaling",
       recommended: true,
       status: "working",
       inputField: "image",
-      processingTime: "30-60s",
-      bestFor: "Photos, artwork, general images",
-      icon: ImageIcon,
     },
     {
-      id: "gfpgan-face",
-      name: "GFPGAN",
-      description: "Specialized face restoration and enhancement",
-      maxUpscale: 4,
-      maxFileSize: 6 * 1024 * 1024, // 6MB for face models
-      replicateModel: "tencentarc/gfpgan",
-      version: "9283608cc6b7be6b65a8e44983db012355fde4132009bf99d976b2f0896856a3",
-      category: "Face Enhancement",
-      recommended: false,
-      status: "working",
-      inputField: "img",
-      processingTime: "45-90s",
-      bestFor: "Portrait photos, face restoration",
-      icon: Camera,
-    },
-    {
-      id: "codeformer-face",
-      name: "CodeFormer",
-      description: "Advanced face restoration with fidelity control",
-      maxUpscale: 4,
-      maxFileSize: 6 * 1024 * 1024, // 6MB for face models
-      replicateModel: "sczhou/codeformer",
-      version: "7de2ea26c616d5bf2245ad0d5e24f0ff9a6204578a5c876db53142edd9d2cd56",
-      category: "Portrait Enhancement",
+      id: "real-esrgan-2x",
+      name: "Real-ESRGAN 2x (Fast)",
+      description: "Faster 2x upscaling with Real-ESRGAN",
+      maxUpscale: 2,
+      replicateModel: "nightmareai/real-esrgan",
+      version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
+      category: "upscaling",
       recommended: false,
       status: "working",
       inputField: "image",
-      processingTime: "60-120s",
-      bestFor: "Professional portraits, headshots",
-      icon: Palette,
+    },
+    {
+      id: "gfpgan-face",
+      name: "GFPGAN Face Enhancement",
+      description: "Specialized face restoration and enhancement",
+      maxUpscale: 4,
+      replicateModel: "tencentarc/gfpgan",
+      version: "9283608cc6b7be6b65a8e44983db012355fde4132009bf99d976b2f0896856a3",
+      category: "face",
+      recommended: false,
+      status: "working",
+      inputField: "img",
+    },
+    {
+      id: "codeformer-face",
+      name: "CodeFormer Face Restoration",
+      description: "Robust face restoration with fidelity control",
+      maxUpscale: 4,
+      replicateModel: "sczhou/codeformer",
+      version: "7de2ea26c616d5bf2245ad0d5e24f0ff9a6204578a5c876db53142edd9d2cd56",
+      category: "face",
+      recommended: false,
+      status: "working",
+      inputField: "image",
     },
     {
       id: "clarity-upscaler",
       name: "Clarity Upscaler",
-      description: "High-quality upscaling with clarity enhancement",
+      description: "High-quality image upscaling with clarity enhancement",
       maxUpscale: 4,
-      maxFileSize: 8 * 1024 * 1024, // 8MB
       replicateModel: "philz1337x/clarity-upscaler",
       version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
-      category: "Professional",
+      category: "upscaling",
       recommended: false,
       status: "working",
       inputField: "image",
-      processingTime: "45-75s",
-      bestFor: "Professional photography, print",
-      icon: Wand2,
     },
   ]
 
   const handleFileSelect = useCallback(
-    async (files) => {
+    (files) => {
       if (!user) {
         setShowAuth(true)
         return
       }
 
-      const newFiles = await Promise.all(
-        Array.from(files).map(async (file) => {
-          return {
-            id: Date.now() + Math.random(),
-            file: file,
-            name: file.name,
-            size: file.size,
-            preview: URL.createObjectURL(file),
-            status: "ready",
-            error: null,
-          }
-        }),
-      )
-
+      const newFiles = Array.from(files).map((file) => ({
+        id: Date.now() + Math.random(),
+        file,
+        name: file.name,
+        size: file.size,
+        preview: URL.createObjectURL(file),
+        status: "ready",
+        error: null,
+      }))
       setSelectedFiles((prev) => [...prev, ...newFiles])
     },
     [user],
@@ -237,59 +210,6 @@ const AIImageEnhancementPortal = () => {
   const handleDragOver = useCallback((e) => {
     e.preventDefault()
   }, [])
-
-  const compressImage = async (file, maxSizeBytes = 3 * 1024 * 1024, quality = 0.8) => {
-    return new Promise((resolve) => {
-      const canvas = document.createElement("canvas")
-      const ctx = canvas.getContext("2d")
-      const img = new Image()
-
-      img.onload = () => {
-        // Calculate new dimensions to reduce file size if needed
-        let { width, height } = img
-        const aspectRatio = width / height
-
-        // Reduce dimensions if file is too large
-        const targetPixels = Math.sqrt(maxSizeBytes / (file.size / (width * height)))
-        if (targetPixels < 1) {
-          width = Math.floor(width * targetPixels)
-          height = Math.floor(height * targetPixels)
-        }
-
-        // Set canvas size
-        canvas.width = width
-        canvas.height = height
-
-        // Draw and compress
-        ctx.drawImage(img, 0, 0, width, height)
-
-        // Convert to blob
-        canvas.toBlob(
-          (blob) => {
-            if (blob && blob.size < file.size) {
-              // Create new file object with compressed data
-              const compressedFile = new File([blob], file.name, {
-                type: "image/jpeg",
-                lastModified: Date.now(),
-              })
-              console.log(
-                `🗜️ Compressed ${file.name}: ${formatFileSize(file.size)} → ${formatFileSize(compressedFile.size)}`,
-              )
-              resolve(compressedFile)
-            } else {
-              // Return original if compression didn't help
-              resolve(file)
-            }
-          },
-          "image/jpeg",
-          quality,
-        )
-      }
-
-      img.onerror = () => resolve(file)
-      img.src = URL.createObjectURL(file)
-    })
-  }
 
   const startProcessing = async (fileId) => {
     if (!user) {
@@ -329,62 +249,35 @@ const AIImageEnhancementPortal = () => {
         throw new Error(`Invalid file type: ${fileToProcess.file.type}`)
       }
 
-      // Get the selected API endpoint
-      const selectedEndpoint = apiEndpoints.find((ep) => ep.id === enhancementSettings.apiEndpoint) || apiEndpoints[0]
-      const maxSize = selectedEndpoint.maxFileSize
-
-      let processFile = fileToProcess.file
-
-      // Auto-compress if file is too large for the selected endpoint
-      if (processFile.size > maxSize) {
-        console.log(
-          `📏 File size ${formatFileSize(processFile.size)} exceeds ${selectedEndpoint.name} limit ${formatFileSize(maxSize)}`,
-        )
-
-        // Update progress
-        setProcessingQueue((prev) =>
-          prev.map((j) => (j.id === job.id ? { ...j, progress: "Compressing image..." } : j)),
-        )
-
-        try {
-          processFile = await compressImage(processFile, maxSize * 0.8) // Target 80% of max size
-          console.log(`✅ Compression result: ${formatFileSize(processFile.size)}`)
-
-          if (processFile.size > maxSize) {
-            throw new Error(
-              `File still too large after compression: ${formatFileSize(processFile.size)} (max: ${formatFileSize(maxSize)} for ${selectedEndpoint.name}). Try a different API endpoint or reduce image dimensions manually.`,
-            )
-          }
-        } catch (compressionError) {
-          console.error("❌ Compression failed:", compressionError)
-          throw new Error(`Failed to compress image: ${compressionError.message}`)
-        }
+      if (fileToProcess.file.size > 50 * 1024 * 1024) {
+        throw new Error(`File too large: ${fileToProcess.file.size} bytes`)
       }
 
       console.log("✅ File validation passed")
 
       // Create form data
       const formData = new FormData()
-      formData.append("file", processFile)
+      formData.append("file", fileToProcess.file)
       formData.append("settings", JSON.stringify(enhancementSettings))
 
       console.log("📤 Form data created with keys:", Array.from(formData.keys()))
       console.log("📤 Settings being sent:", enhancementSettings)
-      console.log("📤 Final file size:", formatFileSize(processFile.size))
-      console.log("📤 Using API endpoint:", selectedEndpoint.name, selectedEndpoint.endpoint)
+
+      const selectedModel = enhancementModels.find((m) => m.id === enhancementSettings.model)
+      const modelName = selectedModel?.replicateModel || "nightmareai/real-esrgan"
 
       // Update progress
       setProcessingQueue((prev) =>
-        prev.map((j) => (j.id === job.id ? { ...j, progress: `Processing with ${selectedEndpoint.name}...` } : j)),
+        prev.map((j) => (j.id === job.id ? { ...j, progress: `Uploading to ${modelName}...` } : j)),
       )
 
-      console.log("🌐 Sending request to", selectedEndpoint.endpoint)
+      console.log("🌐 Sending request to /api/enhance-replicate...")
 
       // Send request with timeout
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 15 * 60 * 1000) // 15 minute timeout
+      const timeoutId = setTimeout(() => controller.abort(), 10 * 60 * 1000) // 10 minute timeout
 
-      const response = await fetch(selectedEndpoint.endpoint, {
+      const response = await fetch("/api/enhance-replicate", {
         method: "POST",
         body: formData,
         signal: controller.signal,
@@ -399,21 +292,28 @@ const AIImageEnhancementPortal = () => {
         headers: Object.fromEntries(response.headers.entries()),
       })
 
-      // Parse response safely
-      let result: any
-      const rawContentType = response.headers.get("content-type") ?? ""
-      const isJSON = rawContentType.includes("application/json")
+      // Handle response
+      let result
+      const contentType = response.headers.get("content-type")
 
-      try {
-        result = isJSON ? await response.json() : await response.text()
-      } catch (parseErr) {
-        console.warn("⚠️  JSON parse failed, treating as text:", parseErr)
-        result = await response.text()
-      }
-
-      // Force uniform object shape
-      if (typeof result === "string") {
-        result = { success: false, error: result.trim(), step: "response" }
+      if (contentType && contentType.includes("application/json")) {
+        try {
+          result = await response.json()
+          console.log("📊 JSON response parsed:", result)
+        } catch (parseError) {
+          console.error("❌ Failed to parse JSON response:", parseError)
+          const text = await response.text()
+          console.error("❌ Raw response text:", text)
+          throw new Error(`Failed to parse response: ${parseError.message}`)
+        }
+      } else {
+        const text = await response.text()
+        console.error("❌ Non-JSON response:", text)
+        result = {
+          success: false,
+          error: text || `HTTP ${response.status} ${response.statusText}`,
+          step: "response_parsing",
+        }
       }
 
       // Remove from processing queue
@@ -421,21 +321,6 @@ const AIImageEnhancementPortal = () => {
 
       if (result.success) {
         console.log("✅ Enhancement successful:", result)
-        console.log("🔗 Download URL received:", result.downloadUrl)
-
-        // Validate the download URL
-        if (!result.downloadUrl || typeof result.downloadUrl !== "string") {
-          console.error("❌ Invalid download URL:", result.downloadUrl)
-          throw new Error("Invalid download URL received from server")
-        }
-
-        // Test if the URL is accessible
-        try {
-          const testResponse = await fetch(result.downloadUrl, { method: "HEAD" })
-          console.log("🔍 URL test response:", testResponse.status, testResponse.statusText)
-        } catch (urlError) {
-          console.warn("⚠️ URL test failed:", urlError.message)
-        }
 
         setCompletedJobs((prev) => [
           ...prev,
@@ -444,26 +329,17 @@ const AIImageEnhancementPortal = () => {
             status: "completed",
             completedAt: Date.now(),
             originalSize: `${fileToProcess.file.name} (${formatFileSize(fileToProcess.file.size)})`,
-            processedSize: `${processFile.name} (${formatFileSize(processFile.size)})`,
             enhancedSize: result.enhancedSize || "Enhanced",
             fileSize: result.fileSize || "Unknown size",
             downloadUrl: result.downloadUrl,
             originalFileName: fileToProcess.name,
-            originalPreview: fileToProcess.preview,
             model: result.model || enhancementSettings.model,
-            method: result.method || selectedEndpoint.id,
+            method: result.method || "replicate",
             upscaleFactor: enhancementSettings.upscaleFactor,
             processingTime: result.processingTime || "Unknown",
             predictionId: result.predictionId,
-            wasCompressed: processFile.size < fileToProcess.file.size,
-            apiEndpoint: selectedEndpoint.name,
           },
         ])
-
-        // Auto-switch to gallery to show result
-        setTimeout(() => {
-          setActiveTab("results")
-        }, 1000)
       } else {
         console.error("❌ Enhancement failed:", result)
 
@@ -476,8 +352,6 @@ const AIImageEnhancementPortal = () => {
             error: result.error || "Unknown error",
             details: result.details || null,
             step: result.step || "unknown",
-            suggestions: result.suggestions || [],
-            apiEndpoint: selectedEndpoint.name,
           },
         ])
       }
@@ -498,6 +372,46 @@ const AIImageEnhancementPortal = () => {
           step: "client_error",
         },
       ])
+    }
+  }
+
+  const testReplicateConfig = async () => {
+    if (!user) {
+      setShowAuth(true)
+      return
+    }
+
+    setIsTesting(true)
+    try {
+      const response = await fetch("/api/test-replicate-config")
+      const result = await response.json()
+      setConfigResults(result)
+      console.log("🧪 Replicate Config Test Results:", result)
+    } catch (error) {
+      console.error("Config test failed:", error)
+      setConfigResults({ error: error.message })
+    } finally {
+      setIsTesting(false)
+    }
+  }
+
+  const runReplicateDiscovery = async () => {
+    if (!user) {
+      setShowAuth(true)
+      return
+    }
+
+    setIsDiscovering(true)
+    try {
+      const response = await fetch("/api/replicate-discovery")
+      const result = await response.json()
+      setDiscoveryResults(result)
+      console.log("🔍 Replicate Discovery Results:", result)
+    } catch (error) {
+      console.error("Discovery failed:", error)
+      setDiscoveryResults({ error: error.message })
+    } finally {
+      setIsDiscovering(false)
     }
   }
 
@@ -523,11 +437,6 @@ const AIImageEnhancementPortal = () => {
     return selectedModel?.maxUpscale || 4
   }
 
-  const getMaxFileSize = () => {
-    const selectedEndpoint = apiEndpoints.find((ep) => ep.id === enhancementSettings.apiEndpoint) || apiEndpoints[0]
-    return selectedEndpoint.maxFileSize
-  }
-
   // Show authentication modal if not logged in
   if (!user && showAuth) {
     return (
@@ -543,73 +452,26 @@ const AIImageEnhancementPortal = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
-      {/* Professional Header */}
-      <header className="bg-black/20 backdrop-blur-lg border-b border-white/10 sticky top-0 z-50">
+      {/* Header */}
+      <div className="bg-black/20 backdrop-blur-lg border-b border-white/10">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                <Sparkles className="w-7 h-7 text-white" />
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <Zap className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-white">AI Enhancer Pro</h1>
-                <p className="text-sm text-blue-200">Professional Image Enhancement Platform</p>
+                <h1 className="text-xl font-bold text-white">AI Enhancement Portal</h1>
+                <p className="text-sm text-blue-200">Professional Image Enhancement with Multiple AI Models</p>
               </div>
             </div>
-
-            {/* Navigation */}
-            <nav className="hidden md:flex items-center space-x-8">
-              <button
-                onClick={() => setActiveTab("home")}
-                className={`text-sm font-medium transition-colors ${
-                  activeTab === "home" ? "text-white" : "text-blue-200 hover:text-white"
-                }`}
-              >
-                Home
-              </button>
-              <button
-                onClick={() => {
-                  if (!user) {
-                    setShowAuth(true)
-                    return
-                  }
-                  setActiveTab("enhance")
-                }}
-                className={`text-sm font-medium transition-colors ${
-                  activeTab === "enhance" ? "text-white" : "text-blue-200 hover:text-white"
-                }`}
-              >
-                Enhance
-              </button>
-              <button
-                onClick={() => {
-                  if (!user) {
-                    setShowAuth(true)
-                    return
-                  }
-                  setActiveTab("results")
-                }}
-                className={`text-sm font-medium transition-colors ${
-                  activeTab === "results" ? "text-white" : "text-blue-200 hover:text-white"
-                }`}
-              >
-                Gallery
-              </button>
-              <button
-                onClick={() => setActiveTab("pricing")}
-                className={`text-sm font-medium transition-colors ${
-                  activeTab === "pricing" ? "text-white" : "text-blue-200 hover:text-white"
-                }`}
-              >
-                Pricing
-              </button>
-            </nav>
-
-            {/* User Area */}
             <div className="flex items-center space-x-4">
-              <div className="hidden md:flex items-center space-x-2 text-sm">
+              <div className="flex items-center space-x-2 text-sm">
                 <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
-                <span className="text-green-400">{apiEndpoints.length} API Endpoints Ready</span>
+                <span className="text-green-400">Replicate: Ready ✅</span>
+                <span className="text-xs text-gray-400">
+                  {enhancementModels.filter((m) => m.status === "working").length} models available
+                </span>
               </div>
 
               {user ? (
@@ -620,694 +482,968 @@ const AIImageEnhancementPortal = () => {
                   isAdmin={isAdmin}
                 />
               ) : (
-                <div className="flex items-center space-x-3">
-                  <button
-                    onClick={() => setShowAuth(true)}
-                    className="text-blue-200 hover:text-white transition-colors text-sm font-medium"
-                  >
-                    Sign In
-                  </button>
-                  <button
-                    onClick={() => {
-                      setAuthMode("signup")
-                      setShowAuth(true)
-                    }}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg transition-all text-sm font-medium shadow-lg"
-                  >
-                    Get Started
-                  </button>
-                </div>
+                <button
+                  onClick={() => setShowAuth(true)}
+                  className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  <LogIn className="w-4 h-4" />
+                  <span>Sign In</span>
+                </button>
               )}
             </div>
           </div>
         </div>
-      </header>
+      </div>
+
+      {/* Navigation */}
+      <div className="max-w-7xl mx-auto px-6 py-6">
+        <div className="flex space-x-1 bg-black/20 backdrop-blur-lg rounded-xl p-1">
+          {[
+            { id: "upload", label: "Upload & Enhance", icon: Upload },
+            { id: "processing", label: "Processing Queue", icon: Settings },
+            { id: "results", label: "Enhanced Images", icon: Download },
+            ...(isAdmin ? [{ id: "admin", label: "Admin", icon: Shield }] : []),
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => {
+                if (!user && tab.id !== "upload") {
+                  setShowAuth(true)
+                  return
+                }
+                setActiveTab(tab.id)
+              }}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ${
+                activeTab === tab.id ? "bg-blue-600 text-white" : "text-blue-200 hover:text-white hover:bg-white/10"
+              }`}
+            >
+              <tab.icon className="w-4 h-4" />
+              <span>{tab.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6">
-        {activeTab === "home" && (
-          <div className="space-y-20 py-12">
-            {/* Hero Section */}
-            <section className="text-center py-20">
-              <div className="max-w-4xl mx-auto">
-                <div className="inline-flex items-center space-x-2 bg-blue-600/10 border border-blue-500/20 rounded-full px-4 py-2 mb-8">
-                  <Star className="w-4 h-4 text-yellow-400" />
-                  <span className="text-sm text-blue-200">Trusted by 10,000+ professionals</span>
-                </div>
-
-                <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-                  Professional AI
-                  <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                    {" "}
-                    Image Enhancement
-                  </span>
-                </h1>
-
-                <p className="text-xl text-blue-100 mb-12 max-w-3xl mx-auto leading-relaxed">
-                  Transform your images with cutting-edge AI models. Upscale, enhance clarity, and restore photos with
-                  professional quality results in seconds. Now supporting files up to 10MB!
-                </p>
-
-                <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6 mb-16">
-                  <button
-                    onClick={() => {
-                      if (!user) {
-                        setShowAuth(true)
-                        return
-                      }
-                      setActiveTab("enhance")
-                    }}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-2xl transition-all transform hover:scale-105 flex items-center space-x-2"
-                  >
-                    <Rocket className="w-5 h-5" />
-                    <span>Start Enhancing Free</span>
-                  </button>
-                  <button
-                    onClick={() => setActiveTab("pricing")}
-                    className="border border-white/20 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white/10 transition-all flex items-center space-x-2"
-                  >
-                    <TrendingUp className="w-5 h-5" />
-                    <span>View Pricing</span>
-                  </button>
-                </div>
+      <div className="max-w-7xl mx-auto px-6 pb-12">
+        {activeTab === "admin" && isAdmin && (
+          <div className="space-y-8">
+            {/* Admin Sub-Navigation */}
+            <div className="bg-black/20 backdrop-blur-lg rounded-xl border border-white/10 p-6">
+              <div className="flex items-center space-x-3 mb-6">
+                <Shield className="w-6 h-6 text-orange-400" />
+                <h2 className="text-xl font-semibold text-white">Admin Panel</h2>
+                <span className="text-sm text-orange-400 bg-orange-400/10 px-2 py-1 rounded">System Management</span>
               </div>
-            </section>
-          </div>
-        )}
 
-        {activeTab === "enhance" && (
-          <div className="py-12">
-            <div className="grid lg:grid-cols-3 gap-8">
-              {/* Enhanced Upload Area */}
-              <div className="lg:col-span-2">
+              <div className="flex space-x-1 bg-white/5 rounded-lg p-1">
+                {[
+                  { id: "config", label: "Configuration", icon: Key },
+                  { id: "discovery", label: "Model Discovery", icon: Search },
+                  { id: "users", label: "User Management", icon: Users },
+                  { id: "roles", label: "Role Management", icon: Shield },
+                ].map((subTab) => (
+                  <button
+                    key={subTab.id}
+                    onClick={() => setAdminSubTab(subTab.id)}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-all ${
+                      adminSubTab === subTab.id
+                        ? "bg-orange-600 text-white"
+                        : "text-gray-300 hover:text-white hover:bg-white/10"
+                    }`}
+                  >
+                    <subTab.icon className="w-4 h-4" />
+                    <span>{subTab.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Admin Content */}
+            {adminSubTab === "config" && (
+              <div className="space-y-8">
+                {/* Configuration Test */}
                 <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-8">
                   <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-semibold text-white">Upload Images</h2>
-                    <div className="text-sm text-blue-200">
-                      {user ? `${selectedFiles.length} files selected` : "Sign in required"}
+                    <div>
+                      <h3 className="text-xl font-semibold text-white mb-2">Replicate API Configuration</h3>
+                      <p className="text-gray-300">Test your Replicate API token and verify model access permissions</p>
+                    </div>
+                    <button
+                      onClick={testReplicateConfig}
+                      disabled={isTesting}
+                      className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 disabled:opacity-50 text-white px-6 py-3 rounded-lg transition-all flex items-center space-x-2"
+                    >
+                      {isTesting ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          <span>Testing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <TestTube className="w-5 h-5" />
+                          <span>Test Configuration</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Configuration Status */}
+                  <div className="grid md:grid-cols-3 gap-4 mb-6">
+                    <div className="bg-white/5 rounded-lg p-4">
+                      <Key className="w-8 h-8 text-blue-400 mb-2" />
+                      <h4 className="text-white font-medium mb-1">API Token</h4>
+                      <p className="text-sm text-gray-400">
+                        {configResults?.configuration?.hasApiKey ? "✅ Configured" : "❌ Missing"}
+                      </p>
+                      {configResults?.configuration?.keyPrefix && (
+                        <p className="text-xs text-gray-500 mt-1">{configResults.configuration.keyPrefix}</p>
+                      )}
+                    </div>
+                    <div className="bg-white/5 rounded-lg p-4">
+                      <Database className="w-8 h-8 text-purple-400 mb-2" />
+                      <h4 className="text-white font-medium mb-1">Available Models</h4>
+                      <p className="text-sm text-gray-400">
+                        {enhancementModels.filter((m) => m.status === "working").length} working models
+                      </p>
+                    </div>
+                    <div className="bg-white/5 rounded-lg p-4">
+                      <Activity className="w-8 h-8 text-green-400 mb-2" />
+                      <h4 className="text-white font-medium mb-1">Status</h4>
+                      <p className="text-sm text-gray-400">
+                        {configResults?.summary?.replicateConfigured ? "✅ Ready" : "⏳ Testing"}
+                      </p>
                     </div>
                   </div>
 
-                  <div
-                    onDrop={handleDrop}
-                    onDragOver={handleDragOver}
-                    className="border-2 border-dashed border-blue-400/50 rounded-2xl p-16 text-center hover:border-blue-400 transition-all cursor-pointer group"
-                    onClick={() => {
-                      if (!user) {
-                        setShowAuth(true)
-                        return
-                      }
-                      fileInputRef.current?.click()
-                    }}
-                  >
-                    <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
-                      <Upload className="w-10 h-10 text-white" />
-                    </div>
-                    <h3 className="text-2xl font-semibold text-white mb-3">
-                      {user ? "Drop images here or click to browse" : "Sign in to upload images"}
-                    </h3>
-                    <p className="text-blue-200 mb-4 text-lg">Supports JPEG, PNG, WebP, HEIC, TIFF up to 10MB</p>
-                    <div className="flex items-center justify-center space-x-6 text-sm text-gray-400">
-                      <div className="flex items-center space-x-2">
-                        <Zap className="w-4 h-4" />
-                        <span>Fast Processing</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Shield className="w-4 h-4" />
-                        <span>Secure Upload</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Award className="w-4 h-4" />
-                        <span>Pro Quality</span>
+                  {/* Setup Instructions */}
+                  {configResults?.configuration?.hasApiKey ? (
+                    /* Token Configured Successfully */
+                    <div className="bg-green-900/20 border border-green-500/20 rounded-lg p-6 mb-6">
+                      <div className="flex items-start space-x-4">
+                        <div className="flex-shrink-0">
+                          <CheckCircle className="w-8 h-8 text-green-400" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-green-400 font-medium mb-3">✅ API Token Configured</h4>
+                          <div className="space-y-3 text-sm text-gray-300">
+                            <div className="flex items-center space-x-2">
+                              <span className="bg-green-600 text-white text-xs px-2 py-1 rounded">✓</span>
+                              <span>REPLICATE_API_TOKEN is configured</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="bg-green-600 text-white text-xs px-2 py-1 rounded">✓</span>
+                              <span>Token: r8_brsNoyAv...04DrJmT (secured)</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">→</span>
+                              <span>
+                                Ready to enhance images with{" "}
+                                {enhancementModels.filter((m) => m.status === "working").length} models
+                              </span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    {!user && (
-                      <button
-                        onClick={() => setShowAuth(true)}
-                        className="mt-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl transition-all inline-flex items-center space-x-2 font-medium"
-                      >
-                        <LogIn className="w-5 h-5" />
-                        <span>Sign In to Continue</span>
-                      </button>
-                    )}
-                  </div>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={(e) => handleFileSelect(e.target.files)}
-                    className="hidden"
-                  />
-
-                  {/* Enhanced File List with Process Buttons */}
-                  {selectedFiles.length > 0 && (
-                    <div className="mt-8">
-                      <h3 className="text-xl font-semibold text-white mb-6">Selected Files ({selectedFiles.length})</h3>
-                      <div className="space-y-4">
-                        {selectedFiles.map((file) => (
-                          <div
-                            key={file.id}
-                            className="bg-white/5 rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all"
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-4">
-                                <div className="relative">
-                                  <img
-                                    src={file.preview || "/placeholder.svg"}
-                                    alt=""
-                                    className="w-16 h-16 object-cover rounded-xl"
-                                  />
-                                  {file.status === "ready" && (
-                                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                                      <Check className="w-3 h-3 text-white" />
-                                    </div>
-                                  )}
-                                </div>
-                                <div>
-                                  <p className="text-white font-semibold text-lg">{file.name}</p>
-                                  <p className="text-blue-200">{formatFileSize(file.size)}</p>
-                                  {file.status === "failed" && (
-                                    <div className="mt-2">
-                                      <div className="flex items-center space-x-2">
-                                        <AlertCircle className="w-4 h-4 text-red-400" />
-                                        <p className="text-sm text-red-400">Error: {file.error}</p>
-                                      </div>
-                                      {file.apiEndpoint && (
-                                        <p className="text-xs text-red-300 mt-1">API: {file.apiEndpoint}</p>
-                                      )}
-                                      {file.details && (
-                                        <p className="text-xs text-red-300 mt-1">
-                                          Details:{" "}
-                                          {typeof file.details === "string"
-                                            ? file.details
-                                            : JSON.stringify(file.details, null, 2)}
-                                        </p>
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="flex items-center space-x-3">
-                                {file.status === "ready" && (
-                                  <button
-                                    onClick={() => startProcessing(file.id)}
-                                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-lg transition-all flex items-center space-x-2 font-medium"
-                                  >
-                                    <Sparkles className="w-4 h-4" />
-                                    <span>Enhance</span>
-                                  </button>
-                                )}
-                                {file.status === "failed" && (
-                                  <button
-                                    onClick={() => startProcessing(file.id)}
-                                    className="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-3 rounded-lg transition-all flex items-center space-x-2 font-medium"
-                                  >
-                                    <RefreshCw className="w-4 h-4" />
-                                    <span>Retry</span>
-                                  </button>
-                                )}
-                                <button
-                                  onClick={() => setSelectedFiles((prev) => prev.filter((f) => f.id !== file.id))}
-                                  className="text-gray-400 hover:text-red-400 transition-colors p-2"
+                  ) : (
+                    <div className="bg-gradient-to-r from-blue-900/20 to-purple-900/20 border border-blue-500/20 rounded-lg p-6 mb-6">
+                      <div className="flex items-start space-x-4">
+                        <div className="flex-shrink-0">
+                          <Key className="w-8 h-8 text-blue-400" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-blue-400 font-medium mb-3">🔑 Get Your Replicate API Token</h4>
+                          <div className="space-y-3 text-sm text-gray-300">
+                            <div className="flex items-center space-x-2">
+                              <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">1</span>
+                              <span>
+                                Visit{" "}
+                                <a
+                                  href="https://replicate.com/account/api-tokens"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-400 underline hover:text-blue-300 inline-flex items-center space-x-1"
                                 >
-                                  <X className="w-5 h-5" />
-                                </button>
-                              </div>
+                                  <span>replicate.com/account/api-tokens</span>
+                                  <ExternalLink className="w-3 h-3" />
+                                </a>
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">2</span>
+                              <span>Sign in with GitHub (you'll see the login screen like below)</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">3</span>
+                              <span>Create a new API token</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">4</span>
+                              <span>Add it as REPLICATE_API_TOKEN environment variable</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">5</span>
+                              <span>Click "Test Configuration" above</span>
                             </div>
                           </div>
-                        ))}
+
+                          {/* Replicate Login Screenshot */}
+                          <div className="mt-4 p-4 bg-black/20 rounded-lg">
+                            <p className="text-xs text-gray-400 mb-2">
+                              What you'll see when you visit the API tokens page:
+                            </p>
+                            <img
+                              src="/replicate-login-screenshot.jpeg"
+                              alt="Replicate login screen showing 'Welcome to Replicate' with GitHub sign-in button"
+                              className="w-full max-w-md rounded-lg border border-gray-600"
+                            />
+                            <p className="text-xs text-gray-500 mt-2">
+                              Click "Sign in with GitHub" to access your API tokens
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
 
-                  {/* Processing Queue */}
-                  {processingQueue.length > 0 && (
-                    <div className="mt-8">
-                      <h3 className="text-xl font-semibold text-white mb-6">
-                        Processing Queue ({processingQueue.length})
-                      </h3>
-                      <div className="space-y-4">
-                        {processingQueue.map((job) => (
-                          <div key={job.id} className="bg-blue-900/20 rounded-xl border border-blue-500/30 p-6">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-4">
-                                <img
-                                  src={job.file.preview || "/placeholder.svg"}
-                                  alt=""
-                                  className="w-16 h-16 object-cover rounded-xl"
-                                />
-                                <div>
-                                  <p className="text-white font-semibold text-lg">{job.file.name}</p>
-                                  <p className="text-blue-200">
-                                    {enhancementModels.find((m) => m.id === job.settings.model)?.name} •{" "}
-                                    {job.settings.upscaleFactor}x upscale
-                                  </p>
-                                  <p className="text-sm text-gray-400 mt-1">
-                                    API: {apiEndpoints.find((ep) => ep.id === job.settings.apiEndpoint)?.name}
-                                  </p>
-                                </div>
-                              </div>
-                              <div className="flex items-center space-x-3">
-                                <div className="flex items-center space-x-2">
-                                  <Loader2 className="w-6 h-6 text-blue-400 animate-spin" />
-                                  <div className="text-right">
-                                    <div className="text-sm font-medium text-white">Processing...</div>
-                                    <div className="text-xs text-blue-400">{job.progress || "Enhancing image..."}</div>
-                                  </div>
-                                </div>
-                              </div>
+                  {/* Available Models Preview */}
+                  <div className="bg-black/20 backdrop-blur-lg rounded-xl border border-white/10 p-6">
+                    <h4 className="text-lg font-semibold text-white mb-4">
+                      Available Models ({enhancementModels.length})
+                    </h4>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {enhancementModels.map((model) => (
+                        <div key={model.id} className="bg-white/5 rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="font-medium text-white">{model.name}</div>
+                            <div className="flex items-center space-x-2">
+                              {model.recommended && (
+                                <span className="text-xs bg-yellow-600 text-white px-2 py-1 rounded">⭐</span>
+                              )}
+                              <span
+                                className={`text-xs px-2 py-1 rounded ${
+                                  model.status === "working" ? "bg-green-600 text-white" : "bg-gray-600 text-white"
+                                }`}
+                              >
+                                {model.status === "working" ? "✅ Ready" : "⏳ Testing"}
+                              </span>
                             </div>
                           </div>
-                        ))}
-                      </div>
+                          <div className="text-xs text-gray-400 mb-2">{model.description}</div>
+                          <div className="text-xs text-blue-400">{model.replicateModel}</div>
+                          <div className="text-xs text-purple-400">
+                            Category: {model.category} • Max: {model.maxUpscale}x
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  )}
+                  </div>
                 </div>
-              </div>
 
-              {/* Enhanced Settings Panel */}
-              <div className="space-y-6">
-                <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-6">
-                  <h3 className="text-xl font-semibold text-white mb-6">Enhancement Settings</h3>
+                {/* Test Results */}
+                {configResults && (
+                  <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-6">
+                    <h4 className="text-lg font-semibold text-white mb-4">Configuration Test Results</h4>
 
-                  <div className="space-y-6">
-                    {/* API Endpoint Selection */}
-                    <div>
-                      <label className="block text-sm font-medium text-white mb-4">API Endpoint</label>
-                      <div className="space-y-3">
-                        {apiEndpoints.map((endpoint) => (
+                    {configResults.error ? (
+                      <div className="bg-red-900/20 border border-red-500/20 rounded-lg p-4">
+                        <div className="text-red-400 font-medium mb-2">❌ Configuration Error</div>
+                        <div className="text-red-300 text-sm">{configResults.error}</div>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {/* Summary */}
+                        {configResults.summary && (
                           <div
-                            key={endpoint.id}
-                            className={`border rounded-xl p-4 cursor-pointer transition-all ${
-                              enhancementSettings.apiEndpoint === endpoint.id
-                                ? "border-blue-500 bg-blue-500/10"
-                                : "border-white/20 hover:border-white/40"
+                            className={`border rounded-lg p-4 ${
+                              configResults.summary.replicateConfigured
+                                ? "bg-green-900/20 border-green-500/20"
+                                : "bg-yellow-900/20 border-yellow-500/20"
                             }`}
-                            onClick={() => {
-                              setEnhancementSettings((prev) => ({
-                                ...prev,
-                                apiEndpoint: endpoint.id,
-                              }))
-                            }}
                           >
-                            <div className="flex items-center space-x-3">
-                              <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-600 rounded-lg flex items-center justify-center">
-                                <Zap className="w-5 h-5 text-white" />
-                              </div>
-                              <div className="flex-1">
-                                <div className="flex items-center space-x-2">
-                                  <h4 className="font-medium text-white">{endpoint.name}</h4>
-                                  {endpoint.recommended && <Star className="w-4 h-4 text-yellow-400 fill-current" />}
-                                </div>
-                                <p className="text-sm text-blue-200">{endpoint.description}</p>
-                                <p className="text-xs text-gray-400 mt-1">
-                                  Max: {Math.round(endpoint.maxFileSize / 1024 / 1024)}MB • {endpoint.processingTime}
-                                </p>
-                              </div>
-                              <div className="w-4 h-4 border-2 border-white/40 rounded-full flex items-center justify-center">
-                                {enhancementSettings.apiEndpoint === endpoint.id && (
-                                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                                )}
-                              </div>
+                            <div
+                              className={`font-medium mb-2 ${
+                                configResults.summary.replicateConfigured ? "text-green-400" : "text-yellow-400"
+                              }`}
+                            >
+                              {configResults.summary.replicateConfigured ? "✅" : "⚠️"}{" "}
+                              {configResults.summary.recommendation}
+                            </div>
+                            <div className="text-sm text-gray-300">
+                              Tests: {configResults.summary.successful}/{configResults.summary.totalTests} successful
                             </div>
                           </div>
-                        ))}
-                      </div>
-                    </div>
+                        )}
 
-                    {/* AI Model Selection */}
-                    <div>
-                      <label className="block text-sm font-medium text-white mb-4">AI Model</label>
-                      <div className="space-y-3">
-                        {enhancementModels
-                          .filter((m) => m.status === "working")
-                          .map((model) => (
+                        {/* Individual Test Results */}
+                        <div className="space-y-3">
+                          {configResults.tests?.map((test, index) => (
                             <div
-                              key={model.id}
-                              className={`border rounded-xl p-4 cursor-pointer transition-all ${
-                                enhancementSettings.model === model.id
-                                  ? "border-blue-500 bg-blue-500/10"
-                                  : "border-white/20 hover:border-white/40"
+                              key={index}
+                              className={`border rounded-lg p-4 ${
+                                test.status === "success"
+                                  ? "bg-green-900/10 border-green-500/20"
+                                  : "bg-red-900/10 border-red-500/20"
                               }`}
-                              onClick={() => {
-                                const maxUpscale = model.maxUpscale || 4
-                                setEnhancementSettings((prev) => ({
-                                  ...prev,
-                                  model: model.id,
-                                  upscaleFactor: Math.min(prev.upscaleFactor, maxUpscale),
-                                }))
-                              }}
                             >
-                              <div className="flex items-center space-x-3">
-                                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                                  <model.icon className="w-5 h-5 text-white" />
-                                </div>
-                                <div className="flex-1">
-                                  <div className="flex items-center space-x-2">
-                                    <h4 className="font-medium text-white">{model.name}</h4>
-                                    {model.recommended && <Star className="w-4 h-4 text-yellow-400 fill-current" />}
-                                  </div>
-                                  <p className="text-sm text-blue-200">{model.category}</p>
-                                  <p className="text-xs text-gray-400 mt-1">
-                                    Max: {Math.round(model.maxFileSize / 1024 / 1024)}MB • {model.processingTime}
-                                  </p>
-                                </div>
-                                <div className="w-4 h-4 border-2 border-white/40 rounded-full flex items-center justify-center">
-                                  {enhancementSettings.model === model.id && (
-                                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                                  )}
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="font-mono text-sm text-white">{test.test}</div>
+                                <div
+                                  className={`text-xs px-2 py-1 rounded ${
+                                    test.status === "success" ? "bg-green-600 text-white" : "bg-red-600 text-white"
+                                  }`}
+                                >
+                                  {test.status === "success" ? "✅ Success" : "❌ Failed"}
                                 </div>
                               </div>
+                              <div className="text-sm text-gray-300">Result: {test.result}</div>
+                              {test.error && <div className="text-sm text-red-300 mt-1">Error: {test.error}</div>}
                             </div>
                           ))}
+                        </div>
                       </div>
-                    </div>
-
-                    {/* Target Use Case */}
-                    <div>
-                      <label className="block text-sm font-medium text-white mb-4">Target Use</label>
-                      <div className="grid grid-cols-3 gap-3">
-                        {[
-                          { id: "display", label: "Display", icon: Monitor, desc: "4K screens" },
-                          { id: "print", label: "Print", icon: Printer, desc: "High-res print" },
-                          { id: "dome", label: "Dome", icon: Globe, desc: "8K projection" },
-                        ].map((use) => (
-                          <button
-                            key={use.id}
-                            onClick={() => setEnhancementSettings((prev) => ({ ...prev, targetUse: use.id }))}
-                            className={`flex flex-col items-center p-4 rounded-xl transition-all ${
-                              enhancementSettings.targetUse === use.id
-                                ? "bg-blue-600 text-white"
-                                : "bg-white/5 text-gray-300 hover:bg-white/10"
-                            }`}
-                          >
-                            <use.icon className="w-6 h-6 mb-2" />
-                            <span className="text-sm font-medium">{use.label}</span>
-                            <span className="text-xs opacity-75">{use.desc}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Upscale Factor */}
-                    <div>
-                      <label className="block text-sm font-medium text-white mb-4">
-                        Upscale Factor: {enhancementSettings.upscaleFactor}x
-                      </label>
-                      <input
-                        type="range"
-                        min="2"
-                        max={getMaxUpscale()}
-                        step="1"
-                        value={enhancementSettings.upscaleFactor}
-                        onChange={(e) =>
-                          setEnhancementSettings((prev) => ({
-                            ...prev,
-                            upscaleFactor: Number.parseInt(e.target.value),
-                          }))
-                        }
-                        className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer"
-                      />
-                      <div className="flex justify-between text-xs text-gray-400 mt-2">
-                        <span>2x</span>
-                        <span className="text-blue-400">Target: {getTargetResolution()}</span>
-                        <span>{getMaxUpscale()}x</span>
-                      </div>
-                    </div>
+                    )}
                   </div>
-                </div>
+                )}
+              </div>
+            )}
 
-                {/* Processing Status */}
-                <div className="bg-gradient-to-r from-green-900/20 to-blue-900/20 backdrop-blur-lg rounded-2xl border border-green-500/20 p-6">
-                  <h3 className="text-lg font-semibold text-white mb-4">Processing Status</h3>
+            {adminSubTab === "discovery" && (
+              <div className="space-y-8">
+                {/* Discovery Control Panel */}
+                <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-8">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="text-xl font-semibold text-white mb-2">Model Discovery</h3>
+                      <p className="text-gray-300">Test available Replicate models for image enhancement</p>
+                    </div>
+                    <button
+                      onClick={runReplicateDiscovery}
+                      disabled={isDiscovering || !configResults?.summary?.replicateConfigured}
+                      className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 text-white px-6 py-3 rounded-lg transition-all flex items-center space-x-2"
+                    >
+                      {isDiscovering ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          <span>Discovering...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Search className="w-5 h-5" />
+                          <span>Re-test Models</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
 
-                  {!user && (
-                    <div className="bg-blue-900/20 border border-blue-500/20 rounded-lg p-4 mb-4">
-                      <div className="text-blue-400 text-sm font-medium mb-1">🔐 Authentication Required</div>
-                      <div className="text-blue-200 text-xs">
-                        Sign in to access image enhancement features and track your processing history.
-                      </div>
+                  {!configResults?.summary?.replicateConfigured && (
+                    <div className="bg-yellow-900/20 border border-yellow-500/20 rounded-lg p-4 mb-6">
+                      <div className="text-yellow-400 font-medium mb-2">⚠️ Configuration Required</div>
+                      <div className="text-yellow-200 text-sm">Please test your Replicate API configuration first.</div>
                     </div>
                   )}
 
-                  <div className="space-y-3 text-sm">
-                    <div className="flex justify-between text-gray-300">
-                      <span>Images queued:</span>
-                      <span className="font-medium">{selectedFiles.length}</span>
+                  {/* Pre-loaded Models Status */}
+                  <div className="bg-green-900/20 border border-green-500/20 rounded-lg p-6">
+                    <h4 className="text-green-400 font-medium mb-3">✅ Pre-loaded Working Models</h4>
+                    <div className="grid md:grid-cols-2 gap-3">
+                      {enhancementModels
+                        .filter((m) => m.status === "working")
+                        .map((model) => (
+                          <div key={model.id} className="bg-white/5 rounded-lg p-3">
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="font-mono text-sm text-green-400">{model.replicateModel}</div>
+                              <span className="text-xs bg-green-600 text-white px-2 py-1 rounded">
+                                {model.category}
+                              </span>
+                            </div>
+                            <div className="text-xs text-gray-400">{model.description}</div>
+                          </div>
+                        ))}
                     </div>
-                    <div className="flex justify-between text-gray-300">
-                      <span>Processing:</span>
-                      <span className="font-medium text-blue-400">{processingQueue.length}</span>
-                    </div>
-                    <div className="flex justify-between text-gray-300">
-                      <span>Completed:</span>
-                      <span className="font-medium text-green-400">{completedJobs.length}</span>
-                    </div>
-                    <div className="flex justify-between text-gray-300">
-                      <span>Selected API:</span>
-                      <span className="text-blue-400 font-medium">
-                        {apiEndpoints.find((ep) => ep.id === enhancementSettings.apiEndpoint)?.name}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-gray-300">
-                      <span>Selected model:</span>
-                      <span className="text-blue-400 font-medium">
-                        {enhancementModels.find((m) => m.id === enhancementSettings.model)?.name}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-gray-300">
-                      <span>Max file size:</span>
-                      <span className="text-green-400 font-medium">{Math.round(getMaxFileSize() / 1024 / 1024)}MB</span>
-                    </div>
-                    <div className="flex justify-between text-white font-medium">
-                      <span>Est. processing time:</span>
-                      <span className="text-green-400">{selectedFiles.length * 60}s</span>
-                    </div>
-                    <div className="flex justify-between text-gray-300">
-                      <span>Available endpoints:</span>
-                      <span className="text-green-400 font-medium">{apiEndpoints.length} ready</span>
-                    </div>
-                    <div className="flex justify-between text-gray-300">
-                      <span>User status:</span>
-                      <span className={user ? "text-green-400 font-medium" : "text-yellow-400 font-medium"}>
-                        {user ? "✅ Authenticated" : "⚠️ Not signed in"}
-                      </span>
+                    <div className="mt-4 text-sm text-gray-300">
+                      These models have been pre-tested and are ready to use. Click "Re-test Models" to verify current
+                      status.
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        )}
 
-        {activeTab === "results" && (
-          <div className="py-12">
-            <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-8">
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl font-semibold text-white">Enhanced Images Gallery</h2>
-                {completedJobs.length > 0 && (
-                  <div className="text-sm text-blue-200">{completedJobs.length} images enhanced</div>
+                {/* Discovery Results */}
+                {discoveryResults && (
+                  <div className="space-y-6">
+                    {discoveryResults.error ? (
+                      <div className="bg-red-900/20 border border-red-500/20 rounded-lg p-6">
+                        <div className="text-red-400 font-medium mb-2">❌ Discovery Error</div>
+                        <div className="text-red-300">{discoveryResults.error}</div>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Summary */}
+                        <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-6">
+                          <h4 className="text-lg font-semibold text-white mb-4">Discovery Summary</h4>
+                          <div className="grid md:grid-cols-3 gap-4">
+                            <div className="bg-green-900/20 border border-green-500/20 rounded-lg p-4">
+                              <div className="text-2xl font-bold text-green-400">
+                                {discoveryResults.workingModels?.length || 0}
+                              </div>
+                              <div className="text-sm text-green-300">Working Models</div>
+                            </div>
+                            <div className="bg-red-900/20 border border-red-500/20 rounded-lg p-4">
+                              <div className="text-2xl font-bold text-red-400">
+                                {discoveryResults.failedModels?.length || 0}
+                              </div>
+                              <div className="text-sm text-red-300">Failed Models</div>
+                            </div>
+                            <div className="bg-blue-900/20 border border-blue-500/20 rounded-lg p-4">
+                              <div className="text-2xl font-bold text-blue-400">
+                                {discoveryResults.configuration?.testedModels || 0}
+                              </div>
+                              <div className="text-sm text-blue-300">Total Tested</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Working Models */}
+                        {discoveryResults.workingModels?.length > 0 && (
+                          <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-6">
+                            <h4 className="text-lg font-semibold text-white mb-4">✅ Working Models</h4>
+                            <div className="space-y-3">
+                              {discoveryResults.workingModels.map((model, index) => (
+                                <div
+                                  key={index}
+                                  className={`border rounded-lg p-4 ${
+                                    model.isPrimary
+                                      ? "bg-blue-900/20 border-blue-500/30"
+                                      : "bg-green-900/10 border-green-500/20"
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center space-x-2">
+                                      <div
+                                        className={`font-mono text-sm ${
+                                          model.isPrimary ? "text-blue-400" : "text-green-400"
+                                        }`}
+                                      >
+                                        {model.modelId}
+                                      </div>
+                                      {model.isPrimary && (
+                                        <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded">
+                                          PRIMARY
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                      <span className="text-xs bg-green-600 text-white px-2 py-1 rounded">
+                                        {model.category}
+                                      </span>
+                                      <span
+                                        className={`text-xs px-2 py-1 rounded ${
+                                          model.priority === "high" ? "bg-red-600 text-white" : "bg-gray-600 text-white"
+                                        }`}
+                                      >
+                                        {model.priority.toUpperCase()}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="text-xs text-gray-400 mb-1">{model.description}</div>
+                                  <div className="text-xs text-gray-500">Prediction: {model.predictionId}</div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Recommendations */}
+                        {discoveryResults.recommendations?.length > 0 && (
+                          <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-6">
+                            <h4 className="text-lg font-semibold text-white mb-4">🎯 Recommendations</h4>
+                            <div className="space-y-3">
+                              {discoveryResults.recommendations.map((rec, index) => (
+                                <div
+                                  key={index}
+                                  className={`border rounded-lg p-4 ${
+                                    rec.priority === "high"
+                                      ? "bg-blue-900/20 border-blue-500/30"
+                                      : rec.priority === "critical"
+                                        ? "bg-red-900/20 border-red-500/30"
+                                        : "bg-gray-900/20 border-gray-500/20"
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div
+                                      className={`font-medium ${
+                                        rec.priority === "high"
+                                          ? "text-blue-400"
+                                          : rec.priority === "critical"
+                                            ? "text-red-400"
+                                            : "text-gray-400"
+                                      }`}
+                                    >
+                                      {rec.type}
+                                    </div>
+                                    {rec.priority && (
+                                      <span
+                                        className={`text-xs px-2 py-1 rounded ${
+                                          rec.priority === "high"
+                                            ? "bg-blue-600 text-white"
+                                            : rec.priority === "critical"
+                                              ? "bg-red-600 text-white"
+                                              : "bg-gray-600 text-white"
+                                        }`}
+                                      >
+                                        {rec.priority.toUpperCase()}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {rec.modelId && (
+                                    <div className="font-mono text-sm text-white mb-1">{rec.modelId}</div>
+                                  )}
+                                  <div className="text-sm text-gray-300">{rec.reason}</div>
+                                  {rec.usage && <div className="text-xs text-gray-400 mt-1">Usage: {rec.usage}</div>}
+                                  {rec.solution && (
+                                    <div className="text-xs text-yellow-400 mt-1">💡 {rec.solution}</div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
                 )}
               </div>
+            )}
 
-              {!user ? (
-                <div className="text-center py-16">
-                  <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <Download className="w-10 h-10 text-white" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-white mb-2">Sign in to view enhanced images</h3>
-                  <p className="text-blue-200 mb-6">Access your completed image enhancements and downloads</p>
-                  <button
-                    onClick={() => setShowAuth(true)}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl transition-all inline-flex items-center space-x-2 font-medium"
-                  >
-                    <LogIn className="w-5 h-5" />
-                    <span>Sign In</span>
-                  </button>
-                </div>
-              ) : completedJobs.length === 0 ? (
-                <div className="text-center py-16">
-                  <div className="w-20 h-20 bg-gradient-to-r from-gray-600 to-gray-700 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <ImageIcon className="w-10 h-10 text-white" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-white mb-2">No enhanced images yet</h3>
-                  <p className="text-blue-200 mb-6">Completed enhancements will appear here</p>
-                  <button
-                    onClick={() => setActiveTab("enhance")}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl transition-all inline-flex items-center space-x-2 font-medium"
-                  >
-                    <Upload className="w-5 h-5" />
-                    <span>Enhance Images</span>
-                  </button>
-                </div>
-              ) : (
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {completedJobs.map((job) => (
-                    <GalleryItem key={job.id} job={job} />
-                  ))}
-                </div>
-              )}
-            </div>
+            {adminSubTab === "users" && <UserManagement currentUser={user} />}
+
+            {adminSubTab === "roles" && <RoleManagement />}
           </div>
         )}
 
-        {activeTab === "pricing" && (
-          <div className="py-20">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-white mb-6">Choose Your Plan</h2>
-              <p className="text-xl text-blue-100 max-w-3xl mx-auto">
-                Professional image enhancement for every need and budget
-              </p>
-            </div>
+        {activeTab === "upload" && (
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* Upload Area */}
+            <div className="lg:col-span-2">
+              <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-8">
+                <h2 className="text-xl font-semibold text-white mb-6">Upload Images for Enhancement</h2>
 
-            {/* Pricing Cards */}
-            <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-              {/* Free Plan */}
-              <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-8 relative">
-                <div className="text-center mb-8">
-                  <h3 className="text-2xl font-bold text-white mb-2">Free</h3>
-                  <div className="text-4xl font-bold text-white mb-2">
-                    $0<span className="text-lg text-gray-400">/month</span>
-                  </div>
-                  <p className="text-blue-200">Perfect for trying out our service</p>
-                </div>
-
-                <ul className="space-y-4 mb-8">
-                  {[
-                    "5 images per month",
-                    "Up to 2MP resolution",
-                    "Basic AI models",
-                    "Standard processing speed",
-                    "JPEG & PNG output",
-                  ].map((feature, index) => (
-                    <li key={index} className="flex items-center space-x-3">
-                      <Check className="w-5 h-5 text-green-400 flex-shrink-0" />
-                      <span className="text-gray-300">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <button
+                <div
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                  className="border-2 border-dashed border-blue-400/50 rounded-xl p-12 text-center hover:border-blue-400 transition-colors cursor-pointer"
                   onClick={() => {
                     if (!user) {
                       setShowAuth(true)
                       return
                     }
-                    setActiveTab("enhance")
+                    fileInputRef.current?.click()
                   }}
-                  className="w-full border border-white/20 text-white py-3 rounded-lg hover:bg-white/10 transition-all font-medium"
                 >
-                  Get Started Free
-                </button>
-              </div>
-
-              {/* Pro Plan */}
-              <div className="bg-gradient-to-b from-blue-900/20 to-purple-900/20 backdrop-blur-lg rounded-2xl border border-blue-500/30 p-8 relative transform scale-105">
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium">
-                    Most Popular
-                  </div>
+                  <ImageIcon className="w-12 h-12 text-blue-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-white mb-2">
+                    {user ? "Drop images here or click to browse" : "Sign in to upload images"}
+                  </h3>
+                  <p className="text-blue-200 mb-4">Supports: JPG, PNG, WebP, HEIC, TIFF up to 50MB</p>
+                  <p className="text-sm text-gray-400">
+                    Enhanced with {enhancementModels.filter((m) => m.status === "working").length} AI Models
+                  </p>
+                  {!user && (
+                    <button
+                      onClick={() => setShowAuth(true)}
+                      className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors inline-flex items-center space-x-2"
+                    >
+                      <LogIn className="w-4 h-4" />
+                      <span>Sign In to Continue</span>
+                    </button>
+                  )}
                 </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={(e) => handleFileSelect(e.target.files)}
+                  className="hidden"
+                />
 
-                <div className="text-center mb-8">
-                  <h3 className="text-2xl font-bold text-white mb-2">Pro</h3>
-                  <div className="text-4xl font-bold text-white mb-2">
-                    $19<span className="text-lg text-gray-400">/month</span>
+                {/* File List */}
+                {selectedFiles.length > 0 && (
+                  <div className="mt-8">
+                    <h3 className="text-lg font-medium text-white mb-4">Selected Files ({selectedFiles.length})</h3>
+                    <div className="space-y-3">
+                      {selectedFiles.map((file) => (
+                        <div key={file.id} className="flex items-center justify-between bg-white/5 rounded-lg p-4">
+                          <div className="flex items-center space-x-4">
+                            <img
+                              src={file.preview || "/placeholder.svg"}
+                              alt=""
+                              className="w-12 h-12 object-cover rounded-lg"
+                            />
+                            <div>
+                              <p className="text-white font-medium">{file.name}</p>
+                              <p className="text-sm text-gray-400">{formatFileSize(file.size)}</p>
+                              {file.status === "failed" && (
+                                <div className="mt-1">
+                                  <div className="flex items-center space-x-2">
+                                    <AlertCircle className="w-4 h-4 text-red-400" />
+                                    <p className="text-sm text-red-400">Error: {file.error}</p>
+                                  </div>
+                                  {file.details && (
+                                    <p className="text-xs text-red-300 mt-1">
+                                      {"Details: "}
+                                      {typeof file.details === "string"
+                                        ? file.details
+                                        : JSON.stringify(file.details, null, 2)}
+                                    </p>
+                                  )}
+                                  {file.step && <p className="text-xs text-gray-500 mt-1">Failed at: {file.step}</p>}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            {file.status === "ready" && (
+                              <button
+                                onClick={() => startProcessing(file.id)}
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                              >
+                                <Play className="w-4 h-4" />
+                                <span>Enhance</span>
+                              </button>
+                            )}
+                            {file.status === "failed" && (
+                              <button
+                                onClick={() => startProcessing(file.id)}
+                                className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                              >
+                                <RefreshCw className="w-4 h-4" />
+                                <span>Retry</span>
+                              </button>
+                            )}
+                            <button
+                              onClick={() => setSelectedFiles((prev) => prev.filter((f) => f.id !== file.id))}
+                              className="text-gray-400 hover:text-red-400 transition-colors"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <p className="text-blue-200">For professional photographers</p>
-                </div>
-
-                <ul className="space-y-4 mb-8">
-                  {[
-                    "200 images per month",
-                    "Up to 10MP resolution",
-                    "All AI models",
-                    "Priority processing",
-                    "All output formats",
-                    "Batch processing",
-                    "API access",
-                  ].map((feature, index) => (
-                    <li key={index} className="flex items-center space-x-3">
-                      <Check className="w-5 h-5 text-green-400 flex-shrink-0" />
-                      <span className="text-gray-300">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 rounded-lg transition-all font-medium">
-                  Start Pro Trial
-                </button>
-              </div>
-
-              {/* Business Plan */}
-              <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-8 relative">
-                <div className="text-center mb-8">
-                  <h3 className="text-2xl font-bold text-white mb-2">Business</h3>
-                  <div className="text-4xl font-bold text-white mb-2">
-                    $49<span className="text-lg text-gray-400">/month</span>
-                  </div>
-                  <p className="text-blue-200">For teams and agencies</p>
-                </div>
-
-                <ul className="space-y-4 mb-8">
-                  {[
-                    "1000 images per month",
-                    "Up to 16MP resolution",
-                    "All AI models",
-                    "Fastest processing",
-                    "All output formats",
-                    "Bulk processing",
-                    "Full API access",
-                    "Team management",
-                    "Priority support",
-                  ].map((feature, index) => (
-                    <li key={index} className="flex items-center space-x-3">
-                      <Check className="w-5 h-5 text-green-400 flex-shrink-0" />
-                      <span className="text-gray-300">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <button className="w-full border border-white/20 text-white py-3 rounded-lg hover:bg-white/10 transition-all font-medium">
-                  Contact Sales
-                </button>
+                )}
               </div>
             </div>
 
-            {/* Annual Discount */}
-            <div className="text-center mt-12">
-              <div className="inline-flex items-center space-x-2 bg-green-600/10 border border-green-500/20 rounded-full px-6 py-3">
-                <TrendingUp className="w-5 h-5 text-green-400" />
-                <span className="text-green-400 font-medium">Save 20% with annual billing</span>
+            {/* Settings Panel */}
+            <div className="space-y-6">
+              <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-6">
+                <h3 className="text-lg font-semibold text-white mb-6">Enhancement Settings</h3>
+
+                <div className="space-y-6">
+                  {/* AI Model Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-white mb-3">Enhancement Model</label>
+                    <select
+                      value={enhancementSettings.model}
+                      onChange={(e) => {
+                        const newModel = e.target.value
+                        const maxUpscale = enhancementModels.find((m) => m.id === newModel)?.maxUpscale || 4
+                        setEnhancementSettings((prev) => ({
+                          ...prev,
+                          model: newModel,
+                          upscaleFactor: Math.min(prev.upscaleFactor, maxUpscale),
+                        }))
+                      }}
+                      className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white"
+                    >
+                      {enhancementModels
+                        .filter((m) => m.status === "working")
+                        .map((model) => (
+                          <option key={model.id} value={model.id} className="bg-slate-800">
+                            {model.name} {model.recommended && "⭐"} [{model.category}]
+                          </option>
+                        ))}
+                    </select>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {enhancementModels.find((m) => m.id === enhancementSettings.model)?.description}
+                    </p>
+                    <p className="text-xs text-blue-400 mt-1">
+                      Model: {enhancementModels.find((m) => m.id === enhancementSettings.model)?.replicateModel}
+                    </p>
+                    <p className="text-xs text-purple-400 mt-1">
+                      Category: {enhancementModels.find((m) => m.id === enhancementSettings.model)?.category}
+                    </p>
+                  </div>
+
+                  {/* Target Use Case */}
+                  <div>
+                    <label className="block text-sm font-medium text-white mb-3">Target Use</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { id: "display", label: "Display", icon: Monitor },
+                        { id: "print", label: "Print", icon: Printer },
+                        { id: "dome", label: "Dome", icon: ImageIcon },
+                      ].map((use) => (
+                        <button
+                          key={use.id}
+                          onClick={() => setEnhancementSettings((prev) => ({ ...prev, targetUse: use.id }))}
+                          className={`flex flex-col items-center p-3 rounded-lg transition-all ${
+                            enhancementSettings.targetUse === use.id
+                              ? "bg-blue-600 text-white"
+                              : "bg-white/5 text-gray-300 hover:bg-white/10"
+                          }`}
+                        >
+                          <use.icon className="w-5 h-5 mb-1" />
+                          <span className="text-xs">{use.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Upscale Factor */}
+                  <div>
+                    <label className="block text-sm font-medium text-white mb-3">
+                      Upscale Factor: {enhancementSettings.upscaleFactor}x
+                    </label>
+                    <input
+                      type="range"
+                      min="2"
+                      max={getMaxUpscale()}
+                      step="1"
+                      value={enhancementSettings.upscaleFactor}
+                      onChange={(e) =>
+                        setEnhancementSettings((prev) => ({ ...prev, upscaleFactor: Number.parseInt(e.target.value) }))
+                      }
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-gray-400 mt-1">
+                      <span>2x</span>
+                      <span>Target: {getTargetResolution()}</span>
+                      <span>{getMaxUpscale()}x</span>
+                    </div>
+                  </div>
+
+                  {/* Enhancement Options */}
+                  <div className="space-y-3">
+                    <label className="block text-sm font-medium text-white">Enhancement Options</label>
+                    {[
+                      { id: "faceEnhance", label: "Face Enhancement", desc: "Improve face quality (if supported)" },
+                    ].map((option) => (
+                      <label key={option.id} className="flex items-center space-x-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={enhancementSettings[option.id]}
+                          onChange={(e) =>
+                            setEnhancementSettings((prev) => ({ ...prev, [option.id]: e.target.checked }))
+                          }
+                          className="w-4 h-4 text-blue-600 bg-white/10 border-white/20 rounded"
+                        />
+                        <div>
+                          <p className="text-sm text-white">{option.label}</p>
+                          <p className="text-xs text-gray-400">{option.desc}</p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Processing Info */}
+              <div className="bg-gradient-to-r from-green-900/20 to-blue-900/20 backdrop-blur-lg rounded-2xl border border-green-500/20 p-6">
+                <h3 className="text-lg font-semibold text-white mb-4">Processing Status</h3>
+
+                {!user && (
+                  <div className="bg-blue-900/20 border border-blue-500/20 rounded-lg p-3 mb-4">
+                    <div className="text-blue-400 text-sm font-medium mb-1">🔐 Authentication Required</div>
+                    <div className="text-blue-200 text-xs">
+                      Sign in to access image enhancement features and track your processing history.
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between text-gray-300">
+                    <span>Images queued:</span>
+                    <span>{selectedFiles.length}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-300">
+                    <span>Selected model:</span>
+                    <span>{enhancementModels.find((m) => m.id === enhancementSettings.model)?.name}</span>
+                  </div>
+                  <div className="flex justify-between text-white font-medium">
+                    <span>Est. processing time:</span>
+                    <span>{selectedFiles.length * 60}s</span>
+                  </div>
+                  <div className="flex justify-between text-gray-300">
+                    <span>Available models:</span>
+                    <span className="text-green-400">
+                      {enhancementModels.filter((m) => m.status === "working").length} ready
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-gray-300">
+                    <span>User status:</span>
+                    <span className={user ? "text-green-400" : "text-yellow-400"}>
+                      {user ? "✅ Authenticated" : "⚠️ Not signed in"}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         )}
-      </main>
 
-      {/* Footer */}
-      <footer className="bg-black/20 backdrop-blur-lg border-t border-white/10">
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-8 md:space-y-0">
-            <div className="text-center md:text-left">
-              <h3 className="text-white font-semibold text-lg mb-2">AI Enhancer Pro</h3>
-              <p className="text-blue-200 text-sm">© {new Date().getFullYear()} All rights reserved.</p>
-            </div>
-            <div className="flex items-center justify-center space-x-6">
-              <a href="#" className="text-blue-200 hover:text-white text-sm">
-                Privacy
-              </a>
-              <a href="#" className="text-blue-200 hover:text-white text-sm">
-                Terms
-              </a>
-              <a href="#" className="text-blue-200 hover:text-white text-sm">
-                Support
-              </a>
-            </div>
+        {activeTab === "processing" && (
+          <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-8">
+            <h2 className="text-xl font-semibold text-white mb-6">Processing Queue</h2>
+
+            {!user ? (
+              <div className="text-center py-12">
+                <LogIn className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-400 mb-2">Sign in to view processing queue</p>
+                <p className="text-sm text-gray-500 mb-4">Track your image enhancement jobs and progress</p>
+                <button
+                  onClick={() => setShowAuth(true)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors inline-flex items-center space-x-2"
+                >
+                  <LogIn className="w-4 h-4" />
+                  <span>Sign In</span>
+                </button>
+              </div>
+            ) : processingQueue.length === 0 ? (
+              <div className="text-center py-12">
+                <Settings className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-400">No images currently processing</p>
+                <p className="text-sm text-gray-500 mt-2">Start processing from the Upload tab</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {processingQueue.map((job) => (
+                  <div key={job.id} className="bg-white/5 rounded-lg p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center space-x-4">
+                        <img
+                          src={job.file.preview || "/placeholder.svg"}
+                          alt=""
+                          className="w-12 h-12 object-cover rounded-lg"
+                        />
+                        <div>
+                          <p className="text-white font-medium">{job.file.name}</p>
+                          <p className="text-sm text-gray-400">
+                            {enhancementModels.find((m) => m.id === job.settings.model)?.replicateModel} •{" "}
+                            {job.settings.upscaleFactor}x
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
+                        <span className="text-sm text-gray-300">{job.progress || "Processing..."}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
-      </footer>
+        )}
+
+        {activeTab === "results" && (
+          <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-8">
+            <h2 className="text-xl font-semibold text-white mb-6">Enhanced Images</h2>
+
+            {!user ? (
+              <div className="text-center py-12">
+                <LogIn className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-400 mb-2">Sign in to view enhanced images</p>
+                <p className="text-sm text-gray-500 mb-4">Access your completed image enhancements and downloads</p>
+                <button
+                  onClick={() => setShowAuth(true)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors inline-flex items-center space-x-2"
+                >
+                  <LogIn className="w-4 h-4" />
+                  <span>Sign In</span>
+                </button>
+              </div>
+            ) : completedJobs.length === 0 ? (
+              <div className="text-center py-12">
+                <Download className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-400">No enhanced images yet</p>
+                <p className="text-sm text-gray-500 mt-2">Completed enhancements will appear here</p>
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {completedJobs.map((job) => (
+                  <div key={job.id} className="bg-white/5 rounded-lg overflow-hidden">
+                    <div className="aspect-video bg-gradient-to-br from-blue-900/20 to-purple-900/20 flex items-center justify-center">
+                      <img
+                        src={job.downloadUrl || "/placeholder.svg"}
+                        alt={`Enhanced ${job.originalFileName}`}
+                        className="w-full h-full object-contain"
+                        crossOrigin="anonymous"
+                      />
+                    </div>
+
+                    <div className="p-4">
+                      <p className="text-white font-medium mb-2">{job.originalFileName}</p>
+                      <div className="flex items-center space-x-2 mb-3">
+                        <CheckCircle className="w-4 h-4 text-green-400" />
+                        <span className="text-sm text-green-400">Enhanced with Replicate</span>
+                      </div>
+
+                      <div className="space-y-2 text-sm text-gray-300 mb-4">
+                        <div className="flex justify-between">
+                          <span>Original:</span>
+                          <span>{job.originalSize}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Model:</span>
+                          <span className="text-blue-400 font-mono text-xs">{job.model}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Processing:</span>
+                          <span className="text-purple-400">{job.processingTime}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Upscale:</span>
+                          <span className="text-green-400">{job.upscaleFactor}x</span>
+                        </div>
+                        {job.predictionId && (
+                          <div className="flex justify-between">
+                            <span>Prediction ID:</span>
+                            <span className="text-gray-400 font-mono text-xs">{job.predictionId.slice(0, 8)}...</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={() => window.open(job.downloadUrl, "_blank")}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                      >
+                        <Download className="w-4 h-4" />
+                        <span>Download Enhanced</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Profile Dialog */}
+      {user && (
+        <ProfileDialog
+          user={user}
+          isOpen={showProfile}
+          onClose={() => setShowProfile(false)}
+          onUpdateProfile={handleUpdateProfile}
+          completedJobs={completedJobs.length}
+          totalProcessingTime={`${Math.floor(completedJobs.length * 1.5)}m`}
+        />
+      )}
     </div>
   )
 }
