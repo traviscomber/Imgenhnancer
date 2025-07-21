@@ -44,16 +44,15 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Get the image data
-    const imageBuffer = await response.arrayBuffer()
-    const contentType = response.headers.get("content-type") || "image/jpeg"
+    // --- stream the remote image straight through ---------------------------
+    const { body } = response
+    const contentType = response.headers.get("content-type") ?? "application/octet-stream"
+    const contentLength = response.headers.get("content-length") ?? undefined
 
-    console.log(`✅ Successfully proxied image (${imageBuffer.byteLength} bytes, ${contentType})`)
-
-    // Return the image with appropriate headers
-    return new NextResponse(imageBuffer, {
+    return new NextResponse(body, {
       headers: {
         "Content-Type": contentType,
+        ...(contentLength ? { "Content-Length": contentLength } : {}),
         "Cache-Control": "public, max-age=86400",
         "Access-Control-Allow-Origin": "*",
         "Cross-Origin-Resource-Policy": "cross-origin",

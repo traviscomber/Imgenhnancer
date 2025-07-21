@@ -24,7 +24,7 @@ export function GalleryItem({ job }: GalleryItemProps) {
   const [isRetrying, setIsRetrying] = useState(false)
 
   // Function to load image with proxy fallback
-  const loadImage = useEffect(() => {
+  useEffect(() => {
     if (!job.downloadUrl) return
 
     // Reset states when URL changes
