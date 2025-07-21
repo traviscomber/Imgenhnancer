@@ -392,18 +392,50 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const prediction = await safeJson(createRes)
+    const predictionPayload = await safeJson(createRes)
 
-    /* Validate prediction structure */
-    if (!prediction || !prediction.id) {
+    /* ---------------------------- validate prediction ---------------------------- */
+    const predictionPayload2 = await safeJson(createRes)
+
+    // Replicate sometimes returns plain-text errors (status may even be 200!)
+    if ("__raw" in predictionPayload2) {
+      const raw = (predictionPayload2 as any).__raw as string
+
+      // Heuristic: treat “Too Large” payload responses as a 413 equivalent.
+      const tooLarge =
+        raw.includes("Too Large") || raw.includes("PAYLOAD_TOO_LARGE") || raw.includes("FUNCTION_PAYLOAD_TOO_LARGE")
+
+      const message = tooLarge ? "Image too large for Replicate" : "Replicate returned a non-JSON error"
+
       return NextResponse.json(
         {
           success: false,
-          error: "Replicate returned an unexpected response",
-          step,
+          error: message,
+          step: "create-prediction",
+          details: raw.trim(),
+          suggestions: tooLarge
+            ? [
+                "Upload a smaller image",
+                "Pick a high-capacity model such as 'ultimate-sd-upscale' or 'ldsr-latent-sr'",
+                "Try compressing the image before uploading",
+              ]
+            : [],
+        },
+        { status: tooLarge ? 413 : 502 },
+      )
+    }
+
+    const prediction = predictionPayload as { id?: string; status?: string }
+
+    if (!prediction.id) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Prediction creation failed – unknown format",
+          step: "create-prediction",
           details: prediction,
         },
-        { status: 500 },
+        { status: 502 },
       )
     }
 
