@@ -1,21 +1,44 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { Buffer } from "buffer"
+import sharp from "sharp"
 
-/**
- * Reads the response body once, returns `{ ok, json?, text }`
- */
+/* -------- make sure we aren't deployed on the edge (Sharp needs Node) ------- */
+export const runtime = "nodejs"
+
+/* ---------- helpers --------------------------------------------------------- */
+const BASE64_MULTIPLIER = 1.37 // ≈ expansion factor from raw bytes → base64
+const MAX_PAYLOAD = 9 * 1024 * 1024 // 9 MB (Replicate accepts up to ~10 MB)
+
+/** Consumes a `Response` exactly once, tries to JSON-parse – falls back to raw */
 async function consume(res: Response) {
   const text = await res.text()
   try {
-    return { ok: true, json: JSON.parse(text), text }
+    return { ok: true, json: JSON.parse(text) }
   } catch {
     return { ok: false, text }
   }
 }
 
+/** Iteratively resize / recompress until `jpeg` buffer ≤ `targetBytes`          */
+async function autoCompress(buf: Buffer, targetBytes: number, { startQuality = 90, minQuality = 50, step = 10 } = {}) {
+  let quality = startQuality
+  const image = sharp(buf).rotate()
+  const meta = await image.metadata()
+  let width = meta.width || 4096
+
+  while (buf.length > targetBytes && quality >= minQuality) {
+    width = Math.floor(width * 0.9) // 10 % shrink each round
+    buf = await sharp(buf).resize({ width }).jpeg({ quality }).toBuffer()
+    quality -= step
+  }
+
+  return buf
+}
+
+/* ---------- main handler ---------------------------------------------------- */
 export async function POST(req: NextRequest) {
   try {
-    /* ─── form-data ─────────────────────────────── */
+    /* form-data -------------------------------------------------------------- */
     const fd = await req.formData()
     const file = fd.get("file") as File | null
     const settings = JSON.parse((fd.get("settings") as string | null) ?? "{}")
@@ -29,7 +52,7 @@ export async function POST(req: NextRequest) {
         { status: 500 },
       )
 
-    /* ─── model config ──────────────────────────── */
+    /* model config ----------------------------------------------------------- */
     const models = {
       "real-esrgan-4x": {
         model: "nightmareai/real-esrgan",
@@ -59,56 +82,76 @@ export async function POST(req: NextRequest) {
 
     const cfg = models[settings.model as keyof typeof models] ?? models["real-esrgan-4x"]
 
+    /* raw-size gate ---------------------------------------------------------- */
     if (file.size > cfg.max)
       return NextResponse.json(
         {
           success: false,
-          error: `File too large. Max ${Math.round(cfg.max / 1024 / 1024)} MB for ${settings.model}`,
+          error: `File too large. Max ${Math.round(cfg.max / 1024 / 1024)} MB`,
           step: "file-size-check",
         },
         { status: 413 },
       )
 
-    /* ─── encode ───────────────────────────────── */
-    const dataUrl = `data:${file.type};base64,${Buffer.from(await file.arrayBuffer()).toString("base64")}`
+    /* read & maybe compress -------------------------------------------------- */
+    let buf = Buffer.from(await file.arrayBuffer())
 
-    const input: Record<string, unknown> = { [cfg.input]: dataUrl, scale: settings.upscaleFactor ?? 2 }
-    if (settings.model === "codeformer-face") input.fidelity = 0.7
+    // additional guard: ensure base64 payload ≤ limit (accounts for 37 % bloat)
+    if (buf.length * BASE64_MULTIPLIER > MAX_PAYLOAD) {
+      buf = await autoCompress(buf, Math.floor(MAX_PAYLOAD / BASE64_MULTIPLIER))
+    }
 
-    /* ─── create prediction ────────────────────── */
+    const dataUrl = `data:image/jpeg;base64,${buf.toString("base64")}`
+
+    /* payload-size sanity check --------------------------------------------- */
+    if (dataUrl.length > MAX_PAYLOAD * 1.1)
+      // small head-room for prefix chars
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Image could not be compressed under Replicate’s 10 MB limit",
+          step: "auto-compress",
+        },
+        { status: 413 },
+      )
+
+    /* create prediction ------------------------------------------------------ */
     const createRes = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: { Authorization: `Token ${process.env.REPLICATE_API_TOKEN}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ version: cfg.version, input }),
+      body: JSON.stringify({
+        version: cfg.version,
+        input: {
+          [cfg.input]: dataUrl,
+          scale: settings.upscaleFactor ?? 2,
+          ...(settings.model === "codeformer-face" && { fidelity: 0.7 }),
+        },
+      }),
     })
 
     const createBody = await consume(createRes)
     if (!createRes.ok || !createBody.ok) {
       return NextResponse.json(
-        {
-          success: false,
-          error: createBody.text.slice(0, 300),
-          step: "create-prediction",
-        },
+        { success: false, error: (createBody.text ?? "Unknown").slice(0, 300), step: "create-prediction" },
         { status: createRes.status },
       )
     }
     const predictionId = createBody.json.id as string
 
-    /* ─── poll ─────────────────────────────────── */
-    for (let i = 0; i < 60; i++) {
+    /* poll for completion ---------------------------------------------------- */
+    for (let poll = 1; poll <= 60; poll++) {
       await new Promise((r) => setTimeout(r, 10_000))
+
       const statusRes = await fetch(`https://api.replicate.com/v1/predictions/${predictionId}`, {
         headers: { Authorization: `Token ${process.env.REPLICATE_API_TOKEN}` },
       })
       const body = await consume(statusRes)
 
-      if (!body.ok) {
+      if (!body.ok)
         return NextResponse.json(
           { success: false, error: body.text.slice(0, 300), step: "status-parse", predictionId },
           { status: 502 },
         )
-      }
 
       const st = body.json
       if (st.status === "succeeded") {
@@ -119,7 +162,7 @@ export async function POST(req: NextRequest) {
           predictionId,
           model: settings.model,
           upscaleFactor: settings.upscaleFactor,
-          processingTime: `${(i + 1) * 10}s`,
+          processingTime: `${poll * 10}s`,
           method: "replicate",
         })
       }
@@ -135,7 +178,7 @@ export async function POST(req: NextRequest) {
         )
     }
 
-    /* ─── timeout ──────────────────────────────── */
+    /* timeout ---------------------------------------------------------------- */
     return NextResponse.json(
       { success: false, error: "Timed out after 10 min", step: "timeout", predictionId },
       { status: 408 },
