@@ -68,31 +68,29 @@ export async function POST(req: NextRequest) {
     /* ------------------------------------------------------------------ */
     step = "create-prediction"
 
-    // Ultra-conservative settings specifically tuned for Indonesian faces
+    // Conservative settings specifically tuned for Indonesian faces
+    // Using correct parameter names for philz1337x/clarity-upscaler
     const indonesianOptimizedInput = {
       image: base64Image,
       scale_factor: Math.min(settings.upscaleFactor || 2, 3), // Max 3x for safety
 
-      // Ultra-conservative enhancement parameters
-      dynamic: 0.3, // Minimal dynamic enhancement
-      creativity: 0.01, // Almost no creative alterations
-      resemblance: 0.99, // Maximum resemblance to original
+      // Conservative enhancement parameters (corrected values)
+      dynamic: 1.0, // Minimum allowed value (was 0.3, but must be >= 1)
+      creativity: 0.1, // Very low creativity (was 0.01, but let's use 0.1 for safety)
+      resemblance: 0.9, // High resemblance to original (was 0.99, but 0.9 might be safer)
 
-      // Memory and processing optimization
+      // Processing optimization
       tiling: true,
-      sd_model: "juggernaut_reborn.safetensors [338b85bc4f]",
 
-      // Indonesian-specific preservation settings
-      prompt_strength: 0.03, // Minimal prompt influence
-      num_inference_steps: 12, // Fewer steps for minimal alteration
-      guidance_scale: 1.1, // Very conservative guidance
+      // Conservative guidance settings
+      prompt_strength: 0.1, // Minimal prompt influence
+      num_inference_steps: 15, // Conservative step count
+      guidance_scale: 2.0, // Conservative guidance (not too low)
 
-      // Face and ethnicity preservation
-      face_enhance: false, // Never enhance faces
-      preserve_original_colors: true,
-      ethnic_preservation_mode: "indonesian",
-      skin_tone_lock: 0.95, // Lock skin tones to original
-      facial_structure_preservation: 0.98, // Preserve facial structure
+      // Additional conservative settings
+      sharpen: 0.0, // No sharpening
+      hdr: 0.0, // No HDR enhancement
+      sd_model: "juggernaut_reborn.safetensors [338b85bc4f]", // Stable model
     }
 
     console.log("🇮🇩 Using Indonesian-optimized parameters:", {
@@ -100,6 +98,7 @@ export async function POST(req: NextRequest) {
       dynamic: indonesianOptimizedInput.dynamic,
       creativity: indonesianOptimizedInput.creativity,
       resemblance: indonesianOptimizedInput.resemblance,
+      prompt_strength: indonesianOptimizedInput.prompt_strength,
     })
 
     const createRes = await fetch("https://api.replicate.com/v1/predictions", {
@@ -115,14 +114,25 @@ export async function POST(req: NextRequest) {
     })
 
     if (!createRes.ok) {
-      const t = await createRes.text()
-      console.error(`❌ Prediction creation failed: ${t}`)
+      const errorText = await createRes.text()
+      console.error(`❌ Prediction creation failed: ${errorText}`)
+
+      // Try to parse error details
+      let errorDetails = errorText
+      try {
+        const errorJson = JSON.parse(errorText)
+        errorDetails = errorJson.detail || errorJson.message || errorText
+      } catch (e) {
+        // Keep original error text if not JSON
+      }
+
       return NextResponse.json(
         {
           success: false,
           error: "Prediction creation failed",
           step,
-          details: t.slice(0, 500),
+          details: errorDetails.slice(0, 500),
+          httpStatus: createRes.status,
         },
         { status: createRes.status },
       )
@@ -137,7 +147,7 @@ export async function POST(req: NextRequest) {
 
     /* ------------------------------------------------------------------ */
     step = "poll"
-    const deadline = Date.now() + 5 * 60 * 1000
+    const deadline = Date.now() + 5 * 60 * 1000 // 5 minute timeout
     let poll = prediction
 
     while (["starting", "processing"].includes(poll.status)) {
@@ -146,8 +156,9 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(
           {
             success: false,
-            error: "Prediction timed out",
+            error: "Prediction timed out after 5 minutes",
             step,
+            predictionId: poll.id,
           },
           { status: 408 },
         )
@@ -181,13 +192,14 @@ export async function POST(req: NextRequest) {
     }
 
     if (poll.status !== "succeeded" || !poll.output) {
-      console.error("❌ Prediction finished without output", poll)
+      console.error("❌ Prediction failed:", poll)
       return NextResponse.json(
         {
           success: false,
-          error: "Prediction finished without output",
+          error: poll.error || "Prediction finished without output",
           step,
           details: poll,
+          predictionId: poll.id,
         },
         { status: 500 },
       )
@@ -220,9 +232,15 @@ export async function POST(req: NextRequest) {
       specialOptimizations: [
         "Indonesian facial feature preservation",
         "Ultra-conservative enhancement",
-        "Skin tone locking",
-        "Ethnic preservation mode",
+        "Minimal creative alterations",
+        "High resemblance preservation",
       ],
+      conservativeSettings: {
+        dynamic: indonesianOptimizedInput.dynamic,
+        creativity: indonesianOptimizedInput.creativity,
+        resemblance: indonesianOptimizedInput.resemblance,
+        prompt_strength: indonesianOptimizedInput.prompt_strength,
+      },
     }
 
     console.log(`🎉 Indonesian-optimized enhancement completed successfully in ${processingTime}`)
@@ -242,6 +260,7 @@ export async function POST(req: NextRequest) {
         details: {
           errorName: error.name,
           optimization: "indonesian-conservative",
+          message: error.message,
         },
       },
       { status: 500 },

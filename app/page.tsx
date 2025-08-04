@@ -207,21 +207,21 @@ const AIImageEnhancementPortal = () => {
     },
     {
       id: "clarity-upscaler",
-      name: "Clarity Upscaler (Conservative Mode)",
-      description: "High-quality upscaling with conservative settings to minimize facial alterations",
+      name: "Clarity Upscaler (Standard Mode)",
+      description: "High-quality upscaling - may alter facial features",
       maxUpscale: 4,
       replicateModel: "philz1337x/clarity-upscaler",
       version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
-      category: "conservative-upscaling",
+      category: "upscaling",
       recommended: false,
       status: "working",
       inputField: "image",
-      biasLevel: "medium", // Improved from "high"
-      ethnicityPreservation: "good", // Improved from "poor"
-      indonesianCompatible: true, // Now compatible with conservative settings
-      icon: "🛡️", // Changed from ⚠️ to shield indicating protection
+      biasLevel: "medium",
+      ethnicityPreservation: "fair",
+      indonesianCompatible: false, // Standard mode not recommended
+      icon: "⚠️",
       warning:
-        "Uses conservative settings to minimize facial alterations. Monitor results for any unwanted changes to Indonesian features.",
+        "Standard Clarity Upscaler may significantly alter Indonesian facial features. Use Conservative mode instead.",
     },
     {
       id: "clarity-conservative",
@@ -234,11 +234,11 @@ const AIImageEnhancementPortal = () => {
       recommended: true,
       status: "working",
       inputField: "image",
-      biasLevel: "low", // Much improved with conservative settings
-      ethnicityPreservation: "excellent", // Optimized for Indonesian faces
+      biasLevel: "low",
+      ethnicityPreservation: "excellent",
       indonesianCompatible: true,
       icon: "🇮🇩",
-      warning: null, // No warning needed with conservative settings
+      warning: null,
       specialFeatures: ["Indonesian-optimized", "Ultra-conservative", "Facial feature preservation"],
     },
   ]
@@ -296,7 +296,7 @@ const AIImageEnhancementPortal = () => {
     const selectedModel = enhancementModels.find((m) => m.id === enhancementSettings.model)
     if (selectedModel && !selectedModel.indonesianCompatible && enhancementSettings.datasetRegion === "indonesian") {
       const proceed = window.confirm(
-        `⚠️ BIAS WARNING: ${selectedModel.name} is known to alter Indonesian facial features.\n\n${selectedModel.warning}\n\nWe recommend using "Real-ESRGAN 4x" instead.\n\nDo you want to continue anyway?`,
+        `⚠️ BIAS WARNING: ${selectedModel.name} is known to alter Indonesian facial features.\n\n${selectedModel.warning}\n\nWe recommend using "Real-ESRGAN 4x" or "Clarity Conservative" instead.\n\nDo you want to continue anyway?`,
       )
       if (!proceed) {
         return
@@ -346,14 +346,17 @@ const AIImageEnhancementPortal = () => {
         prev.map((j) => (j.id === job.id ? { ...j, progress: `Uploading to ${modelName}...` } : j)),
       )
 
-      console.log("🌐 Sending request to /api/enhance-replicate...")
-
       // Use specialized conservative endpoint for Indonesian-optimized Clarity
       let apiEndpoint = "/api/enhance-replicate"
       if (enhancementSettings.model === "clarity-conservative") {
         apiEndpoint = "/api/clarity-conservative"
         console.log("🇮🇩 Using Indonesian-optimized Conservative Clarity endpoint")
+        setProcessingQueue((prev) =>
+          prev.map((j) => (j.id === job.id ? { ...j, progress: "Using Indonesian-optimized processing..." } : j)),
+        )
       }
+
+      console.log(`🌐 Sending request to ${apiEndpoint}...`)
 
       // Send request with timeout
       const controller = new AbortController()
@@ -424,10 +427,26 @@ const AIImageEnhancementPortal = () => {
             ethnicityPreservation: result.ethnicityPreservation,
             datasetCompatibility: result.datasetCompatibility,
             specialOptimizations: result.specialOptimizations,
+            conservativeSettings: result.conservativeSettings,
           },
         ])
       } else {
         console.error("❌ Enhancement failed:", result)
+
+        // Provide helpful error messages and recommendations
+        let errorMessage = result.error || "Unknown error"
+        const recommendations = []
+        let alternativeModels = []
+
+        // Check if it's a parameter validation error
+        if (result.details && typeof result.details === "string" && result.details.includes("validation")) {
+          errorMessage = "Model parameter validation failed"
+          recommendations.push("Try using Real-ESRGAN 4x instead")
+          recommendations.push("Check if the image format is supported")
+          alternativeModels = enhancementModels.filter(
+            (m) => m.indonesianCompatible && m.id !== enhancementSettings.model,
+          )
+        }
 
         // Return file to selected files with error
         setSelectedFiles((prev) => [
@@ -435,11 +454,11 @@ const AIImageEnhancementPortal = () => {
           {
             ...fileToProcess,
             status: "failed",
-            error: result.error || "Unknown error",
+            error: errorMessage,
             details: result.details || null,
             step: result.step || "unknown",
-            recommendations: result.recommendations || [],
-            alternativeModels: result.alternativeModels || [],
+            recommendations,
+            alternativeModels,
           },
         ])
       }
@@ -458,6 +477,8 @@ const AIImageEnhancementPortal = () => {
           error: error.message || "Network error",
           details: error.name || null,
           step: "client_error",
+          recommendations: ["Check your internet connection", "Try a different model"],
+          alternativeModels: enhancementModels.filter((m) => m.indonesianCompatible),
         },
       ])
     }
@@ -1832,6 +1853,17 @@ const AIImageEnhancementPortal = () => {
                                   {opt}
                                 </span>
                               ))}
+                            </div>
+                          </div>
+                        )}
+                        {job.conservativeSettings && (
+                          <div className="mt-2 p-2 bg-blue-900/20 border border-blue-500/20 rounded">
+                            <span className="text-xs text-blue-400 font-medium">🇮🇩 Conservative Settings:</span>
+                            <div className="grid grid-cols-2 gap-2 mt-1 text-xs text-blue-300">
+                              <div>Dynamic: {job.conservativeSettings.dynamic}</div>
+                              <div>Creativity: {job.conservativeSettings.creativity}</div>
+                              <div>Resemblance: {job.conservativeSettings.resemblance}</div>
+                              <div>Prompt: {job.conservativeSettings.prompt_strength}</div>
                             </div>
                           </div>
                         )}
