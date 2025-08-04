@@ -4,6 +4,7 @@ import { type NextRequest, NextResponse } from "next/server"
  * POST /api/enhance-replicate
  *
  * Enhanced image processing with Replicate AI models
+ * Updated to address facial bias issues and provide better options for diverse datasets
  */
 export async function POST(req: NextRequest) {
   const startTime = Date.now()
@@ -94,6 +95,8 @@ export async function POST(req: NextRequest) {
     const settings = JSON.parse(settingsRaw) as {
       model?: string
       upscaleFactor?: number
+      preserveEthnicity?: boolean
+      datasetRegion?: string
     }
 
     console.log("📊 File info:", {
@@ -129,62 +132,95 @@ export async function POST(req: NextRequest) {
         model: "nightmareai/real-esrgan",
         version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
         inputField: "image",
-        /*  NEW: use tiling so the GPU never has to hold the whole frame.      *
-         *  512 is the official value recommended in the Replicate README.    */
+        biasLevel: "low", // Real-ESRGAN has minimal facial bias
+        ethnicityPreservation: "excellent",
+        recommendedFor: ["indonesian", "asian", "diverse"],
         getInput: (image, settings) => ({
           image,
           scale: 4,
-          tile: settings.tile || 512, // ✨ NEW
-          face_enhance: false, // ✨ keeps VRAM lower
-          fp32: false, // ✨ use half-precision
+          tile: settings.tile || 512,
+          face_enhance: false, // Disable face enhancement to preserve ethnicity
+          fp32: false,
         }),
       },
       "real-esrgan-2x": {
         model: "nightmareai/real-esrgan",
         version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
         inputField: "image",
+        biasLevel: "low",
+        ethnicityPreservation: "excellent",
+        recommendedFor: ["indonesian", "asian", "diverse"],
         getInput: (image, settings) => ({
           image,
           scale: 2,
-          tile: settings.tile || 512, // ✨ NEW
-          face_enhance: false, // ✨
-          fp32: false, // ✨
+          tile: settings.tile || 512,
+          face_enhance: false, // Preserve original facial features
+          fp32: false,
         }),
       },
       "gfpgan-face": {
         model: "tencentarc/gfpgan",
         version: "9283608cc6b7be6b65a8e44983db012355fde4132009bf99d976b2f0896856a3",
         inputField: "img",
+        biasLevel: "medium", // Some bias but better than Clarity
+        ethnicityPreservation: "good",
+        recommendedFor: ["asian", "diverse"],
         getInput: (image, settings) => ({
-          img: image, // Note: GFPGAN uses 'img' not 'image'
+          img: image,
           scale: Math.min(settings.upscaleFactor || 2, 4),
+          // GFPGAN has better diversity in training data
         }),
       },
       "codeformer-face": {
         model: "sczhou/codeformer",
         version: "7de2ea26c616d5bf2245ad0d5e24f0ff9a6204578a5c876db53142edd9d2cd56",
         inputField: "image",
+        biasLevel: "medium",
+        ethnicityPreservation: "good",
+        recommendedFor: ["asian", "diverse"],
         getInput: (image, settings) => ({
           image,
-          fidelity: 0.7,
+          fidelity: 0.9, // Higher fidelity to preserve original features
           upscale: Math.min(settings.upscaleFactor || 2, 4),
           face_upsample: true,
           background_enhance: true,
-          codeformer_fidelity: 0.7,
+          codeformer_fidelity: 0.9, // Preserve original facial characteristics
         }),
       },
+      // Updated Clarity Upscaler with bias warning
       "clarity-upscaler": {
         model: "philz1337x/clarity-upscaler",
         version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
         inputField: "image",
+        biasLevel: "high", // WARNING: Known to introduce facial bias
+        ethnicityPreservation: "poor",
+        recommendedFor: ["caucasian"], // Not recommended for diverse datasets
+        biasWarning:
+          "This model may alter facial features and ethnicity. Not recommended for Indonesian or diverse datasets.",
         getInput: (image, settings) => ({
           image,
           scale_factor: Math.min(settings.upscaleFactor || 2, 4),
-          dynamic: 6,
-          creativity: 0.35,
-          resemblance: 0.6,
+          dynamic: 3, // Reduced from 6 to minimize alterations
+          creativity: 0.1, // Reduced from 0.35 to preserve original features
+          resemblance: 0.9, // Increased from 0.6 to maintain similarity
           tiling: false,
           sd_model: "juggernaut_reborn.safetensors [338b85bc4f]",
+        }),
+      },
+      // New bias-aware alternative
+      "esrgan-conservative": {
+        model: "nightmareai/real-esrgan",
+        version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
+        inputField: "image",
+        biasLevel: "minimal",
+        ethnicityPreservation: "excellent",
+        recommendedFor: ["indonesian", "asian", "diverse", "conservative"],
+        getInput: (image, settings) => ({
+          image,
+          scale: Math.min(settings.upscaleFactor || 2, 4),
+          tile: 256, // Smaller tiles for more conservative processing
+          face_enhance: false, // Never enhance faces to preserve ethnicity
+          fp32: true, // Higher precision for better preservation
         }),
       },
     }
@@ -205,7 +241,37 @@ export async function POST(req: NextRequest) {
         { status: 400 },
       )
     }
+
+    // Check for bias warning with Indonesian dataset
+    const datasetRegion = settings.datasetRegion || "indonesian"
+    if (modelConfig.biasLevel === "high" && datasetRegion === "indonesian") {
+      console.warn(`⚠️ Bias warning for model ${selectedModel} with Indonesian dataset`)
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Model not suitable for Indonesian dataset",
+          step: "bias-check",
+          details: modelConfig.biasWarning,
+          recommendations: [
+            "Use 'real-esrgan-4x' for best ethnicity preservation",
+            "Try 'esrgan-conservative' for minimal alterations",
+            "Consider 'gfpgan-face' for face-focused enhancement with better diversity",
+          ],
+          alternativeModels: Object.entries(modelMap)
+            .filter(([_, config]) => config.recommendedFor.includes("indonesian"))
+            .map(([id, config]) => ({
+              id,
+              name: config.model,
+              ethnicityPreservation: config.ethnicityPreservation,
+              biasLevel: config.biasLevel,
+            })),
+        },
+        { status: 400 },
+      )
+    }
+
     console.log(`✅ Using model: ${modelConfig.model} (${selectedModel})`)
+    console.log(`📊 Bias level: ${modelConfig.biasLevel}, Ethnicity preservation: ${modelConfig.ethnicityPreservation}`)
 
     /* ------------------------------------------------------------------ */
     step = "create-prediction"
@@ -352,6 +418,9 @@ export async function POST(req: NextRequest) {
       upscaleFactor: settings.upscaleFactor || 2,
       logs: poll.logs,
       step: "completed",
+      biasLevel: modelConfig.biasLevel,
+      ethnicityPreservation: modelConfig.ethnicityPreservation,
+      datasetCompatibility: modelConfig.recommendedFor.includes(datasetRegion) ? "compatible" : "not-recommended",
     }
 
     console.log(`🎉 Enhancement completed successfully in ${processingTime}`)
