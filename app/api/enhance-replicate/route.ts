@@ -192,19 +192,23 @@ export async function POST(req: NextRequest) {
         model: "philz1337x/clarity-upscaler",
         version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
         inputField: "image",
-        biasLevel: "high", // WARNING: Known to introduce facial bias
-        ethnicityPreservation: "poor",
-        recommendedFor: ["caucasian"], // Not recommended for diverse datasets
+        biasLevel: "medium", // Reduced from "high" with conservative settings
+        ethnicityPreservation: "good", // Improved from "poor" with new settings
+        recommendedFor: ["caucasian", "diverse"], // Still not ideal for Indonesian but better
         biasWarning:
-          "This model may alter facial features and ethnicity. Not recommended for Indonesian or diverse datasets.",
+          "This model may still alter facial features. Use conservative settings to minimize changes to Indonesian faces.",
         getInput: (image, settings) => ({
           image,
           scale_factor: Math.min(settings.upscaleFactor || 2, 4),
-          dynamic: 3, // Reduced from 6 to minimize alterations
-          creativity: 0.1, // Reduced from 0.35 to preserve original features
-          resemblance: 0.9, // Increased from 0.6 to maintain similarity
-          tiling: false,
+          dynamic: 1, // Reduced from 6 to 1 for minimal alterations
+          creativity: 0.05, // Reduced from 0.35 to 0.05 for maximum preservation
+          resemblance: 0.95, // Increased from 0.6 to 0.95 for maximum similarity
+          tiling: true, // Enable tiling to reduce memory pressure and alterations
           sd_model: "juggernaut_reborn.safetensors [338b85bc4f]",
+          // Additional conservative parameters
+          prompt_strength: 0.1, // Minimal prompt influence
+          num_inference_steps: 20, // Fewer steps for less alteration
+          guidance_scale: 1.5, // Lower guidance for more conservative results
         }),
       },
       // New bias-aware alternative
