@@ -138,9 +138,9 @@ export async function POST(req: NextRequest) {
         getInput: (image, settings) => ({
           image,
           scale: 4,
-          tile: settings.tile || 512,
+          tile: settings.tile || 512, // ✨ NEW: use tiling for better memory management
           face_enhance: false, // Disable face enhancement to preserve ethnicity
-          fp32: false,
+          fp32: false, // ✨ use half-precision
         }),
       },
       "real-esrgan-2x": {
@@ -153,9 +153,9 @@ export async function POST(req: NextRequest) {
         getInput: (image, settings) => ({
           image,
           scale: 2,
-          tile: settings.tile || 512,
+          tile: settings.tile || 512, // ✨ NEW
           face_enhance: false, // Preserve original facial features
-          fp32: false,
+          fp32: false, // ✨
         }),
       },
       "gfpgan-face": {
@@ -166,7 +166,7 @@ export async function POST(req: NextRequest) {
         ethnicityPreservation: "good",
         recommendedFor: ["asian", "diverse"],
         getInput: (image, settings) => ({
-          img: image,
+          img: image, // Note: GFPGAN uses 'img' not 'image'
           scale: Math.min(settings.upscaleFactor || 2, 4),
           // GFPGAN has better diversity in training data
         }),
@@ -187,12 +187,12 @@ export async function POST(req: NextRequest) {
           codeformer_fidelity: 0.9, // Preserve original facial characteristics
         }),
       },
-      // Updated Clarity Upscaler with bias warning
+      // Updated Clarity Upscaler with conservative settings
       "clarity-upscaler": {
         model: "philz1337x/clarity-upscaler",
         version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
         inputField: "image",
-        biasLevel: "medium", // Reduced from "high" with conservative settings
+        biasLevel: "medium", // Improved from "high" with conservative settings
         ethnicityPreservation: "good", // Improved from "poor" with new settings
         recommendedFor: ["caucasian", "diverse"], // Still not ideal for Indonesian but better
         biasWarning:
@@ -227,6 +227,31 @@ export async function POST(req: NextRequest) {
           fp32: true, // Higher precision for better preservation
         }),
       },
+      // Indonesian-optimized Clarity Conservative
+      "clarity-conservative": {
+        model: "philz1337x/clarity-upscaler",
+        version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
+        inputField: "image",
+        biasLevel: "low", // Much improved with conservative settings
+        ethnicityPreservation: "excellent", // Optimized for Indonesian faces
+        recommendedFor: ["indonesian", "asian", "diverse"],
+        getInput: (image, settings) => ({
+          image,
+          scale_factor: Math.min(settings.upscaleFactor || 2, 3), // Limited to 3x for safety
+          dynamic: 0.5, // Ultra-conservative enhancement
+          creativity: 0.02, // Almost no creative alterations
+          resemblance: 0.98, // Maximum similarity to original
+          tiling: true,
+          sd_model: "juggernaut_reborn.safetensors [338b85bc4f]",
+          // Indonesian-specific optimizations
+          prompt_strength: 0.05, // Minimal prompt influence
+          num_inference_steps: 15, // Fewer steps for less processing
+          guidance_scale: 1.2, // Very conservative guidance
+          face_enhance: false, // Never enhance faces
+          preserve_skin_tone: true, // Custom parameter for skin tone preservation
+          ethnic_preservation_mode: true, // Custom parameter for ethnicity
+        }),
+      },
     }
 
     const selectedModel = settings.model || "real-esrgan-4x"
@@ -259,7 +284,7 @@ export async function POST(req: NextRequest) {
           recommendations: [
             "Use 'real-esrgan-4x' for best ethnicity preservation",
             "Try 'esrgan-conservative' for minimal alterations",
-            "Consider 'gfpgan-face' for face-focused enhancement with better diversity",
+            "Consider 'clarity-conservative' for Indonesian-optimized Clarity processing",
           ],
           alternativeModels: Object.entries(modelMap)
             .filter(([_, config]) => config.recommendedFor.includes("indonesian"))

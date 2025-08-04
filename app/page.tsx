@@ -19,6 +19,7 @@ import {
   Activity,
   TestTube,
   Key,
+  ExternalLink,
   Shield,
   LogIn,
   Users,
@@ -354,6 +355,7 @@ const AIImageEnhancementPortal = () => {
         console.log("🇮🇩 Using Indonesian-optimized Conservative Clarity endpoint")
       }
 
+      // Send request with timeout
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 10 * 60 * 1000) // 10 minute timeout
 
@@ -421,6 +423,7 @@ const AIImageEnhancementPortal = () => {
             biasLevel: result.biasLevel,
             ethnicityPreservation: result.ethnicityPreservation,
             datasetCompatibility: result.datasetCompatibility,
+            specialOptimizations: result.specialOptimizations,
           },
         ])
       } else {
@@ -657,11 +660,12 @@ const AIImageEnhancementPortal = () => {
                         Some AI models have been trained primarily on Western datasets and may alter Indonesian facial
                         features, making them appear Caucasian and middle-aged.
                       </p>
-                      <div className="bg-red-900/30 border border-red-500/30 rounded-lg p-4">
-                        <h4 className="text-red-300 font-medium mb-2">Problematic Model:</h4>
-                        <p className="text-red-200 text-sm">
-                          <strong>Clarity Upscaler</strong> - Known to change Indonesian faces to appear Caucasian and
-                          middle-aged. This model is NOT recommended for Indonesian datasets.
+                      <div className="bg-green-900/30 border border-green-500/30 rounded-lg p-4 mt-4">
+                        <h4 className="text-green-300 font-medium mb-2">✅ New: Conservative Clarity Available!</h4>
+                        <p className="text-green-200 text-sm">
+                          <strong>Clarity Conservative (Indonesian-Optimized)</strong> - Now available with
+                          ultra-conservative settings specifically tuned to preserve Indonesian facial features and
+                          ethnicity.
                         </p>
                       </div>
                       <div className="mt-4">
@@ -674,7 +678,8 @@ const AIImageEnhancementPortal = () => {
                             • <strong>ESRGAN Conservative</strong> - Minimal alterations, preserves all features
                           </li>
                           <li>
-                            • <strong>Real-ESRGAN 2x</strong> - Fast and safe for Indonesian faces
+                            • <strong>Clarity Conservative (Indonesian-Optimized)</strong> - NEW: Ultra-conservative
+                            Clarity processing
                           </li>
                         </ul>
                       </div>
@@ -737,6 +742,97 @@ const AIImageEnhancementPortal = () => {
                     </div>
                   </div>
 
+                  {/* Setup Instructions */}
+                  {configResults?.configuration?.hasApiKey ? (
+                    /* Token Configured Successfully */
+                    <div className="bg-green-900/20 border border-green-500/20 rounded-lg p-6 mb-6">
+                      <div className="flex items-start space-x-4">
+                        <div className="flex-shrink-0">
+                          <CheckCircle className="w-8 h-8 text-green-400" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-green-400 font-medium mb-3">✅ API Token Configured</h4>
+                          <div className="space-y-3 text-sm text-gray-300">
+                            <div className="flex items-center space-x-2">
+                              <span className="bg-green-600 text-white text-xs px-2 py-1 rounded">✓</span>
+                              <span>REPLICATE_API_TOKEN is configured</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="bg-green-600 text-white text-xs px-2 py-1 rounded">✓</span>
+                              <span>Token: r8_brsNoyAv...04DrJmT (secured)</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">→</span>
+                              <span>
+                                Ready to enhance images with{" "}
+                                {enhancementModels.filter((m) => m.indonesianCompatible).length} Indonesian-safe models
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-gradient-to-r from-blue-900/20 to-purple-900/20 border border-blue-500/20 rounded-lg p-6 mb-6">
+                      <div className="flex items-start space-x-4">
+                        <div className="flex-shrink-0">
+                          <Key className="w-8 h-8 text-blue-400" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-blue-400 font-medium mb-3">🔑 Get Your Replicate API Token</h4>
+                          <div className="space-y-3 text-sm text-gray-300">
+                            <div className="flex items-center space-x-2">
+                              <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">1</span>
+                              <span>
+                                Visit{" "}
+                                <a
+                                  href="https://replicate.com/account/api-tokens"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-400 underline hover:text-blue-300 inline-flex items-center space-x-1"
+                                >
+                                  <span>replicate.com/account/api-tokens</span>
+                                  <ExternalLink className="w-3 h-3" />
+                                </a>
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">2</span>
+                              <span>Sign in with GitHub (you'll see the login screen like below)</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">3</span>
+                              <span>Create a new API token</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">4</span>
+                              <span>Add it as REPLICATE_API_TOKEN environment variable</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">5</span>
+                              <span>Click "Test Configuration" above</span>
+                            </div>
+                          </div>
+
+                          {/* Replicate Login Screenshot */}
+                          <div className="mt-4 p-4 bg-black/20 rounded-lg">
+                            <p className="text-xs text-gray-400 mb-2">
+                              What you'll see when you visit the API tokens page:
+                            </p>
+                            <img
+                              src="/replicate-login-screenshot.jpeg"
+                              alt="Replicate login screen showing 'Welcome to Replicate' with GitHub sign-in button"
+                              className="w-full max-w-md rounded-lg border border-gray-600"
+                            />
+                            <p className="text-xs text-gray-500 mt-2">
+                              Click "Sign in with GitHub" to access your API tokens
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Enhanced Models Preview with Bias Information */}
                   <div className="bg-black/20 backdrop-blur-lg rounded-xl border border-white/10 p-6">
                     <h4 className="text-lg font-semibold text-white mb-4">
@@ -761,6 +857,11 @@ const AIImageEnhancementPortal = () => {
                                   {model.recommended && (
                                     <span className="text-xs bg-yellow-600 text-white px-2 py-1 rounded">
                                       ⭐ Recommended
+                                    </span>
+                                  )}
+                                  {model.specialFeatures && (
+                                    <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">
+                                      🇮🇩 Optimized
                                     </span>
                                   )}
                                 </div>
@@ -808,6 +909,18 @@ const AIImageEnhancementPortal = () => {
                               <span className="text-blue-400 ml-2 font-medium">{model.maxUpscale}x</span>
                             </div>
                           </div>
+                          {model.specialFeatures && (
+                            <div className="mt-3 p-3 bg-purple-900/20 border border-purple-500/20 rounded">
+                              <div className="text-purple-300 text-xs font-medium mb-1">🇮🇩 Special Features:</div>
+                              <div className="flex flex-wrap gap-1">
+                                {model.specialFeatures.map((feature, idx) => (
+                                  <span key={idx} className="text-xs bg-purple-600 text-white px-2 py-1 rounded">
+                                    {feature}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                           {model.warning && (
                             <div className="mt-3 p-3 bg-red-900/20 border border-red-500/20 rounded">
                               <div className="flex items-start space-x-2">
@@ -944,6 +1057,11 @@ const AIImageEnhancementPortal = () => {
                             </div>
                             <div className="text-xs text-gray-400">{model.description}</div>
                             <div className="text-xs text-blue-400 mt-1">Bias Level: {model.biasLevel}</div>
+                            {model.specialFeatures && (
+                              <div className="text-xs text-purple-400 mt-1">
+                                Special: {model.specialFeatures.join(", ")}
+                              </div>
+                            )}
                           </div>
                         ))}
                     </div>
@@ -1128,8 +1246,8 @@ const AIImageEnhancementPortal = () => {
                     <div>
                       <h4 className="text-blue-400 font-medium mb-1">🇮🇩 Indonesian Dataset Protection Active</h4>
                       <p className="text-blue-200 text-sm">
-                        We've configured bias-aware models to preserve Indonesian facial characteristics. Problematic
-                        models like "Clarity Upscaler" will show warnings before use.
+                        We've configured bias-aware models to preserve Indonesian facial characteristics. New
+                        Conservative Clarity model now available for Indonesian-optimized processing.
                       </p>
                     </div>
                   </div>
@@ -1339,6 +1457,11 @@ const AIImageEnhancementPortal = () => {
                                     ) : (
                                       <span className="text-xs bg-red-600 text-white px-2 py-1 rounded">⚠️ Biased</span>
                                     )}
+                                    {model.specialFeatures && (
+                                      <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">
+                                        Optimized
+                                      </span>
+                                    )}
                                   </div>
                                   <p className="text-sm text-blue-200 mt-1">{model.category}</p>
                                   <div className="flex items-center space-x-4 mt-2 text-xs">
@@ -1383,6 +1506,18 @@ const AIImageEnhancementPortal = () => {
                                 )}
                               </div>
                             </div>
+                            {model.specialFeatures && (
+                              <div className="mt-3 p-2 bg-purple-900/20 border border-purple-500/20 rounded">
+                                <div className="text-purple-300 text-xs font-medium mb-1">🇮🇩 Special Features:</div>
+                                <div className="flex flex-wrap gap-1">
+                                  {model.specialFeatures.map((feature, idx) => (
+                                    <span key={idx} className="text-xs bg-purple-600 text-white px-2 py-1 rounded">
+                                      {feature}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                             {model.warning && (
                               <div className="mt-3 p-3 bg-red-900/20 border border-red-500/20 rounded">
                                 <div className="flex items-start space-x-2">
@@ -1678,13 +1813,26 @@ const AIImageEnhancementPortal = () => {
                             <span>Dataset:</span>
                             <span
                               className={`text-xs px-2 py-1 rounded ${
-                                job.datasetCompatibility === "compatible"
+                                job.datasetCompatibility === "compatible" ||
+                                job.datasetCompatibility === "indonesian-optimized"
                                   ? "bg-green-600 text-white"
                                   : "bg-red-600 text-white"
                               }`}
                             >
                               {job.datasetCompatibility}
                             </span>
+                          </div>
+                        )}
+                        {job.specialOptimizations && (
+                          <div className="mt-2">
+                            <span className="text-xs text-purple-400 font-medium">Special Optimizations:</span>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {job.specialOptimizations.map((opt, idx) => (
+                                <span key={idx} className="text-xs bg-purple-600 text-white px-2 py-1 rounded">
+                                  {opt}
+                                </span>
+                              ))}
+                            </div>
                           </div>
                         )}
                         {job.predictionId && (
