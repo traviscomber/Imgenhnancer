@@ -1,634 +1,672 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { Users, Search, Filter, Plus, Edit, Trash2, Shield, Mail, Calendar, Activity, MoreHorizontal, UserCheck, UserX, Crown, AlertTriangle } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import {
-  Users,
-  UserPlus,
-  Search,
-  MoreHorizontal,
-  Edit,
-  Trash2,
-  Shield,
-  User,
-  Crown,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-} from "lucide-react"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Switch } from "@/components/ui/switch"
 
-interface UserManagementProps {
-  currentUser: {
-    id: string
-    email: string
-    name: string
-    role: string
-  }
-}
-
-// Mock user data - in a real app, this would come from a database
+// Mock user data - in a real app, this would come from your database
 const mockUsers = [
   {
-    id: "1",
+    id: 1,
     name: "Admin User",
     email: "admin@example.com",
     role: "admin",
     status: "active",
-    createdAt: "2024-01-15T10:00:00Z",
-    lastLogin: "2024-01-21T14:30:00Z",
-    imagesProcessed: 156,
-    creditsUsed: 1560,
+    lastLogin: "2024-01-15T10:30:00Z",
+    createdAt: "2024-01-01T00:00:00Z",
+    enhancementsCount: 156,
+    storageUsed: "2.4 GB",
+    avatar: "/placeholder-user.jpg"
   },
   {
-    id: "2",
+    id: 2,
     name: "Demo User",
     email: "demo@example.com",
-    role: "admin",
+    role: "user",
     status: "active",
-    createdAt: "2024-01-10T09:00:00Z",
-    lastLogin: "2024-01-21T12:15:00Z",
-    imagesProcessed: 89,
-    creditsUsed: 890,
+    lastLogin: "2024-01-14T15:45:00Z",
+    createdAt: "2024-01-05T00:00:00Z",
+    enhancementsCount: 23,
+    storageUsed: "456 MB",
+    avatar: "/placeholder-user.jpg"
   },
   {
-    id: "3",
-    name: "John Smith",
+    id: 3,
+    name: "John Doe",
     email: "john@example.com",
     role: "user",
     status: "active",
-    createdAt: "2024-01-18T16:45:00Z",
-    lastLogin: "2024-01-20T11:20:00Z",
-    imagesProcessed: 23,
-    creditsUsed: 230,
+    lastLogin: "2024-01-13T09:15:00Z",
+    createdAt: "2024-01-10T00:00:00Z",
+    enhancementsCount: 8,
+    storageUsed: "124 MB",
+    avatar: "/placeholder-user.jpg"
   },
   {
-    id: "4",
-    name: "Sarah Johnson",
-    email: "sarah@example.com",
+    id: 4,
+    name: "Jane Smith",
+    email: "jane@example.com",
     role: "moderator",
-    status: "active",
-    createdAt: "2024-01-12T14:20:00Z",
-    lastLogin: "2024-01-19T09:45:00Z",
-    imagesProcessed: 67,
-    creditsUsed: 670,
+    status: "suspended",
+    lastLogin: "2024-01-12T14:20:00Z",
+    createdAt: "2024-01-08T00:00:00Z",
+    enhancementsCount: 45,
+    storageUsed: "890 MB",
+    avatar: "/placeholder-user.jpg"
   },
   {
-    id: "5",
-    name: "Mike Wilson",
-    email: "mike@example.com",
+    id: 5,
+    name: "Bob Wilson",
+    email: "bob@example.com",
     role: "user",
-    status: "suspended",
-    createdAt: "2024-01-05T11:30:00Z",
-    lastLogin: "2024-01-15T16:10:00Z",
-    imagesProcessed: 12,
-    creditsUsed: 120,
-  },
+    status: "inactive",
+    lastLogin: "2024-01-05T11:30:00Z",
+    createdAt: "2024-01-03T00:00:00Z",
+    enhancementsCount: 2,
+    storageUsed: "45 MB",
+    avatar: "/placeholder-user.jpg"
+  }
 ]
 
 const roles = [
-  { id: "user", name: "User", description: "Basic user with image enhancement access", color: "bg-blue-600" },
-  { id: "moderator", name: "Moderator", description: "Can moderate content and assist users", color: "bg-purple-600" },
-  { id: "admin", name: "Administrator", description: "Full system access and user management", color: "bg-red-600" },
+  { id: "admin", name: "Administrator", color: "bg-red-600" },
+  { id: "moderator", name: "Moderator", color: "bg-yellow-600" },
+  { id: "user", name: "User", color: "bg-blue-600" }
 ]
 
-export function UserManagement({ currentUser }: UserManagementProps) {
+export function UserManagement({ currentUser }) {
   const [users, setUsers] = useState(mockUsers)
   const [searchTerm, setSearchTerm] = useState("")
   const [roleFilter, setRoleFilter] = useState("all")
   const [statusFilter, setStatusFilter] = useState("all")
-  const [selectedUser, setSelectedUser] = useState(null)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [editForm, setEditForm] = useState({
+  const [selectedUsers, setSelectedUsers] = useState([])
+  const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [showEditDialog, setShowEditDialog] = useState(false)
+  const [editingUser, setEditingUser] = useState(null)
+  const [newUser, setNewUser] = useState({
     name: "",
     email: "",
     role: "user",
     status: "active",
+    password: "",
+    notes: ""
   })
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2)
-  }
-
-  const getRoleIcon = (role: string) => {
-    switch (role) {
-      case "admin":
-        return <Crown className="w-4 h-4" />
-      case "moderator":
-        return <Shield className="w-4 h-4" />
-      default:
-        return <User className="w-4 h-4" />
-    }
-  }
-
-  const getRoleColor = (role: string) => {
-    const roleData = roles.find((r) => r.id === role)
-    return roleData?.color || "bg-gray-600"
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "active":
-        return "text-green-400"
-      case "suspended":
-        return "text-red-400"
-      case "pending":
-        return "text-yellow-400"
-      default:
-        return "text-gray-400"
-    }
-  }
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "active":
-        return <CheckCircle className="w-4 h-4" />
-      case "suspended":
-        return <XCircle className="w-4 h-4" />
-      case "pending":
-        return <AlertTriangle className="w-4 h-4" />
-      default:
-        return <User className="w-4 h-4" />
-    }
-  }
-
-  const filteredUsers = users.filter((user) => {
-    const matchesSearch =
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  // Filter users based on search and filters
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         user.email.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesRole = roleFilter === "all" || user.role === roleFilter
     const matchesStatus = statusFilter === "all" || user.status === statusFilter
     return matchesSearch && matchesRole && matchesStatus
   })
 
-  const handleEditUser = (user: any) => {
-    setSelectedUser(user)
-    setEditForm({
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      status: user.status,
-    })
-    setIsEditDialogOpen(true)
+  // User statistics
+  const userStats = {
+    total: users.length,
+    active: users.filter(u => u.status === "active").length,
+    suspended: users.filter(u => u.status === "suspended").length,
+    inactive: users.filter(u => u.status === "inactive").length,
+    admins: users.filter(u => u.role === "admin").length,
+    moderators: users.filter(u => u.role === "moderator").length,
+    regularUsers: users.filter(u => u.role === "user").length
   }
 
-  const handleSaveUser = () => {
-    if (selectedUser) {
-      setUsers(users.map((user) => (user.id === selectedUser.id ? { ...user, ...editForm } : user)))
-    }
-    setIsEditDialogOpen(false)
-    setSelectedUser(null)
-  }
-
-  const handleCreateUser = () => {
-    const newUser = {
-      id: Date.now().toString(),
-      ...editForm,
-      createdAt: new Date().toISOString(),
-      lastLogin: null,
-      imagesProcessed: 0,
-      creditsUsed: 0,
-    }
-    setUsers([...users, newUser])
-    setIsCreateDialogOpen(false)
-    setEditForm({ name: "", email: "", role: "user", status: "active" })
-  }
-
-  const handleDeleteUser = (userId: string) => {
-    if (userId === currentUser.id) {
-      alert("You cannot delete your own account")
-      return
-    }
-    if (confirm("Are you sure you want to delete this user?")) {
-      setUsers(users.filter((user) => user.id !== userId))
-    }
-  }
-
-  const handleSuspendUser = (userId: string) => {
-    if (userId === currentUser.id) {
-      alert("You cannot suspend your own account")
-      return
-    }
-    setUsers(
-      users.map((user) =>
-        user.id === userId ? { ...user, status: user.status === "suspended" ? "active" : "suspended" } : user,
-      ),
-    )
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    })
-  }
-
-  const formatDateTime = (dateString: string) => {
-    if (!dateString) return "Never"
+  const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
       hour: "2-digit",
-      minute: "2-digit",
+      minute: "2-digit"
     })
   }
 
-  // Statistics
-  const stats = {
-    total: users.length,
-    active: users.filter((u) => u.status === "active").length,
-    suspended: users.filter((u) => u.status === "suspended").length,
-    admins: users.filter((u) => u.role === "admin").length,
-    moderators: users.filter((u) => u.role === "moderator").length,
-    regularUsers: users.filter((u) => u.role === "user").length,
+  const getRoleColor = (role) => {
+    const roleObj = roles.find(r => r.id === role)
+    return roleObj?.color || "bg-gray-600"
+  }
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "active": return "bg-green-600"
+      case "suspended": return "bg-red-600"
+      case "inactive": return "bg-gray-600"
+      default: return "bg-gray-600"
+    }
+  }
+
+  const handleCreateUser = () => {
+    const user = {
+      id: Math.max(...users.map(u => u.id)) + 1,
+      ...newUser,
+      createdAt: new Date().toISOString(),
+      lastLogin: null,
+      enhancementsCount: 0,
+      storageUsed: "0 MB",
+      avatar: "/placeholder-user.jpg"
+    }
+    setUsers([...users, user])
+    setNewUser({
+      name: "",
+      email: "",
+      role: "user",
+      status: "active",
+      password: "",
+      notes: ""
+    })
+    setShowCreateDialog(false)
+  }
+
+  const handleEditUser = (user) => {
+    setEditingUser({ ...user })
+    setShowEditDialog(true)
+  }
+
+  const handleUpdateUser = () => {
+    setUsers(users.map(u => u.id === editingUser.id ? editingUser : u))
+    setShowEditDialog(false)
+    setEditingUser(null)
+  }
+
+  const handleDeleteUser = (userId) => {
+    if (userId === currentUser?.id) {
+      alert("You cannot delete your own account")
+      return
+    }
+    if (confirm("Are you sure you want to delete this user?")) {
+      setUsers(users.filter(u => u.id !== userId))
+    }
+  }
+
+  const handleBulkAction = (action) => {
+    if (selectedUsers.length === 0) return
+
+    switch (action) {
+      case "activate":
+        setUsers(users.map(u => 
+          selectedUsers.includes(u.id) ? { ...u, status: "active" } : u
+        ))
+        break
+      case "suspend":
+        setUsers(users.map(u => 
+          selectedUsers.includes(u.id) && u.id !== currentUser?.id 
+            ? { ...u, status: "suspended" } : u
+        ))
+        break
+      case "delete":
+        if (confirm(`Are you sure you want to delete ${selectedUsers.length} users?`)) {
+          setUsers(users.filter(u => 
+            !selectedUsers.includes(u.id) || u.id === currentUser?.id
+          ))
+        }
+        break
+    }
+    setSelectedUsers([])
+  }
+
+  const toggleUserSelection = (userId) => {
+    setSelectedUsers(prev => 
+      prev.includes(userId) 
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    )
+  }
+
+  const selectAllUsers = () => {
+    if (selectedUsers.length === filteredUsers.length) {
+      setSelectedUsers([])
+    } else {
+      setSelectedUsers(filteredUsers.map(u => u.id))
+    }
   }
 
   return (
     <div className="space-y-8">
-      {/* Statistics Cards */}
+      {/* User Statistics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="bg-white/5 border-white/10">
+        <Card className="bg-black/20 border-white/10">
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
               <Users className="w-5 h-5 text-blue-400" />
               <div>
-                <p className="text-2xl font-bold text-white">{stats.total}</p>
-                <p className="text-xs text-gray-400">Total Users</p>
+                <p className="text-sm text-gray-400">Total Users</p>
+                <p className="text-2xl font-bold text-white">{userStats.total}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-white/5 border-white/10">
+        <Card className="bg-black/20 border-white/10">
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
-              <CheckCircle className="w-5 h-5 text-green-400" />
+              <UserCheck className="w-5 h-5 text-green-400" />
               <div>
-                <p className="text-2xl font-bold text-white">{stats.active}</p>
-                <p className="text-xs text-gray-400">Active Users</p>
+                <p className="text-sm text-gray-400">Active</p>
+                <p className="text-2xl font-bold text-white">{userStats.active}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-white/5 border-white/10">
+        <Card className="bg-black/20 border-white/10">
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
               <Crown className="w-5 h-5 text-yellow-400" />
               <div>
-                <p className="text-2xl font-bold text-white">{stats.admins}</p>
-                <p className="text-xs text-gray-400">Administrators</p>
+                <p className="text-sm text-gray-400">Admins</p>
+                <p className="text-2xl font-bold text-white">{userStats.admins}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-white/5 border-white/10">
+        <Card className="bg-black/20 border-white/10">
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
-              <XCircle className="w-5 h-5 text-red-400" />
+              <UserX className="w-5 h-5 text-red-400" />
               <div>
-                <p className="text-2xl font-bold text-white">{stats.suspended}</p>
-                <p className="text-xs text-gray-400">Suspended</p>
+                <p className="text-sm text-gray-400">Suspended</p>
+                <p className="text-2xl font-bold text-white">{userStats.suspended}</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* User Management */}
-      <Card className="bg-black/20 backdrop-blur-lg border-white/10">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-white">User Management</CardTitle>
-              <CardDescription className="text-gray-400">Manage user accounts, roles, and permissions</CardDescription>
+      {/* Controls */}
+      <Card className="bg-black/20 border-white/10">
+        <CardContent className="p-6">
+          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center flex-1">
+              {/* Search */}
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  placeholder="Search users..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 bg-white/10 border-white/20 text-white"
+                />
+              </div>
+
+              {/* Filters */}
+              <div className="flex gap-2">
+                <Select value={roleFilter} onValueChange={setRoleFilter}>
+                  <SelectTrigger className="w-32 bg-white/10 border-white/20 text-white">
+                    <SelectValue placeholder="Role" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-white/20">
+                    <SelectItem value="all">All Roles</SelectItem>
+                    {roles.map(role => (
+                      <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-32 bg-white/10 border-white/20 text-white">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-white/20">
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="suspended">Suspended</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  Add User
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="bg-black/90 backdrop-blur-lg border-white/10 text-white">
-                <DialogHeader>
-                  <DialogTitle>Create New User</DialogTitle>
-                  <DialogDescription className="text-gray-400">Add a new user to the system</DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="create-name">Full Name</Label>
-                    <Input
-                      id="create-name"
-                      value={editForm.name}
-                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                      className="bg-white/10 border-white/20 text-white"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="create-email">Email</Label>
-                    <Input
-                      id="create-email"
-                      type="email"
-                      value={editForm.email}
-                      onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                      className="bg-white/10 border-white/20 text-white"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="create-role">Role</Label>
-                    <Select value={editForm.role} onValueChange={(value) => setEditForm({ ...editForm, role: value })}>
-                      <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-black/90 border-white/10">
-                        {roles.map((role) => (
-                          <SelectItem key={role.id} value={role.id} className="text-white">
-                            <div className="flex items-center space-x-2">
-                              {getRoleIcon(role.id)}
-                              <span>{role.name}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button onClick={handleCreateUser} className="bg-blue-600 hover:bg-blue-700">
-                      Create User
+
+            {/* Actions */}
+            <div className="flex gap-2">
+              {selectedUsers.length > 0 && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="bg-white/10 border-white/20 text-white">
+                      Bulk Actions ({selectedUsers.length})
                     </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => setIsCreateDialogOpen(false)}
-                      className="border-white/20 text-white hover:bg-white/10"
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-slate-800 border-white/20">
+                    <DropdownMenuItem onClick={() => handleBulkAction("activate")}>
+                      <UserCheck className="w-4 h-4 mr-2" />
+                      Activate Users
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleBulkAction("suspend")}>
+                      <UserX className="w-4 h-4 mr-2" />
+                      Suspend Users
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => handleBulkAction("delete")}
+                      className="text-red-400"
                     >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {/* Filters */}
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input
-                placeholder="Search users..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-gray-400"
-              />
-            </div>
-            <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger className="w-full md:w-40 bg-white/10 border-white/20 text-white">
-                <SelectValue placeholder="Filter by role" />
-              </SelectTrigger>
-              <SelectContent className="bg-black/90 border-white/10">
-                <SelectItem value="all" className="text-white">
-                  All Roles
-                </SelectItem>
-                {roles.map((role) => (
-                  <SelectItem key={role.id} value={role.id} className="text-white">
-                    {role.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-40 bg-white/10 border-white/20 text-white">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent className="bg-black/90 border-white/10">
-                <SelectItem value="all" className="text-white">
-                  All Status
-                </SelectItem>
-                <SelectItem value="active" className="text-white">
-                  Active
-                </SelectItem>
-                <SelectItem value="suspended" className="text-white">
-                  Suspended
-                </SelectItem>
-                <SelectItem value="pending" className="text-white">
-                  Pending
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete Users
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
 
-          {/* Users Table */}
-          <div className="space-y-4">
-            {filteredUsers.map((user) => (
-              <div key={user.id} className="bg-white/5 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <Avatar className="h-12 w-12 bg-blue-600">
-                      <AvatarFallback className="bg-blue-600 text-white">{getInitials(user.name)}</AvatarFallback>
-                    </Avatar>
+              <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+                <DialogTrigger asChild>
+                  <Button className="bg-blue-600 hover:bg-blue-700">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add User
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="bg-slate-800 border-white/20 text-white">
+                  <DialogHeader>
+                    <DialogTitle>Create New User</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="name">Name</Label>
+                        <Input
+                          id="name"
+                          value={newUser.name}
+                          onChange={(e) => setNewUser({...newUser, name: e.target.value})}
+                          className="bg-white/10 border-white/20 text-white"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="email">Email</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={newUser.email}
+                          onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                          className="bg-white/10 border-white/20 text-white"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="role">Role</Label>
+                        <Select value={newUser.role} onValueChange={(value) => setNewUser({...newUser, role: value})}>
+                          <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-slate-800 border-white/20">
+                            {roles.map(role => (
+                              <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="status">Status</Label>
+                        <Select value={newUser.status} onValueChange={(value) => setNewUser({...newUser, status: value})}>
+                          <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-slate-800 border-white/20">
+                            <SelectItem value="active">Active</SelectItem>
+                            <SelectItem value="suspended">Suspended</SelectItem>
+                            <SelectItem value="inactive">Inactive</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
                     <div>
-                      <div className="flex items-center space-x-2">
-                        <h3 className="text-white font-medium">{user.name}</h3>
-                        {user.id === currentUser.id && (
-                          <Badge variant="outline" className="border-blue-500/20 text-blue-400 text-xs">
-                            You
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-gray-400 text-sm">{user.email}</p>
-                      <div className="flex items-center space-x-4 mt-1">
-                        <div className="flex items-center space-x-1">
-                          <Badge className={`${getRoleColor(user.role)} text-white text-xs`}>
-                            {getRoleIcon(user.role)}
-                            <span className="ml-1">{user.role}</span>
-                          </Badge>
-                        </div>
-                        <div className={`flex items-center space-x-1 text-xs ${getStatusColor(user.status)}`}>
-                          {getStatusIcon(user.status)}
-                          <span className="capitalize">{user.status}</span>
-                        </div>
-                      </div>
+                      <Label htmlFor="password">Password</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        value={newUser.password}
+                        onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                        className="bg-white/10 border-white/20 text-white"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="notes">Notes</Label>
+                      <Textarea
+                        id="notes"
+                        value={newUser.notes}
+                        onChange={(e) => setNewUser({...newUser, notes: e.target.value})}
+                        className="bg-white/10 border-white/20 text-white"
+                        rows={3}
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+                        Cancel
+                      </Button>
+                      <Button onClick={handleCreateUser} className="bg-blue-600 hover:bg-blue-700">
+                        Create User
+                      </Button>
                     </div>
                   </div>
-
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right text-sm">
-                      <p className="text-white">{user.imagesProcessed} images</p>
-                      <p className="text-gray-400">{user.creditsUsed} credits</p>
-                    </div>
-                    <div className="text-right text-sm">
-                      <p className="text-white">Joined {formatDate(user.createdAt)}</p>
-                      <p className="text-gray-400">Last: {formatDateTime(user.lastLogin)}</p>
-                    </div>
-
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0 text-gray-400 hover:text-white">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="bg-black/90 border-white/10">
-                        <DropdownMenuLabel className="text-white">Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator className="bg-white/10" />
-                        <DropdownMenuItem
-                          onClick={() => handleEditUser(user)}
-                          className="text-gray-300 hover:text-white hover:bg-white/10"
-                        >
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit User
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleSuspendUser(user.id)}
-                          className="text-gray-300 hover:text-white hover:bg-white/10"
-                          disabled={user.id === currentUser.id}
-                        >
-                          {user.status === "suspended" ? (
-                            <>
-                              <CheckCircle className="mr-2 h-4 w-4" />
-                              Activate User
-                            </>
-                          ) : (
-                            <>
-                              <XCircle className="mr-2 h-4 w-4" />
-                              Suspend User
-                            </>
-                          )}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator className="bg-white/10" />
-                        <DropdownMenuItem
-                          onClick={() => handleDeleteUser(user.id)}
-                          className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
-                          disabled={user.id === currentUser.id}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete User
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
-              </div>
-            ))}
-
-            {filteredUsers.length === 0 && (
-              <div className="text-center py-8">
-                <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-400">No users found matching your criteria</p>
-              </div>
-            )}
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
         </CardContent>
       </Card>
 
+      {/* Users Table */}
+      <Card className="bg-black/20 border-white/10">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="border-b border-white/10">
+                <tr>
+                  <th className="text-left p-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
+                      onChange={selectAllUsers}
+                      className="rounded"
+                    />
+                  </th>
+                  <th className="text-left p-4 text-gray-300 font-medium">User</th>
+                  <th className="text-left p-4 text-gray-300 font-medium">Role</th>
+                  <th className="text-left p-4 text-gray-300 font-medium">Status</th>
+                  <th className="text-left p-4 text-gray-300 font-medium">Activity</th>
+                  <th className="text-left p-4 text-gray-300 font-medium">Usage</th>
+                  <th className="text-left p-4 text-gray-300 font-medium">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredUsers.map((user) => (
+                  <tr key={user.id} className="border-b border-white/5 hover:bg-white/5">
+                    <td className="p-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedUsers.includes(user.id)}
+                        onChange={() => toggleUserSelection(user.id)}
+                        className="rounded"
+                      />
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center space-x-3">
+                        <img
+                          src={user.avatar || "/placeholder.svg"}
+                          alt={user.name}
+                          className="w-8 h-8 rounded-full"
+                        />
+                        <div>
+                          <p className="text-white font-medium">{user.name}</p>
+                          <p className="text-sm text-gray-400">{user.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <Badge className={`${getRoleColor(user.role)} text-white`}>
+                        {roles.find(r => r.id === user.role)?.name}
+                      </Badge>
+                    </td>
+                    <td className="p-4">
+                      <Badge className={`${getStatusColor(user.status)} text-white`}>
+                        {user.status}
+                      </Badge>
+                    </td>
+                    <td className="p-4">
+                      <div className="text-sm">
+                        <p className="text-white">
+                          {user.lastLogin ? formatDate(user.lastLogin) : "Never"}
+                        </p>
+                        <p className="text-gray-400">
+                          Joined {formatDate(user.createdAt)}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="text-sm">
+                        <p className="text-white">{user.enhancementsCount} enhancements</p>
+                        <p className="text-gray-400">{user.storageUsed} used</p>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="bg-slate-800 border-white/20">
+                          <DropdownMenuItem onClick={() => handleEditUser(user)}>
+                            <Edit className="w-4 h-4 mr-2" />
+                            Edit User
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Mail className="w-4 h-4 mr-2" />
+                            Send Email
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Activity className="w-4 h-4 mr-2" />
+                            View Activity
+                          </DropdownMenuItem>
+                          {user.id !== currentUser?.id && (
+                            <DropdownMenuItem 
+                              onClick={() => handleDeleteUser(user.id)}
+                              className="text-red-400"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Delete User
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {filteredUsers.length === 0 && (
+            <div className="text-center py-12">
+              <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-400">No users found</p>
+              <p className="text-sm text-gray-500 mt-2">
+                {searchTerm || roleFilter !== "all" || statusFilter !== "all" 
+                  ? "Try adjusting your search or filters"
+                  : "Create your first user to get started"
+                }
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Edit User Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="bg-black/90 backdrop-blur-lg border-white/10 text-white">
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="bg-slate-800 border-white/20 text-white max-w-2xl">
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
-            <DialogDescription className="text-gray-400">Update user information and permissions</DialogDescription>
           </DialogHeader>
-          {selectedUser && (
+          {editingUser && (
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-name">Full Name</Label>
-                <Input
-                  id="edit-name"
-                  value={editForm.name}
-                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                  className="bg-white/10 border-white/20 text-white"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-name">Name</Label>
+                  <Input
+                    id="edit-name"
+                    value={editingUser.name}
+                    onChange={(e) => setEditingUser({...editingUser, name: e.target.value})}
+                    className="bg-white/10 border-white/20 text-white"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-email">Email</Label>
+                  <Input
+                    id="edit-email"
+                    type="email"
+                    value={editingUser.email}
+                    onChange={(e) => setEditingUser({...editingUser, email: e.target.value})}
+                    className="bg-white/10 border-white/20 text-white"
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-email">Email</Label>
-                <Input
-                  id="edit-email"
-                  type="email"
-                  value={editForm.email}
-                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                  className="bg-white/10 border-white/20 text-white"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-role">Role</Label>
+                  <Select 
+                    value={editingUser.role} 
+                    onValueChange={(value) => setEditingUser({...editingUser, role: value})}
+                  >
+                    <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-800 border-white/20">
+                      {roles.map(role => (
+                        <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="edit-status">Status</Label>
+                  <Select 
+                    value={editingUser.status} 
+                    onValueChange={(value) => setEditingUser({...editingUser, status: value})}
+                  >
+                    <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-800 border-white/20">
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="suspended">Suspended</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-role">Role</Label>
-                <Select value={editForm.role} onValueChange={(value) => setEditForm({ ...editForm, role: value })}>
-                  <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-black/90 border-white/10">
-                    {roles.map((role) => (
-                      <SelectItem key={role.id} value={role.id} className="text-white">
-                        <div className="flex items-center space-x-2">
-                          {getRoleIcon(role.id)}
-                          <div>
-                            <div>{role.name}</div>
-                            <div className="text-xs text-gray-400">{role.description}</div>
-                          </div>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              
+              {/* User Statistics */}
+              <div className="grid grid-cols-3 gap-4 p-4 bg-white/5 rounded-lg">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-white">{editingUser.enhancementsCount}</p>
+                  <p className="text-sm text-gray-400">Enhancements</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-white">{editingUser.storageUsed}</p>
+                  <p className="text-sm text-gray-400">Storage Used</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-medium text-white">
+                    {editingUser.lastLogin ? formatDate(editingUser.lastLogin) : "Never"}
+                  </p>
+                  <p className="text-sm text-gray-400">Last Login</p>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-status">Status</Label>
-                <Select value={editForm.status} onValueChange={(value) => setEditForm({ ...editForm, status: value })}>
-                  <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-black/90 border-white/10">
-                    <SelectItem value="active" className="text-white">
-                      Active
-                    </SelectItem>
-                    <SelectItem value="suspended" className="text-white">
-                      Suspended
-                    </SelectItem>
-                    <SelectItem value="pending" className="text-white">
-                      Pending
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex space-x-2">
-                <Button onClick={handleSaveUser} className="bg-blue-600 hover:bg-blue-700">
-                  Save Changes
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsEditDialogOpen(false)}
-                  className="border-white/20 text-white hover:bg-white/10"
-                >
+
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setShowEditDialog(false)}>
                   Cancel
+                </Button>
+                <Button onClick={handleUpdateUser} className="bg-blue-600 hover:bg-blue-700">
+                  Update User
                 </Button>
               </div>
             </div>

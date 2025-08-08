@@ -11,7 +11,8 @@ export async function POST(req: NextRequest) {
 
   console.log("🚀 Starting Replicate image enhancement...")
   console.log("📊 Request method:", req.method)
-  console.log("📊 Request headers:", Object.fromEntries(req.headers.entries()))
+  console.log("📊 Content-Type:", req.headers.get("content-type"))
+  console.log("📊 All headers:", Object.fromEntries(req.headers.entries()))
 
   try {
     /* ------------------------------------------------------------------ */
@@ -45,21 +46,90 @@ export async function POST(req: NextRequest) {
 
     /* ------------------------------------------------------------------ */
     step = "parse-form"
-    const formData = await req.formData().catch((e) => {
-      console.error("❌ Failed to parse form data:", e)
-      throw new Error(`Could not parse multipart form: ${e}`)
-    })
+    let formData: FormData
+    let file: File | null = null
+    let settingsRaw: string = "{}"
 
-    const file = formData.get("file") as File | null
-    const settingsRaw = (formData.get("settings") as string) || "{}"
+    try {
+      console.log("📥 Parsing form data...")
+      
+      // Check if the request has the correct content type (more lenient check)
+      const contentType = req.headers.get("content-type")
+      console.log("📊 Content-Type header:", contentType)
+      
+      // More lenient content type check - just check if it contains multipart
+      if (contentType && !contentType.includes("multipart")) {
+        console.warn("⚠️ Unexpected content type, but attempting to parse anyway:", contentType)
+      }
+
+      // Parse form data with better error handling
+      try {
+        formData = await req.formData()
+        console.log("✅ Form data parsed successfully")
+      } catch (formDataError) {
+        console.error("❌ FormData parsing failed:", formDataError)
+        console.error("❌ Error details:", {
+          name: formDataError.name,
+          message: formDataError.message,
+          stack: formDataError.stack?.split('\n').slice(0, 3)
+        })
+        throw new Error(`FormData parsing failed: ${formDataError.message}`)
+      }
+      
+      // Log form data keys for debugging
+      const keys = Array.from(formData.keys())
+      console.log("📊 Form data keys:", keys)
+      
+      // Extract file and settings
+      file = formData.get("file") as File | null
+      settingsRaw = (formData.get("settings") as string) || "{}"
+      
+      console.log("📊 Extracted data:", {
+        hasFile: !!file,
+        fileType: file?.constructor?.name,
+        fileName: file?.name,
+        fileSize: file?.size,
+        settingsLength: settingsRaw.length
+      })
+      
+    } catch (parseError) {
+      console.error("❌ Failed to parse form data:", parseError)
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Failed to parse form data",
+          step,
+          details: parseError.message,
+          timestamp: new Date().toISOString(),
+        },
+        { status: 400 },
+      )
+    }
+
+    // Validate file after extraction
     if (!file) {
       console.error("❌ No file field in form-data")
+      console.error("❌ Available fields:", Array.from(formData.keys()))
       return NextResponse.json(
         {
           success: false,
           error: "No file provided",
           step,
-          details: "File field is missing from form data",
+          details: `File field is missing from form data. Available fields: ${Array.from(formData.keys()).join(", ")}`,
+        },
+        { status: 400 },
+      )
+    }
+
+    // Validate file object
+    if (!(file instanceof File)) {
+      console.error("❌ File field is not a File object:", typeof file, file?.constructor?.name)
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Invalid file object",
+          step,
+          details: `Expected File object, got ${typeof file} (${file?.constructor?.name})`,
         },
         { status: 400 },
       )
@@ -91,36 +161,71 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const settings = JSON.parse(settingsRaw) as {
-      model?: string
-      upscaleFactor?: number
+    let settings
+    try {
+      settings = JSON.parse(settingsRaw) as {
+        model?: string
+        upscaleFactor?: number
+        preserveAsianFeatures?: boolean
+      }
+    } catch (settingsError) {
+      console.error("❌ Failed to parse settings JSON:", settingsError)
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Invalid settings format",
+          step,
+          details: `Failed to parse settings JSON: ${settingsError.message}`,
+        },
+        { status: 400 },
+      )
     }
 
     console.log("📊 File info:", {
-      name: file?.name,
-      size: file?.size,
-      type: file?.type,
-      hasFile: !!file,
+      name: file.name,
+      size: file.size,
+      type: file.type,
     })
     console.log("📊 Settings:", settings)
 
     /* ------------------------------------------------------------------ */
     step = "buffer→b64"
-    const buffer = Buffer.from(await file.arrayBuffer())
-    const base64Image = `data:${file.type};base64,${buffer.toString("base64")}`
-    if (base64Image.length > 10 * 1024 * 1024) {
-      console.error("❌ Base64 image too large:", base64Image.length)
+    let buffer: Buffer
+    let base64Image: string
+    
+    try {
+      console.log("🔄 Converting file to buffer...")
+      const arrayBuffer = await file.arrayBuffer()
+      buffer = Buffer.from(arrayBuffer)
+      console.log(`✅ Buffer created: ${buffer.length} bytes`)
+      
+      base64Image = `data:${file.type};base64,${buffer.toString("base64")}`
+      console.log(`✅ Converted to base64: ${base64Image.length} characters`)
+      
+      if (base64Image.length > 10 * 1024 * 1024) {
+        console.error("❌ Base64 image too large:", base64Image.length)
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Image too large for processing",
+            step,
+            details: `Base64 size ${base64Image.length} exceeds limit`,
+          },
+          { status: 400 },
+        )
+      }
+    } catch (bufferError) {
+      console.error("❌ Failed to process file buffer:", bufferError)
       return NextResponse.json(
         {
           success: false,
-          error: "Image too large for processing",
+          error: "Failed to process file",
           step,
-          details: `Base64 size ${base64Image.length} exceeds limit`,
+          details: bufferError.message,
         },
-        { status: 400 },
+        { status: 500 },
       )
     }
-    console.log(`✅ Converted to base64: ${base64Image.length} characters`)
 
     /* ------------------------------------------------------------------ */
     step = "model-map"
@@ -129,14 +234,12 @@ export async function POST(req: NextRequest) {
         model: "nightmareai/real-esrgan",
         version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
         inputField: "image",
-        /*  NEW: use tiling so the GPU never has to hold the whole frame.      *
-         *  512 is the official value recommended in the Replicate README.    */
         getInput: (image, settings) => ({
           image,
           scale: 4,
-          tile: settings.tile || 512, // ✨ NEW
-          face_enhance: false, // ✨ keeps VRAM lower
-          fp32: false, // ✨ use half-precision
+          tile: settings.tile || 512,
+          face_enhance: false, // Preserve natural features
+          fp32: false,
         }),
       },
       "real-esrgan-2x": {
@@ -146,9 +249,9 @@ export async function POST(req: NextRequest) {
         getInput: (image, settings) => ({
           image,
           scale: 2,
-          tile: settings.tile || 512, // ✨ NEW
-          face_enhance: false, // ✨
-          fp32: false, // ✨
+          tile: settings.tile || 512,
+          face_enhance: false, // Preserve natural features
+          fp32: false,
         }),
       },
       "gfpgan-face": {
@@ -209,66 +312,85 @@ export async function POST(req: NextRequest) {
 
     /* ------------------------------------------------------------------ */
     step = "create-prediction"
-    const createRes = await fetch("https://api.replicate.com/v1/predictions", {
-      method: "POST",
-      headers: {
-        Authorization: `Token ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        version: modelConfig.version,
-        input: modelConfig.getInput(base64Image, settings),
-      }),
-    })
+    let createRes: Response
+    let prediction: any
+    
+    try {
+      console.log("🌐 Creating Replicate prediction...")
+      createRes = await fetch("https://api.replicate.com/v1/predictions", {
+        method: "POST",
+        headers: {
+          Authorization: `Token ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          version: modelConfig.version,
+          input: modelConfig.getInput(base64Image, settings),
+        }),
+      })
 
-    if (createRes.status === 413) {
-      console.error("❌ Image too large for Replicate (413)")
+      console.log(`📥 Replicate response status: ${createRes.status}`)
+
+      if (createRes.status === 413) {
+        console.error("❌ Image too large for Replicate (413)")
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Image too large for Replicate (413)",
+            step,
+          },
+          { status: 413 },
+        )
+      }
+
+      if (!createRes.ok) {
+        const errorText = await createRes.text()
+        console.error(`❌ Prediction creation failed: ${errorText}`)
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Prediction creation failed",
+            step,
+            details: errorText.slice(0, 500),
+          },
+          { status: createRes.status },
+        )
+      }
+
+      prediction = await createRes.json()
+      console.log("✅ Prediction creation response received")
+      console.log(`📊 Prediction keys: ${Object.keys(prediction || {}).join(", ")}`)
+
+      if (!prediction || !prediction.id) {
+        throw new Error("No prediction ID returned from Replicate")
+      }
+
+      console.log(`🔮 Prediction created: ${prediction.id}`)
+      console.log(`📊 Initial status: ${prediction.status}`)
+      
+    } catch (replicateError) {
+      console.error("❌ Failed to create Replicate prediction:", replicateError)
       return NextResponse.json(
         {
           success: false,
-          error: "Image too large for Replicate (413)",
+          error: "Failed to create prediction",
           step,
+          details: replicateError.message,
         },
-        { status: 413 },
+        { status: 500 },
       )
     }
-
-    if (!createRes.ok) {
-      const t = await createRes.text()
-      console.error(`❌ Prediction creation failed: ${t}`)
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Prediction creation failed",
-          step,
-          details: t.slice(0, 500),
-        },
-        { status: createRes.status },
-      )
-    }
-
-    const prediction = (await createRes.json()) as {
-      id: string
-      status: string
-    }
-
-    console.log("✅ Prediction creation response received")
-    console.log(`📊 Prediction keys: ${Object.keys(prediction || {}).join(", ")}`)
-
-    if (!prediction || !prediction.id) {
-      throw new Error("No prediction ID returned from Replicate")
-    }
-
-    console.log(`🔮 Prediction created: ${prediction.id}`)
-    console.log(`📊 Initial status: ${prediction.status}`)
 
     /* ------------------------------------------------------------------ */
     step = "poll"
-    const deadline = Date.now() + 5 * 60 * 1000
+    const deadline = Date.now() + 5 * 60 * 1000 // 5 minutes
     let poll = prediction
-    while (["starting", "processing"].includes(poll.status)) {
+    let attempts = 0
+    const maxAttempts = 150 // 5 minutes with 2-second intervals
+    
+    while (["starting", "processing"].includes(poll.status) && attempts < maxAttempts) {
       if (Date.now() > deadline) {
-        console.error("❌ Prediction timed out after maximum attempts")
+        console.error("❌ Prediction timed out after maximum time")
         return NextResponse.json(
           {
             success: false,
@@ -277,7 +399,7 @@ export async function POST(req: NextRequest) {
             details: {
               predictionId: poll.id,
               finalStatus: poll.status,
-              attempts: 0,
+              attempts,
               maxWaitTime: "300s",
             },
           },
@@ -286,34 +408,51 @@ export async function POST(req: NextRequest) {
       }
 
       await new Promise((resolve) => setTimeout(resolve, 2000))
+      attempts++
 
-      const pollRes = await fetch(`https://api.replicate.com/v1/predictions/${poll.id}`, {
-        headers: {
-          Authorization: `Token ${token}`,
-          "Content-Type": "application/json",
-        },
-      })
-
-      if (!pollRes.ok) {
-        const t = await pollRes.text()
-        console.error(`❌ Polling failed: ${t}`)
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Polling failed",
-            step,
-            details: t.slice(0, 500),
+      try {
+        const pollRes = await fetch(`https://api.replicate.com/v1/predictions/${poll.id}`, {
+          headers: {
+            Authorization: `Token ${token}`,
+            "Content-Type": "application/json",
           },
-          { status: pollRes.status },
-        )
-      }
+        })
 
-      poll = await pollRes.json()
-      console.log(`📊 Updated status: ${poll.status}`)
+        if (!pollRes.ok) {
+          const errorText = await pollRes.text()
+          console.error(`❌ Polling failed: ${errorText}`)
+          return NextResponse.json(
+            {
+              success: false,
+              error: "Polling failed",
+              step,
+              details: errorText.slice(0, 500),
+            },
+            { status: pollRes.status },
+          )
+        }
 
-      if (poll.logs) {
-        const recentLogs = poll.logs.slice(-200) // Last 200 chars
-        console.log(`📝 Recent logs: ${recentLogs}`)
+        poll = await pollRes.json()
+        console.log(`📊 Updated status (attempt ${attempts}): ${poll.status}`)
+
+        if (poll.logs) {
+          const recentLogs = poll.logs.slice(-200) // Last 200 chars
+          console.log(`📝 Recent logs: ${recentLogs}`)
+        }
+      } catch (pollError) {
+        console.error(`❌ Polling error (attempt ${attempts}):`, pollError)
+        // Continue polling unless we've exceeded max attempts
+        if (attempts >= maxAttempts) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: "Polling failed after max attempts",
+              step,
+              details: pollError.message,
+            },
+            { status: 500 },
+          )
+        }
       }
     }
 
@@ -324,7 +463,11 @@ export async function POST(req: NextRequest) {
           success: false,
           error: "Prediction finished without output",
           step,
-          details: poll,
+          details: {
+            status: poll.status,
+            error: poll.error,
+            logs: poll.logs,
+          },
         },
         { status: 500 },
       )
@@ -350,6 +493,7 @@ export async function POST(req: NextRequest) {
       fileSize: `${Math.round(buffer.length / 1024)}KB`,
       enhancedSize: `Enhanced with ${modelConfig.model}`,
       upscaleFactor: settings.upscaleFactor || 2,
+      preserveAsianFeatures: settings.preserveAsianFeatures || false,
       logs: poll.logs,
       step: "completed",
     }
