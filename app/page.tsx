@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useCallback, useEffect } from "react"
-import { Upload, ImageIcon, Settings, Download, Zap, Loader2, CheckCircle, Play, X, RefreshCw, AlertCircle, Search, TestTube, Key, Shield, LogIn, Users, AlertTriangle } from 'lucide-react'
+import { Upload, ImageIcon, Settings, Download, Zap, Loader2, CheckCircle, Play, X, RefreshCw, AlertCircle, Search, TestTube, Key, Shield, LogIn, Users, AlertTriangle, Sparkles } from 'lucide-react'
 import { LoginForm } from "@/components/auth/login-form"
 import { SignupForm } from "@/components/auth/signup-form"
 import { UserMenu } from "@/components/auth/user-menu"
@@ -9,8 +9,9 @@ import { ProfileDialog } from "@/components/auth/profile-dialog"
 import { UserManagement } from "@/components/admin/user-management"
 import { RoleManagement } from "@/components/admin/role-management"
 import { preProcessImage, postProcessImage, type EnhancementToggles } from "@/utils/image-processing"
+import { generateDomemaster, type DomemasterOptions } from "@/utils/domemaster"
 
-// Define enhancement models with complete configurations
+// Define enhancement models first
 const ENHANCEMENT_MODELS = [
   {
     id: "real-esrgan-4x",
@@ -25,8 +26,6 @@ const ENHANCEMENT_MODELS = [
     inputField: "image",
     asianFaceCompatibility: "excellent" as const,
     westernBias: false,
-    processingTime: "60-90s",
-    qualityRating: 5,
   },
   {
     id: "real-esrgan-2x",
@@ -41,8 +40,6 @@ const ENHANCEMENT_MODELS = [
     inputField: "image",
     asianFaceCompatibility: "excellent" as const,
     westernBias: false,
-    processingTime: "30-45s",
-    qualityRating: 4,
   },
   {
     id: "gfpgan-face",
@@ -57,8 +54,6 @@ const ENHANCEMENT_MODELS = [
     inputField: "img",
     asianFaceCompatibility: "warning" as const,
     westernBias: true,
-    processingTime: "45-60s",
-    qualityRating: 4,
   },
   {
     id: "codeformer-face",
@@ -73,8 +68,6 @@ const ENHANCEMENT_MODELS = [
     inputField: "image",
     asianFaceCompatibility: "poor" as const,
     westernBias: true,
-    processingTime: "90-120s",
-    qualityRating: 5,
   },
   {
     id: "clarity-upscaler",
@@ -89,8 +82,6 @@ const ENHANCEMENT_MODELS = [
     inputField: "image",
     asianFaceCompatibility: "warning" as const,
     westernBias: true,
-    processingTime: "120-180s",
-    qualityRating: 5,
   },
 ]
 
@@ -104,6 +95,11 @@ interface EnhancementSettings {
   preserveAsianFeatures: boolean
   pre: EnhancementToggles["pre"]
   post: EnhancementToggles["post"]
+}
+
+// NUEVO: Opciones de domemaster (preset/exportación)
+interface DomePresetState extends DomemasterOptions {
+  enabled: boolean
 }
 
 interface ProcessingJob {
@@ -171,6 +167,15 @@ const AIImageEnhancementPortal = () => {
       sharpen: "low",
       grain: "off",
     },
+  })
+
+  // NUEVO: estado del preset domemaster
+  const [domePreset, setDomePreset] = useState<DomePresetState>({
+    enabled: false,
+    size: 8192,
+    bleedPercent: 3,
+    overlay: true,
+    projection: "equidistant",
   })
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -292,12 +297,46 @@ const AIImageEnhancementPortal = () => {
       print: "16384x12288",
       display: "3840x2160",
     }
+    if (domePreset.enabled) return `${domePreset.size}x${domePreset.size}`
     return baseResolutions[enhancementSettings?.targetUse] || "4K"
   }
 
   const getMaxUpscale = () => {
     const selectedModel = getCurrentModel()
     return selectedModel?.maxUpscale || 4
+  }
+
+  async function exportDomemasterForJob(job: CompletedJob) {
+    try {
+      // Usar el proxy para evitar CORS si es URL externa
+      const url = `/api/proxy-image?url=${encodeURIComponent(job.downloadUrl)}`
+      const resp = await fetch(url)
+      if (!resp.ok) throw new Error(`Proxy fetch failed: ${resp.status}`)
+      const blob = await resp.blob()
+
+      const out = await generateDomemaster(blob, {
+        size: domePreset.size,
+        bleedPercent: domePreset.bleedPercent,
+        overlay: domePreset.overlay,
+        projection: "equidistant",
+      })
+
+      const fileNameBase = (job.originalFileName || "enhanced").replace(/\.[a-zA-Z0-9]+$/, "")
+      const suffix = `_DOMEMASTER_${(domePreset.size / 1024).toFixed(0)}K`
+      const outName = `${fileNameBase}${suffix}.png`
+
+      const outUrl = URL.createObjectURL(out)
+      const a = document.createElement("a")
+      a.href = outUrl
+      a.download = outName
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(outUrl)
+    } catch (e) {
+      console.error("Domemaster export error:", e)
+      alert("No se pudo exportar el domemaster. Revisa la consola para más detalles.")
+    }
   }
 
   const startProcessing = async (fileId: number) => {
@@ -335,7 +374,13 @@ const AIImageEnhancementPortal = () => {
 
       let uploadBlob: Blob
       if (needPre) {
-        uploadBlob = await preProcessImage(fileToProcess.file, enhancementSettings.pre)
+        try {
+          uploadBlob = await preProcessImage(fileToProcess.file, enhancementSettings.pre)
+        } catch (error) {
+          console.error("Pre-processing error:", error)
+          // Fall back to original file if pre-processing fails
+          uploadBlob = fileToProcess.file
+        }
       } else {
         uploadBlob = fileToProcess.file
       }
@@ -404,7 +449,7 @@ const AIImageEnhancementPortal = () => {
           setProcessingQueue((prev) => [
             ...prev,
             { id: `post-${job.id}`, file: job.file, settings: job.settings, status: "processing", startTime: Date.now(), progress: "Post-processing..." },
-          ])
+          ] as any)
           const proxied = await fetch(`/api/proxy-image?url=${encodeURIComponent(result.downloadUrl)}`)
           if (!proxied.ok) throw new Error(`Proxy fetch failed: ${proxied.status}`)
           const blob = await proxied.blob()
@@ -414,7 +459,7 @@ const AIImageEnhancementPortal = () => {
         } catch (e) {
           console.warn("Post-processing skipped due to error:", e)
         } finally {
-          setProcessingQueue((prev) => prev.filter((j) => j.id !== `post-${job.id}`))
+          setProcessingQueue((prev) => prev.filter((j) => (j as any).id !== `post-${job.id}`))
         }
       }
 
@@ -440,7 +485,6 @@ const AIImageEnhancementPortal = () => {
         preserveAsianFeatures: enhancementSettings?.preserveAsianFeatures || false,
       }
 
-      console.log("Adding completed job:", completedJob)
       setCompletedJobs((prev) => [...prev, completedJob])
     } catch (error: any) {
       console.error("Processing error:", error)
@@ -816,7 +860,59 @@ const AIImageEnhancementPortal = () => {
                 <h3 className="text-lg font-semibold text-white mb-6">Enhancement Settings</h3>
 
                 <div className="space-y-6">
-                  {/* AI Model Selection with Enhanced UI */}
+                  {/* NUEVO: Presets rápidos */}
+                  <div className="bg-white/5 rounded-lg p-4">
+                    <h4 className="text-white font-medium mb-3 flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-yellow-300" />
+                      Presets
+                    </h4>
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        onClick={() => {
+                          // Dome 8K preset
+                          setDomePreset((d) => ({ ...d, enabled: true, size: 8192, bleedPercent: 3, overlay: true }))
+                          setEnhancementSettings((prev) => ({
+                            ...prev,
+                            targetUse: "dome",
+                            pre: { ...prev.pre, deblock: "low", denoise: "low", whiteBalance: "auto" },
+                            post: { ...prev.post, localContrast: "low", sharpen: "low", grain: "off" },
+                            upscaleFactor: Math.min(prev.upscaleFactor, getMaxUpscale()),
+                            format: "PNG",
+                            quality: 95,
+                          }))
+                        }}
+                        className="px-3 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm"
+                      >
+                        Dome 8K
+                      </button>
+                      <button
+                        onClick={() => {
+                          // Dome 12K preset
+                          setDomePreset((d) => ({ ...d, enabled: true, size: 12288, bleedPercent: 3, overlay: true }))
+                          setEnhancementSettings((prev) => ({
+                            ...prev,
+                            targetUse: "dome",
+                            pre: { ...prev.pre, deblock: "low", denoise: "low", whiteBalance: "auto" },
+                            post: { ...prev.post, localContrast: "low", sharpen: "low", grain: "off" },
+                            upscaleFactor: Math.min(prev.upscaleFactor, getMaxUpscale()),
+                            format: "PNG",
+                            quality: 95,
+                          }))
+                        }}
+                        className="px-3 py-2 rounded-md bg-purple-600 hover:bg-purple-700 text-white text-sm"
+                      >
+                        Dome 12K
+                      </button>
+                      <button
+                        onClick={() => setDomePreset((d) => ({ ...d, enabled: false }))}
+                        className="px-3 py-2 rounded-md bg-white/10 hover:bg-white/20 text-white text-sm"
+                      >
+                        Desactivar Dome
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* AI Model Selection */}
                   <div>
                     <label className="block text-sm font-medium text-white mb-3">Enhancement Model</label>
                     <select
@@ -843,53 +939,15 @@ const AIImageEnhancementPortal = () => {
                           </option>
                         ))}
                     </select>
-                    
-                    {/* Enhanced Model Information Display */}
-                    <div className="mt-3 p-3 bg-white/5 rounded-lg">
-                      <p className="text-xs text-gray-400 mb-2">
-                        {getCurrentModel()?.description || "Model description not available"}
-                      </p>
-                      
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Processing Time:</span>
-                          <span className="text-blue-400">{getCurrentModel()?.processingTime || "Unknown"}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Quality Rating:</span>
-                          <span className="text-yellow-400">
-                            {"★".repeat(getCurrentModel()?.qualityRating || 0)}
-                            {"☆".repeat(5 - (getCurrentModel()?.qualityRating || 0))}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Max Upscale:</span>
-                          <span className="text-green-400">{getCurrentModel()?.maxUpscale || 4}x</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Category:</span>
-                          <span className="text-purple-400 capitalize">{getCurrentModel()?.category || "Unknown"}</span>
-                        </div>
-                      </div>
-                    </div>
-                    
+                    <p className="text-xs text-gray-400 mt-1">
+                      {getCurrentModel()?.description || "Model description not available"}
+                    </p>
                     {getCurrentModel()?.westernBias && (
                       <div className="mt-2 p-3 bg-yellow-900/20 border border-yellow-500/20 rounded-lg">
                         <div className="flex items-start space-x-2">
                           <AlertTriangle className="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
                           <div className="text-xs text-yellow-200">
                             <strong>Western Bias Warning:</strong> This model may alter Indonesian/ASEAN facial features to appear more Western.
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {getCurrentModel()?.asianFaceCompatibility === "excellent" && (
-                      <div className="mt-2 p-3 bg-green-900/20 border border-green-500/20 rounded-lg">
-                        <div className="flex items-start space-x-2">
-                          <CheckCircle className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-                          <div className="text-xs text-green-200">
-                            <strong>ASEAN Optimized:</strong> This model preserves Indonesian/ASEAN facial characteristics and skin tones.
                           </div>
                         </div>
                       </div>
@@ -1009,14 +1067,69 @@ const AIImageEnhancementPortal = () => {
                           <option value="very-low" className="bg-slate-800">Very Low</option>
                           <option value="low" className="bg-slate-800">Low</option>
                         </select>
-                        <p className="text-xs text-gray-400 mt-1">Subtle texture to reduce "AI plasticity".</p>
+                        <p className="text-xs text-gray-400 mt-1">Subtle texture to reduce {"AI plasticity"}.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* NUEVO: Exportación Domemaster */}
+                  <div className="bg-white/5 rounded-lg p-4">
+                    <h4 className="text-white font-medium mb-3">Exportación Domemaster</h4>
+                    <div className="flex items-center gap-3 mb-3">
+                      <label className="text-sm text-gray-200">Activar</label>
+                      <input
+                        type="checkbox"
+                        checked={domePreset.enabled}
+                        onChange={(e) => setDomePreset((d) => ({ ...d, enabled: e.target.checked }))}
+                      />
+                      <span className={`text-xs ${domePreset.enabled ? "text-green-400" : "text-gray-400"}`}>
+                        {domePreset.enabled ? "ON" : "OFF"}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-gray-300 mb-1">Resolución</label>
+                        <select
+                          value={domePreset.size}
+                          onChange={(e) => setDomePreset((d) => ({ ...d, size: parseInt(e.target.value, 10) }))}
+                          className="w-full bg-white/10 border border-white/20 rounded px-3 py-2 text-white"
+                        >
+                          <option value={4096} className="bg-slate-800">4K (preview)</option>
+                          <option value={8192} className="bg-slate-800">8K (recomendado)</option>
+                          <option value={12288} className="bg-slate-800">12K (alto detalle)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-300 mb-1">Bleed (margen negro)</label>
+                        <input
+                          type="range"
+                          min={0}
+                          max={5}
+                          step={0.5}
+                          value={domePreset.bleedPercent}
+                          onChange={(e) => setDomePreset((d) => ({ ...d, bleedPercent: parseFloat(e.target.value) }))}
+                          className="w-full"
+                        />
+                        <div className="text-xs text-gray-400 mt-1">{domePreset.bleedPercent}%</div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          id="overlay"
+                          type="checkbox"
+                          checked={domePreset.overlay}
+                          onChange={(e) => setDomePreset((d) => ({ ...d, overlay: e.target.checked }))}
+                        />
+                        <label htmlFor="overlay" className="text-xs text-gray-300">Overlays (guías 10°/ejes)</label>
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        Salida: PNG 8-bit con fondo negro fuera del círculo.
                       </div>
                     </div>
                   </div>
 
                   {/* Options summary */}
                   <div className="text-xs text-gray-400">
-                    Safe defaults enabled: Deblock/denoise low, WB auto, local contrast/sharpen low, grain off.
+                    Safe defaults: Deblock/denoise low, WB auto, local contrast/sharpen low, grain off. Domemaster: {domePreset.enabled ? `${domePreset.size}×${domePreset.size} con máscara` : "desactivado"}.
                   </div>
                 </div>
               </div>
@@ -1036,8 +1149,8 @@ const AIImageEnhancementPortal = () => {
                     </span>
                   </div>
                   <div className="flex justify-between text-white font-medium">
-                    <span>Est. processing time:</span>
-                    <span>{getCurrentModel()?.processingTime || "60s"}</span>
+                    <span>Target:</span>
+                    <span>{getTargetResolution()}</span>
                   </div>
                   <div className="flex justify-between text-gray-300">
                     <span>Feature preservation:</span>
@@ -1046,10 +1159,9 @@ const AIImageEnhancementPortal = () => {
                     </span>
                   </div>
                   <div className="flex justify-between text-gray-300">
-                    <span>Quality rating:</span>
-                    <span className="text-yellow-400">
-                      {"★".repeat(getCurrentModel()?.qualityRating || 0)}
-                      {"☆".repeat(5 - (getCurrentModel()?.qualityRating || 0))}
+                    <span>Domemaster preset:</span>
+                    <span className={domePreset.enabled ? "text-green-400" : "text-gray-400"}>
+                      {domePreset.enabled ? `${(domePreset.size/1024).toFixed(0)}K • Bleed ${domePreset.bleedPercent}%` : "OFF"}
                     </span>
                   </div>
                 </div>
@@ -1158,13 +1270,26 @@ const AIImageEnhancementPortal = () => {
                         )}
                       </div>
 
-                      <button
-                        onClick={() => window.open(job.downloadUrl, "_blank")}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition-colors flex items-center justify-center space-x-2"
-                      >
-                        <Download className="w-4 h-4" />
-                        <span>Download Enhanced</span>
-                      </button>
+                      {/* NUEVO: Botón de exportación domemaster si preset activo */}
+                      <div className="flex flex-col gap-2">
+                        <button
+                          onClick={() => window.open(job.downloadUrl, "_blank")}
+                          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                        >
+                          <Download className="w-4 h-4" />
+                          <span>Download Enhanced</span>
+                        </button>
+
+                        <button
+                          onClick={() => exportDomemasterForJob(job)}
+                          disabled={!domePreset.enabled}
+                          className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white py-2 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                          title={domePreset.enabled ? `Exportar domemaster ${(domePreset.size/1024).toFixed(0)}K` : "Activa el preset Dome en Settings"}
+                        >
+                          <Sparkles className="w-4 h-4" />
+                          <span>{domePreset.enabled ? `Export Domemaster ${(domePreset.size/1024).toFixed(0)}K` : "Enable Dome preset to export"}</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}

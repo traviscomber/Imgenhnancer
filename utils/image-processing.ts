@@ -29,11 +29,11 @@ export async function preProcessImage(
     }
 
     img.onload = () => {
-      canvas.width = img.width
-      canvas.height = img.height
-      ctx.drawImage(img, 0, 0)
-
       try {
+        canvas.width = img.width
+        canvas.height = img.height
+        ctx.drawImage(img, 0, 0)
+
         let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
 
         // Apply pre-processing in order
@@ -56,20 +56,33 @@ export async function preProcessImage(
             if (blob) {
               resolve(blob)
             } else {
-              reject(new Error("Failed to create blob"))
+              reject(new Error("Failed to create blob from canvas"))
             }
           },
           "image/png",
           1.0
         )
       } catch (error) {
-        reject(error)
+        reject(new Error(`Image processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`))
       }
     }
 
-    img.onerror = () => reject(new Error("Failed to load image"))
-    img.crossOrigin = "anonymous"
-    img.src = URL.createObjectURL(file)
+    img.onerror = (event) => {
+      reject(new Error(`Failed to load image: ${event instanceof ErrorEvent ? event.message : 'Image load error'}`))
+    }
+
+    // Don't set crossOrigin for blob URLs from File objects
+    try {
+      const imageUrl = URL.createObjectURL(file)
+      img.src = imageUrl
+      
+      // Clean up the URL after the image loads or fails
+      const cleanup = () => URL.revokeObjectURL(imageUrl)
+      img.addEventListener('load', cleanup, { once: true })
+      img.addEventListener('error', cleanup, { once: true })
+    } catch (error) {
+      reject(new Error(`Failed to create object URL: ${error instanceof Error ? error.message : 'Unknown error'}`))
+    }
   })
 }
 
@@ -91,11 +104,11 @@ export async function postProcessImage(
     }
 
     img.onload = () => {
-      canvas.width = img.width
-      canvas.height = img.height
-      ctx.drawImage(img, 0, 0)
-
       try {
+        canvas.width = img.width
+        canvas.height = img.height
+        ctx.drawImage(img, 0, 0)
+
         let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
 
         // Apply post-processing in order
@@ -118,20 +131,32 @@ export async function postProcessImage(
             if (blob) {
               resolve(blob)
             } else {
-              reject(new Error("Failed to create blob"))
+              reject(new Error("Failed to create blob from canvas"))
             }
           },
           "image/png",
           1.0
         )
       } catch (error) {
-        reject(error)
+        reject(new Error(`Post-processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`))
       }
     }
 
-    img.onerror = () => reject(new Error("Failed to load image"))
-    img.crossOrigin = "anonymous"
-    img.src = URL.createObjectURL(blob)
+    img.onerror = (event) => {
+      reject(new Error(`Failed to load image for post-processing: ${event instanceof ErrorEvent ? event.message : 'Image load error'}`))
+    }
+
+    try {
+      const imageUrl = URL.createObjectURL(blob)
+      img.src = imageUrl
+      
+      // Clean up the URL after the image loads or fails
+      const cleanup = () => URL.revokeObjectURL(imageUrl)
+      img.addEventListener('load', cleanup, { once: true })
+      img.addEventListener('error', cleanup, { once: true })
+    } catch (error) {
+      reject(new Error(`Failed to create object URL for post-processing: ${error instanceof Error ? error.message : 'Unknown error'}`))
+    }
   })
 }
 
@@ -155,15 +180,18 @@ function applyDeblock(imageData: ImageData, strength: "low" | "medium"): ImageDa
         // Apply mild averaging with neighbors
         for (let c = 0; c < 3; c++) {
           const current = data[idx + c]
-          const neighbors = [
-            data[((y - 1) * width + x) * 4 + c] || current,
-            data[((y + 1) * width + x) * 4 + c] || current,
-            data[(y * width + (x - 1)) * 4 + c] || current,
-            data[(y * width + (x + 1)) * 4 + c] || current
-          ]
+          const neighbors = []
           
-          const avg = neighbors.reduce((sum, val) => sum + val, 0) / neighbors.length
-          data[idx + c] = Math.round(current * (1 - factor) + avg * factor)
+          // Safely get neighbor values
+          if (y > 0) neighbors.push(data[((y - 1) * width + x) * 4 + c])
+          if (y < height - 1) neighbors.push(data[((y + 1) * width + x) * 4 + c])
+          if (x > 0) neighbors.push(data[(y * width + (x - 1)) * 4 + c])
+          if (x < width - 1) neighbors.push(data[(y * width + (x + 1)) * 4 + c])
+          
+          if (neighbors.length > 0) {
+            const avg = neighbors.reduce((sum, val) => sum + val, 0) / neighbors.length
+            data[idx + c] = Math.round(current * (1 - factor) + avg * factor)
+          }
         }
       }
     }
@@ -227,8 +255,6 @@ function applyDenoise(imageData: ImageData, strength: "low" | "medium"): ImageDa
  */
 function applyAutoWhiteBalance(imageData: ImageData): ImageData {
   const data = new Uint8ClampedArray(imageData.data)
-  const width = imageData.width
-  const height = imageData.height
   
   // Calculate average RGB values
   let rSum = 0, gSum = 0, bSum = 0
@@ -260,9 +286,9 @@ function applyAutoWhiteBalance(imageData: ImageData): ImageData {
   
   // Apply correction
   for (let i = 0; i < data.length; i += 4) {
-    data[i] = Math.min(255, data[i] * rFactor)
-    data[i + 1] = Math.min(255, data[i + 1] * gFactor)
-    data[i + 2] = Math.min(255, data[i + 2] * bFactor)
+    data[i] = Math.min(255, Math.max(0, data[i] * rFactor))
+    data[i + 1] = Math.min(255, Math.max(0, data[i + 1] * gFactor))
+    data[i + 2] = Math.min(255, Math.max(0, data[i + 2] * bFactor))
   }
   
   return new ImageData(data, width, height)
@@ -328,6 +354,7 @@ function applySharpen(imageData: ImageData, strength: "low" | "medium"): ImageDa
   const height = imageData.height
   
   const factor = strength === "low" ? 0.2 : 0.4
+  const originalData = new Uint8ClampedArray(data)
   
   // Sharpening kernel
   const kernel = [
@@ -347,12 +374,14 @@ function applySharpen(imageData: ImageData, strength: "low" | "medium"): ImageDa
           for (let kx = 0; kx < 3; kx++) {
             const py = y + ky - 1
             const px = x + kx - 1
-            const pIdx = (py * width + px) * 4
-            sum += data[pIdx + c] * kernel[ky][kx]
+            if (py >= 0 && py < height && px >= 0 && px < width) {
+              const pIdx = (py * width + px) * 4
+              sum += originalData[pIdx + c] * kernel[ky][kx]
+            }
           }
         }
         
-        const original = data[idx + c]
+        const original = originalData[idx + c]
         const sharpened = sum
         data[idx + c] = Math.max(0, Math.min(255, original * (1 - factor) + sharpened * factor))
       }
