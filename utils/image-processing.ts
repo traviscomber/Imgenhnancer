@@ -11,13 +11,33 @@ export interface EnhancementToggles {
   }
 }
 
+export interface ImageProcessingSettings {
+  brightness: number
+  contrast: number
+  saturation: number
+  sharpness: number
+  denoise: number
+  grain: number
+  vignette: number
+  autoWhiteBalance: boolean
+  autoLevels: boolean
+  model: string
+  upscaleFactor: number
+}
+
+export interface ImageStats {
+  brightness: number
+  contrast: number
+  saturation: number
+  sharpness: number
+  hasNoise: boolean
+  needsWhiteBalance: boolean
+}
+
 /**
  * Pre-process image before AI enhancement
  */
-export async function preProcessImage(
-  file: File,
-  settings: EnhancementToggles["pre"]
-): Promise<Blob> {
+export async function preProcessImage(file: File, settings: EnhancementToggles["pre"]): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const img = new Image()
     const canvas = document.createElement("canvas")
@@ -34,19 +54,22 @@ export async function preProcessImage(
         canvas.height = img.height
         ctx.drawImage(img, 0, 0)
 
-        let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+        const data = imageData.data
 
-        // Apply pre-processing in order
+        // Apply deblocking (JPEG artifact reduction)
         if (settings.deblock !== "off") {
-          imageData = applyDeblock(imageData, settings.deblock)
+          applyDeblock(data, canvas.width, canvas.height, settings.deblock)
         }
 
+        // Apply denoising
         if (settings.denoise !== "off") {
-          imageData = applyDenoise(imageData, settings.denoise)
+          applyDenoise(data, canvas.width, canvas.height, settings.denoise)
         }
 
+        // Apply white balance correction
         if (settings.whiteBalance === "auto") {
-          imageData = applyAutoWhiteBalance(imageData)
+          applyWhiteBalance(data)
         }
 
         ctx.putImageData(imageData, 0, 0)
@@ -56,43 +79,32 @@ export async function preProcessImage(
             if (blob) {
               resolve(blob)
             } else {
-              reject(new Error("Failed to create blob from canvas"))
+              reject(new Error("Failed to create blob"))
             }
+            URL.revokeObjectURL(img.src)
           },
           "image/png",
-          1.0
+          1.0,
         )
       } catch (error) {
-        reject(new Error(`Image processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`))
+        reject(error)
+        URL.revokeObjectURL(img.src)
       }
     }
 
-    img.onerror = (event) => {
-      reject(new Error(`Failed to load image: ${event instanceof ErrorEvent ? event.message : 'Image load error'}`))
+    img.onerror = () => {
+      reject(new Error("Failed to load image"))
+      URL.revokeObjectURL(img.src)
     }
 
-    // Don't set crossOrigin for blob URLs from File objects
-    try {
-      const imageUrl = URL.createObjectURL(file)
-      img.src = imageUrl
-      
-      // Clean up the URL after the image loads or fails
-      const cleanup = () => URL.revokeObjectURL(imageUrl)
-      img.addEventListener('load', cleanup, { once: true })
-      img.addEventListener('error', cleanup, { once: true })
-    } catch (error) {
-      reject(new Error(`Failed to create object URL: ${error instanceof Error ? error.message : 'Unknown error'}`))
-    }
+    img.src = URL.createObjectURL(file)
   })
 }
 
 /**
  * Post-process enhanced image
  */
-export async function postProcessImage(
-  blob: Blob,
-  settings: EnhancementToggles["post"]
-): Promise<Blob> {
+export async function postProcessImage(blob: Blob, settings: EnhancementToggles["post"]): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const img = new Image()
     const canvas = document.createElement("canvas")
@@ -109,19 +121,22 @@ export async function postProcessImage(
         canvas.height = img.height
         ctx.drawImage(img, 0, 0)
 
-        let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+        const data = imageData.data
 
-        // Apply post-processing in order
+        // Apply local contrast enhancement
         if (settings.localContrast !== "off") {
-          imageData = applyLocalContrast(imageData, settings.localContrast)
+          applyLocalContrast(data, canvas.width, canvas.height, settings.localContrast)
         }
 
+        // Apply sharpening
         if (settings.sharpen !== "off") {
-          imageData = applySharpen(imageData, settings.sharpen)
+          applySharpen(data, canvas.width, canvas.height, settings.sharpen)
         }
 
+        // Add film grain
         if (settings.grain !== "off") {
-          imageData = applyGrain(imageData, settings.grain)
+          applyGrain(data, settings.grain)
         }
 
         ctx.putImageData(imageData, 0, 0)
@@ -131,282 +146,347 @@ export async function postProcessImage(
             if (blob) {
               resolve(blob)
             } else {
-              reject(new Error("Failed to create blob from canvas"))
+              reject(new Error("Failed to create blob"))
             }
+            URL.revokeObjectURL(img.src)
           },
           "image/png",
-          1.0
+          1.0,
         )
       } catch (error) {
-        reject(new Error(`Post-processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`))
+        reject(error)
+        URL.revokeObjectURL(img.src)
       }
     }
 
-    img.onerror = (event) => {
-      reject(new Error(`Failed to load image for post-processing: ${event instanceof ErrorEvent ? event.message : 'Image load error'}`))
+    img.onerror = () => {
+      reject(new Error("Failed to load image"))
+      URL.revokeObjectURL(img.src)
     }
 
-    try {
-      const imageUrl = URL.createObjectURL(blob)
-      img.src = imageUrl
-      
-      // Clean up the URL after the image loads or fails
-      const cleanup = () => URL.revokeObjectURL(imageUrl)
-      img.addEventListener('load', cleanup, { once: true })
-      img.addEventListener('error', cleanup, { once: true })
-    } catch (error) {
-      reject(new Error(`Failed to create object URL for post-processing: ${error instanceof Error ? error.message : 'Unknown error'}`))
-    }
+    img.src = URL.createObjectURL(blob)
   })
 }
 
 /**
- * Apply JPEG deblocking filter
+ * Apply deblocking filter to reduce JPEG artifacts
  */
-function applyDeblock(imageData: ImageData, strength: "low" | "medium"): ImageData {
-  const data = new Uint8ClampedArray(imageData.data)
-  const width = imageData.width
-  const height = imageData.height
-  
-  const factor = strength === "low" ? 0.3 : 0.6
-  
-  // Simple deblocking using a mild blur on block boundaries
-  for (let y = 1; y < height - 1; y++) {
-    for (let x = 1; x < width - 1; x++) {
-      // Check if we're near a potential block boundary (every 8 pixels)
-      if (x % 8 === 0 || y % 8 === 0) {
-        const idx = (y * width + x) * 4
-        
-        // Apply mild averaging with neighbors
-        for (let c = 0; c < 3; c++) {
-          const current = data[idx + c]
-          const neighbors = []
-          
-          // Safely get neighbor values
-          if (y > 0) neighbors.push(data[((y - 1) * width + x) * 4 + c])
-          if (y < height - 1) neighbors.push(data[((y + 1) * width + x) * 4 + c])
-          if (x > 0) neighbors.push(data[(y * width + (x - 1)) * 4 + c])
-          if (x < width - 1) neighbors.push(data[(y * width + (x + 1)) * 4 + c])
-          
-          if (neighbors.length > 0) {
-            const avg = neighbors.reduce((sum, val) => sum + val, 0) / neighbors.length
-            data[idx + c] = Math.round(current * (1 - factor) + avg * factor)
-          }
-        }
-      }
-    }
-  }
-  
-  return new ImageData(data, width, height)
-}
+function applyDeblock(data: Uint8ClampedArray, width: number, height: number, strength: "low" | "medium") {
+  const factor = strength === "low" ? 0.3 : 0.5
+  const temp = new Uint8ClampedArray(data)
 
-/**
- * Apply noise reduction using bilateral filtering approximation
- */
-function applyDenoise(imageData: ImageData, strength: "low" | "medium"): ImageData {
-  const data = new Uint8ClampedArray(imageData.data)
-  const width = imageData.width
-  const height = imageData.height
-  
-  const factor = strength === "low" ? 0.2 : 0.4
-  const threshold = strength === "low" ? 15 : 25
-  
   for (let y = 1; y < height - 1; y++) {
     for (let x = 1; x < width - 1; x++) {
       const idx = (y * width + x) * 4
-      
+
       for (let c = 0; c < 3; c++) {
-        const current = data[idx + c]
-        let sum = 0
-        let count = 0
-        
-        // Check 3x3 neighborhood
-        for (let dy = -1; dy <= 1; dy++) {
-          for (let dx = -1; dx <= 1; dx++) {
-            const ny = y + dy
-            const nx = x + dx
-            
-            if (ny >= 0 && ny < height && nx >= 0 && nx < width) {
-              const nIdx = (ny * width + nx) * 4
-              const neighbor = data[nIdx + c]
-              
-              // Only average with similar pixels (bilateral filtering concept)
-              if (Math.abs(neighbor - current) < threshold) {
-                sum += neighbor
-                count++
-              }
-            }
-          }
-        }
-        
-        if (count > 0) {
-          const avg = sum / count
-          data[idx + c] = Math.round(current * (1 - factor) + avg * factor)
-        }
+        const current = temp[idx + c]
+        const neighbors = [
+          temp[((y - 1) * width + x) * 4 + c],
+          temp[((y + 1) * width + x) * 4 + c],
+          temp[(y * width + (x - 1)) * 4 + c],
+          temp[(y * width + (x + 1)) * 4 + c],
+        ]
+
+        const avg = neighbors.reduce((sum, val) => sum + val, 0) / 4
+        data[idx + c] = Math.round(current * (1 - factor) + avg * factor)
       }
     }
   }
-  
-  return new ImageData(data, width, height)
+}
+
+/**
+ * Apply noise reduction using bilateral filtering
+ */
+function applyDenoise(data: Uint8ClampedArray, width: number, height: number, strength: "low" | "medium") {
+  const factor = strength === "low" ? 0.2 : 0.4
+  const temp = new Uint8ClampedArray(data)
+  const threshold = strength === "low" ? 15 : 25
+
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      const idx = (y * width + x) * 4
+
+      for (let c = 0; c < 3; c++) {
+        const current = temp[idx + c]
+        let sum = current
+        let count = 1
+
+        // Check 8-connected neighbors
+        for (let dy = -1; dy <= 1; dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            if (dx === 0 && dy === 0) continue
+
+            const nIdx = ((y + dy) * width + (x + dx)) * 4 + c
+            const neighbor = temp[nIdx]
+
+            // Only average with similar pixels (noise reduction)
+            if (Math.abs(current - neighbor) < threshold) {
+              sum += neighbor
+              count++
+            }
+          }
+        }
+
+        data[idx + c] = Math.round(sum / count)
+      }
+    }
+  }
 }
 
 /**
  * Apply automatic white balance using gray world assumption
  */
-function applyAutoWhiteBalance(imageData: ImageData): ImageData {
-  const data = new Uint8ClampedArray(imageData.data)
-  
-  // Calculate average RGB values
-  let rSum = 0, gSum = 0, bSum = 0
+function applyWhiteBalance(data: Uint8ClampedArray) {
+  let rSum = 0,
+    gSum = 0,
+    bSum = 0
   let count = 0
-  
+
+  // Calculate average RGB values
   for (let i = 0; i < data.length; i += 4) {
     rSum += data[i]
     gSum += data[i + 1]
     bSum += data[i + 2]
     count++
   }
-  
-  if (count === 0) return imageData
-  
+
   const rAvg = rSum / count
   const gAvg = gSum / count
   const bAvg = bSum / count
-  
-  // Calculate gray world average
-  const grayAvg = (rAvg + gAvg + bAvg) / 3
-  
-  // Avoid division by zero
-  if (rAvg === 0 || gAvg === 0 || bAvg === 0) return imageData
-  
-  // Calculate correction factors (subtle correction)
-  const rFactor = Math.min(1.2, Math.max(0.8, grayAvg / rAvg))
-  const gFactor = Math.min(1.2, Math.max(0.8, grayAvg / gAvg))
-  const bFactor = Math.min(1.2, Math.max(0.8, grayAvg / bAvg))
-  
-  // Apply correction
+
+  // Calculate correction factors using gray world assumption
+  const gray = (rAvg + gAvg + bAvg) / 3
+  const rFactor = gray / rAvg
+  const gFactor = gray / gAvg
+  const bFactor = gray / bAvg
+
+  // Apply correction with moderate strength
+  const strength = 0.4
   for (let i = 0; i < data.length; i += 4) {
-    data[i] = Math.min(255, Math.max(0, data[i] * rFactor))
-    data[i + 1] = Math.min(255, Math.max(0, data[i + 1] * gFactor))
-    data[i + 2] = Math.min(255, Math.max(0, data[i + 2] * bFactor))
+    data[i] = Math.min(255, Math.max(0, data[i] * (1 + (rFactor - 1) * strength)))
+    data[i + 1] = Math.min(255, Math.max(0, data[i + 1] * (1 + (gFactor - 1) * strength)))
+    data[i + 2] = Math.min(255, Math.max(0, data[i + 2] * (1 + (bFactor - 1) * strength)))
   }
-  
-  return new ImageData(data, width, height)
 }
 
 /**
  * Apply local contrast enhancement using unsharp mask
  */
-function applyLocalContrast(imageData: ImageData, strength: "low" | "medium"): ImageData {
-  const data = new Uint8ClampedArray(imageData.data)
-  const width = imageData.width
-  const height = imageData.height
-  
-  const factor = strength === "low" ? 0.3 : 0.6
-  
-  // Create blurred version for unsharp mask
-  const blurred = new Uint8ClampedArray(data)
-  
-  // Simple box blur
-  for (let y = 1; y < height - 1; y++) {
-    for (let x = 1; x < width - 1; x++) {
+function applyLocalContrast(data: Uint8ClampedArray, width: number, height: number, strength: "low" | "medium") {
+  const factor = strength === "low" ? 0.3 : 0.5
+  const temp = new Uint8ClampedArray(data)
+
+  for (let y = 2; y < height - 2; y++) {
+    for (let x = 2; x < width - 2; x++) {
       const idx = (y * width + x) * 4
-      
+
       for (let c = 0; c < 3; c++) {
+        const current = temp[idx + c]
         let sum = 0
         let count = 0
-        
-        for (let dy = -1; dy <= 1; dy++) {
-          for (let dx = -1; dx <= 1; dx++) {
-            const ny = y + dy
-            const nx = x + dx
-            if (ny >= 0 && ny < height && nx >= 0 && nx < width) {
-              sum += data[(ny * width + nx) * 4 + c]
-              count++
-            }
+
+        // 5x5 kernel for local average
+        for (let dy = -2; dy <= 2; dy++) {
+          for (let dx = -2; dx <= 2; dx++) {
+            sum += temp[((y + dy) * width + (x + dx)) * 4 + c]
+            count++
           }
         }
-        
-        blurred[idx + c] = count > 0 ? sum / count : data[idx + c]
+
+        const localAvg = sum / count
+        const diff = current - localAvg
+        data[idx + c] = Math.max(0, Math.min(255, current + diff * factor))
       }
     }
   }
-  
-  // Apply unsharp mask
-  for (let i = 0; i < data.length; i += 4) {
-    for (let c = 0; c < 3; c++) {
-      const original = data[i + c]
-      const blur = blurred[i + c]
-      const enhanced = original + (original - blur) * factor
-      data[i + c] = Math.max(0, Math.min(255, enhanced))
-    }
-  }
-  
-  return new ImageData(data, width, height)
 }
 
 /**
- * Apply edge-aware sharpening
+ * Apply edge-aware sharpening using unsharp mask
  */
-function applySharpen(imageData: ImageData, strength: "low" | "medium"): ImageData {
-  const data = new Uint8ClampedArray(imageData.data)
-  const width = imageData.width
-  const height = imageData.height
-  
-  const factor = strength === "low" ? 0.2 : 0.4
-  const originalData = new Uint8ClampedArray(data)
-  
+function applySharpen(data: Uint8ClampedArray, width: number, height: number, strength: "low" | "medium") {
+  const factor = strength === "low" ? 0.3 : 0.5
+  const temp = new Uint8ClampedArray(data)
+
   // Sharpening kernel
   const kernel = [
     [0, -1, 0],
     [-1, 5, -1],
-    [0, -1, 0]
+    [0, -1, 0],
   ]
-  
+
   for (let y = 1; y < height - 1; y++) {
     for (let x = 1; x < width - 1; x++) {
       const idx = (y * width + x) * 4
-      
+
       for (let c = 0; c < 3; c++) {
         let sum = 0
-        
+
         for (let ky = 0; ky < 3; ky++) {
           for (let kx = 0; kx < 3; kx++) {
-            const py = y + ky - 1
-            const px = x + kx - 1
-            if (py >= 0 && py < height && px >= 0 && px < width) {
-              const pIdx = (py * width + px) * 4
-              sum += originalData[pIdx + c] * kernel[ky][kx]
-            }
+            const pixelIdx = ((y + ky - 1) * width + (x + kx - 1)) * 4 + c
+            sum += temp[pixelIdx] * kernel[ky][kx]
           }
         }
-        
-        const original = originalData[idx + c]
-        const sharpened = sum
-        data[idx + c] = Math.max(0, Math.min(255, original * (1 - factor) + sharpened * factor))
+
+        const current = temp[idx + c]
+        const sharpened = current + sum * factor
+        data[idx + c] = Math.max(0, Math.min(255, sharpened))
       }
     }
   }
-  
-  return new ImageData(data, width, height)
 }
 
 /**
- * Add film grain texture
+ * Add subtle film grain texture
  */
-function applyGrain(imageData: ImageData, strength: "very-low" | "low"): ImageData {
-  const data = new Uint8ClampedArray(imageData.data)
-  const intensity = strength === "very-low" ? 3 : 6
-  
+function applyGrain(data: Uint8ClampedArray, strength: "very-low" | "low") {
+  const factor = strength === "very-low" ? 3 : 6
+
   for (let i = 0; i < data.length; i += 4) {
-    // Generate random grain
-    const grain = (Math.random() - 0.5) * intensity
-    
-    // Apply to RGB channels
-    for (let c = 0; c < 3; c++) {
-      data[i + c] = Math.max(0, Math.min(255, data[i + c] + grain))
+    const noise = (Math.random() - 0.5) * factor
+    data[i] = Math.max(0, Math.min(255, data[i] + noise))
+    data[i + 1] = Math.max(0, Math.min(255, data[i + 1] + noise))
+    data[i + 2] = Math.max(0, Math.min(255, data[i + 2] + noise))
+  }
+}
+
+/**
+ * Analyze image to determine optimal processing parameters
+ */
+export function analyzeImage(canvas: HTMLCanvasElement): ImageStats {
+  const ctx = canvas.getContext("2d")
+  if (!ctx) throw new Error("Could not get canvas context")
+
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+  const data = imageData.data
+
+  let totalBrightness = 0
+  let totalSaturation = 0
+  let rSum = 0,
+    gSum = 0,
+    bSum = 0
+  let minBrightness = 255,
+    maxBrightness = 0
+  let edgeStrength = 0
+
+  const pixelCount = data.length / 4
+
+  // Analyze each pixel
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i]
+    const g = data[i + 1]
+    const b = data[i + 2]
+
+    // Calculate brightness
+    const brightness = (r + g + b) / 3
+    totalBrightness += brightness
+    minBrightness = Math.min(minBrightness, brightness)
+    maxBrightness = Math.max(maxBrightness, brightness)
+
+    // Calculate saturation
+    const max = Math.max(r, g, b)
+    const min = Math.min(r, g, b)
+    const saturation = max > 0 ? (max - min) / max : 0
+    totalSaturation += saturation
+
+    // Sum for white balance analysis
+    rSum += r
+    gSum += g
+    bSum += b
+  }
+
+  // Calculate averages
+  const avgBrightness = totalBrightness / pixelCount
+  const avgSaturation = totalSaturation / pixelCount
+  const contrast = maxBrightness - minBrightness
+
+  // Detect if white balance correction is needed
+  const rAvg = rSum / pixelCount
+  const gAvg = gSum / pixelCount
+  const bAvg = bSum / pixelCount
+  const colorBalance = Math.max(rAvg, gAvg, bAvg) - Math.min(rAvg, gAvg, bAvg)
+  const needsWhiteBalance = colorBalance > 20
+
+  // Simple edge detection for sharpness analysis
+  const sampleSize = Math.min(1000, pixelCount / 4)
+  for (let i = 0; i < sampleSize; i++) {
+    const idx = Math.floor(Math.random() * (data.length - 8)) & ~3
+    if (idx + 4 < data.length) {
+      const curr = (data[idx] + data[idx + 1] + data[idx + 2]) / 3
+      const next = (data[idx + 4] + data[idx + 5] + data[idx + 6]) / 3
+      edgeStrength += Math.abs(curr - next)
     }
   }
-  
-  return new ImageData(data, width, height)
+
+  const sharpness = edgeStrength / sampleSize
+  const hasNoise = sharpness > 15 // High edge variation suggests noise
+
+  return {
+    brightness: avgBrightness / 255,
+    contrast: contrast / 255,
+    saturation: avgSaturation,
+    sharpness: Math.min(sharpness / 30, 1),
+    hasNoise,
+    needsWhiteBalance,
+  }
+}
+
+/**
+ * Generate optimal settings based on image analysis
+ */
+export function generateOptimalSettings(
+  stats: ImageStats,
+  baseSettings: Partial<ImageProcessingSettings> = {},
+): ImageProcessingSettings {
+  const optimal: ImageProcessingSettings = {
+    brightness: 0,
+    contrast: 0,
+    saturation: 0,
+    sharpness: 0,
+    denoise: 0,
+    grain: 0,
+    vignette: 0,
+    autoWhiteBalance: false,
+    autoLevels: false,
+    model: "clarity-upscaler",
+    upscaleFactor: 2,
+    ...baseSettings,
+  }
+
+  // Adjust brightness if too dark or bright
+  if (stats.brightness < 0.3) {
+    optimal.brightness = Math.min(30, (0.3 - stats.brightness) * 100)
+  } else if (stats.brightness > 0.7) {
+    optimal.brightness = Math.max(-20, (0.7 - stats.brightness) * 100)
+  }
+
+  // Adjust contrast if too flat
+  if (stats.contrast < 0.5) {
+    optimal.contrast = Math.min(25, (0.5 - stats.contrast) * 50)
+  }
+
+  // Adjust saturation if too dull
+  if (stats.saturation < 0.3) {
+    optimal.saturation = Math.min(20, (0.3 - stats.saturation) * 67)
+  }
+
+  // Apply sharpening if image is soft
+  if (stats.sharpness < 0.4) {
+    optimal.sharpness = Math.min(15, (0.4 - stats.sharpness) * 37.5)
+  }
+
+  // Apply denoising if noisy
+  if (stats.hasNoise) {
+    optimal.denoise = 10
+  }
+
+  // Enable auto white balance if needed
+  optimal.autoWhiteBalance = stats.needsWhiteBalance
+
+  // Enable auto levels for low contrast images
+  optimal.autoLevels = stats.contrast < 0.3
+
+  return optimal
 }
