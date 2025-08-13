@@ -37,20 +37,6 @@ export async function POST(request: NextRequest) {
 
     console.log(`✅ File extracted: ${file.name} (${file.size} bytes, ${file.type})`)
 
-    // Significantly increased file size limit to 100MB - no compression
-    const maxSize = 100 * 1024 * 1024 // 100MB
-    if (file.size > maxSize) {
-      console.error(`❌ File too large: ${file.size} bytes (max: ${maxSize})`)
-      return NextResponse.json(
-        {
-          success: false,
-          error: `File too large. Maximum size is ${Math.round(maxSize / 1024 / 1024)}MB.`,
-          step: "file_validation",
-        },
-        { status: 413 },
-      )
-    }
-
     // Validate file type
     if (!file.type.startsWith("image/")) {
       console.error("❌ Invalid file type:", file.type)
@@ -72,29 +58,35 @@ export async function POST(request: NextRequest) {
       console.warn("⚠️ Failed to parse settings, using defaults:", error.message)
     }
 
-    // Convert file to base64 data URL without any compression
-    let imageDataUrl: string
+    // Smart image processing to ensure API compatibility
+    let imageInput: string
     try {
-      console.log("🔄 Converting image to base64 (no compression)...")
+      console.log("🔄 Processing image for API compatibility...")
+
+      // Create image element to get dimensions and process
       const arrayBuffer = await file.arrayBuffer()
-      const base64 = Buffer.from(arrayBuffer).toString("base64")
-      imageDataUrl = `data:${file.type};base64,${base64}`
+      const blob = new Blob([arrayBuffer], { type: file.type })
 
-      const sizeKB = Math.round(base64.length / 1024)
-      const sizeMB = Math.round(sizeKB / 1024)
-      console.log(`✅ Image converted to base64: ${sizeKB}KB (${sizeMB}MB)`)
+      // Process image to ensure it's within API limits
+      const processedBlob = await processImageForAPI(blob, file.name)
 
-      // Log but don't reject - let Replicate handle the size limits
-      if (base64.length > 50 * 1024 * 1024) {
-        console.warn(`⚠️ Large base64 size: ${sizeMB}MB - Replicate may reject this`)
-      }
+      // Convert to base64
+      const processedArrayBuffer = await processedBlob.arrayBuffer()
+      const base64 = Buffer.from(processedArrayBuffer).toString("base64")
+      imageInput = `data:${processedBlob.type};base64,${base64}`
+
+      const originalSizeMB = Math.round(file.size / 1024 / 1024)
+      const processedSizeMB = Math.round(processedBlob.size / 1024 / 1024)
+      const base64SizeMB = Math.round(base64.length / 1024 / 1024)
+
+      console.log(`✅ Image processed: ${originalSizeMB}MB → ${processedSizeMB}MB (base64: ${base64SizeMB}MB)`)
     } catch (error: any) {
-      console.error("❌ Failed to convert image to base64:", error)
+      console.error("❌ Failed to process image:", error)
       return NextResponse.json(
         {
           success: false,
-          error: "Failed to process image",
-          step: "image_conversion",
+          error: "Failed to process image file",
+          step: "image_processing",
           details: error.message,
         },
         { status: 500 },
@@ -107,7 +99,7 @@ export async function POST(request: NextRequest) {
       "clarity-upscaler": {
         version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
         input: {
-          image: imageDataUrl,
+          image: imageInput,
           scale_factor: settings.upscaleFactor || 2,
           dynamic: 6,
           creativity: 0.35,
@@ -118,15 +110,19 @@ export async function POST(request: NextRequest) {
       },
       "real-esrgan-4x": {
         version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
-        input: { image: imageDataUrl, scale: settings.upscaleFactor || 4 },
+        input: {
+          image: imageInput,
+          scale: settings.upscaleFactor || 4,
+          face_enhance: false,
+        },
       },
       "real-esrgan-2x": {
         version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
-        input: { image: imageDataUrl, scale: 2 },
-      },
-      "esrgan-general": {
-        version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
-        input: { image: imageDataUrl, scale: settings.upscaleFactor || 4 },
+        input: {
+          image: imageInput,
+          scale: 2,
+          face_enhance: false,
+        },
       },
     }
 
@@ -141,7 +137,7 @@ export async function POST(request: NextRequest) {
 
     console.log(`✅ Using model: ${modelId} (version: ${config.version})`)
 
-    // Create prediction using direct API call
+    // Create prediction with enhanced error handling
     let prediction: any
     try {
       console.log("🔄 Creating prediction via Replicate API...")
@@ -152,7 +148,7 @@ export async function POST(request: NextRequest) {
       })
 
       const requestSizeMB = Math.round(requestBody.length / 1024 / 1024)
-      console.log(`📤 Request size: ${requestSizeMB}MB`)
+      console.log(`📤 Request payload size: ${requestSizeMB}MB`)
 
       const response = await fetch("https://api.replicate.com/v1/predictions", {
         method: "POST",
@@ -163,33 +159,25 @@ export async function POST(request: NextRequest) {
         body: requestBody,
       })
 
-      // Get response text first
+      // Get response text first and check what we received
       const responseText = await response.text()
       const contentType = response.headers.get("content-type") || ""
-      console.log(`📥 Response status: ${response.status}, Content-Type: ${contentType}`)
+      console.log(`📥 Response status: ${response.status}`)
+      console.log(`📥 Content-Type: ${contentType}`)
+      console.log(`📥 Response preview: ${responseText.substring(0, 100)}...`)
 
-      if (!response.ok) {
-        console.error(`❌ API request failed: ${response.status} ${response.statusText}`)
-        console.error("Response body:", responseText.substring(0, 500))
+      // Check if we got an error response
+      if (!response.ok || !contentType.includes("application/json")) {
+        console.error("❌ Non-JSON response or error status")
 
-        let errorMessage = "Failed to create prediction"
-        let userMessage = errorMessage
-
-        if (response.status === 413 || responseText.includes("Request Entity Too Large")) {
-          errorMessage = "Image too large for Replicate API"
-          userMessage =
-            "Image file is too large for the AI service. Try using a smaller image (under 20MB recommended)."
+        let userMessage = "Failed to process image with AI service"
+        if (responseText.includes("Request Entity Too Large") || responseText.includes("FUNCTION_PAYLOAD_TOO_LARGE")) {
+          userMessage = "Image is still too large after processing. Please try a smaller image."
         } else if (response.status === 401) {
-          errorMessage = "Invalid API token"
           userMessage = "Authentication failed with AI service"
         } else if (response.status === 429) {
-          errorMessage = "Rate limit exceeded"
           userMessage = "Too many requests. Please try again in a few minutes."
-        } else if (response.status === 422) {
-          errorMessage = "Invalid input parameters"
-          userMessage = "Invalid image format or parameters"
         } else if (response.status >= 500) {
-          errorMessage = "Server error"
           userMessage = "AI service is temporarily unavailable. Please try again later."
         }
 
@@ -197,8 +185,7 @@ export async function POST(request: NextRequest) {
           {
             success: false,
             error: userMessage,
-            step: "create_prediction",
-            details: errorMessage,
+            step: "api_error",
             httpStatus: response.status,
             responsePreview: responseText.substring(0, 200),
           },
@@ -211,16 +198,15 @@ export async function POST(request: NextRequest) {
         prediction = JSON.parse(responseText)
       } catch (jsonError: any) {
         console.error("❌ Failed to parse JSON response:", jsonError)
-        console.error("Response text (first 200 chars):", responseText.substring(0, 200))
         return NextResponse.json(
           {
             success: false,
-            error: "Invalid response from AI service",
+            error: "Invalid response format from AI service",
             step: "parse_response",
             details: `JSON parse error: ${jsonError.message}`,
-            responsePreview: responseText.substring(0, 100),
+            responsePreview: responseText.substring(0, 200),
           },
-          { status: 500 },
+          { status: 502 },
         )
       }
 
@@ -251,9 +237,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Wait for completion with extended timeout for large files
+    // Wait for completion
     const startTime = Date.now()
-    const timeout = 20 * 60 * 1000 // 20 minutes for large files
+    const timeout = 20 * 60 * 1000 // 20 minutes
     let finalPrediction: any
 
     try {
@@ -264,28 +250,18 @@ export async function POST(request: NextRequest) {
           throw new Error("Prediction timed out after 20 minutes")
         }
 
-        try {
-          const statusResponse = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
-            headers: {
-              Authorization: `Token ${process.env.REPLICATE_API_TOKEN}`,
-            },
-          })
+        const statusResponse = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
+          headers: {
+            Authorization: `Token ${process.env.REPLICATE_API_TOKEN}`,
+          },
+        })
 
-          if (!statusResponse.ok) {
-            throw new Error(`Failed to get prediction status: ${statusResponse.status}`)
-          }
-
-          const statusText = await statusResponse.text()
-
-          try {
-            finalPrediction = JSON.parse(statusText)
-          } catch (parseError) {
-            throw new Error(`Failed to parse status response: ${parseError}`)
-          }
-        } catch (error: any) {
-          console.error("❌ Failed to get prediction status:", error)
-          throw new Error(`Failed to get prediction status: ${error.message}`)
+        if (!statusResponse.ok) {
+          throw new Error(`Failed to get prediction status: ${statusResponse.status}`)
         }
+
+        const statusText = await statusResponse.text()
+        finalPrediction = JSON.parse(statusText)
 
         console.log(`🔄 Prediction status: ${finalPrediction.status}`)
 
@@ -304,13 +280,17 @@ export async function POST(request: NextRequest) {
           throw new Error("Prediction was canceled")
         }
 
-        // Wait before next check - longer intervals for large files
         await new Promise((resolve) => setTimeout(resolve, 5000))
       }
     } catch (error: any) {
       console.error("❌ Prediction processing failed:", error)
       return NextResponse.json(
-        { success: false, error: error.message, step: "prediction_wait", predictionId: prediction.id },
+        {
+          success: false,
+          error: error.message,
+          step: "prediction_wait",
+          predictionId: prediction.id,
+        },
         { status: 500 },
       )
     }
@@ -330,7 +310,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Handle different output formats
     let downloadUrl: string
     if (Array.isArray(output)) {
       downloadUrl = output[0]
@@ -374,13 +353,95 @@ export async function POST(request: NextRequest) {
       predictionId: prediction.id,
       fileSize: "Enhanced image",
       upscaleFactor: settings.upscaleFactor || 2,
-      originalSize: `${Math.round(file.size / 1024)}KB`,
+      originalSize: `${Math.round(file.size / 1024 / 1024)}MB`,
     })
   } catch (error: any) {
     console.error("❌ Unexpected error:", error)
     return NextResponse.json(
-      { success: false, error: error.message || "Unexpected error occurred", step: "unexpected_error" },
+      {
+        success: false,
+        error: error.message || "Unexpected error occurred",
+        step: "unexpected_error",
+      },
       { status: 500 },
     )
   }
+}
+
+/**
+ * Process image to ensure it's within API limits
+ */
+async function processImageForAPI(blob: Blob, fileName: string): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    const canvas = document.createElement("canvas")
+    const ctx = canvas.getContext("2d")
+
+    if (!ctx) {
+      reject(new Error("Could not get canvas context"))
+      return
+    }
+
+    img.onload = () => {
+      try {
+        let { width, height } = img
+        console.log(`📐 Original dimensions: ${width}x${height}`)
+
+        // Calculate target dimensions to keep payload under 20MB
+        const maxDimension = 4096 // 4K max for safety
+        const targetFileSize = 15 * 1024 * 1024 // 15MB target to leave room for base64 overhead
+
+        // Resize if too large
+        if (width > maxDimension || height > maxDimension) {
+          const ratio = Math.min(maxDimension / width, maxDimension / height)
+          width = Math.floor(width * ratio)
+          height = Math.floor(height * ratio)
+          console.log(`📐 Resized to: ${width}x${height} (ratio: ${ratio.toFixed(3)})`)
+        }
+
+        canvas.width = width
+        canvas.height = height
+        ctx.drawImage(img, 0, 0, width, height)
+
+        // Try different quality levels to get under size limit
+        const tryCompress = (quality: number) => {
+          canvas.toBlob(
+            (compressedBlob) => {
+              if (!compressedBlob) {
+                reject(new Error("Failed to compress image"))
+                return
+              }
+
+              const sizeMB = Math.round(compressedBlob.size / 1024 / 1024)
+              console.log(`🔄 Compressed to ${sizeMB}MB at quality ${quality}`)
+
+              if (compressedBlob.size <= targetFileSize || quality <= 0.3) {
+                console.log(`✅ Final size: ${sizeMB}MB`)
+                resolve(compressedBlob)
+              } else {
+                // Try lower quality
+                tryCompress(Math.max(0.3, quality - 0.1))
+              }
+              URL.revokeObjectURL(img.src)
+            },
+            "image/jpeg",
+            quality,
+          )
+        }
+
+        // Start with reasonable quality
+        tryCompress(0.8)
+      } catch (error) {
+        reject(new Error(`Image processing failed: ${error instanceof Error ? error.message : "Unknown error"}`))
+        URL.revokeObjectURL(img.src)
+      }
+    }
+
+    img.onerror = () => {
+      reject(new Error("Failed to load image for processing"))
+      URL.revokeObjectURL(img.src)
+    }
+
+    img.src = URL.createObjectURL(blob)
+  })
 }
