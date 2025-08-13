@@ -1,3 +1,86 @@
+/**
+ * Client-side image compression for mobile photos before upload
+ */
+export async function compressImageForUpload(file: File, maxSizeMB = 3): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    const canvas = document.createElement("canvas")
+    const ctx = canvas.getContext("2d")
+
+    if (!ctx) {
+      reject(new Error("Could not get canvas context"))
+      return
+    }
+
+    img.onload = () => {
+      try {
+        // Calculate new dimensions to keep under size limit
+        let { width, height } = img
+        const maxDimension = 2048 // Max dimension for mobile photos
+        const targetSizeBytes = maxSizeMB * 1024 * 1024
+
+        // Resize if too large
+        if (width > maxDimension || height > maxDimension) {
+          const ratio = Math.min(maxDimension / width, maxDimension / height)
+          width = Math.floor(width * ratio)
+          height = Math.floor(height * ratio)
+          console.log(`📱 Resizing mobile photo: ${img.width}x${img.height} → ${width}x${height}`)
+        }
+
+        canvas.width = width
+        canvas.height = height
+        ctx.drawImage(img, 0, 0, width, height)
+
+        // Try different quality levels until we get under the size limit
+        const tryCompress = (quality: number) => {
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                reject(new Error("Failed to compress image"))
+                return
+              }
+
+              console.log(`📱 Mobile compression: ${Math.round(blob.size / 1024)}KB at quality ${quality}`)
+
+              if (blob.size <= targetSizeBytes || quality <= 0.3) {
+                const compressedFile = new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), {
+                  type: "image/jpeg",
+                  lastModified: Date.now(),
+                })
+                console.log(
+                  `✅ Mobile photo compressed: ${Math.round(file.size / 1024)}KB → ${Math.round(compressedFile.size / 1024)}KB`,
+                )
+                resolve(compressedFile)
+              } else {
+                // Try lower quality
+                tryCompress(Math.max(0.3, quality - 0.1))
+              }
+              URL.revokeObjectURL(img.src)
+            },
+            "image/jpeg",
+            quality,
+          )
+        }
+
+        // Start with good quality for mobile photos
+        tryCompress(0.8)
+      } catch (error) {
+        reject(
+          new Error(`Mobile image compression failed: ${error instanceof Error ? error.message : "Unknown error"}`),
+        )
+        URL.revokeObjectURL(img.src)
+      }
+    }
+
+    img.onerror = () => {
+      reject(new Error("Failed to load image for compression"))
+      URL.revokeObjectURL(img.src)
+    }
+
+    img.src = URL.createObjectURL(file)
+  })
+}
+
 export interface EnhancementToggles {
   pre: {
     deblock: "off" | "low" | "medium"
