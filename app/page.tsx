@@ -31,7 +31,7 @@ import { ProfileDialog } from "@/components/auth/profile-dialog"
 import { UserManagement } from "@/components/admin/user-management"
 import { RoleManagement } from "@/components/admin/role-management"
 import { preProcessImage, postProcessImage, type EnhancementToggles } from "@/utils/image-processing"
-import { generateDomemaster, type DomemasterOptions } from "@/utils/domemaster"
+import type { DomemasterOptions } from "@/utils/domemaster"
 import { DomemasterTestWorkflow } from "@/components/domemaster-test-workflow"
 
 // Define enhancement models first - Clarity Upscaler as default and best for ASEAN
@@ -207,6 +207,14 @@ const AIImageEnhancementPortal = () => {
     },
   })
 
+  // Add after existing state declarations
+  const [cascadeSettings, setCascadeSettings] = useState({
+    enabled: false,
+    iterations: 2, // 2x upscale twice = 4x total
+    compressionQuality: 0.85,
+    maxIntermediateSize: 15, // MB
+  })
+
   // NUEVO: estado del preset domemaster
   const [domePreset, setDomePreset] = useState<DomePresetState>({
     enabled: false,
@@ -348,69 +356,6 @@ const AIImageEnhancementPortal = () => {
     return selectedModel?.maxUpscale || 4
   }
 
-  async function exportDomemasterForJob(job: CompletedJob) {
-    try {
-      console.log(`🔄 Starting domemaster export for ${job.originalFileName}...`)
-
-      // Show progress in UI
-      const progressToast = document.createElement("div")
-      progressToast.className = "fixed top-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg z-50"
-      progressToast.textContent = `Generating ${(domePreset.size / 1024).toFixed(0)}K domemaster...`
-      document.body.appendChild(progressToast)
-
-      // Usar el proxy para evitar CORS si es URL externa
-      const url = `/api/proxy-image?url=${encodeURIComponent(job.downloadUrl)}`
-      const resp = await fetch(url)
-      if (!resp.ok) throw new Error(`Proxy fetch failed: ${resp.status}`)
-      const blob = await resp.blob()
-
-      console.log(`✅ Downloaded enhanced image: ${Math.round(blob.size / 1024)}KB`)
-
-      const out = await generateDomemaster(blob, {
-        size: domePreset.size,
-        bleedPercent: domePreset.bleedPercent,
-        overlay: domePreset.overlay,
-        projection: "equidistant",
-      })
-
-      const fileNameBase = (job.originalFileName || "enhanced").replace(/\.[a-zA-Z0-9]+$/, "")
-      const suffix = `_DOMEMASTER_${(domePreset.size / 1024).toFixed(0)}K`
-      const outName = `${fileNameBase}${suffix}.png`
-
-      const outUrl = URL.createObjectURL(out)
-      const a = document.createElement("a")
-      a.href = outUrl
-      a.download = outName
-      document.body.appendChild(a)
-      a.click()
-      a.remove()
-
-      // Cleanup
-      setTimeout(() => {
-        URL.revokeObjectURL(outUrl)
-        document.body.removeChild(progressToast)
-      }, 1000)
-
-      console.log(`✅ Domemaster exported: ${outName} (${Math.round(out.size / 1024)}KB)`)
-
-      // Show success message
-      const successToast = document.createElement("div")
-      successToast.className = "fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg z-50"
-      successToast.textContent = `✅ Domemaster exported: ${outName}`
-      document.body.appendChild(successToast)
-      setTimeout(() => document.body.removeChild(successToast), 3000)
-    } catch (e) {
-      console.error("Domemaster export error:", e)
-
-      // Show error message
-      const errorToast = document.createElement("div")
-      errorToast.className = "fixed top-4 right-4 bg-red-600 text-white px-4 py-2 rounded-lg z-50"
-      errorToast.textContent = `❌ Domemaster export failed: ${e instanceof Error ? e.message : "Unknown error"}`
-      document.body.appendChild(errorToast)
-      setTimeout(() => document.body.removeChild(errorToast), 5000)
-    }
-  }
-
   const startProcessing = async (fileId: number) => {
     if (!user) {
       setShowAuth(true)
@@ -422,6 +367,12 @@ const AIImageEnhancementPortal = () => {
       console.error("File not found:", fileId)
       return
     }
+
+    // Calculate total iterations based on settings
+    const totalIterations = cascadeSettings.enabled ? cascadeSettings.iterations : 1
+    const targetUpscale = enhancementSettings.upscaleFactor
+
+    console.log(`🚀 Starting ${totalIterations}-iteration upscale for ${targetUpscale}x total`)
 
     // Move into queue
     setSelectedFiles((prev) => prev.filter((f) => f.id !== fileId))
@@ -436,110 +387,147 @@ const AIImageEnhancementPortal = () => {
     setProcessingQueue((prev) => [...prev, job])
 
     try {
-      // Pre-process on client (light, safe)
-      setProcessingQueue((prev) => prev.map((j) => (j.id === job.id ? { ...j, progress: "Pre-processing..." } : j)))
+      let currentFile = fileToProcess.file
+      let currentUrl: string | null = null
 
-      const needPre =
-        enhancementSettings.pre?.deblock !== "off" ||
-        enhancementSettings.pre?.denoise !== "off" ||
-        enhancementSettings.pre?.whiteBalance === "auto"
+      // Process each iteration
+      for (let iteration = 1; iteration <= totalIterations; iteration++) {
+        setProcessingQueue((prev) =>
+          prev.map((j) =>
+            j.id === job.id
+              ? {
+                  ...j,
+                  progress: `Iteration ${iteration}/${totalIterations} - Processing...`,
+                }
+              : j,
+          ),
+        )
 
-      let uploadBlob: Blob
-      if (needPre) {
-        try {
-          uploadBlob = await preProcessImage(fileToProcess.file, enhancementSettings.pre)
-        } catch (error) {
-          console.error("Pre-processing error:", error)
-          // Fall back to original file if pre-processing fails
-          uploadBlob = fileToProcess.file
+        // Pre-process only on first iteration
+        if (iteration === 1) {
+          const needPre =
+            enhancementSettings.pre?.deblock !== "off" ||
+            enhancementSettings.pre?.denoise !== "off" ||
+            enhancementSettings.pre?.whiteBalance === "auto"
+
+          if (needPre) {
+            try {
+              const uploadBlob = await preProcessImage(currentFile, enhancementSettings.pre)
+              currentFile = new File([uploadBlob], currentFile.name.replace(/\.(\w+)$/, "") + ".png", {
+                type: "image/png",
+              })
+            } catch (error) {
+              console.error("Pre-processing error:", error)
+            }
+          }
+        } else if (currentUrl) {
+          // Download result from previous iteration
+          setProcessingQueue((prev) =>
+            prev.map((j) =>
+              j.id === job.id
+                ? {
+                    ...j,
+                    progress: `Iteration ${iteration}/${totalIterations} - Downloading previous result...`,
+                  }
+                : j,
+            ),
+          )
+
+          const response = await fetch(`/api/proxy-image?url=${encodeURIComponent(currentUrl)}`)
+          if (!response.ok) throw new Error(`Failed to download iteration ${iteration - 1} result`)
+
+          const blob = await response.blob()
+          currentFile = new File([blob], `iteration_${iteration}.png`, { type: "image/png" })
+
+          console.log(`📥 Downloaded iteration ${iteration - 1} result: ${Math.round(blob.size / 1024)}KB`)
         }
-      } else {
-        uploadBlob = fileToProcess.file
+
+        // Build FormData for this iteration
+        const formData = new FormData()
+        formData.append("file", currentFile, currentFile.name)
+        formData.append(
+          "settings",
+          JSON.stringify({
+            ...enhancementSettings,
+            upscaleFactor: 2, // Always 2x per iteration
+          }),
+        )
+        formData.append("cascadeIteration", iteration.toString())
+        formData.append("totalIterations", totalIterations.toString())
+
+        setProcessingQueue((prev) =>
+          prev.map((j) =>
+            j.id === job.id
+              ? {
+                  ...j,
+                  progress: `Iteration ${iteration}/${totalIterations} - Uploading...`,
+                }
+              : j,
+          ),
+        )
+
+        // Call API
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 15 * 60 * 1000) // 15 min per iteration
+
+        let response: Response
+        try {
+          response = await fetch("/api/enhance-replicate", {
+            method: "POST",
+            body: formData,
+            signal: controller.signal,
+          })
+        } finally {
+          clearTimeout(timeoutId)
+        }
+
+        const contentType = response.headers.get("content-type") || ""
+        const result = contentType.includes("application/json")
+          ? await response.json()
+          : { success: false, error: await response.text() }
+
+        if (!response.ok || !result?.success) {
+          throw new Error(result?.error || `HTTP ${response.status} on iteration ${iteration}`)
+        }
+
+        currentUrl = result.downloadUrl
+        console.log(`✅ Iteration ${iteration} complete: ${currentUrl}`)
       }
-
-      const uploadFile = new File([uploadBlob], fileToProcess.file.name.replace(/\.(\w+)$/, "") + ".png", {
-        type: "image/png",
-      })
-
-      // Build FormData
-      const formData = new FormData()
-      formData.append("file", uploadFile, uploadFile.name)
-      formData.append("settings", JSON.stringify(enhancementSettings))
-
-      const selectedModel = getCurrentModel()
-      const modelName = selectedModel?.replicateModel || "unknown-model"
-
-      setProcessingQueue((prev) =>
-        prev.map((j) => (j.id === job.id ? { ...j, progress: `Uploading to ${modelName}...` } : j)),
-      )
-
-      // Call API (let browser set multipart boundary)
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 10 * 60 * 1000)
-      let response: Response
-      try {
-        response = await fetch("/api/enhance-replicate", {
-          method: "POST",
-          body: formData,
-          signal: controller.signal,
-        })
-      } finally {
-        clearTimeout(timeoutId)
-      }
-
-      const contentType = response.headers.get("content-type") || ""
-      const result = contentType.includes("application/json")
-        ? await response.json()
-        : { success: false, error: await response.text() }
 
       // Remove from queue
       setProcessingQueue((prev) => prev.filter((j) => j.id !== job.id))
 
-      if (!response.ok || !result?.success) {
-        setSelectedFiles((prev) => [
-          ...prev,
-          {
-            ...fileToProcess,
-            status: "failed",
-            error: result?.error || `HTTP ${response.status}`,
-            details: result?.details || null,
-            step: result?.step || "unknown",
-          },
-        ])
-        return
+      if (!currentUrl) {
+        throw new Error("No final result URL")
       }
 
-      // Optionally post-process the enhanced image
+      // Post-process final result if needed
       const needPost =
         enhancementSettings.post?.localContrast !== "off" ||
         enhancementSettings.post?.sharpen !== "off" ||
         enhancementSettings.post?.grain !== "off"
 
-      let finalUrl = result.downloadUrl as string
+      let finalUrl = currentUrl
 
-      if (needPost && result.downloadUrl) {
+      if (needPost) {
         try {
-          // Proxy fetch to bypass CORS
-          setProcessingQueue(
-            (prev) =>
-              [
-                ...prev,
-                {
-                  id: `post-${job.id}`,
-                  file: job.file,
-                  settings: job.settings,
-                  status: "processing",
-                  startTime: Date.now(),
-                  progress: "Post-processing...",
-                },
-              ] as any,
-          )
-          const proxied = await fetch(`/api/proxy-image?url=${encodeURIComponent(result.downloadUrl)}`)
+          setProcessingQueue((prev) => [
+            ...prev,
+            {
+              id: `post-${job.id}`,
+              file: job.file,
+              settings: job.settings,
+              status: "processing",
+              startTime: Date.now(),
+              progress: "Post-processing final result...",
+            } as any,
+          ])
+
+          const proxied = await fetch(`/api/proxy-image?url=${encodeURIComponent(currentUrl)}`)
           if (!proxied.ok) throw new Error(`Proxy fetch failed: ${proxied.status}`)
           const blob = await proxied.blob()
           const postBlob = await postProcessImage(blob, enhancementSettings.post)
-          const url = URL.createObjectURL(postBlob)
-          finalUrl = url
+          finalUrl = URL.createObjectURL(postBlob)
         } catch (e) {
           console.warn("Post-processing skipped due to error:", e)
         } finally {
@@ -547,40 +535,37 @@ const AIImageEnhancementPortal = () => {
         }
       }
 
-      // Ensure we have a valid model ID and name with complete safety
-      const finalModelId = result.model || enhancementSettings?.model || "real-esrgan-4x"
-      const finalModelName = getModelName(finalModelId)
-
+      // Create completed job
+      const finalUpscale = Math.pow(2, totalIterations)
       const completedJob: CompletedJob = {
         id: job.id,
         status: "completed",
         completedAt: Date.now(),
         originalSize: `${fileToProcess.file.name} (${formatFileSize(fileToProcess.file.size)})`,
-        enhancedSize: "Enhanced",
-        fileSize: result.fileSize || "Unknown size",
+        enhancedSize: `${finalUpscale}x Enhanced`,
+        fileSize: "Cascaded Enhancement",
         downloadUrl: finalUrl,
         originalFileName: fileToProcess.name,
-        model: finalModelId,
-        modelName: finalModelName,
-        method: result.method || "replicate",
-        upscaleFactor: enhancementSettings?.upscaleFactor || 2,
-        processingTime: result.processingTime || "Unknown",
-        predictionId: result.predictionId,
+        model: enhancementSettings?.model || "clarity-upscaler",
+        modelName: getModelName(enhancementSettings?.model),
+        method: `replicate-cascade-${totalIterations}x`,
+        upscaleFactor: finalUpscale,
+        processingTime: `${Math.round((Date.now() - job.startTime) / 1000)}s`,
         preserveAsianFeatures: enhancementSettings?.preserveAsianFeatures || false,
       }
 
       setCompletedJobs((prev) => [...prev, completedJob])
     } catch (error: any) {
-      console.error("Processing error:", error)
+      console.error("Cascading processing error:", error)
       setProcessingQueue((prev) => prev.filter((j) => j.id !== job.id))
       setSelectedFiles((prev) => [
         ...prev,
         {
           ...fileToProcess,
           status: "failed",
-          error: error?.message || "Network error",
+          error: error?.message || "Cascading enhancement failed",
           details: error?.name || null,
-          step: "client_error",
+          step: "cascade_error",
         },
       ])
     }
@@ -735,6 +720,30 @@ const AIImageEnhancementPortal = () => {
     } catch (error) {
       console.warn("AI optimization failed, using defaults:", error)
       return {}
+    }
+  }
+
+  const exportDomemasterForJob = async (job: CompletedJob) => {
+    try {
+      const response = await fetch(
+        `/api/domemaster-export?url=${encodeURIComponent(job.downloadUrl)}&size=${domePreset.size}&bleedPercent=${domePreset.bleedPercent}&overlay=${domePreset.overlay}`,
+      )
+      if (!response.ok) {
+        console.error("Error exporting domemaster:", response.status, response.statusText)
+        return
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `domemaster_${job.originalFileName.replace(/\.(png|jpg|jpeg|webp)$/i, "")}_${domePreset.size}K.png`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error("Domemaster export failed:", error)
     }
   }
 
@@ -1108,6 +1117,82 @@ const AIImageEnhancementPortal = () => {
                     </div>
                   </div>
 
+                  {/* Cascading Upscale Settings */}
+                  <div className="bg-gradient-to-r from-orange-900/20 to-red-900/20 rounded-lg p-4 border border-orange-500/20">
+                    <h4 className="text-white font-medium mb-3 flex items-center gap-2">
+                      <RefreshCw className="w-4 h-4 text-orange-300" />
+                      Cascading Upscale (2x → 2x = 4x)
+                    </h4>
+                    <p className="text-sm text-gray-300 mb-3">
+                      Upscale 2x twice with smart compression to achieve 4x total while managing file sizes
+                    </p>
+
+                    <div className="flex items-center gap-3 mb-3">
+                      <label className="text-sm text-gray-200">Enable Cascading</label>
+                      <input
+                        type="checkbox"
+                        checked={cascadeSettings.enabled}
+                        onChange={(e) => setCascadeSettings((prev) => ({ ...prev, enabled: e.target.checked }))}
+                      />
+                      <span className={`text-xs ${cascadeSettings.enabled ? "text-orange-400" : "text-gray-400"}`}>
+                        {cascadeSettings.enabled ? "ON" : "OFF"}
+                      </span>
+                    </div>
+
+                    {cascadeSettings.enabled && (
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-xs text-gray-300 mb-1">
+                            Iterations: {cascadeSettings.iterations} (Total: {Math.pow(2, cascadeSettings.iterations)}x)
+                          </label>
+                          <input
+                            type="range"
+                            min={2}
+                            max={3}
+                            step={1}
+                            value={cascadeSettings.iterations}
+                            onChange={(e) =>
+                              setCascadeSettings((prev) => ({
+                                ...prev,
+                                iterations: Number.parseInt(e.target.value),
+                              }))
+                            }
+                            className="w-full"
+                          />
+                          <div className="flex justify-between text-xs text-gray-400 mt-1">
+                            <span>2 iter (4x)</span>
+                            <span>3 iter (8x)</span>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs text-gray-300 mb-1">
+                            Compression Quality: {Math.round(cascadeSettings.compressionQuality * 100)}%
+                          </label>
+                          <input
+                            type="range"
+                            min={0.6}
+                            max={0.95}
+                            step={0.05}
+                            value={cascadeSettings.compressionQuality}
+                            onChange={(e) =>
+                              setCascadeSettings((prev) => ({
+                                ...prev,
+                                compressionQuality: Number.parseFloat(e.target.value),
+                              }))
+                            }
+                            className="w-full"
+                          />
+                        </div>
+
+                        <div className="text-xs text-orange-200 bg-orange-900/20 rounded p-2">
+                          ⚡ <strong>Smart Processing:</strong> Automatically compresses between iterations to stay
+                          under 15MB while preserving quality.
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   {/* AI Model Selection */}
                   <div>
                     <label className="block text-sm font-medium text-white mb-3">Enhancement Model</label>
@@ -1422,6 +1507,20 @@ const AIImageEnhancementPortal = () => {
                   <div className="flex justify-between text-white font-medium">
                     <span>Target:</span>
                     <span>{getTargetResolution()}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-300">
+                    <span>Target upscale:</span>
+                    <span>
+                      {cascadeSettings.enabled
+                        ? `${Math.pow(2, cascadeSettings.iterations)}x (${cascadeSettings.iterations} iterations)`
+                        : `${enhancementSettings.upscaleFactor}x (single)`}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-gray-300">
+                    <span>Cascade mode:</span>
+                    <span className={cascadeSettings.enabled ? "text-orange-400" : "text-gray-400"}>
+                      {cascadeSettings.enabled ? "✅ Enabled" : "❌ Disabled"}
+                    </span>
                   </div>
                   <div className="flex justify-between text-gray-300">
                     <span>Feature preservation:</span>

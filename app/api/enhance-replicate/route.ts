@@ -1,5 +1,52 @@
 import { type NextRequest, NextResponse } from "next/server"
 
+// Smart compression to manage file sizes between upscale iterations
+async function smartCompress(imageBuffer: ArrayBuffer, targetSizeMB = 15): Promise<ArrayBuffer> {
+  return new Promise((resolve, reject) => {
+    const canvas = document.createElement("canvas")
+    const ctx = canvas.getContext("2d")
+    const img = new Image()
+
+    img.onload = () => {
+      canvas.width = img.width
+      canvas.height = img.height
+      ctx?.drawImage(img, 0, 0)
+
+      // Start with high quality and reduce if needed
+      let quality = 0.95
+      const tryCompress = () => {
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error("Failed to compress image"))
+              return
+            }
+
+            const sizeMB = blob.size / (1024 * 1024)
+            console.log(`Compression attempt: ${sizeMB.toFixed(1)}MB at quality ${quality}`)
+
+            if (sizeMB <= targetSizeMB || quality <= 0.3) {
+              blob.arrayBuffer().then(resolve).catch(reject)
+            } else {
+              quality -= 0.1
+              tryCompress()
+            }
+          },
+          "image/jpeg",
+          quality,
+        )
+      }
+
+      tryCompress()
+    }
+
+    img.onerror = () => reject(new Error("Failed to load image for compression"))
+
+    const blob = new Blob([imageBuffer])
+    img.src = URL.createObjectURL(blob)
+  })
+}
+
 export async function POST(request: NextRequest) {
   console.log("🚀 Starting Replicate enhancement...")
 
@@ -72,24 +119,37 @@ export async function POST(request: NextRequest) {
       console.warn("⚠️ Failed to parse settings, using defaults:", error.message)
     }
 
-    // Convert file to base64 data URL without any compression
+    // Check if this is a cascading upscale request
+    const cascadeIteration = Number.parseInt(formData.get("cascadeIteration") as string) || 1
+    const totalIterations = Number.parseInt(formData.get("totalIterations") as string) || 1
+    const isMultiIteration = totalIterations > 1
+
+    console.log(`🔄 Cascade iteration ${cascadeIteration}/${totalIterations}`)
+
+    // For multi-iteration, use 2x per iteration
+    const iterationUpscale = isMultiIteration ? 2 : settings.upscaleFactor || 2
+
+    // Convert file to base64 with smart compression for iterations > 1
     let imageDataUrl: string
     try {
-      console.log("🔄 Converting image to base64 (no compression)...")
+      console.log("🔄 Converting image to base64...")
       const arrayBuffer = await file.arrayBuffer()
-      const base64 = Buffer.from(arrayBuffer).toString("base64")
+
+      // Apply smart compression for subsequent iterations
+      let processedBuffer = arrayBuffer
+      if (cascadeIteration > 1) {
+        console.log("🗜️ Applying smart compression for iteration", cascadeIteration)
+        processedBuffer = await smartCompress(arrayBuffer, 15) // 15MB target
+      }
+
+      const base64 = Buffer.from(processedBuffer).toString("base64")
       imageDataUrl = `data:${file.type};base64,${base64}`
 
       const sizeKB = Math.round(base64.length / 1024)
       const sizeMB = Math.round(sizeKB / 1024)
-      console.log(`✅ Image converted to base64: ${sizeKB}KB (${sizeMB}MB)`)
-
-      // Log but don't reject - let Replicate handle the size limits
-      if (base64.length > 50 * 1024 * 1024) {
-        console.warn(`⚠️ Large base64 size: ${sizeMB}MB - Replicate may reject this`)
-      }
+      console.log(`✅ Image converted: ${sizeKB}KB (${sizeMB}MB) for iteration ${cascadeIteration}`)
     } catch (error: any) {
-      console.error("❌ Failed to convert image to base64:", error)
+      console.error("❌ Failed to convert image:", error)
       return NextResponse.json(
         {
           success: false,
@@ -101,14 +161,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Model configuration
-    const modelId = settings.model || "clarity-upscaler"
+    // Update model configs to use iteration upscale
     const modelConfigs: Record<string, any> = {
       "clarity-upscaler": {
         version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
         input: {
           image: imageDataUrl,
-          scale_factor: settings.upscaleFactor || 2,
+          scale_factor: iterationUpscale,
           dynamic: 6,
           creativity: 0.35,
           resemblance: 0.6,
@@ -118,7 +177,7 @@ export async function POST(request: NextRequest) {
       },
       "real-esrgan-4x": {
         version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
-        input: { image: imageDataUrl, scale: settings.upscaleFactor || 4 },
+        input: { image: imageDataUrl, scale: iterationUpscale },
       },
       "real-esrgan-2x": {
         version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
@@ -126,10 +185,11 @@ export async function POST(request: NextRequest) {
       },
       "esrgan-general": {
         version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
-        input: { image: imageDataUrl, scale: settings.upscaleFactor || 4 },
+        input: { image: imageDataUrl, scale: iterationUpscale },
       },
     }
 
+    const modelId = settings.model || "clarity-upscaler"
     const config = modelConfigs[modelId]
     if (!config) {
       console.error("❌ Unknown model:", modelId)
@@ -365,6 +425,10 @@ export async function POST(request: NextRequest) {
     const processingTime = `${Math.round((Date.now() - startTime) / 1000)}s`
     console.log(`✅ Enhancement completed in ${processingTime}`)
 
+    // Calculate final upscale factor
+    const currentUpscale = Math.pow(iterationUpscale, cascadeIteration)
+    const finalUpscale = Math.pow(iterationUpscale, totalIterations)
+
     return NextResponse.json({
       success: true,
       downloadUrl,
@@ -373,7 +437,11 @@ export async function POST(request: NextRequest) {
       processingTime,
       predictionId: prediction.id,
       fileSize: "Enhanced image",
-      upscaleFactor: settings.upscaleFactor || 2,
+      upscaleFactor: currentUpscale,
+      finalUpscaleFactor: finalUpscale,
+      cascadeIteration,
+      totalIterations,
+      isComplete: cascadeIteration >= totalIterations,
       originalSize: `${Math.round(file.size / 1024)}KB`,
     })
   } catch (error: any) {
