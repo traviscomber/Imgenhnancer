@@ -1,4 +1,4 @@
-export type DomemasterProjection = "equidistant" | "equisolid" | "stereographic"
+export type DomemasterProjection = "equidistant" | "stereographic"
 
 export interface DomemasterOptions {
   size: number // Output size (e.g., 8192 for 8K)
@@ -425,4 +425,166 @@ export function getRecommendedDomemasterSize(sourceWidth: number, sourceHeight: 
   if (sourceMegapixels < 8) return 8192 // 8K for medium sources
   if (sourceMegapixels < 20) return 12288 // 12K for large sources
   return 16384 // 16K for very large sources
+}
+
+/**
+ * Bilinear interpolation sampling from image
+ */
+function bilinearSample(img: HTMLImageElement, x: number, y: number): { r: number; g: number; b: number } | null {
+  // Create a temporary canvas to sample pixel data
+  const tempCanvas = document.createElement("canvas")
+  const tempCtx = tempCanvas.getContext("2d")
+  if (!tempCtx) return null
+
+  tempCanvas.width = img.width
+  tempCanvas.height = img.height
+  tempCtx.drawImage(img, 0, 0)
+
+  try {
+    // Clamp coordinates to image bounds
+    x = Math.max(0, Math.min(img.width - 1, x))
+    y = Math.max(0, Math.min(img.height - 1, y))
+
+    const x1 = Math.floor(x)
+    const y1 = Math.floor(y)
+    const x2 = Math.min(x1 + 1, img.width - 1)
+    const y2 = Math.min(y1 + 1, img.height - 1)
+
+    const fx = x - x1
+    const fy = y - y1
+
+    // Get pixel data for the four corners
+    const p1 = tempCtx.getImageData(x1, y1, 1, 1).data // Top-left
+    const p2 = tempCtx.getImageData(x2, y1, 1, 1).data // Top-right
+    const p3 = tempCtx.getImageData(x1, y2, 1, 1).data // Bottom-left
+    const p4 = tempCtx.getImageData(x2, y2, 1, 1).data // Bottom-right
+
+    // Bilinear interpolation
+    const r = p1[0] * (1 - fx) * (1 - fy) + p2[0] * fx * (1 - fy) + p3[0] * (1 - fx) * fy + p4[0] * fx * fy
+    const g = p1[1] * (1 - fx) * (1 - fy) + p2[1] * fx * (1 - fy) + p3[1] * (1 - fx) * fy + p4[1] * fx * fy
+    const b = p1[2] * (1 - fx) * (1 - fy) + p2[2] * fx * (1 - fy) + p3[2] * (1 - fx) * fy + p4[2] * fx * fy
+
+    return { r: Math.round(r), g: Math.round(g), b: Math.round(b) }
+  } catch (error) {
+    console.warn("Bilinear sampling error:", error)
+    return null
+  }
+}
+
+/**
+ * Add guide overlays to domemaster
+ */
+function addGuideOverlays(ctx: CanvasRenderingContext2D, centerX: number, centerY: number, radius: number): void {
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.5)"
+  ctx.lineWidth = 2
+
+  // Center crosshairs
+  ctx.beginPath()
+  ctx.moveTo(centerX - 20, centerY)
+  ctx.lineTo(centerX + 20, centerY)
+  ctx.moveTo(centerX, centerY - 20)
+  ctx.lineTo(centerX, centerY + 20)
+  ctx.stroke()
+
+  // Elevation circles (every 10 degrees)
+  for (let elevation = 10; elevation <= 80; elevation += 10) {
+    const circleRadius = radius * (elevation / 90)
+    ctx.beginPath()
+    ctx.arc(centerX, centerY, circleRadius, 0, 2 * Math.PI)
+    ctx.stroke()
+  }
+
+  // Azimuth lines (every 30 degrees)
+  for (let azimuth = 0; azimuth < 360; azimuth += 30) {
+    const angle = (azimuth * Math.PI) / 180
+    const x = centerX + radius * Math.cos(angle)
+    const y = centerY + radius * Math.sin(angle)
+
+    ctx.beginPath()
+    ctx.moveTo(centerX, centerY)
+    ctx.lineTo(x, y)
+    ctx.stroke()
+  }
+
+  // Corner markers
+  const markerSize = 10
+  const corners = [
+    [markerSize, markerSize],
+    [centerX * 2 - markerSize, markerSize],
+    [markerSize, centerY * 2 - markerSize],
+    [centerX * 2 - markerSize, centerY * 2 - markerSize],
+  ]
+
+  ctx.strokeStyle = "rgba(255, 0, 0, 0.7)"
+  ctx.lineWidth = 3
+
+  corners.forEach(([x, y]) => {
+    ctx.beginPath()
+    ctx.moveTo(x - 5, y)
+    ctx.lineTo(x + 5, y)
+    ctx.moveTo(x, y - 5)
+    ctx.lineTo(x, y + 5)
+    ctx.stroke()
+  })
+
+  // Add text labels
+  ctx.fillStyle = "rgba(255, 255, 255, 0.8)"
+  ctx.font = "14px Arial"
+  ctx.textAlign = "center"
+
+  // Zenith label
+  ctx.fillText("ZENITH", centerX, centerY - 30)
+
+  // Cardinal directions
+  ctx.fillText("N", centerX, centerY - radius + 20)
+  ctx.fillText("S", centerX, centerY + radius - 10)
+  ctx.fillText("E", centerX + radius - 15, centerY + 5)
+  ctx.fillText("W", centerX - radius + 15, centerY + 5)
+}
+
+/**
+ * Get recommended domemaster presets
+ */
+export function getDomemasterPresets(): Array<{
+  name: string
+  size: number
+  bleedPercent: number
+  overlay: boolean
+  description: string
+  estimatedTime: string
+}> {
+  return [
+    {
+      name: "4K Preview",
+      size: 4096,
+      bleedPercent: 3,
+      overlay: true,
+      description: "Fast preview for testing and validation",
+      estimatedTime: "~15s",
+    },
+    {
+      name: "8K Standard",
+      size: 8192,
+      bleedPercent: 3,
+      overlay: true,
+      description: "Standard resolution for most planetariums",
+      estimatedTime: "~45s",
+    },
+    {
+      name: "12K High Detail",
+      size: 12288,
+      bleedPercent: 2,
+      overlay: true,
+      description: "High detail for premium installations",
+      estimatedTime: "~90s",
+    },
+    {
+      name: "16K Ultra",
+      size: 16384,
+      bleedPercent: 1,
+      overlay: false,
+      description: "Maximum quality for specialized applications",
+      estimatedTime: "~180s",
+    },
+  ]
 }

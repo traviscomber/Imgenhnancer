@@ -37,6 +37,20 @@ export async function POST(request: NextRequest) {
 
     console.log(`✅ File extracted: ${file.name} (${file.size} bytes, ${file.type})`)
 
+    // Check file size (limit to 10MB)
+    const maxSize = 10 * 1024 * 1024 // 10MB
+    if (file.size > maxSize) {
+      console.error(`❌ File too large: ${file.size} bytes (max: ${maxSize})`)
+      return NextResponse.json(
+        {
+          success: false,
+          error: `File too large. Maximum size is ${maxSize / 1024 / 1024}MB`,
+          step: "file_validation",
+        },
+        { status: 413 },
+      )
+    }
+
     // Validate file
     if (!file.type.startsWith("image/")) {
       console.error("❌ Invalid file type:", file.type)
@@ -58,47 +72,25 @@ export async function POST(request: NextRequest) {
       console.warn("⚠️ Failed to parse settings, using defaults:", error.message)
     }
 
-    // Compress image to reduce size for API
-    let processedFile: File
-    try {
-      console.log("🔄 Compressing image for API...")
-
-      // Create a compressed version for API upload
-      const compressedBlob = await compressImageForAPI(file)
-      processedFile = new File([compressedBlob], file.name.replace(/\.[^.]+$/, ".jpg"), {
-        type: "image/jpeg",
-      })
-
-      console.log(
-        `✅ Image compressed: ${file.size} → ${processedFile.size} bytes (${Math.round((processedFile.size / file.size) * 100)}%)`,
-      )
-    } catch (error: any) {
-      console.error("❌ Failed to compress image:", error)
-      return NextResponse.json(
-        { success: false, error: "Failed to compress image", step: "image_compression", details: error.message },
-        { status: 500 },
-      )
-    }
-
-    // Convert compressed file to base64 data URL
+    // Convert file to base64 data URL
     let imageDataUrl: string
     try {
-      const arrayBuffer = await processedFile.arrayBuffer()
+      const arrayBuffer = await file.arrayBuffer()
       const base64 = Buffer.from(arrayBuffer).toString("base64")
-      imageDataUrl = `data:${processedFile.type};base64,${base64}`
-      console.log(`✅ Image converted to base64 (${base64.length} chars, ~${Math.round(base64.length / 1024)}KB)`)
+      imageDataUrl = `data:${file.type};base64,${base64}`
+      console.log(`✅ Image converted to base64 (${base64.length} chars)`)
 
-      // Final size check for base64
-      if (base64.length > 4 * 1024 * 1024) {
-        // 4MB base64 limit
-        throw new Error("Image still too large after compression")
+      // Check base64 size
+      if (base64.length > 15 * 1024 * 1024) {
+        // 15MB base64 limit
+        throw new Error("Image too large after base64 encoding")
       }
     } catch (error: any) {
       console.error("❌ Failed to convert image to base64:", error)
       return NextResponse.json(
         {
           success: false,
-          error: "Failed to process image - file may be too large even after compression",
+          error: "Failed to process image - file may be too large",
           step: "image_conversion",
           details: error.message,
         },
@@ -324,78 +316,4 @@ export async function POST(request: NextRequest) {
       { status: 500 },
     )
   }
-}
-
-/**
- * Compress image for API upload to stay under size limits
- */
-async function compressImageForAPI(file: File): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    const canvas = document.createElement("canvas")
-    const ctx = canvas.getContext("2d")
-
-    if (!ctx) {
-      reject(new Error("Could not get canvas context"))
-      return
-    }
-
-    img.onload = () => {
-      try {
-        // Calculate new dimensions to keep under API limits
-        let { width, height } = img
-        const maxDimension = 1536 // Conservative limit for API
-        const maxFileSize = 800 * 1024 // 800KB target
-
-        // Resize if too large
-        if (width > maxDimension || height > maxDimension) {
-          const ratio = Math.min(maxDimension / width, maxDimension / height)
-          width = Math.floor(width * ratio)
-          height = Math.floor(height * ratio)
-        }
-
-        canvas.width = width
-        canvas.height = height
-        ctx.drawImage(img, 0, 0, width, height)
-
-        // Try different quality levels until we get under the size limit
-        const tryCompress = (quality: number) => {
-          canvas.toBlob(
-            (blob) => {
-              if (!blob) {
-                reject(new Error("Failed to compress image"))
-                return
-              }
-
-              console.log(`🔄 Compressed to ${Math.round(blob.size / 1024)}KB at quality ${quality}`)
-
-              if (blob.size <= maxFileSize || quality <= 0.3) {
-                console.log(`✅ Final compressed size: ${Math.round(blob.size / 1024)}KB`)
-                resolve(blob)
-              } else {
-                // Try lower quality
-                tryCompress(Math.max(0.3, quality - 0.1))
-              }
-              URL.revokeObjectURL(img.src)
-            },
-            "image/jpeg",
-            quality,
-          )
-        }
-
-        // Start with moderate quality and reduce if needed
-        tryCompress(0.8)
-      } catch (error) {
-        reject(new Error(`Image compression failed: ${error instanceof Error ? error.message : "Unknown error"}`))
-        URL.revokeObjectURL(img.src)
-      }
-    }
-
-    img.onerror = () => {
-      reject(new Error("Failed to load image for compression"))
-      URL.revokeObjectURL(img.src)
-    }
-
-    img.src = URL.createObjectURL(file)
-  })
 }

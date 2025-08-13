@@ -24,12 +24,6 @@ export function DomemasterTestWorkflow() {
       status: "pending",
     },
     {
-      id: "compress-image",
-      name: "Image Compression",
-      description: "Test compression system with size reporting",
-      status: "pending",
-    },
-    {
       id: "ai-enhancement",
       name: "AI Enhancement Simulation",
       description: "Simulate Clarity Upscaler process",
@@ -112,35 +106,6 @@ export function DomemasterTestWorkflow() {
     })
   }
 
-  const compressImage = async (blob: Blob): Promise<Blob> => {
-    // Simulate compression by converting to JPEG with quality reduction
-    return new Promise((resolve) => {
-      const canvas = document.createElement("canvas")
-      const ctx = canvas.getContext("2d")!
-      const img = new Image()
-
-      img.onload = () => {
-        // Resize to max 1536px width for compression
-        const maxWidth = 1536
-        const scale = Math.min(1, maxWidth / img.width)
-        canvas.width = img.width * scale
-        canvas.height = img.height * scale
-
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-
-        canvas.toBlob(
-          (compressedBlob) => {
-            resolve(compressedBlob!)
-          },
-          "image/jpeg",
-          0.85,
-        )
-      }
-
-      img.src = URL.createObjectURL(blob)
-    })
-  }
-
   const simulateAIEnhancement = async (blob: Blob): Promise<Blob> => {
     // Simulate AI enhancement by applying some basic filters
     return new Promise((resolve) => {
@@ -195,28 +160,14 @@ export function DomemasterTestWorkflow() {
         result: { size: Math.round(testImage.size / 1024) + "KB" },
       })
 
-      // Step 2: Compress image
-      updateStep("compress-image", { status: "running", progress: 0 })
-      const compressedImage = await compressImage(testImage)
-      const compressionRatio = (((testImage.size - compressedImage.size) / testImage.size) * 100).toFixed(1)
-      updateStep("compress-image", {
-        status: "completed",
-        progress: 100,
-        result: {
-          originalSize: Math.round(testImage.size / 1024) + "KB",
-          compressedSize: Math.round(compressedImage.size / 1024) + "KB",
-          compressionRatio: compressionRatio + "%",
-        },
-      })
-
-      // Step 3: AI Enhancement simulation
+      // Step 2: AI Enhancement simulation
       updateStep("ai-enhancement", { status: "running", progress: 0 })
       // Simulate processing time
       for (let i = 0; i <= 100; i += 10) {
         updateStep("ai-enhancement", { status: "running", progress: i })
         await new Promise((resolve) => setTimeout(resolve, 100))
       }
-      const enhancedImage = await simulateAIEnhancement(compressedImage)
+      const enhancedImage = await simulateAIEnhancement(testImage)
       updateStep("ai-enhancement", {
         status: "completed",
         progress: 100,
@@ -226,7 +177,7 @@ export function DomemasterTestWorkflow() {
         },
       })
 
-      // Step 4: Generate 4K Domemaster
+      // Step 3: Generate 4K Domemaster
       updateStep("generate-4k-dome", { status: "running", progress: 0 })
       const dome4K = await generateDomemaster(enhancedImage, {
         size: 4096,
@@ -245,7 +196,7 @@ export function DomemasterTestWorkflow() {
         },
       })
 
-      // Step 5: Generate 8K Domemaster
+      // Step 4: Generate 8K Domemaster
       updateStep("generate-8k-dome", { status: "running", progress: 0 })
       const dome8K = await generateDomemaster(enhancedImage, {
         size: 8192,
@@ -452,7 +403,7 @@ export function DomemasterTestWorkflow() {
             { name: "Multiple Resolutions", icon: "📏", description: "4K and 8K generation with different settings" },
             { name: "Bleed Margins", icon: "⚫", description: "Configurable black borders around fisheye circle" },
             { name: "Bilinear Interpolation", icon: "🔍", description: "Smooth pixel sampling for high quality" },
-            { name: "Image Compression", icon: "📦", description: "Smart compression to meet API size limits" },
+            { name: "Test Pattern Generation", icon: "🎯", description: "Synthetic equirectangular test images" },
           ].map((feature) => (
             <div key={feature.name} className="flex items-start space-x-3 p-3 bg-white/5 rounded-lg">
               <span className="text-xl">{feature.icon}</span>

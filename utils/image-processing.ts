@@ -35,79 +35,6 @@ export interface ImageStats {
 }
 
 /**
- * Compress image to reduce file size before API upload
- */
-export async function compressImage(file: File, maxSizeKB = 1024): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    const canvas = document.createElement("canvas")
-    const ctx = canvas.getContext("2d")
-
-    if (!ctx) {
-      reject(new Error("Could not get canvas context"))
-      return
-    }
-
-    img.onload = () => {
-      try {
-        // Calculate new dimensions to keep under size limit
-        let { width, height } = img
-        const maxDimension = 2048 // Max dimension for API
-
-        if (width > maxDimension || height > maxDimension) {
-          const ratio = Math.min(maxDimension / width, maxDimension / height)
-          width = Math.floor(width * ratio)
-          height = Math.floor(height * ratio)
-        }
-
-        canvas.width = width
-        canvas.height = height
-        ctx.drawImage(img, 0, 0, width, height)
-
-        // Try different quality levels until we get under the size limit
-        const tryCompress = (quality: number) => {
-          canvas.toBlob(
-            (blob) => {
-              if (!blob) {
-                reject(new Error("Failed to compress image"))
-                return
-              }
-
-              const sizeKB = blob.size / 1024
-              console.log(`🔄 Compressed to ${Math.round(sizeKB)}KB at quality ${quality}`)
-
-              if (sizeKB <= maxSizeKB || quality <= 0.3) {
-                console.log(`✅ Final compressed size: ${Math.round(sizeKB)}KB`)
-                resolve(blob)
-              } else {
-                // Try lower quality
-                tryCompress(quality - 0.1)
-              }
-              URL.revokeObjectURL(img.src)
-            },
-            "image/jpeg",
-            quality,
-          )
-        }
-
-        // Start with high quality and reduce if needed
-        tryCompress(0.9)
-      } catch (error) {
-        reject(new Error(`Image compression failed: ${error instanceof Error ? error.message : "Unknown error"}`))
-        URL.revokeObjectURL(img.src)
-      }
-    }
-
-    img.onerror = () => {
-      reject(new Error("Failed to load image for compression"))
-      URL.revokeObjectURL(img.src)
-    }
-
-    img.src = URL.createObjectURL(file)
-  })
-}
-
-/**
  * Pre-process image before AI enhancement
  */
 export async function preProcessImage(file: File, settings: EnhancementToggles["pre"]): Promise<Blob> {
@@ -759,7 +686,7 @@ export function processImage(canvas: HTMLCanvasElement, settings: ImageProcessin
 
     // Apply effects that work on canvas directly
     if (settings.sharpness > 0) {
-      applySharpen(canvas, settings.sharpness)
+      applySharpness(canvas, settings.sharpness)
     }
 
     if (settings.denoise > 0) {
