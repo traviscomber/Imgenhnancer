@@ -11,6 +11,29 @@ export interface EnhancementToggles {
   }
 }
 
+export interface ImageProcessingSettings {
+  brightness: number
+  contrast: number
+  saturation: number
+  sharpness: number
+  denoise: number
+  grain: number
+  vignette: number
+  autoWhiteBalance: boolean
+  autoLevels: boolean
+  model: string
+  upscaleFactor: number
+}
+
+export interface ImageStats {
+  brightness: number
+  contrast: number
+  saturation: number
+  sharpness: number
+  hasNoise: boolean
+  needsWhiteBalance: boolean
+}
+
 /**
  * Pre-process image before AI enhancement
  */
@@ -277,4 +300,143 @@ function addGrain(data: Uint8ClampedArray, strength: "very-low" | "low") {
     data[i + 1] = Math.max(0, Math.min(255, data[i + 1] + noise))
     data[i + 2] = Math.max(0, Math.min(255, data[i + 2] + noise))
   }
+}
+
+/**
+ * Analyze image to determine optimal processing parameters
+ */
+export function analyzeImage(canvas: HTMLCanvasElement): ImageStats {
+  const ctx = canvas.getContext("2d")
+  if (!ctx) throw new Error("Could not get canvas context")
+
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+  const data = imageData.data
+
+  let totalBrightness = 0
+  let totalSaturation = 0
+  let rSum = 0,
+    gSum = 0,
+    bSum = 0
+  let minBrightness = 255,
+    maxBrightness = 0
+  let edgeStrength = 0
+
+  const pixelCount = data.length / 4
+
+  // Analyze each pixel
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i]
+    const g = data[i + 1]
+    const b = data[i + 2]
+
+    // Calculate brightness
+    const brightness = (r + g + b) / 3
+    totalBrightness += brightness
+    minBrightness = Math.min(minBrightness, brightness)
+    maxBrightness = Math.max(maxBrightness, brightness)
+
+    // Calculate saturation
+    const max = Math.max(r, g, b)
+    const min = Math.min(r, g, b)
+    const saturation = max > 0 ? (max - min) / max : 0
+    totalSaturation += saturation
+
+    // Sum for white balance analysis
+    rSum += r
+    gSum += g
+    bSum += b
+  }
+
+  // Calculate averages
+  const avgBrightness = totalBrightness / pixelCount
+  const avgSaturation = totalSaturation / pixelCount
+  const contrast = maxBrightness - minBrightness
+
+  // Detect if white balance correction is needed
+  const rAvg = rSum / pixelCount
+  const gAvg = gSum / pixelCount
+  const bAvg = bSum / pixelCount
+  const colorBalance = Math.max(rAvg, gAvg, bAvg) - Math.min(rAvg, gAvg, bAvg)
+  const needsWhiteBalance = colorBalance > 20
+
+  // Simple edge detection for sharpness analysis
+  const sampleSize = Math.min(1000, pixelCount / 4)
+  for (let i = 0; i < sampleSize; i++) {
+    const idx = Math.floor(Math.random() * (data.length - 8)) & ~3
+    if (idx + 4 < data.length) {
+      const curr = (data[idx] + data[idx + 1] + data[idx + 2]) / 3
+      const next = (data[idx + 4] + data[idx + 5] + data[idx + 6]) / 3
+      edgeStrength += Math.abs(curr - next)
+    }
+  }
+
+  const sharpness = edgeStrength / sampleSize
+  const hasNoise = sharpness > 15 // High edge variation suggests noise
+
+  return {
+    brightness: avgBrightness / 255,
+    contrast: contrast / 255,
+    saturation: avgSaturation,
+    sharpness: Math.min(sharpness / 30, 1),
+    hasNoise,
+    needsWhiteBalance,
+  }
+}
+
+/**
+ * Generate optimal settings based on image analysis
+ */
+export function generateOptimalSettings(
+  stats: ImageStats,
+  baseSettings: Partial<ImageProcessingSettings> = {},
+): ImageProcessingSettings {
+  const optimal: ImageProcessingSettings = {
+    brightness: 0,
+    contrast: 0,
+    saturation: 0,
+    sharpness: 0,
+    denoise: 0,
+    grain: 0,
+    vignette: 0,
+    autoWhiteBalance: false,
+    autoLevels: false,
+    model: "clarity-upscaler",
+    upscaleFactor: 2,
+    ...baseSettings,
+  }
+
+  // Adjust brightness if too dark or bright
+  if (stats.brightness < 0.3) {
+    optimal.brightness = Math.min(30, (0.3 - stats.brightness) * 100)
+  } else if (stats.brightness > 0.7) {
+    optimal.brightness = Math.max(-20, (0.7 - stats.brightness) * 100)
+  }
+
+  // Adjust contrast if too flat
+  if (stats.contrast < 0.5) {
+    optimal.contrast = Math.min(25, (0.5 - stats.contrast) * 50)
+  }
+
+  // Adjust saturation if too dull
+  if (stats.saturation < 0.3) {
+    optimal.saturation = Math.min(20, (0.3 - stats.saturation) * 67)
+  }
+
+  // Apply sharpening if image is soft
+  if (stats.sharpness < 0.4) {
+    optimal.sharpness = Math.min(15, (0.4 - stats.sharpness) * 37.5)
+  }
+
+  // Apply denoising if noisy
+  if (stats.hasNoise) {
+    optimal.denoise = 10
+  }
+
+  // Enable auto white balance if needed
+  optimal.autoWhiteBalance = stats.needsWhiteBalance
+
+  // Enable auto levels for low contrast images
+  optimal.autoLevels = stats.contrast < 0.3
+
+  return optimal
 }

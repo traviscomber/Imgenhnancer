@@ -80,6 +80,11 @@ export async function POST(request: NextRequest) {
       const base64SizeMB = Math.round(base64.length / 1024 / 1024)
 
       console.log(`✅ Image processed: ${originalSizeMB}MB → ${processedSizeMB}MB (base64: ${base64SizeMB}MB)`)
+
+      // Additional safety check for base64 size
+      if (base64SizeMB > 25) {
+        throw new Error(`Base64 payload too large: ${base64SizeMB}MB (max 25MB)`)
+      }
     } catch (error: any) {
       console.error("❌ Failed to process image:", error)
       return NextResponse.json(
@@ -150,6 +155,11 @@ export async function POST(request: NextRequest) {
       const requestSizeMB = Math.round(requestBody.length / 1024 / 1024)
       console.log(`📤 Request payload size: ${requestSizeMB}MB`)
 
+      // Additional safety check before sending
+      if (requestSizeMB > 30) {
+        throw new Error(`Request payload too large: ${requestSizeMB}MB (max 30MB)`)
+      }
+
       const response = await fetch("https://api.replicate.com/v1/predictions", {
         method: "POST",
         headers: {
@@ -162,30 +172,69 @@ export async function POST(request: NextRequest) {
       // Get response text first and check what we received
       const responseText = await response.text()
       const contentType = response.headers.get("content-type") || ""
+
       console.log(`📥 Response status: ${response.status}`)
       console.log(`📥 Content-Type: ${contentType}`)
-      console.log(`📥 Response preview: ${responseText.substring(0, 100)}...`)
+      console.log(`📥 Response length: ${responseText.length} chars`)
+      console.log(`📥 Response preview: ${responseText.substring(0, 200)}...`)
 
-      // Check if we got an error response
-      if (!response.ok || !contentType.includes("application/json")) {
-        console.error("❌ Non-JSON response or error status")
+      // Check if we got an HTML error page (common with payload too large errors)
+      const isHtmlResponse =
+        responseText.trim().toLowerCase().startsWith("<!doctype html") ||
+        responseText.trim().toLowerCase().startsWith("<html") ||
+        contentType.includes("text/html")
 
-        let userMessage = "Failed to process image with AI service"
-        if (responseText.includes("Request Entity Too Large") || responseText.includes("FUNCTION_PAYLOAD_TOO_LARGE")) {
-          userMessage = "Image is still too large after processing. Please try a smaller image."
-        } else if (response.status === 401) {
-          userMessage = "Authentication failed with AI service"
-        } else if (response.status === 429) {
-          userMessage = "Too many requests. Please try again in a few minutes."
-        } else if (response.status >= 500) {
-          userMessage = "AI service is temporarily unavailable. Please try again later."
+      if (isHtmlResponse) {
+        console.error("❌ Received HTML error page instead of JSON")
+
+        let userMessage = "Server returned an error page instead of processing the image"
+
+        // Check for common error patterns in HTML
+        if (
+          responseText.includes("Request Entity Too Large") ||
+          responseText.includes("413") ||
+          responseText.includes("FUNCTION_PAYLOAD_TOO_LARGE")
+        ) {
+          userMessage = "Image file is too large for processing. Please try a smaller image or lower quality."
+        } else if (responseText.includes("502") || responseText.includes("Bad Gateway")) {
+          userMessage = "AI service is temporarily unavailable. Please try again in a few minutes."
+        } else if (responseText.includes("504") || responseText.includes("Gateway Timeout")) {
+          userMessage = "Request timed out. Please try again with a smaller image."
         }
 
         return NextResponse.json(
           {
             success: false,
             error: userMessage,
-            step: "api_error",
+            step: "html_error_page",
+            httpStatus: response.status,
+            isHtmlResponse: true,
+            responsePreview: responseText.substring(0, 300),
+          },
+          { status: response.status || 502 },
+        )
+      }
+
+      // Check for non-OK status
+      if (!response.ok) {
+        console.error("❌ Non-OK response status")
+
+        let userMessage = "Failed to process image with AI service"
+        if (response.status === 401) {
+          userMessage = "Authentication failed with AI service"
+        } else if (response.status === 429) {
+          userMessage = "Too many requests. Please try again in a few minutes."
+        } else if (response.status >= 500) {
+          userMessage = "AI service is temporarily unavailable. Please try again later."
+        } else if (response.status === 413) {
+          userMessage = "Image is too large for processing. Please try a smaller image."
+        }
+
+        return NextResponse.json(
+          {
+            success: false,
+            error: userMessage,
+            step: "http_error",
             httpStatus: response.status,
             responsePreview: responseText.substring(0, 200),
           },
@@ -193,16 +242,32 @@ export async function POST(request: NextRequest) {
         )
       }
 
+      // Check if response looks like JSON
+      if (!contentType.includes("application/json") && !responseText.trim().startsWith("{")) {
+        console.error("❌ Response doesn't appear to be JSON")
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Invalid response format from AI service",
+            step: "non_json_response",
+            contentType,
+            responsePreview: responseText.substring(0, 200),
+          },
+          { status: 502 },
+        )
+      }
+
       // Try to parse JSON response
       try {
         prediction = JSON.parse(responseText)
+        console.log(`✅ JSON parsed successfully`)
       } catch (jsonError: any) {
         console.error("❌ Failed to parse JSON response:", jsonError)
         return NextResponse.json(
           {
             success: false,
-            error: "Invalid response format from AI service",
-            step: "parse_response",
+            error: "Invalid JSON response from AI service",
+            step: "json_parse_error",
             details: `JSON parse error: ${jsonError.message}`,
             responsePreview: responseText.substring(0, 200),
           },
@@ -216,7 +281,7 @@ export async function POST(request: NextRequest) {
           {
             success: false,
             error: "No prediction ID returned from AI service",
-            step: "prediction_id",
+            step: "missing_prediction_id",
             details: prediction,
           },
           { status: 500 },
@@ -226,11 +291,22 @@ export async function POST(request: NextRequest) {
       console.log(`✅ Prediction created: ${prediction.id}`)
     } catch (error: any) {
       console.error("❌ Failed to create prediction:", error)
+
+      // Handle specific network errors
+      let userMessage = "Network error while contacting AI service"
+      if (error.message.includes("fetch")) {
+        userMessage = "Unable to connect to AI service. Please check your internet connection."
+      } else if (error.message.includes("timeout")) {
+        userMessage = "Request timed out. Please try again."
+      } else if (error.message.includes("too large")) {
+        userMessage = error.message
+      }
+
       return NextResponse.json(
         {
           success: false,
-          error: "Network error while contacting AI service",
-          step: "create_prediction",
+          error: userMessage,
+          step: "network_error",
           details: error.message,
         },
         { status: 500 },
@@ -261,7 +337,12 @@ export async function POST(request: NextRequest) {
         }
 
         const statusText = await statusResponse.text()
-        finalPrediction = JSON.parse(statusText)
+
+        try {
+          finalPrediction = JSON.parse(statusText)
+        } catch (parseError) {
+          throw new Error(`Failed to parse status response: ${parseError}`)
+        }
 
         console.log(`🔄 Prediction status: ${finalPrediction.status}`)
 
@@ -280,6 +361,7 @@ export async function POST(request: NextRequest) {
           throw new Error("Prediction was canceled")
         }
 
+        // Wait 5 seconds before checking again
         await new Promise((resolve) => setTimeout(resolve, 5000))
       }
     } catch (error: any) {
@@ -288,7 +370,7 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           error: error.message,
-          step: "prediction_wait",
+          step: "prediction_processing",
           predictionId: prediction.id,
         },
         { status: 500 },
@@ -303,7 +385,7 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           error: "No output from AI processing",
-          step: "output_extraction",
+          step: "missing_output",
           predictionId: prediction.id,
         },
         { status: 500 },
@@ -321,7 +403,7 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           error: "Unexpected output format from AI service",
-          step: "output_format",
+          step: "invalid_output_format",
           predictionId: prediction.id,
         },
         { status: 500 },
@@ -334,7 +416,7 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           error: "Invalid download URL from AI service",
-          step: "url_validation",
+          step: "invalid_download_url",
           predictionId: prediction.id,
         },
         { status: 500 },
@@ -362,6 +444,7 @@ export async function POST(request: NextRequest) {
         success: false,
         error: error.message || "Unexpected error occurred",
         step: "unexpected_error",
+        stack: error.stack,
       },
       { status: 500 },
     )
@@ -369,79 +452,87 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * Process image to ensure it's within API limits
+ * Process image to ensure it's within API limits - Server-side version
  */
 async function processImageForAPI(blob: Blob, fileName: string): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    const canvas = document.createElement("canvas")
-    const ctx = canvas.getContext("2d")
+  try {
+    // For server-side processing, we need to use a different approach
+    // since we don't have access to DOM APIs like Image and Canvas
 
-    if (!ctx) {
-      reject(new Error("Could not get canvas context"))
-      return
-    }
+    const arrayBuffer = await blob.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
 
-    img.onload = () => {
-      try {
-        let { width, height } = img
-        console.log(`📐 Original dimensions: ${width}x${height}`)
+    // Check if we have sharp available for server-side image processing
+    try {
+      const sharp = require("sharp")
 
-        // Calculate target dimensions to keep payload under 20MB
-        const maxDimension = 4096 // 4K max for safety
-        const targetFileSize = 15 * 1024 * 1024 // 15MB target to leave room for base64 overhead
+      const image = sharp(buffer)
+      const metadata = await image.metadata()
 
-        // Resize if too large
-        if (width > maxDimension || height > maxDimension) {
-          const ratio = Math.min(maxDimension / width, maxDimension / height)
-          width = Math.floor(width * ratio)
-          height = Math.floor(height * ratio)
-          console.log(`📐 Resized to: ${width}x${height} (ratio: ${ratio.toFixed(3)})`)
-        }
+      console.log(`📐 Original dimensions: ${metadata.width}x${metadata.height}`)
 
-        canvas.width = width
-        canvas.height = height
-        ctx.drawImage(img, 0, 0, width, height)
+      let { width = 1920, height = 1080 } = metadata
+      const maxDimension = 4096
+      const targetFileSize = 10 * 1024 * 1024 // 10MB target for safety
 
-        // Try different quality levels to get under size limit
-        const tryCompress = (quality: number) => {
-          canvas.toBlob(
-            (compressedBlob) => {
-              if (!compressedBlob) {
-                reject(new Error("Failed to compress image"))
-                return
-              }
+      // Resize if too large
+      if (width > maxDimension || height > maxDimension) {
+        const ratio = Math.min(maxDimension / width, maxDimension / height)
+        width = Math.floor(width * ratio)
+        height = Math.floor(height * ratio)
+        console.log(`📐 Resizing to: ${width}x${height}`)
+      }
 
-              const sizeMB = Math.round(compressedBlob.size / 1024 / 1024)
-              console.log(`🔄 Compressed to ${sizeMB}MB at quality ${quality}`)
+      // Process with sharp
+      let processedBuffer = await image
+        .resize(width, height, {
+          kernel: sharp.kernel.lanczos3,
+          withoutEnlargement: true,
+        })
+        .jpeg({
+          quality: 85,
+          progressive: true,
+          mozjpeg: true,
+        })
+        .toBuffer()
 
-              if (compressedBlob.size <= targetFileSize || quality <= 0.3) {
-                console.log(`✅ Final size: ${sizeMB}MB`)
-                resolve(compressedBlob)
-              } else {
-                // Try lower quality
-                tryCompress(Math.max(0.3, quality - 0.1))
-              }
-              URL.revokeObjectURL(img.src)
-            },
-            "image/jpeg",
+      // If still too large, reduce quality
+      let quality = 85
+      while (processedBuffer.length > targetFileSize && quality > 30) {
+        quality -= 10
+        processedBuffer = await image
+          .resize(width, height, {
+            kernel: sharp.kernel.lanczos3,
+            withoutEnlargement: true,
+          })
+          .jpeg({
             quality,
-          )
-        }
+            progressive: true,
+            mozjpeg: true,
+          })
+          .toBuffer()
 
-        // Start with reasonable quality
-        tryCompress(0.8)
-      } catch (error) {
-        reject(new Error(`Image processing failed: ${error instanceof Error ? error.message : "Unknown error"}`))
-        URL.revokeObjectURL(img.src)
+        console.log(`🔄 Reduced quality to ${quality}%, size: ${Math.round(processedBuffer.length / 1024 / 1024)}MB`)
+      }
+
+      const finalSizeMB = Math.round(processedBuffer.length / 1024 / 1024)
+      console.log(`✅ Final processed size: ${finalSizeMB}MB`)
+
+      return new Blob([processedBuffer], { type: "image/jpeg" })
+    } catch (sharpError) {
+      console.warn("⚠️ Sharp not available, using fallback processing")
+
+      // Fallback: just return the original blob if it's not too large
+      const sizeMB = blob.size / 1024 / 1024
+      if (sizeMB <= 15) {
+        console.log(`✅ Using original image (${Math.round(sizeMB)}MB)`)
+        return blob
+      } else {
+        throw new Error(`Image too large (${Math.round(sizeMB)}MB) and no image processing available`)
       }
     }
-
-    img.onerror = () => {
-      reject(new Error("Failed to load image for processing"))
-      URL.revokeObjectURL(img.src)
-    }
-
-    img.src = URL.createObjectURL(blob)
-  })
+  } catch (error: any) {
+    console.error("❌ Image processing failed:", error)
+    throw new Error(`Image processing failed: ${error.message}`)
+  }
 }

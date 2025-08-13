@@ -80,164 +80,17 @@ function sphereToFisheye(point: Point3D, projection: "equidistant" | "stereograp
 }
 
 /**
- * Sample pixel from equirectangular image with bilinear interpolation
+ * Generate a domemaster projection from an equirectangular image
  */
-function sampleEquirectangular(
-  imageData: ImageData,
-  u: number,
-  v: number,
-): { r: number; g: number; b: number; a: number } {
-  const width = imageData.width
-  const height = imageData.height
-  const data = imageData.data
-
-  // Wrap u coordinate (longitude)
-  u = ((u % 1) + 1) % 1
-
-  // Clamp v coordinate (latitude)
-  v = Math.max(0, Math.min(1, v))
-
-  // Convert to pixel coordinates
-  const x = u * (width - 1)
-  const y = v * (height - 1)
-
-  // Get integer and fractional parts
-  const x0 = Math.floor(x)
-  const y0 = Math.floor(y)
-  const x1 = Math.min(x0 + 1, width - 1)
-  const y1 = Math.min(y0 + 1, height - 1)
-
-  const fx = x - x0
-  const fy = y - y0
-
-  // Sample four neighboring pixels
-  const getPixel = (px: number, py: number) => {
-    const idx = (py * width + px) * 4
-    return {
-      r: data[idx],
-      g: data[idx + 1],
-      b: data[idx + 2],
-      a: data[idx + 3],
-    }
-  }
-
-  const p00 = getPixel(x0, y0)
-  const p10 = getPixel(x1, y0)
-  const p01 = getPixel(x0, y1)
-  const p11 = getPixel(x1, y1)
-
-  // Bilinear interpolation
-  const interpolate = (v00: number, v10: number, v01: number, v11: number) => {
-    const v0 = v00 * (1 - fx) + v10 * fx
-    const v1 = v01 * (1 - fx) + v11 * fx
-    return v0 * (1 - fy) + v1 * fy
-  }
-
-  return {
-    r: interpolate(p00.r, p10.r, p01.r, p11.r),
-    g: interpolate(p00.g, p10.g, p01.g, p11.g),
-    b: interpolate(p00.b, p10.b, p01.b, p11.b),
-    a: interpolate(p00.a, p10.a, p01.a, p11.a),
-  }
-}
-
-/**
- * Draw guide overlays on the domemaster
- */
-function drawGuideOverlays(ctx: CanvasRenderingContext2D, size: number) {
-  const center = size / 2
-  const radius = center * 0.97 // Slightly inside the circle
-
-  ctx.save()
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.8)"
-  ctx.lineWidth = Math.max(1, size / 2048) // Scale line width with resolution
-  ctx.setLineDash([10, 5])
-
-  // Center crosshairs
-  const crosshairSize = Math.max(20, size / 200)
-  ctx.beginPath()
-  ctx.moveTo(center - crosshairSize, center)
-  ctx.lineTo(center + crosshairSize, center)
-  ctx.moveTo(center, center - crosshairSize)
-  ctx.lineTo(center, center + crosshairSize)
-  ctx.stroke()
-
-  // Concentric circles at elevation angles (10°, 20°, 30°, 40°, 50°, 60°, 70°, 80°)
-  for (let elevation = 10; elevation <= 80; elevation += 10) {
-    const elevationRad = (elevation * Math.PI) / 180
-    const circleRadius = (elevationRad / (Math.PI / 2)) * radius
-
-    ctx.beginPath()
-    ctx.arc(center, center, circleRadius, 0, 2 * Math.PI)
-    ctx.stroke()
-  }
-
-  // Azimuth lines every 30°
-  for (let azimuth = 0; azimuth < 360; azimuth += 30) {
-    const azimuthRad = (azimuth * Math.PI) / 180
-    const x = center + radius * Math.cos(azimuthRad)
-    const y = center + radius * Math.sin(azimuthRad)
-
-    ctx.beginPath()
-    ctx.moveTo(center, center)
-    ctx.lineTo(x, y)
-    ctx.stroke()
-  }
-
-  // Corner markers for alignment
-  const markerSize = Math.max(10, size / 400)
-  const corners = [
-    { x: markerSize, y: markerSize },
-    { x: size - markerSize, y: markerSize },
-    { x: markerSize, y: size - markerSize },
-    { x: size - markerSize, y: size - markerSize },
-  ]
-
-  ctx.setLineDash([])
-  ctx.lineWidth = Math.max(2, size / 1024)
-  ctx.strokeStyle = "rgba(255, 0, 0, 0.7)"
-  corners.forEach((corner) => {
-    ctx.beginPath()
-    ctx.moveTo(corner.x - markerSize / 2, corner.y)
-    ctx.lineTo(corner.x + markerSize / 2, corner.y)
-    ctx.moveTo(corner.x, corner.y - markerSize / 2)
-    ctx.lineTo(corner.x, corner.y + markerSize / 2)
-    ctx.stroke()
-  })
-
-  // Cardinal direction labels
-  ctx.fillStyle = "rgba(255, 255, 255, 0.9)"
-  ctx.font = `${Math.max(12, size / 200)}px Arial`
-  ctx.textAlign = "center"
-  ctx.textBaseline = "middle"
-
-  const labelRadius = radius * 0.9
-  const directions = [
-    { label: "N", angle: -Math.PI / 2 },
-    { label: "E", angle: 0 },
-    { label: "S", angle: Math.PI / 2 },
-    { label: "W", angle: Math.PI },
-  ]
-
-  directions.forEach((dir) => {
-    const x = center + Math.cos(dir.angle) * labelRadius
-    const y = center + Math.sin(dir.angle) * labelRadius
-    ctx.fillText(dir.label, x, y)
-  })
-
-  // Center zenith marker
-  ctx.fillStyle = "rgba(255, 0, 0, 0.8)"
-  ctx.beginPath()
-  ctx.arc(center, center, Math.max(2, size / 512), 0, 2 * Math.PI)
-  ctx.fill()
-
-  ctx.restore()
-}
-
-/**
- * Generate domemaster from equirectangular image
- */
-export async function generateDomemaster(imageBlob: Blob, options: DomemasterOptions): Promise<Blob> {
+export async function generateDomemaster(
+  sourceBlob: Blob,
+  options: DomemasterOptions = {
+    size: 8192,
+    bleedPercent: 3,
+    overlay: true,
+    projection: "equidistant",
+  },
+): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const img = new Image()
     const canvas = document.createElement("canvas")
@@ -250,71 +103,73 @@ export async function generateDomemaster(imageBlob: Blob, options: DomemasterOpt
 
     img.onload = () => {
       try {
-        const { size, bleedPercent, overlay, projection } = options
+        console.log(`🔄 Processing ${options.size}x${options.size} domemaster...`)
 
-        canvas.width = size
-        canvas.height = size
+        canvas.width = options.size
+        canvas.height = options.size
+        ctx.fillStyle = "black"
+        ctx.fillRect(0, 0, options.size, options.size)
 
-        // Fill with black background
-        ctx.fillStyle = "#000000"
-        ctx.fillRect(0, 0, size, size)
+        const center = options.size / 2
+        const radius = center * (1 - options.bleedPercent / 100)
 
-        const centerX = size / 2
-        const centerY = size / 2
-        const radius = (size / 2) * (1 - bleedPercent / 100)
+        // Create circular mask
+        ctx.save()
+        ctx.beginPath()
+        ctx.arc(center, center, radius, 0, 2 * Math.PI)
+        ctx.clip()
 
-        console.log(`🔄 Generating ${size}x${size} domemaster with ${projection} projection...`)
-
-        // Create image data for pixel manipulation
-        const imageData = ctx.createImageData(size, size)
+        // Process each pixel in the dome
+        const imageData = ctx.createImageData(options.size, options.size)
         const data = imageData.data
 
-        // Process each pixel
-        for (let y = 0; y < size; y++) {
-          for (let x = 0; x < size; x++) {
-            const dx = x - centerX
-            const dy = y - centerY
+        // Create temporary canvas for source image
+        const sourceCanvas = document.createElement("canvas")
+        const sourceCtx = sourceCanvas.getContext("2d")!
+        sourceCanvas.width = img.width
+        sourceCanvas.height = img.height
+        sourceCtx.drawImage(img, 0, 0)
+        const sourceData = sourceCtx.getImageData(0, 0, img.width, img.height)
+
+        for (let y = 0; y < options.size; y++) {
+          for (let x = 0; x < options.size; x++) {
+            const dx = x - center
+            const dy = y - center
             const distance = Math.sqrt(dx * dx + dy * dy)
 
             if (distance <= radius) {
               // Convert dome coordinates to spherical coordinates
-              const { theta, phi } = domeToSpherical(dx, dy, radius, projection)
+              const spherical = domeToSpherical(dx, dy, radius, options.projection)
 
-              // Convert spherical to equirectangular coordinates
-              const srcX = ((theta + Math.PI) / (2 * Math.PI)) * img.width
-              const srcY = (phi / Math.PI) * img.height
+              if (spherical) {
+                // Convert spherical to equirectangular coordinates
+                const equirect = sphericalToEquirectangular(spherical, img.width, img.height)
 
-              // Bilinear interpolation
-              const color = bilinearSample(img, srcX, srcY)
+                // Sample the source image with bilinear interpolation
+                const color = bilinearSample(sourceData, equirect.x, equirect.y, img.width, img.height)
 
-              const idx = (y * size + x) * 4
-              data[idx] = color.r
-              data[idx + 1] = color.g
-              data[idx + 2] = color.b
-              data[idx + 3] = 255
-            } else {
-              // Outside dome - keep black
-              const idx = (y * size + x) * 4
-              data[idx] = 0
-              data[idx + 1] = 0
-              data[idx + 2] = 0
-              data[idx + 3] = 255
+                const idx = (y * options.size + x) * 4
+                data[idx] = color.r
+                data[idx + 1] = color.g
+                data[idx + 2] = color.b
+                data[idx + 3] = 255
+              }
             }
           }
         }
 
-        // Draw the processed image
         ctx.putImageData(imageData, 0, 0)
+        ctx.restore()
 
         // Add overlay guides if requested
-        if (overlay) {
-          drawDomemasterOverlay(ctx, size, radius)
+        if (options.overlay) {
+          drawDomemasterOverlay(ctx, center, radius)
         }
 
         canvas.toBlob(
           (blob) => {
             if (blob) {
-              console.log(`✅ Domemaster generated: ${size}x${size} (${Math.round(blob.size / 1024)}KB)`)
+              console.log(`✅ Domemaster generated: ${Math.round(blob.size / 1024)}KB`)
               resolve(blob)
             } else {
               reject(new Error("Failed to create domemaster blob"))
@@ -336,7 +191,7 @@ export async function generateDomemaster(imageBlob: Blob, options: DomemasterOpt
     }
 
     img.crossOrigin = "anonymous"
-    img.src = URL.createObjectURL(imageBlob)
+    img.src = URL.createObjectURL(sourceBlob)
   })
 }
 
@@ -344,114 +199,136 @@ export async function generateDomemaster(imageBlob: Blob, options: DomemasterOpt
  * Convert dome coordinates to spherical coordinates
  */
 function domeToSpherical(
-  dx: number,
-  dy: number,
+  x: number,
+  y: number,
   radius: number,
   projection: DomemasterOptions["projection"],
-): { theta: number; phi: number } {
-  const r = Math.sqrt(dx * dx + dy * dy) / radius
+): Point3D | null {
+  const distance = Math.sqrt(x * x + y * y)
+  if (distance > radius) return null
 
-  let phi: number
+  const normalizedDistance = distance / radius
+  let elevation: number
+
   switch (projection) {
     case "equidistant":
-      phi = r * (Math.PI / 2)
+      elevation = (Math.PI / 2) * (1 - normalizedDistance)
       break
     case "equisolid":
-      phi = 2 * Math.asin(r / 2)
+      elevation = Math.acos(1 - 2 * normalizedDistance * normalizedDistance)
       break
     case "orthographic":
-      phi = Math.asin(r)
+      elevation = Math.asin(normalizedDistance)
       break
     case "stereographic":
-      phi = 2 * Math.atan(r / 2)
+      elevation = 2 * Math.atan(normalizedDistance / 2)
       break
     default:
-      phi = r * (Math.PI / 2)
+      elevation = (Math.PI / 2) * (1 - normalizedDistance)
   }
 
-  const theta = Math.atan2(dy, dx)
+  const azimuth = Math.atan2(y, x)
 
-  return { theta, phi }
+  // Convert to Cartesian coordinates
+  const cosElevation = Math.cos(elevation)
+  return {
+    x: cosElevation * Math.cos(azimuth),
+    y: cosElevation * Math.sin(azimuth),
+    z: Math.sin(elevation),
+  }
+}
+
+/**
+ * Convert spherical coordinates to equirectangular coordinates
+ */
+function sphericalToEquirectangular(point: Point3D, width: number, height: number): Point2D {
+  const longitude = Math.atan2(point.y, point.x)
+  const latitude = Math.asin(Math.max(-1, Math.min(1, point.z)))
+
+  const u = (longitude + Math.PI) / (2 * Math.PI)
+  const v = (Math.PI / 2 - latitude) / Math.PI
+
+  return {
+    x: u * width,
+    y: v * height,
+  }
 }
 
 /**
  * Bilinear interpolation sampling
  */
-function bilinearSample(img: HTMLImageElement, x: number, y: number): { r: number; g: number; b: number } {
-  // Create a temporary canvas to sample the image
-  const canvas = document.createElement("canvas")
-  const ctx = canvas.getContext("2d")
+function bilinearSample(
+  imageData: ImageData,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+): { r: number; g: number; b: number } {
+  const x1 = Math.floor(x) % width
+  const y1 = Math.floor(y) % height
+  const x2 = (x1 + 1) % width
+  const y2 = (y1 + 1) % height
 
-  if (!ctx) {
-    return { r: 0, g: 0, b: 0 }
+  const fx = x - Math.floor(x)
+  const fy = y - Math.floor(y)
+
+  const getPixel = (px: number, py: number) => {
+    const idx = (py * width + px) * 4
+    return {
+      r: imageData.data[idx] || 0,
+      g: imageData.data[idx + 1] || 0,
+      b: imageData.data[idx + 2] || 0,
+    }
   }
 
-  canvas.width = img.width
-  canvas.height = img.height
-  ctx.drawImage(img, 0, 0)
+  const p1 = getPixel(x1, y1)
+  const p2 = getPixel(x2, y1)
+  const p3 = getPixel(x1, y2)
+  const p4 = getPixel(x2, y2)
 
-  // Clamp coordinates
-  x = Math.max(0, Math.min(img.width - 1, x))
-  y = Math.max(0, Math.min(img.height - 1, y))
+  const interpolate = (a: number, b: number, c: number, d: number) => {
+    const top = a * (1 - fx) + b * fx
+    const bottom = c * (1 - fx) + d * fx
+    return top * (1 - fy) + bottom * fy
+  }
 
-  const x1 = Math.floor(x)
-  const y1 = Math.floor(y)
-  const x2 = Math.min(x1 + 1, img.width - 1)
-  const y2 = Math.min(y1 + 1, img.height - 1)
-
-  const fx = x - x1
-  const fy = y - y1
-
-  try {
-    const p1 = ctx.getImageData(x1, y1, 1, 1).data
-    const p2 = ctx.getImageData(x2, y1, 1, 1).data
-    const p3 = ctx.getImageData(x1, y2, 1, 1).data
-    const p4 = ctx.getImageData(x2, y2, 1, 1).data
-
-    const r = (1 - fx) * (1 - fy) * p1[0] + fx * (1 - fy) * p2[0] + (1 - fx) * fy * p3[0] + fx * fy * p4[0]
-    const g = (1 - fx) * (1 - fy) * p1[1] + fx * (1 - fy) * p2[1] + (1 - fx) * fy * p3[1] + fx * fy * p4[1]
-    const b = (1 - fx) * (1 - fy) * p1[2] + fx * (1 - fy) * p2[2] + (1 - fx) * fy * p3[2] + fx * fy * p4[2]
-
-    return { r: Math.round(r), g: Math.round(g), b: Math.round(b) }
-  } catch {
-    return { r: 0, g: 0, b: 0 }
+  return {
+    r: Math.round(interpolate(p1.r, p2.r, p3.r, p4.r)),
+    g: Math.round(interpolate(p1.g, p2.g, p3.g, p4.g)),
+    b: Math.round(interpolate(p1.b, p2.b, p3.b, p4.b)),
   }
 }
 
 /**
- * Draw overlay guides on domemaster
+ * Draw overlay guides on the domemaster
  */
-function drawDomemasterOverlay(ctx: CanvasRenderingContext2D, size: number, radius: number) {
-  const centerX = size / 2
-  const centerY = size / 2
-
+function drawDomemasterOverlay(ctx: CanvasRenderingContext2D, center: number, radius: number) {
   ctx.strokeStyle = "rgba(255, 255, 255, 0.3)"
   ctx.lineWidth = 2
 
-  // Draw elevation circles (10°, 30°, 60°, 90°)
-  const elevations = [10, 30, 60, 90]
-  elevations.forEach((elev) => {
-    const r = (elev / 90) * radius
+  // Draw elevation circles every 10 degrees
+  for (let elevation = 10; elevation <= 80; elevation += 10) {
+    const elevationRadius = radius * (1 - (elevation * Math.PI) / 180 / (Math.PI / 2))
     ctx.beginPath()
-    ctx.arc(centerX, centerY, r, 0, 2 * Math.PI)
+    ctx.arc(center, center, elevationRadius, 0, 2 * Math.PI)
     ctx.stroke()
-  })
+  }
 
-  // Draw azimuth lines (every 30°)
-  for (let az = 0; az < 360; az += 30) {
-    const angle = (az * Math.PI) / 180
-    const x2 = centerX + Math.cos(angle) * radius
-    const y2 = centerY + Math.sin(angle) * radius
+  // Draw azimuth lines every 30 degrees
+  for (let azimuth = 0; azimuth < 360; azimuth += 30) {
+    const angle = (azimuth * Math.PI) / 180
+    const x = center + radius * Math.cos(angle)
+    const y = center + radius * Math.sin(angle)
 
     ctx.beginPath()
-    ctx.moveTo(centerX, centerY)
-    ctx.lineTo(x2, y2)
+    ctx.moveTo(center, center)
+    ctx.lineTo(x, y)
     ctx.stroke()
   }
 
   // Draw cardinal directions
   ctx.fillStyle = "rgba(255, 255, 255, 0.8)"
-  ctx.font = `${Math.round(size / 40)}px Arial`
+  ctx.font = `${Math.round(radius / 20)}px Arial`
   ctx.textAlign = "center"
   ctx.textBaseline = "middle"
 
@@ -464,88 +341,94 @@ function drawDomemasterOverlay(ctx: CanvasRenderingContext2D, size: number, radi
   ]
 
   directions.forEach(({ label, angle }) => {
-    const x = centerX + Math.cos(angle) * labelRadius
-    const y = centerY + Math.sin(angle) * labelRadius
+    const x = center + labelRadius * Math.cos(angle)
+    const y = center + labelRadius * Math.sin(angle)
     ctx.fillText(label, x, y)
   })
 }
 
 /**
- * Generate synthetic equirectangular test pattern
+ * Generate a test pattern for domemaster validation
  */
-export function generateTestPattern(width = 4096, height = 2048): Promise<Blob> {
-  return new Promise((resolve) => {
-    const canvas = document.createElement("canvas")
-    const ctx = canvas.getContext("2d")!
+export function generateTestPattern(width = 4096, height = 2048): HTMLCanvasElement {
+  const canvas = document.createElement("canvas")
+  const ctx = canvas.getContext("2d")!
 
-    canvas.width = width
-    canvas.height = height
+  canvas.width = width
+  canvas.height = height
 
-    // Create gradient background
-    const gradient = ctx.createLinearGradient(0, 0, width, height)
-    gradient.addColorStop(0, "#1a1a2e")
-    gradient.addColorStop(0.5, "#16213e")
-    gradient.addColorStop(1, "#0f3460")
+  // Fill with gradient background
+  const gradient = ctx.createLinearGradient(0, 0, 0, height)
+  gradient.addColorStop(0, "#87CEEB") // Sky blue
+  gradient.addColorStop(0.7, "#98FB98") // Pale green
+  gradient.addColorStop(1, "#8B4513") // Saddle brown
 
-    ctx.fillStyle = gradient
-    ctx.fillRect(0, 0, width, height)
+  ctx.fillStyle = gradient
+  ctx.fillRect(0, 0, width, height)
 
-    // Add grid lines
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.3)"
-    ctx.lineWidth = 2
+  // Draw grid lines
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.5)"
+  ctx.lineWidth = 2
 
-    // Longitude lines (vertical)
-    for (let x = 0; x <= width; x += width / 24) {
-      ctx.beginPath()
-      ctx.moveTo(x, 0)
-      ctx.lineTo(x, height)
-      ctx.stroke()
-    }
+  // Longitude lines every 30 degrees
+  for (let lon = 0; lon < 360; lon += 30) {
+    const x = (lon / 360) * width
+    ctx.beginPath()
+    ctx.moveTo(x, 0)
+    ctx.lineTo(x, height)
+    ctx.stroke()
+  }
 
-    // Latitude lines (horizontal)
-    for (let y = 0; y <= height; y += height / 12) {
-      ctx.beginPath()
-      ctx.moveTo(0, y)
-      ctx.lineTo(width, y)
-      ctx.stroke()
-    }
+  // Latitude lines every 30 degrees
+  for (let lat = -90; lat <= 90; lat += 30) {
+    const y = ((90 - lat) / 180) * height
+    ctx.beginPath()
+    ctx.moveTo(0, y)
+    ctx.lineTo(width, y)
+    ctx.stroke()
+  }
 
-    // Add text labels
-    ctx.fillStyle = "white"
-    ctx.font = "24px Arial"
-    ctx.textAlign = "center"
-    ctx.fillText("EQUIRECTANGULAR TEST PATTERN", width / 2, height / 10)
-    ctx.fillText("360° × 180° Coverage", width / 2, height / 8)
+  // Add coordinate labels
+  ctx.fillStyle = "white"
+  ctx.font = `${Math.round(height / 40)}px Arial`
+  ctx.textAlign = "center"
+  ctx.textBaseline = "middle"
 
-    // Add directional markers
-    ctx.font = "bold 16px Arial"
-    ctx.fillText("ZENITH", width / 2, height * 0.05)
-    ctx.fillText("HORIZON", width / 2, height / 2 + 10)
-    ctx.fillText("NADIR", width / 2, height * 0.95)
+  // Longitude labels
+  for (let lon = 0; lon < 360; lon += 60) {
+    const x = (lon / 360) * width
+    ctx.fillText(`${lon}°`, x, height * 0.1)
+  }
 
-    // Cardinal directions
-    ctx.fillText("0°", width / 2, height * 0.15)
-    ctx.fillText("90°", width * 0.75, height * 0.15)
-    ctx.fillText("180°", width - 50, height * 0.15)
-    ctx.fillText("270°", width * 0.25, height * 0.15)
+  // Latitude labels
+  for (let lat = -60; lat <= 60; lat += 60) {
+    const y = ((90 - lat) / 180) * height
+    ctx.fillText(`${lat}°`, width * 0.05, y)
+  }
 
-    // Add corner markers
-    const markerSize = 20
-    ctx.fillStyle = "red"
-    ctx.fillRect(0, 0, markerSize, markerSize)
-    ctx.fillRect(width - markerSize, 0, markerSize, markerSize)
-    ctx.fillRect(0, height - markerSize, markerSize, markerSize)
-    ctx.fillRect(width - markerSize, height - markerSize, markerSize, markerSize)
+  // Add center marker
+  ctx.fillStyle = "red"
+  ctx.beginPath()
+  ctx.arc(width / 2, height / 2, height / 100, 0, 2 * Math.PI)
+  ctx.fill()
 
-    // Convert to blob
-    canvas.toBlob(
-      (blob) => {
-        resolve(blob!)
-      },
-      "image/png",
-      1.0,
-    )
+  // Add corner markers
+  const markerSize = height / 50
+  ctx.fillStyle = "yellow"
+  const corners = [
+    [markerSize, markerSize],
+    [width - markerSize, markerSize],
+    [markerSize, height - markerSize],
+    [width - markerSize, height - markerSize],
+  ]
+
+  corners.forEach(([x, y]) => {
+    ctx.beginPath()
+    ctx.arc(x, y, markerSize, 0, 2 * Math.PI)
+    ctx.fill()
   })
+
+  return canvas
 }
 
 /**
