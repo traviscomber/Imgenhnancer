@@ -1,10 +1,10 @@
-export type DomemasterProjection = "equidistant" | "stereographic"
+export type DomemasterProjection = "equidistant" | "equisolid" | "stereographic"
 
 export interface DomemasterOptions {
-  size: number // Output resolution (e.g., 4096, 8192)
-  bleedPercent: number // Black border percentage (0-5)
+  size: number // Output size (e.g., 8192 for 8K)
+  bleedPercent: number // Black border percentage (0-5%)
   overlay: boolean // Show guide overlays
-  projection: "equidistant" | "stereographic" // Projection type
+  projection: "equidistant" | "stereographic" // Fisheye projection type
 }
 
 export interface DomemasterSettings {
@@ -144,33 +144,33 @@ function sampleEquirectangular(
 /**
  * Draw guide overlays on the domemaster
  */
-function drawGuideOverlays(ctx: CanvasRenderingContext2D, size: number) {
+function drawGuideOverlays(ctx: CanvasRenderingContext2D, size: number): void {
   const center = size / 2
   const radius = center * 0.97 // Slightly inside the circle
 
   ctx.save()
   ctx.strokeStyle = "rgba(255, 255, 255, 0.8)"
-  ctx.lineWidth = Math.max(1, size / 2048) // Scale line width with resolution
+  ctx.lineWidth = 2
   ctx.setLineDash([10, 5])
 
   // Center crosshairs
-  const crosshairSize = Math.max(20, size / 200)
   ctx.beginPath()
-  ctx.moveTo(center - crosshairSize, center)
-  ctx.lineTo(center + crosshairSize, center)
-  ctx.moveTo(center, center - crosshairSize)
-  ctx.lineTo(center, center + crosshairSize)
+  ctx.moveTo(center - 30, center)
+  ctx.lineTo(center + 30, center)
+  ctx.moveTo(center, center - 30)
+  ctx.lineTo(center, center + 30)
   ctx.stroke()
 
-  // Concentric circles at elevation angles (10°, 20°, 30°, 40°, 50°, 60°, 70°, 80°)
-  for (let elevation = 10; elevation <= 80; elevation += 10) {
+  // Concentric circles at 30°, 60°, 90° elevation
+  const elevations = [30, 60, 90]
+  elevations.forEach((elevation) => {
     const elevationRad = (elevation * Math.PI) / 180
     const circleRadius = (elevationRad / (Math.PI / 2)) * radius
 
     ctx.beginPath()
     ctx.arc(center, center, circleRadius, 0, 2 * Math.PI)
     ctx.stroke()
-  }
+  })
 
   // Azimuth lines every 30°
   for (let azimuth = 0; azimuth < 360; azimuth += 30) {
@@ -185,7 +185,7 @@ function drawGuideOverlays(ctx: CanvasRenderingContext2D, size: number) {
   }
 
   // Corner markers for alignment
-  const markerSize = Math.max(10, size / 400)
+  const markerSize = 20
   const corners = [
     { x: markerSize, y: markerSize },
     { x: size - markerSize, y: markerSize },
@@ -194,42 +194,15 @@ function drawGuideOverlays(ctx: CanvasRenderingContext2D, size: number) {
   ]
 
   ctx.setLineDash([])
-  ctx.lineWidth = Math.max(2, size / 1024)
-  ctx.strokeStyle = "rgba(255, 0, 0, 0.7)"
+  ctx.lineWidth = 3
   corners.forEach((corner) => {
     ctx.beginPath()
-    ctx.moveTo(corner.x - markerSize / 2, corner.y)
-    ctx.lineTo(corner.x + markerSize / 2, corner.y)
-    ctx.moveTo(corner.x, corner.y - markerSize / 2)
-    ctx.lineTo(corner.x, corner.y + markerSize / 2)
+    ctx.moveTo(corner.x - 10, corner.y)
+    ctx.lineTo(corner.x + 10, corner.y)
+    ctx.moveTo(corner.x, corner.y - 10)
+    ctx.lineTo(corner.x, corner.y + 10)
     ctx.stroke()
   })
-
-  // Cardinal direction labels
-  ctx.fillStyle = "rgba(255, 255, 255, 0.9)"
-  ctx.font = `${Math.max(12, size / 200)}px Arial`
-  ctx.textAlign = "center"
-  ctx.textBaseline = "middle"
-
-  const labelRadius = radius * 0.9
-  const directions = [
-    { label: "N", angle: -Math.PI / 2 },
-    { label: "E", angle: 0 },
-    { label: "S", angle: Math.PI / 2 },
-    { label: "W", angle: Math.PI },
-  ]
-
-  directions.forEach((dir) => {
-    const x = center + Math.cos(dir.angle) * labelRadius
-    const y = center + Math.sin(dir.angle) * labelRadius
-    ctx.fillText(dir.label, x, y)
-  })
-
-  // Center zenith marker
-  ctx.fillStyle = "rgba(255, 0, 0, 0.8)"
-  ctx.beginPath()
-  ctx.arc(center, center, Math.max(2, size / 512), 0, 2 * Math.PI)
-  ctx.fill()
 
   ctx.restore()
 }
@@ -327,7 +300,7 @@ export async function generateDomemaster(imageBlob: Blob, options: DomemasterOpt
             outputImageData.data[outputIdx + 3] = Math.round(pixel.a)
           }
 
-          // Progress logging every 10%
+          // Progress logging
           if (y % Math.floor(options.size / 10) === 0) {
             const progress = Math.round((y / options.size) * 100)
             console.log(`🔄 Domemaster progress: ${progress}%`)
@@ -368,96 +341,6 @@ export async function generateDomemaster(imageBlob: Blob, options: DomemasterOpt
     }
 
     img.src = URL.createObjectURL(imageBlob)
-  })
-}
-
-/**
- * Generate synthetic equirectangular test pattern
- */
-export function generateTestPattern(width = 4096, height = 2048): Promise<Blob> {
-  return new Promise((resolve) => {
-    const canvas = document.createElement("canvas")
-    const ctx = canvas.getContext("2d")!
-
-    canvas.width = width
-    canvas.height = height
-
-    // Create gradient background
-    const gradient = ctx.createLinearGradient(0, 0, 0, height)
-    gradient.addColorStop(0, "#87CEEB") // Sky blue
-    gradient.addColorStop(0.5, "#98FB98") // Pale green
-    gradient.addColorStop(1, "#8B4513") // Saddle brown
-
-    ctx.fillStyle = gradient
-    ctx.fillRect(0, 0, width, height)
-
-    // Add grid lines
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.3)"
-    ctx.lineWidth = 2
-
-    // Longitude lines (vertical)
-    for (let x = 0; x <= width; x += width / 12) {
-      ctx.beginPath()
-      ctx.moveTo(x, 0)
-      ctx.lineTo(x, height)
-      ctx.stroke()
-    }
-
-    // Latitude lines (horizontal)
-    for (let y = 0; y <= height; y += height / 6) {
-      ctx.beginPath()
-      ctx.moveTo(0, y)
-      ctx.lineTo(width, y)
-      ctx.stroke()
-    }
-
-    // Add test markers
-    ctx.fillStyle = "red"
-    ctx.beginPath()
-    ctx.arc(width * 0.25, height * 0.3, 20, 0, 2 * Math.PI)
-    ctx.fill()
-
-    ctx.fillStyle = "blue"
-    ctx.beginPath()
-    ctx.arc(width * 0.75, height * 0.7, 20, 0, 2 * Math.PI)
-    ctx.fill()
-
-    ctx.fillStyle = "green"
-    ctx.beginPath()
-    ctx.arc(width * 0.5, height * 0.1, 15, 0, 2 * Math.PI)
-    ctx.fill()
-
-    ctx.fillStyle = "yellow"
-    ctx.beginPath()
-    ctx.arc(width * 0.5, height * 0.9, 15, 0, 2 * Math.PI)
-    ctx.fill()
-
-    // Add text labels
-    ctx.fillStyle = "white"
-    ctx.font = `${Math.round(height / 40)}px Arial`
-    ctx.textAlign = "center"
-    ctx.fillText("EQUIRECTANGULAR TEST PATTERN", width / 2, height / 10)
-    ctx.fillText("360° × 180° Coverage", width / 2, height / 8)
-
-    // Add directional markers
-    ctx.font = `${Math.round(height / 60)}px Arial`
-    ctx.fillText("ZENITH", width / 2, height * 0.05)
-    ctx.fillText("HORIZON", width / 2, height / 2)
-    ctx.fillText("NADIR", width / 2, height * 0.95)
-
-    // Cardinal directions
-    ctx.fillText("0°", width / 2, height * 0.15)
-    ctx.fillText("90°", width * 0.75, height * 0.15)
-    ctx.fillText("180°", width - 50, height * 0.15)
-    ctx.fillText("270°", width * 0.25, height * 0.15)
-
-    canvas.toBlob(
-      (blob) => {
-        resolve(blob!)
-      },
-      "image/png",
-      1.0,
-    )
   })
 }
 

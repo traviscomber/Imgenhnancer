@@ -31,16 +31,15 @@ import { ProfileDialog } from "@/components/auth/profile-dialog"
 import { UserManagement } from "@/components/admin/user-management"
 import { RoleManagement } from "@/components/admin/role-management"
 import { preProcessImage, postProcessImage, type EnhancementToggles } from "@/utils/image-processing"
-import type { DomemasterOptions } from "@/utils/domemaster"
-import { DomemasterTestWorkflow } from "@/components/domemaster-test-workflow"
+import { generateDomemaster, type DomemasterOptions } from "@/utils/domemaster"
 
-// Define enhancement models first - Clarity Upscaler as default and best for ASEAN
+// Define enhancement models first - Clarity Upscaler as default
 const ENHANCEMENT_MODELS = [
   {
     id: "clarity-upscaler",
-    name: "Clarity Upscaler (ASEAN-Optimized Default) ⭐",
+    name: "Clarity Upscaler (AI-Optimized Default)",
     description:
-      "🇻🇳🇮🇩🇹🇭 EXCELLENT for Vietnamese, Indonesian, and Thai faces! AI-optimized upscaling that perfectly preserves ASEAN facial features, natural skin tones, and cultural characteristics. Tested and proven with Southeast Asian faces.",
+      "High-quality AI upscaling with intelligent parameter optimization. Automatically adjusts settings based on image analysis.",
     maxUpscale: 4,
     replicateModel: "philz1337x/clarity-upscaler",
     version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
@@ -48,16 +47,14 @@ const ENHANCEMENT_MODELS = [
     recommended: true,
     status: "working",
     inputField: "image",
-    asianFaceCompatibility: "excellent" as const,
+    asianFaceCompatibility: "good" as const,
     westernBias: false,
-    maxFileSize: 100 * 1024 * 1024, // 100MB
-    aseanOptimized: true,
   },
   {
     id: "real-esrgan-4x",
     name: "Real-ESRGAN 4x (ASEAN-Safe)",
     description:
-      "Good AI-powered image upscaling that preserves Indonesian/ASEAN facial features. Handles large files efficiently but not as advanced as Clarity Upscaler for faces.",
+      "AI-powered image upscaling optimized for Indonesian/ASEAN facial features. Preserves natural skin tones and facial characteristics.",
     maxUpscale: 4,
     replicateModel: "nightmareai/real-esrgan",
     version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
@@ -65,16 +62,13 @@ const ENHANCEMENT_MODELS = [
     recommended: false,
     status: "working",
     inputField: "image",
-    asianFaceCompatibility: "good" as const,
+    asianFaceCompatibility: "excellent" as const,
     westernBias: false,
-    maxFileSize: 50 * 1024 * 1024, // 50MB
-    aseanOptimized: false,
   },
   {
     id: "real-esrgan-2x",
     name: "Real-ESRGAN 2x (Fast, ASEAN-Safe)",
-    description:
-      "Faster 2x upscaling that preserves Indonesian facial features without Western bias. Good for batch processing but less detailed than Clarity Upscaler.",
+    description: "Faster 2x upscaling that preserves Indonesian facial features without Western bias",
     maxUpscale: 2,
     replicateModel: "nightmareai/real-esrgan",
     version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
@@ -82,16 +76,14 @@ const ENHANCEMENT_MODELS = [
     recommended: false,
     status: "working",
     inputField: "image",
-    asianFaceCompatibility: "good" as const,
+    asianFaceCompatibility: "excellent" as const,
     westernBias: false,
-    maxFileSize: 75 * 1024 * 1024, // 75MB
-    aseanOptimized: false,
   },
   {
     id: "gfpgan-face",
-    name: "GFPGAN Face Enhancement (⚠️ Western Bias - NOT for ASEAN)",
+    name: "GFPGAN Face Enhancement (Western Bias Warning)",
     description:
-      "❌ NOT RECOMMENDED for Vietnamese/Indonesian/Thai faces! Face restoration trained on Western datasets. Will alter ASEAN facial features to appear more Western. Use Clarity Upscaler instead.",
+      "⚠️ Face restoration trained on Western datasets. May alter Indonesian/ASEAN facial features to appear more Western.",
     maxUpscale: 4,
     replicateModel: "tencentarc/gfpgan",
     version: "9283608cc6b7be6b65a8e44983db012355fde4132009bf99d976b2f0896856a3",
@@ -99,16 +91,14 @@ const ENHANCEMENT_MODELS = [
     recommended: false,
     status: "working",
     inputField: "img",
-    asianFaceCompatibility: "poor" as const,
+    asianFaceCompatibility: "warning" as const,
     westernBias: true,
-    maxFileSize: 25 * 1024 * 1024, // 25MB
-    aseanOptimized: false,
   },
   {
     id: "codeformer-face",
-    name: "CodeFormer Face Restoration (❌ AVOID for ASEAN)",
+    name: "CodeFormer Face Restoration (Strong Western Bias)",
     description:
-      "❌ AVOID for Vietnamese/Indonesian/Thai faces! Strong Western dataset bias will significantly alter ASEAN facial characteristics. Use Clarity Upscaler for best results with Southeast Asian faces.",
+      "⚠️ Advanced face restoration with strong Western dataset bias. Will significantly alter Indonesian facial characteristics.",
     maxUpscale: 4,
     replicateModel: "sczhou/codeformer",
     version: "7de2ea26c616d5bf2245ad0d5e24f0ff9a6204578a5c876db53142edd9d2cd56",
@@ -118,8 +108,6 @@ const ENHANCEMENT_MODELS = [
     inputField: "image",
     asianFaceCompatibility: "poor" as const,
     westernBias: true,
-    maxFileSize: 20 * 1024 * 1024, // 20MB
-    aseanOptimized: false,
   },
 ]
 
@@ -205,14 +193,6 @@ const AIImageEnhancementPortal = () => {
       sharpen: "low",
       grain: "off",
     },
-  })
-
-  // Add after existing state declarations
-  const [cascadeSettings, setCascadeSettings] = useState({
-    enabled: false,
-    iterations: 2, // 2x upscale twice = 4x total
-    compressionQuality: 0.85,
-    maxIntermediateSize: 15, // MB
   })
 
   // NUEVO: estado del preset domemaster
@@ -356,6 +336,39 @@ const AIImageEnhancementPortal = () => {
     return selectedModel?.maxUpscale || 4
   }
 
+  async function exportDomemasterForJob(job: CompletedJob) {
+    try {
+      // Usar el proxy para evitar CORS si es URL externa
+      const url = `/api/proxy-image?url=${encodeURIComponent(job.downloadUrl)}`
+      const resp = await fetch(url)
+      if (!resp.ok) throw new Error(`Proxy fetch failed: ${resp.status}`)
+      const blob = await resp.blob()
+
+      const out = await generateDomemaster(blob, {
+        size: domePreset.size,
+        bleedPercent: domePreset.bleedPercent,
+        overlay: domePreset.overlay,
+        projection: "equidistant",
+      })
+
+      const fileNameBase = (job.originalFileName || "enhanced").replace(/\.[a-zA-Z0-9]+$/, "")
+      const suffix = `_DOMEMASTER_${(domePreset.size / 1024).toFixed(0)}K`
+      const outName = `${fileNameBase}${suffix}.png`
+
+      const outUrl = URL.createObjectURL(out)
+      const a = document.createElement("a")
+      a.href = outUrl
+      a.download = outName
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(outUrl)
+    } catch (e) {
+      console.error("Domemaster export error:", e)
+      alert("No se pudo exportar el domemaster. Revisa la consola para más detalles.")
+    }
+  }
+
   const startProcessing = async (fileId: number) => {
     if (!user) {
       setShowAuth(true)
@@ -367,12 +380,6 @@ const AIImageEnhancementPortal = () => {
       console.error("File not found:", fileId)
       return
     }
-
-    // Calculate total iterations based on settings
-    const totalIterations = cascadeSettings.enabled ? cascadeSettings.iterations : 1
-    const targetUpscale = enhancementSettings.upscaleFactor
-
-    console.log(`🚀 Starting ${totalIterations}-iteration upscale for ${targetUpscale}x total`)
 
     // Move into queue
     setSelectedFiles((prev) => prev.filter((f) => f.id !== fileId))
@@ -387,147 +394,110 @@ const AIImageEnhancementPortal = () => {
     setProcessingQueue((prev) => [...prev, job])
 
     try {
-      let currentFile = fileToProcess.file
-      let currentUrl: string | null = null
+      // Pre-process on client (light, safe)
+      setProcessingQueue((prev) => prev.map((j) => (j.id === job.id ? { ...j, progress: "Pre-processing..." } : j)))
 
-      // Process each iteration
-      for (let iteration = 1; iteration <= totalIterations; iteration++) {
-        setProcessingQueue((prev) =>
-          prev.map((j) =>
-            j.id === job.id
-              ? {
-                  ...j,
-                  progress: `Iteration ${iteration}/${totalIterations} - Processing...`,
-                }
-              : j,
-          ),
-        )
+      const needPre =
+        enhancementSettings.pre?.deblock !== "off" ||
+        enhancementSettings.pre?.denoise !== "off" ||
+        enhancementSettings.pre?.whiteBalance === "auto"
 
-        // Pre-process only on first iteration
-        if (iteration === 1) {
-          const needPre =
-            enhancementSettings.pre?.deblock !== "off" ||
-            enhancementSettings.pre?.denoise !== "off" ||
-            enhancementSettings.pre?.whiteBalance === "auto"
-
-          if (needPre) {
-            try {
-              const uploadBlob = await preProcessImage(currentFile, enhancementSettings.pre)
-              currentFile = new File([uploadBlob], currentFile.name.replace(/\.(\w+)$/, "") + ".png", {
-                type: "image/png",
-              })
-            } catch (error) {
-              console.error("Pre-processing error:", error)
-            }
-          }
-        } else if (currentUrl) {
-          // Download result from previous iteration
-          setProcessingQueue((prev) =>
-            prev.map((j) =>
-              j.id === job.id
-                ? {
-                    ...j,
-                    progress: `Iteration ${iteration}/${totalIterations} - Downloading previous result...`,
-                  }
-                : j,
-            ),
-          )
-
-          const response = await fetch(`/api/proxy-image?url=${encodeURIComponent(currentUrl)}`)
-          if (!response.ok) throw new Error(`Failed to download iteration ${iteration - 1} result`)
-
-          const blob = await response.blob()
-          currentFile = new File([blob], `iteration_${iteration}.png`, { type: "image/png" })
-
-          console.log(`📥 Downloaded iteration ${iteration - 1} result: ${Math.round(blob.size / 1024)}KB`)
-        }
-
-        // Build FormData for this iteration
-        const formData = new FormData()
-        formData.append("file", currentFile, currentFile.name)
-        formData.append(
-          "settings",
-          JSON.stringify({
-            ...enhancementSettings,
-            upscaleFactor: 2, // Always 2x per iteration
-          }),
-        )
-        formData.append("cascadeIteration", iteration.toString())
-        formData.append("totalIterations", totalIterations.toString())
-
-        setProcessingQueue((prev) =>
-          prev.map((j) =>
-            j.id === job.id
-              ? {
-                  ...j,
-                  progress: `Iteration ${iteration}/${totalIterations} - Uploading...`,
-                }
-              : j,
-          ),
-        )
-
-        // Call API
-        const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 15 * 60 * 1000) // 15 min per iteration
-
-        let response: Response
+      let uploadBlob: Blob
+      if (needPre) {
         try {
-          response = await fetch("/api/enhance-replicate", {
-            method: "POST",
-            body: formData,
-            signal: controller.signal,
-          })
-        } finally {
-          clearTimeout(timeoutId)
+          uploadBlob = await preProcessImage(fileToProcess.file, enhancementSettings.pre)
+        } catch (error) {
+          console.error("Pre-processing error:", error)
+          // Fall back to original file if pre-processing fails
+          uploadBlob = fileToProcess.file
         }
-
-        const contentType = response.headers.get("content-type") || ""
-        const result = contentType.includes("application/json")
-          ? await response.json()
-          : { success: false, error: await response.text() }
-
-        if (!response.ok || !result?.success) {
-          throw new Error(result?.error || `HTTP ${response.status} on iteration ${iteration}`)
-        }
-
-        currentUrl = result.downloadUrl
-        console.log(`✅ Iteration ${iteration} complete: ${currentUrl}`)
+      } else {
+        uploadBlob = fileToProcess.file
       }
+
+      const uploadFile = new File([uploadBlob], fileToProcess.file.name.replace(/\.(\w+)$/, "") + ".png", {
+        type: "image/png",
+      })
+
+      // Build FormData
+      const formData = new FormData()
+      formData.append("file", uploadFile, uploadFile.name)
+      formData.append("settings", JSON.stringify(enhancementSettings))
+
+      const selectedModel = getCurrentModel()
+      const modelName = selectedModel?.replicateModel || "unknown-model"
+
+      setProcessingQueue((prev) =>
+        prev.map((j) => (j.id === job.id ? { ...j, progress: `Uploading to ${modelName}...` } : j)),
+      )
+
+      // Call API (let browser set multipart boundary)
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10 * 60 * 1000)
+      let response: Response
+      try {
+        response = await fetch("/api/enhance-replicate", {
+          method: "POST",
+          body: formData,
+          signal: controller.signal,
+        })
+      } finally {
+        clearTimeout(timeoutId)
+      }
+
+      const contentType = response.headers.get("content-type") || ""
+      const result = contentType.includes("application/json")
+        ? await response.json()
+        : { success: false, error: await response.text() }
 
       // Remove from queue
       setProcessingQueue((prev) => prev.filter((j) => j.id !== job.id))
 
-      if (!currentUrl) {
-        throw new Error("No final result URL")
+      if (!response.ok || !result?.success) {
+        setSelectedFiles((prev) => [
+          ...prev,
+          {
+            ...fileToProcess,
+            status: "failed",
+            error: result?.error || `HTTP ${response.status}`,
+            details: result?.details || null,
+            step: result?.step || "unknown",
+          },
+        ])
+        return
       }
 
-      // Post-process final result if needed
+      // Optionally post-process the enhanced image
       const needPost =
         enhancementSettings.post?.localContrast !== "off" ||
         enhancementSettings.post?.sharpen !== "off" ||
         enhancementSettings.post?.grain !== "off"
 
-      let finalUrl = currentUrl
+      let finalUrl = result.downloadUrl as string
 
-      if (needPost) {
+      if (needPost && result.downloadUrl) {
         try {
-          setProcessingQueue((prev) => [
-            ...prev,
-            {
-              id: `post-${job.id}`,
-              file: job.file,
-              settings: job.settings,
-              status: "processing",
-              startTime: Date.now(),
-              progress: "Post-processing final result...",
-            } as any,
-          ])
-
-          const proxied = await fetch(`/api/proxy-image?url=${encodeURIComponent(currentUrl)}`)
+          // Proxy fetch to bypass CORS
+          setProcessingQueue(
+            (prev) =>
+              [
+                ...prev,
+                {
+                  id: `post-${job.id}`,
+                  file: job.file,
+                  settings: job.settings,
+                  status: "processing",
+                  startTime: Date.now(),
+                  progress: "Post-processing...",
+                },
+              ] as any,
+          )
+          const proxied = await fetch(`/api/proxy-image?url=${encodeURIComponent(result.downloadUrl)}`)
           if (!proxied.ok) throw new Error(`Proxy fetch failed: ${proxied.status}`)
           const blob = await proxied.blob()
           const postBlob = await postProcessImage(blob, enhancementSettings.post)
-          finalUrl = URL.createObjectURL(postBlob)
+          const url = URL.createObjectURL(postBlob)
+          finalUrl = url
         } catch (e) {
           console.warn("Post-processing skipped due to error:", e)
         } finally {
@@ -535,37 +505,40 @@ const AIImageEnhancementPortal = () => {
         }
       }
 
-      // Create completed job
-      const finalUpscale = Math.pow(2, totalIterations)
+      // Ensure we have a valid model ID and name with complete safety
+      const finalModelId = result.model || enhancementSettings?.model || "real-esrgan-4x"
+      const finalModelName = getModelName(finalModelId)
+
       const completedJob: CompletedJob = {
         id: job.id,
         status: "completed",
         completedAt: Date.now(),
         originalSize: `${fileToProcess.file.name} (${formatFileSize(fileToProcess.file.size)})`,
-        enhancedSize: `${finalUpscale}x Enhanced`,
-        fileSize: "Cascaded Enhancement",
+        enhancedSize: "Enhanced",
+        fileSize: result.fileSize || "Unknown size",
         downloadUrl: finalUrl,
         originalFileName: fileToProcess.name,
-        model: enhancementSettings?.model || "clarity-upscaler",
-        modelName: getModelName(enhancementSettings?.model),
-        method: `replicate-cascade-${totalIterations}x`,
-        upscaleFactor: finalUpscale,
-        processingTime: `${Math.round((Date.now() - job.startTime) / 1000)}s`,
+        model: finalModelId,
+        modelName: finalModelName,
+        method: result.method || "replicate",
+        upscaleFactor: enhancementSettings?.upscaleFactor || 2,
+        processingTime: result.processingTime || "Unknown",
+        predictionId: result.predictionId,
         preserveAsianFeatures: enhancementSettings?.preserveAsianFeatures || false,
       }
 
       setCompletedJobs((prev) => [...prev, completedJob])
     } catch (error: any) {
-      console.error("Cascading processing error:", error)
+      console.error("Processing error:", error)
       setProcessingQueue((prev) => prev.filter((j) => j.id !== job.id))
       setSelectedFiles((prev) => [
         ...prev,
         {
           ...fileToProcess,
           status: "failed",
-          error: error?.message || "Cascading enhancement failed",
+          error: error?.message || "Network error",
           details: error?.name || null,
-          step: "cascade_error",
+          step: "client_error",
         },
       ])
     }
@@ -642,6 +615,7 @@ const AIImageEnhancementPortal = () => {
           // Analyze image characteristics
           const pixels = imageData.data
           let totalBrightness = 0
+          const totalContrast = 0
           let noiseLevel = 0
           let edgeCount = 0
 
@@ -723,30 +697,6 @@ const AIImageEnhancementPortal = () => {
     }
   }
 
-  const exportDomemasterForJob = async (job: CompletedJob) => {
-    try {
-      const response = await fetch(
-        `/api/domemaster-export?url=${encodeURIComponent(job.downloadUrl)}&size=${domePreset.size}&bleedPercent=${domePreset.bleedPercent}&overlay=${domePreset.overlay}`,
-      )
-      if (!response.ok) {
-        console.error("Error exporting domemaster:", response.status, response.statusText)
-        return
-      }
-
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement("a")
-      a.href = url
-      a.download = `domemaster_${job.originalFileName.replace(/\.(png|jpg|jpeg|webp)$/i, "")}_${domePreset.size}K.png`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      window.URL.revokeObjectURL(url)
-    } catch (error) {
-      console.error("Domemaster export failed:", error)
-    }
-  }
-
   // Show authentication modal if not logged in
   if (!user && showAuth) {
     return (
@@ -772,16 +722,20 @@ const AIImageEnhancementPortal = () => {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-white">AI Enhancement Portal</h1>
-                <p className="text-sm text-blue-200">
-                  🇻🇳🇮🇩🇹🇭 ASEAN-Optimized • Clarity Upscaler Default • Face-Safe Processing
-                </p>
+                <p className="text-sm text-blue-200">Optimized for Indonesian/ASEAN Facial Features</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2 text-sm">
                 <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
-                <span className="text-green-400">ASEAN-Safe ✅</span>
-                <span className="text-xs text-gray-400">Preserves Vietnamese/Indonesian/Thai features</span>
+                <span className="text-green-400">ASEAN-Optimized ✅</span>
+                <span className="text-xs text-gray-400">
+                  {
+                    ENHANCEMENT_MODELS.filter((m) => m.status === "working" && m.asianFaceCompatibility === "excellent")
+                      .length
+                  }{" "}
+                  ASEAN-safe models
+                </span>
               </div>
 
               {user ? (
@@ -812,7 +766,6 @@ const AIImageEnhancementPortal = () => {
             { id: "upload", label: "Upload & Enhance", icon: Upload },
             { id: "processing", label: "Processing Queue", icon: Settings },
             { id: "results", label: "Enhanced Images", icon: Download },
-            { id: "test-workflow", label: "Test Workflow", icon: TestTube },
             ...(isAdmin ? [{ id: "admin", label: "Admin", icon: Shield }] : []),
           ].map((tab) => (
             <button
@@ -1115,82 +1068,6 @@ const AIImageEnhancementPortal = () => {
                       💡 <strong>AI Analysis:</strong> Automatically detects brightness, noise, detail level, and
                       resolution to optimize enhancement parameters for best results.
                     </div>
-                  </div>
-
-                  {/* Cascading Upscale Settings */}
-                  <div className="bg-gradient-to-r from-orange-900/20 to-red-900/20 rounded-lg p-4 border border-orange-500/20">
-                    <h4 className="text-white font-medium mb-3 flex items-center gap-2">
-                      <RefreshCw className="w-4 h-4 text-orange-300" />
-                      Cascading Upscale (2x → 2x = 4x)
-                    </h4>
-                    <p className="text-sm text-gray-300 mb-3">
-                      Upscale 2x twice with smart compression to achieve 4x total while managing file sizes
-                    </p>
-
-                    <div className="flex items-center gap-3 mb-3">
-                      <label className="text-sm text-gray-200">Enable Cascading</label>
-                      <input
-                        type="checkbox"
-                        checked={cascadeSettings.enabled}
-                        onChange={(e) => setCascadeSettings((prev) => ({ ...prev, enabled: e.target.checked }))}
-                      />
-                      <span className={`text-xs ${cascadeSettings.enabled ? "text-orange-400" : "text-gray-400"}`}>
-                        {cascadeSettings.enabled ? "ON" : "OFF"}
-                      </span>
-                    </div>
-
-                    {cascadeSettings.enabled && (
-                      <div className="space-y-3">
-                        <div>
-                          <label className="block text-xs text-gray-300 mb-1">
-                            Iterations: {cascadeSettings.iterations} (Total: {Math.pow(2, cascadeSettings.iterations)}x)
-                          </label>
-                          <input
-                            type="range"
-                            min={2}
-                            max={3}
-                            step={1}
-                            value={cascadeSettings.iterations}
-                            onChange={(e) =>
-                              setCascadeSettings((prev) => ({
-                                ...prev,
-                                iterations: Number.parseInt(e.target.value),
-                              }))
-                            }
-                            className="w-full"
-                          />
-                          <div className="flex justify-between text-xs text-gray-400 mt-1">
-                            <span>2 iter (4x)</span>
-                            <span>3 iter (8x)</span>
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="block text-xs text-gray-300 mb-1">
-                            Compression Quality: {Math.round(cascadeSettings.compressionQuality * 100)}%
-                          </label>
-                          <input
-                            type="range"
-                            min={0.6}
-                            max={0.95}
-                            step={0.05}
-                            value={cascadeSettings.compressionQuality}
-                            onChange={(e) =>
-                              setCascadeSettings((prev) => ({
-                                ...prev,
-                                compressionQuality: Number.parseFloat(e.target.value),
-                              }))
-                            }
-                            className="w-full"
-                          />
-                        </div>
-
-                        <div className="text-xs text-orange-200 bg-orange-900/20 rounded p-2">
-                          ⚡ <strong>Smart Processing:</strong> Automatically compresses between iterations to stay
-                          under 15MB while preserving quality.
-                        </div>
-                      </div>
-                    )}
                   </div>
 
                   {/* AI Model Selection */}
@@ -1509,20 +1386,6 @@ const AIImageEnhancementPortal = () => {
                     <span>{getTargetResolution()}</span>
                   </div>
                   <div className="flex justify-between text-gray-300">
-                    <span>Target upscale:</span>
-                    <span>
-                      {cascadeSettings.enabled
-                        ? `${Math.pow(2, cascadeSettings.iterations)}x (${cascadeSettings.iterations} iterations)`
-                        : `${enhancementSettings.upscaleFactor}x (single)`}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-gray-300">
-                    <span>Cascade mode:</span>
-                    <span className={cascadeSettings.enabled ? "text-orange-400" : "text-gray-400"}>
-                      {cascadeSettings.enabled ? "✅ Enabled" : "❌ Disabled"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-gray-300">
                     <span>Feature preservation:</span>
                     <span className={enhancementSettings.preserveAsianFeatures ? "text-green-400" : "text-gray-400"}>
                       {enhancementSettings.preserveAsianFeatures ? "✅ Enabled" : "❌ Disabled"}
@@ -1680,12 +1543,6 @@ const AIImageEnhancementPortal = () => {
                 ))}
               </div>
             )}
-          </div>
-        )}
-
-        {activeTab === "test-workflow" && (
-          <div className="space-y-8">
-            <DomemasterTestWorkflow />
           </div>
         )}
       </div>
