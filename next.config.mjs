@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    largePageDataBytes: 128 * 1024 * 1024, // 128MB
+  },
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -7,44 +10,35 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
+    domains: ['replicate.delivery', 'pbxt.replicate.delivery'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**.replicate.delivery',
+      },
+      {
+        protocol: 'https',
+        hostname: 'replicate.delivery',
+      }
+    ],
     unoptimized: true,
   },
-  // Significantly increase payload limits
-  experimental: {
-    // Enable large payloads
-    largePageDataBytes: 128 * 1024 * 1024, // 128MB
+  // Increase body parser limits
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb', // Limit for API routes
+    },
+    responseLimit: false,
   },
-  // Configure server options for large uploads
-  serverRuntimeConfig: {
-    // Increase body size limit
-    maxRequestSize: '500mb',
-  },
-  // Headers for large file uploads
-  async headers() {
-    return [
-      {
-        source: '/api/:path*',
-        headers: [
-          {
-            key: 'Access-Control-Allow-Origin',
-            value: '*',
-          },
-          {
-            key: 'Access-Control-Allow-Methods',
-            value: 'GET, POST, PUT, DELETE, OPTIONS',
-          },
-          {
-            key: 'Access-Control-Allow-Headers',
-            value: 'Content-Type, Authorization',
-          },
-          // Increase timeout for large uploads
-          {
-            key: 'Keep-Alive',
-            value: 'timeout=300, max=1000',
-          },
-        ],
-      },
-    ]
+  // Increase webpack memory limits
+  webpack: (config) => {
+    config.performance = {
+      ...config.performance,
+      hints: false,
+      maxEntrypointSize: 512000,
+      maxAssetSize: 512000,
+    };
+    return config;
   },
 }
 

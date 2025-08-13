@@ -1,26 +1,22 @@
 {
   "functions": {
     "app/api/enhance-replicate/route.ts": {
-      "maxDuration": 900
+      "maxDuration": 900,
+      "memory": 3008
     },
     "app/api/enhance-fal/route.ts": {
-      "maxDuration": 900
+      "maxDuration": 600,
+      "memory": 3008
+    },
+    "app/api/upload-chunk/route.ts": {
+      "maxDuration": 300,
+      "memory": 1024
     },
     "app/api/proxy-image/route.ts": {
-      "maxDuration": 300
+      "maxDuration": 300,
+      "memory": 1024
     }
   },
-  "regions": ["iad1"],
-  "framework": "nextjs",
-  "buildCommand": "npm run build",
-  "devCommand": "npm run dev",
-  "installCommand": "npm install",
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
-    }
-  ],
   "headers": [
     {
       "source": "/api/(.*)",
@@ -35,11 +31,7 @@
         },
         {
           "key": "Access-Control-Allow-Headers",
-          "value": "Content-Type, Authorization, Content-Length"
-        },
-        {
-          "key": "Access-Control-Max-Age",
-          "value": "86400"
+          "value": "Content-Type, Authorization"
         }
       ]
     }

@@ -34,7 +34,12 @@ import { UserManagement } from "@/components/admin/user-management"
 import { RoleManagement } from "@/components/admin/role-management"
 import { preProcessImage, postProcessImage, type EnhancementToggles } from "@/utils/image-processing"
 import { generateDomemaster, type DomemasterOptions } from "@/utils/domemaster"
-import { compressLargeImageInStages, createProgressivePreview, type CompressionResult } from "@/utils/image-compression"
+import {
+  compressForApiSubmission,
+  createProgressivePreview,
+  formatFileSize,
+  type CompressionResult,
+} from "@/utils/image-compression"
 
 // Define enhancement models first - Clarity Upscaler as default
 const ENHANCEMENT_MODELS = [
@@ -354,14 +359,6 @@ const AIImageEnhancementPortal = () => {
     e.preventDefault()
   }, [])
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return "0 Bytes"
-    const k = 1024
-    const sizes = ["Bytes", "KB", "MB", "GB"]
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
-  }
-
   const getTargetResolution = () => {
     const baseResolutions: Record<string, string> = {
       dome: "8192x8192",
@@ -445,13 +442,17 @@ const AIImageEnhancementPortal = () => {
       const selectedModel = getCurrentModel()
       const maxFileSize = selectedModel?.maxFileSize || 50 * 1024 * 1024
 
-      if (fileToProcess.file.size > maxFileSize) {
+      // Check if file exceeds Replicate's payload limit (4MB)
+      const replicatePayloadLimit = 4 * 1024 * 1024
+
+      if (fileToProcess.file.size > replicatePayloadLimit) {
         setProcessingQueue((prev) =>
-          prev.map((j) => (j.id === job.id ? { ...j, progress: "Compressing large image..." } : j)),
+          prev.map((j) => (j.id === job.id ? { ...j, progress: "Compressing for API submission..." } : j)),
         )
 
         try {
-          const compressionResult = await compressLargeImageInStages(fileToProcess.file, maxFileSize)
+          // Use the specialized compression function for API submission
+          const compressionResult = await compressForApiSubmission(fileToProcess.file)
           uploadFile = new File([compressionResult.blob], fileToProcess.file.name, {
             type: compressionResult.blob.type,
           })
@@ -470,7 +471,7 @@ const AIImageEnhancementPortal = () => {
           )
 
           console.log(
-            `✅ Large file compressed: ${formatFileSize(fileToProcess.file.size)} → ${formatFileSize(uploadFile.size)}`,
+            `✅ File compressed for API: ${formatFileSize(fileToProcess.file.size)} → ${formatFileSize(uploadFile.size)}`,
           )
         } catch (compressionError) {
           console.error("Compression failed:", compressionError)
@@ -480,7 +481,7 @@ const AIImageEnhancementPortal = () => {
             {
               ...fileToProcess,
               status: "failed",
-              error: "Failed to compress large image",
+              error: "Failed to compress image for API submission",
               details: compressionError instanceof Error ? compressionError.message : "Unknown compression error",
             },
           ])
@@ -535,24 +536,60 @@ const AIImageEnhancementPortal = () => {
       }
 
       const contentType = response.headers.get("content-type") || ""
-      const result = contentType.includes("application/json")
-        ? await response.json()
-        : { success: false, error: await response.text() }
+      let result: any
+
+      try {
+        // First get response as text
+        const responseText = await response.text()
+
+        // Then try to parse as JSON
+        try {
+          result = JSON.parse(responseText)
+        } catch (parseError) {
+          console.error("Failed to parse response as JSON:", responseText.substring(0, 200))
+          result = {
+            success: false,
+            error: "Invalid JSON response",
+            details: responseText.substring(0, 500),
+          }
+        }
+      } catch (error) {
+        console.error("Error reading response:", error)
+        result = {
+          success: false,
+          error: "Failed to read response",
+          details: error instanceof Error ? error.message : "Unknown error",
+        }
+      }
 
       // Remove from queue
       setProcessingQueue((prev) => prev.filter((j) => j.id !== job.id))
 
       if (!response.ok || !result?.success) {
-        setSelectedFiles((prev) => [
-          ...prev,
-          {
-            ...fileToProcess,
-            status: "failed",
-            error: result?.error || `HTTP ${response.status}`,
-            details: result?.details || null,
-            step: result?.step || "unknown",
-          },
-        ])
+        // Check for specific error types
+        if (response.status === 413 || (result?.error && result.error.includes("too large"))) {
+          setSelectedFiles((prev) => [
+            ...prev,
+            {
+              ...fileToProcess,
+              status: "failed",
+              error: "Image too large for API submission",
+              details: "Please try a smaller image or more aggressive compression",
+              step: "payload_too_large",
+            },
+          ])
+        } else {
+          setSelectedFiles((prev) => [
+            ...prev,
+            {
+              ...fileToProcess,
+              status: "failed",
+              error: result?.error || `HTTP ${response.status}`,
+              details: result?.details || null,
+              step: result?.step || "unknown",
+            },
+          ])
+        }
         return
       }
 
