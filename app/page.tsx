@@ -32,7 +32,6 @@ import { UserManagement } from "@/components/admin/user-management"
 import { RoleManagement } from "@/components/admin/role-management"
 import { preProcessImage, postProcessImage, type EnhancementToggles } from "@/utils/image-processing"
 import { generateDomemaster, type DomemasterOptions } from "@/utils/domemaster"
-import { DomemasterTestWorkflow } from "@/components/domemaster-test-workflow"
 
 // Define enhancement models first - Clarity Upscaler as default
 const ENHANCEMENT_MODELS = [
@@ -339,21 +338,11 @@ const AIImageEnhancementPortal = () => {
 
   async function exportDomemasterForJob(job: CompletedJob) {
     try {
-      console.log(`🔄 Starting domemaster export for ${job.originalFileName}...`)
-
-      // Show progress in UI
-      const progressToast = document.createElement("div")
-      progressToast.className = "fixed top-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg z-50"
-      progressToast.textContent = `Generating ${(domePreset.size / 1024).toFixed(0)}K domemaster...`
-      document.body.appendChild(progressToast)
-
       // Usar el proxy para evitar CORS si es URL externa
       const url = `/api/proxy-image?url=${encodeURIComponent(job.downloadUrl)}`
       const resp = await fetch(url)
       if (!resp.ok) throw new Error(`Proxy fetch failed: ${resp.status}`)
       const blob = await resp.blob()
-
-      console.log(`✅ Downloaded enhanced image: ${Math.round(blob.size / 1024)}KB`)
 
       const out = await generateDomemaster(blob, {
         size: domePreset.size,
@@ -373,30 +362,10 @@ const AIImageEnhancementPortal = () => {
       document.body.appendChild(a)
       a.click()
       a.remove()
-
-      // Cleanup
-      setTimeout(() => {
-        URL.revokeObjectURL(outUrl)
-        document.body.removeChild(progressToast)
-      }, 1000)
-
-      console.log(`✅ Domemaster exported: ${outName} (${Math.round(out.size / 1024)}KB)`)
-
-      // Show success message
-      const successToast = document.createElement("div")
-      successToast.className = "fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg z-50"
-      successToast.textContent = `✅ Domemaster exported: ${outName}`
-      document.body.appendChild(successToast)
-      setTimeout(() => document.body.removeChild(successToast), 3000)
+      URL.revokeObjectURL(outUrl)
     } catch (e) {
       console.error("Domemaster export error:", e)
-
-      // Show error message
-      const errorToast = document.createElement("div")
-      errorToast.className = "fixed top-4 right-4 bg-red-600 text-white px-4 py-2 rounded-lg z-50"
-      errorToast.textContent = `❌ Domemaster export failed: ${e instanceof Error ? e.message : "Unknown error"}`
-      document.body.appendChild(errorToast)
-      setTimeout(() => document.body.removeChild(errorToast), 5000)
+      alert("No se pudo exportar el domemaster. Revisa la consola para más detalles.")
     }
   }
 
@@ -646,6 +615,7 @@ const AIImageEnhancementPortal = () => {
           // Analyze image characteristics
           const pixels = imageData.data
           let totalBrightness = 0
+          const totalContrast = 0
           let noiseLevel = 0
           let edgeCount = 0
 
@@ -796,7 +766,6 @@ const AIImageEnhancementPortal = () => {
             { id: "upload", label: "Upload & Enhance", icon: Upload },
             { id: "processing", label: "Processing Queue", icon: Settings },
             { id: "results", label: "Enhanced Images", icon: Download },
-            { id: "test-workflow", label: "Test Workflow", icon: TestTube },
             ...(isAdmin ? [{ id: "admin", label: "Admin", icon: Shield }] : []),
           ].map((tab) => (
             <button
@@ -1574,12 +1543,6 @@ const AIImageEnhancementPortal = () => {
                 ))}
               </div>
             )}
-          </div>
-        )}
-
-        {activeTab === "test-workflow" && (
-          <div className="space-y-8">
-            <DomemasterTestWorkflow />
           </div>
         )}
       </div>
