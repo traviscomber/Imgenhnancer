@@ -1,538 +1,337 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { processImageForAPI } from "@/utils/image-processing"
 
 export async function POST(request: NextRequest) {
-  console.log("🚀 Starting Replicate enhancement...")
+  console.log("🚀 Starting enhance-replicate API call")
 
   try {
-    // Check API token
-    if (!process.env.REPLICATE_API_TOKEN) {
-      console.error("❌ REPLICATE_API_TOKEN not configured")
-      return NextResponse.json(
-        { success: false, error: "REPLICATE_API_TOKEN not configured", step: "config_check" },
-        { status: 500 },
-      )
-    }
+    // Parse form data
+    const formData = await request.formData()
+    const file = formData.get("image") as File
+    const model = (formData.get("model") as string) || "nightmareai/real-esrgan"
+    const scale = Number.parseInt(formData.get("scale") as string) || 2
 
-    console.log("✅ API token configured")
+    console.log("📝 Request details:", {
+      fileName: file?.name,
+      fileSize: file?.size,
+      model,
+      scale,
+      fileType: file?.type,
+    })
 
-    // Parse FormData with detailed error handling
-    let formData: FormData
-    try {
-      formData = await request.formData()
-      console.log("✅ FormData parsed successfully")
-    } catch (error: any) {
-      console.error("❌ Failed to parse FormData:", error)
-      return NextResponse.json(
-        { success: false, error: "Failed to parse form data", step: "formdata_parse", details: error.message },
-        { status: 400 },
-      )
-    }
-
-    // Extract file with validation
-    const file = formData.get("file") as File
     if (!file) {
-      console.error("❌ No file provided in FormData")
-      return NextResponse.json({ success: false, error: "No file provided", step: "file_extraction" }, { status: 400 })
+      console.error("❌ No file provided")
+      return NextResponse.json({ error: "No image file provided" }, { status: 400 })
     }
 
-    console.log(`✅ File extracted: ${file.name} (${file.size} bytes, ${file.type})`)
-
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
-      console.error("❌ Invalid file type:", file.type)
+    // Check file size (50MB limit)
+    const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB
+    if (file.size > MAX_FILE_SIZE) {
+      console.error("❌ File too large:", file.size)
       return NextResponse.json(
-        { success: false, error: "File must be an image", step: "file_validation" },
-        { status: 400 },
+        { error: `File too large. Maximum size is ${MAX_FILE_SIZE / 1024 / 1024}MB` },
+        { status: 413 },
       )
     }
 
-    // Extract settings
-    let settings: any = {}
-    try {
-      const settingsStr = formData.get("settings") as string
-      if (settingsStr) {
-        settings = JSON.parse(settingsStr)
-        console.log("✅ Settings parsed:", settings)
-      }
-    } catch (error: any) {
-      console.warn("⚠️ Failed to parse settings, using defaults:", error.message)
+    // Process image to ensure it's within API limits
+    console.log("🔄 Processing image for API compatibility...")
+    const processedImageData = await processImageForAPI(file)
+
+    console.log("✅ Image processed:", {
+      originalSize: file.size,
+      processedSize: processedImageData.length,
+      compressionRatio: (((file.size - processedImageData.length) / file.size) * 100).toFixed(1) + "%",
+    })
+
+    // Check if we have Replicate token
+    if (!process.env.REPLICATE_API_TOKEN) {
+      console.error("❌ Missing REPLICATE_API_TOKEN")
+      return NextResponse.json({ error: "Replicate API token not configured" }, { status: 500 })
     }
 
-    // Smart image processing to ensure API compatibility
-    let imageInput: string
-    try {
-      console.log("🔄 Processing image for API compatibility...")
+    // Convert processed image to base64 data URL
+    const base64Image = `data:${file.type};base64,${Buffer.from(processedImageData).toString("base64")}`
 
-      // Create image element to get dimensions and process
-      const arrayBuffer = await file.arrayBuffer()
-      const blob = new Blob([arrayBuffer], { type: file.type })
+    console.log("🔄 Calling Replicate API...")
 
-      // Process image to ensure it's within API limits
-      const processedBlob = await processImageForAPI(blob, file.name)
+    // Call Replicate API
+    const replicateResponse = await fetch("https://api.replicate.com/v1/predictions", {
+      method: "POST",
+      headers: {
+        Authorization: `Token ${process.env.REPLICATE_API_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        version: getModelVersion(model),
+        input: {
+          image: base64Image,
+          scale: scale,
+        },
+      }),
+    })
 
-      // Convert to base64
-      const processedArrayBuffer = await processedBlob.arrayBuffer()
-      const base64 = Buffer.from(processedArrayBuffer).toString("base64")
-      imageInput = `data:${processedBlob.type};base64,${base64}`
+    console.log("📡 Replicate response status:", replicateResponse.status)
+    console.log("📡 Replicate response headers:", Object.fromEntries(replicateResponse.headers.entries()))
 
-      const originalSizeMB = Math.round(file.size / 1024 / 1024)
-      const processedSizeMB = Math.round(processedBlob.size / 1024 / 1024)
-      const base64SizeMB = Math.round(base64.length / 1024 / 1024)
+    // Check if response is HTML (error page)
+    const contentType = replicateResponse.headers.get("content-type") || ""
+    const responseText = await replicateResponse.text()
 
-      console.log(`✅ Image processed: ${originalSizeMB}MB → ${processedSizeMB}MB (base64: ${base64SizeMB}MB)`)
+    console.log("📄 Response preview:", responseText.substring(0, 200))
 
-      // Additional safety check for base64 size
-      if (base64SizeMB > 25) {
-        throw new Error(`Base64 payload too large: ${base64SizeMB}MB (max 25MB)`)
+    if (contentType.includes("text/html") || responseText.trim().startsWith("<")) {
+      console.error("❌ Received HTML error page instead of JSON")
+      console.error("📄 HTML content:", responseText.substring(0, 500))
+
+      // Try to extract error message from HTML
+      let errorMessage = "Server returned an error page"
+      const titleMatch = responseText.match(/<title>(.*?)<\/title>/i)
+      if (titleMatch) {
+        errorMessage = titleMatch[1]
       }
-    } catch (error: any) {
-      console.error("❌ Failed to process image:", error)
+
       return NextResponse.json(
         {
-          success: false,
-          error: "Failed to process image file",
-          step: "image_processing",
-          details: error.message,
+          error: `API Error: ${errorMessage}`,
+          details:
+            "The server returned an HTML error page instead of JSON. This usually indicates a server-side issue or configuration problem.",
+          status: replicateResponse.status,
+        },
+        { status: replicateResponse.status || 500 },
+      )
+    }
+
+    // Handle specific HTTP error codes
+    if (!replicateResponse.ok) {
+      let errorData
+      try {
+        errorData = JSON.parse(responseText)
+      } catch (parseError) {
+        console.error("❌ Failed to parse error response as JSON:", parseError)
+        return NextResponse.json(
+          {
+            error: `HTTP ${replicateResponse.status}: ${replicateResponse.statusText}`,
+            details: responseText.substring(0, 500),
+            status: replicateResponse.status,
+          },
+          { status: replicateResponse.status },
+        )
+      }
+
+      console.error("❌ Replicate API error:", errorData)
+
+      // Handle specific error codes
+      if (replicateResponse.status === 413) {
+        return NextResponse.json(
+          {
+            error: "Image too large for processing",
+            details: "The processed image is still too large for the API. Try using a smaller image or lower quality.",
+            status: 413,
+          },
+          { status: 413 },
+        )
+      } else if (replicateResponse.status === 422) {
+        return NextResponse.json(
+          {
+            error: "Invalid input parameters",
+            details: errorData.detail || "The provided parameters are not valid for this model.",
+            status: 422,
+          },
+          { status: 422 },
+        )
+      } else if (replicateResponse.status === 502 || replicateResponse.status === 504) {
+        return NextResponse.json(
+          {
+            error: "Service temporarily unavailable",
+            details: "The AI service is currently experiencing issues. Please try again in a few minutes.",
+            status: replicateResponse.status,
+          },
+          { status: replicateResponse.status },
+        )
+      }
+
+      return NextResponse.json(
+        {
+          error: errorData.detail || "Unknown API error",
+          details: JSON.stringify(errorData),
+          status: replicateResponse.status,
+        },
+        { status: replicateResponse.status },
+      )
+    }
+
+    // Parse successful response
+    let responseData
+    try {
+      responseData = JSON.parse(responseText)
+    } catch (parseError) {
+      console.error("❌ Failed to parse successful response as JSON:", parseError)
+      return NextResponse.json(
+        {
+          error: "Invalid JSON response from API",
+          details: "The API returned a successful status but invalid JSON.",
+          responsePreview: responseText.substring(0, 200),
         },
         { status: 500 },
       )
     }
 
-    // Model configuration
-    const modelId = settings.model || "clarity-upscaler"
-    const modelConfigs: Record<string, any> = {
-      "clarity-upscaler": {
-        version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
-        input: {
-          image: imageInput,
-          scale_factor: settings.upscaleFactor || 2,
-          dynamic: 6,
-          creativity: 0.35,
-          resemblance: 0.6,
-          tiling: false,
-          sd_model: "juggernaut_reborn.safetensors [338b85bc4f]",
-        },
-      },
-      "real-esrgan-4x": {
-        version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
-        input: {
-          image: imageInput,
-          scale: settings.upscaleFactor || 4,
-          face_enhance: false,
-        },
-      },
-      "real-esrgan-2x": {
-        version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
-        input: {
-          image: imageInput,
-          scale: 2,
-          face_enhance: false,
-        },
-      },
-    }
+    console.log("✅ Replicate prediction created:", responseData.id)
 
-    const config = modelConfigs[modelId]
-    if (!config) {
-      console.error("❌ Unknown model:", modelId)
-      return NextResponse.json(
-        { success: false, error: `Unknown model: ${modelId}`, step: "model_config" },
-        { status: 400 },
-      )
-    }
+    // Poll for completion
+    const predictionId = responseData.id
+    let prediction = responseData
+    let attempts = 0
+    const maxAttempts = 180 // 15 minutes with 5-second intervals
 
-    console.log(`✅ Using model: ${modelId} (version: ${config.version})`)
-
-    // Create prediction with enhanced error handling
-    let prediction: any
-    try {
-      console.log("🔄 Creating prediction via Replicate API...")
-
-      const requestBody = JSON.stringify({
-        version: config.version,
-        input: config.input,
-      })
-
-      const requestSizeMB = Math.round(requestBody.length / 1024 / 1024)
-      console.log(`📤 Request payload size: ${requestSizeMB}MB`)
-
-      // Additional safety check before sending
-      if (requestSizeMB > 30) {
-        throw new Error(`Request payload too large: ${requestSizeMB}MB (max 30MB)`)
+    while (prediction.status === "starting" || prediction.status === "processing") {
+      if (attempts >= maxAttempts) {
+        console.error("❌ Prediction timed out after 15 minutes")
+        return NextResponse.json(
+          {
+            error: "Processing timeout",
+            details: "The image enhancement is taking longer than expected. Please try again with a smaller image.",
+            predictionId,
+          },
+          { status: 408 },
+        )
       }
 
-      const response = await fetch("https://api.replicate.com/v1/predictions", {
-        method: "POST",
+      await new Promise((resolve) => setTimeout(resolve, 5000)) // Wait 5 seconds
+      attempts++
+
+      console.log(`🔄 Polling attempt ${attempts}/${maxAttempts} for prediction ${predictionId}`)
+
+      const pollResponse = await fetch(`https://api.replicate.com/v1/predictions/${predictionId}`, {
         headers: {
           Authorization: `Token ${process.env.REPLICATE_API_TOKEN}`,
-          "Content-Type": "application/json",
         },
-        body: requestBody,
       })
 
-      // Get response text first and check what we received
-      const responseText = await response.text()
-      const contentType = response.headers.get("content-type") || ""
-
-      console.log(`📥 Response status: ${response.status}`)
-      console.log(`📥 Content-Type: ${contentType}`)
-      console.log(`📥 Response length: ${responseText.length} chars`)
-      console.log(`📥 Response preview: ${responseText.substring(0, 200)}...`)
-
-      // Check if we got an HTML error page (common with payload too large errors)
-      const isHtmlResponse =
-        responseText.trim().toLowerCase().startsWith("<!doctype html") ||
-        responseText.trim().toLowerCase().startsWith("<html") ||
-        contentType.includes("text/html")
-
-      if (isHtmlResponse) {
-        console.error("❌ Received HTML error page instead of JSON")
-
-        let userMessage = "Server returned an error page instead of processing the image"
-
-        // Check for common error patterns in HTML
-        if (
-          responseText.includes("Request Entity Too Large") ||
-          responseText.includes("413") ||
-          responseText.includes("FUNCTION_PAYLOAD_TOO_LARGE")
-        ) {
-          userMessage = "Image file is too large for processing. Please try a smaller image or lower quality."
-        } else if (responseText.includes("502") || responseText.includes("Bad Gateway")) {
-          userMessage = "AI service is temporarily unavailable. Please try again in a few minutes."
-        } else if (responseText.includes("504") || responseText.includes("Gateway Timeout")) {
-          userMessage = "Request timed out. Please try again with a smaller image."
-        }
-
+      if (!pollResponse.ok) {
+        console.error("❌ Failed to poll prediction status:", pollResponse.status)
+        const pollErrorText = await pollResponse.text()
         return NextResponse.json(
           {
-            success: false,
-            error: userMessage,
-            step: "html_error_page",
-            httpStatus: response.status,
-            isHtmlResponse: true,
-            responsePreview: responseText.substring(0, 300),
+            error: "Failed to check processing status",
+            details: pollErrorText,
+            predictionId,
           },
-          { status: response.status || 502 },
+          { status: pollResponse.status },
         )
       }
 
-      // Check for non-OK status
-      if (!response.ok) {
-        console.error("❌ Non-OK response status")
-
-        let userMessage = "Failed to process image with AI service"
-        if (response.status === 401) {
-          userMessage = "Authentication failed with AI service"
-        } else if (response.status === 429) {
-          userMessage = "Too many requests. Please try again in a few minutes."
-        } else if (response.status >= 500) {
-          userMessage = "AI service is temporarily unavailable. Please try again later."
-        } else if (response.status === 413) {
-          userMessage = "Image is too large for processing. Please try a smaller image."
-        }
-
-        return NextResponse.json(
-          {
-            success: false,
-            error: userMessage,
-            step: "http_error",
-            httpStatus: response.status,
-            responsePreview: responseText.substring(0, 200),
-          },
-          { status: response.status },
-        )
-      }
-
-      // Check if response looks like JSON
-      if (!contentType.includes("application/json") && !responseText.trim().startsWith("{")) {
-        console.error("❌ Response doesn't appear to be JSON")
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Invalid response format from AI service",
-            step: "non_json_response",
-            contentType,
-            responsePreview: responseText.substring(0, 200),
-          },
-          { status: 502 },
-        )
-      }
-
-      // Try to parse JSON response
+      const pollText = await pollResponse.text()
       try {
-        prediction = JSON.parse(responseText)
-        console.log(`✅ JSON parsed successfully`)
-      } catch (jsonError: any) {
-        console.error("❌ Failed to parse JSON response:", jsonError)
+        prediction = JSON.parse(pollText)
+      } catch (parseError) {
+        console.error("❌ Failed to parse polling response:", parseError)
         return NextResponse.json(
           {
-            success: false,
-            error: "Invalid JSON response from AI service",
-            step: "json_parse_error",
-            details: `JSON parse error: ${jsonError.message}`,
-            responsePreview: responseText.substring(0, 200),
-          },
-          { status: 502 },
-        )
-      }
-
-      if (!prediction?.id) {
-        console.error("❌ No prediction ID in response:", prediction)
-        return NextResponse.json(
-          {
-            success: false,
-            error: "No prediction ID returned from AI service",
-            step: "missing_prediction_id",
-            details: prediction,
+            error: "Invalid polling response",
+            details: "Failed to parse status check response.",
+            predictionId,
           },
           { status: 500 },
         )
       }
 
-      console.log(`✅ Prediction created: ${prediction.id}`)
-    } catch (error: any) {
-      console.error("❌ Failed to create prediction:", error)
+      console.log(`📊 Prediction status: ${prediction.status}`)
+    }
 
-      // Handle specific network errors
-      let userMessage = "Network error while contacting AI service"
-      if (error.message.includes("fetch")) {
-        userMessage = "Unable to connect to AI service. Please check your internet connection."
-      } else if (error.message.includes("timeout")) {
-        userMessage = "Request timed out. Please try again."
-      } else if (error.message.includes("too large")) {
-        userMessage = error.message
-      }
-
+    if (prediction.status === "failed") {
+      console.error("❌ Prediction failed:", prediction.error)
       return NextResponse.json(
         {
-          success: false,
-          error: userMessage,
-          step: "network_error",
-          details: error.message,
+          error: "Image enhancement failed",
+          details: prediction.error || "The AI model failed to process the image.",
+          predictionId,
         },
         { status: 500 },
       )
     }
 
-    // Wait for completion
-    const startTime = Date.now()
-    const timeout = 20 * 60 * 1000 // 20 minutes
-    let finalPrediction: any
-
-    try {
-      console.log("⏳ Waiting for prediction to complete...")
-
-      while (true) {
-        if (Date.now() - startTime > timeout) {
-          throw new Error("Prediction timed out after 20 minutes")
-        }
-
-        const statusResponse = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
-          headers: {
-            Authorization: `Token ${process.env.REPLICATE_API_TOKEN}`,
-          },
-        })
-
-        if (!statusResponse.ok) {
-          throw new Error(`Failed to get prediction status: ${statusResponse.status}`)
-        }
-
-        const statusText = await statusResponse.text()
-
-        try {
-          finalPrediction = JSON.parse(statusText)
-        } catch (parseError) {
-          throw new Error(`Failed to parse status response: ${parseError}`)
-        }
-
-        console.log(`🔄 Prediction status: ${finalPrediction.status}`)
-
-        if (finalPrediction.status === "succeeded") {
-          console.log("✅ Prediction completed successfully")
-          break
-        }
-
-        if (finalPrediction.status === "failed") {
-          const errorMsg = finalPrediction.error || "Prediction failed without error message"
-          console.error("❌ Prediction failed:", errorMsg)
-          throw new Error(`AI processing failed: ${errorMsg}`)
-        }
-
-        if (finalPrediction.status === "canceled") {
-          throw new Error("Prediction was canceled")
-        }
-
-        // Wait 5 seconds before checking again
-        await new Promise((resolve) => setTimeout(resolve, 5000))
-      }
-    } catch (error: any) {
-      console.error("❌ Prediction processing failed:", error)
+    if (prediction.status === "canceled") {
+      console.error("❌ Prediction was canceled")
       return NextResponse.json(
         {
-          success: false,
-          error: error.message,
-          step: "prediction_processing",
-          predictionId: prediction.id,
+          error: "Processing was canceled",
+          details: "The image enhancement was canceled by the service.",
+          predictionId,
         },
         { status: 500 },
       )
     }
 
-    // Extract result
-    const output = finalPrediction.output
-    if (!output) {
-      console.error("❌ No output from prediction")
+    if (!prediction.output || !prediction.output[0]) {
+      console.error("❌ No output from prediction:", prediction)
       return NextResponse.json(
         {
-          success: false,
-          error: "No output from AI processing",
-          step: "missing_output",
-          predictionId: prediction.id,
+          error: "No enhanced image generated",
+          details: "The AI model completed but did not generate an output image.",
+          predictionId,
         },
         { status: 500 },
       )
     }
 
-    let downloadUrl: string
-    if (Array.isArray(output)) {
-      downloadUrl = output[0]
-    } else if (typeof output === "string") {
-      downloadUrl = output
-    } else {
-      console.error("❌ Unexpected output format:", typeof output)
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Unexpected output format from AI service",
-          step: "invalid_output_format",
-          predictionId: prediction.id,
-        },
-        { status: 500 },
-      )
-    }
-
-    if (!downloadUrl || !downloadUrl.startsWith("http")) {
-      console.error("❌ Invalid download URL:", downloadUrl)
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Invalid download URL from AI service",
-          step: "invalid_download_url",
-          predictionId: prediction.id,
-        },
-        { status: 500 },
-      )
-    }
-
-    const processingTime = `${Math.round((Date.now() - startTime) / 1000)}s`
-    console.log(`✅ Enhancement completed in ${processingTime}`)
+    const enhancedImageUrl = prediction.output[0]
+    console.log("✅ Enhancement completed:", enhancedImageUrl)
 
     return NextResponse.json({
       success: true,
-      downloadUrl,
-      model: modelId,
-      method: "replicate",
-      processingTime,
-      predictionId: prediction.id,
-      fileSize: "Enhanced image",
-      upscaleFactor: settings.upscaleFactor || 2,
-      originalSize: `${Math.round(file.size / 1024 / 1024)}MB`,
+      enhancedImageUrl,
+      predictionId,
+      model,
+      scale,
+      processingTime: `${attempts * 5} seconds`,
     })
-  } catch (error: any) {
-    console.error("❌ Unexpected error:", error)
+  } catch (error) {
+    console.error("❌ Unexpected error in enhance-replicate:", error)
+
+    // Handle specific error types
+    if (error instanceof Error) {
+      if (error.message.includes("fetch")) {
+        return NextResponse.json(
+          {
+            error: "Network error",
+            details: "Failed to connect to the AI service. Please check your internet connection and try again.",
+            originalError: error.message,
+          },
+          { status: 503 },
+        )
+      }
+
+      if (error.message.includes("JSON")) {
+        return NextResponse.json(
+          {
+            error: "Data parsing error",
+            details: "Failed to process the API response. This may be a temporary issue.",
+            originalError: error.message,
+          },
+          { status: 500 },
+        )
+      }
+    }
+
     return NextResponse.json(
       {
-        success: false,
-        error: error.message || "Unexpected error occurred",
-        step: "unexpected_error",
-        stack: error.stack,
+        error: "Internal server error",
+        details: "An unexpected error occurred while processing your request.",
+        originalError: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 },
     )
   }
 }
 
-/**
- * Process image to ensure it's within API limits - Server-side version
- */
-async function processImageForAPI(blob: Blob, fileName: string): Promise<Blob> {
-  try {
-    // For server-side processing, we need to use a different approach
-    // since we don't have access to DOM APIs like Image and Canvas
-
-    const arrayBuffer = await blob.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
-
-    // Check if we have sharp available for server-side image processing
-    try {
-      const sharp = require("sharp")
-
-      const image = sharp(buffer)
-      const metadata = await image.metadata()
-
-      console.log(`📐 Original dimensions: ${metadata.width}x${metadata.height}`)
-
-      let { width = 1920, height = 1080 } = metadata
-      const maxDimension = 4096
-      const targetFileSize = 10 * 1024 * 1024 // 10MB target for safety
-
-      // Resize if too large
-      if (width > maxDimension || height > maxDimension) {
-        const ratio = Math.min(maxDimension / width, maxDimension / height)
-        width = Math.floor(width * ratio)
-        height = Math.floor(height * ratio)
-        console.log(`📐 Resizing to: ${width}x${height}`)
-      }
-
-      // Process with sharp
-      let processedBuffer = await image
-        .resize(width, height, {
-          kernel: sharp.kernel.lanczos3,
-          withoutEnlargement: true,
-        })
-        .jpeg({
-          quality: 85,
-          progressive: true,
-          mozjpeg: true,
-        })
-        .toBuffer()
-
-      // If still too large, reduce quality
-      let quality = 85
-      while (processedBuffer.length > targetFileSize && quality > 30) {
-        quality -= 10
-        processedBuffer = await image
-          .resize(width, height, {
-            kernel: sharp.kernel.lanczos3,
-            withoutEnlargement: true,
-          })
-          .jpeg({
-            quality,
-            progressive: true,
-            mozjpeg: true,
-          })
-          .toBuffer()
-
-        console.log(`🔄 Reduced quality to ${quality}%, size: ${Math.round(processedBuffer.length / 1024 / 1024)}MB`)
-      }
-
-      const finalSizeMB = Math.round(processedBuffer.length / 1024 / 1024)
-      console.log(`✅ Final processed size: ${finalSizeMB}MB`)
-
-      return new Blob([processedBuffer], { type: "image/jpeg" })
-    } catch (sharpError) {
-      console.warn("⚠️ Sharp not available, using fallback processing")
-
-      // Fallback: just return the original blob if it's not too large
-      const sizeMB = blob.size / 1024 / 1024
-      if (sizeMB <= 15) {
-        console.log(`✅ Using original image (${Math.round(sizeMB)}MB)`)
-        return blob
-      } else {
-        throw new Error(`Image too large (${Math.round(sizeMB)}MB) and no image processing available`)
-      }
-    }
-  } catch (error: any) {
-    console.error("❌ Image processing failed:", error)
-    throw new Error(`Image processing failed: ${error.message}`)
+function getModelVersion(model: string): string {
+  const modelVersions: Record<string, string> = {
+    "nightmareai/real-esrgan": "f121d640bd286e1fdc67f9799164c1d5be36ff74576ee11c803ae5b665dd46aa",
+    "tencentarc/gfpgan": "9283608cc6b7be6b65a8e44983db012355fde4132009bf99d976b2f0896856a3",
+    "xinntao/realesrgan": "f121d640bd286e1fdc67f9799164c1d5be36ff74576ee11c803ae5b665dd46aa",
   }
+
+  return modelVersions[model] || modelVersions["nightmareai/real-esrgan"]
 }

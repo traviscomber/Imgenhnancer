@@ -440,3 +440,242 @@ export function generateOptimalSettings(
 
   return optimal
 }
+
+export async function processImageForAPI(file: File): Promise<Uint8Array> {
+  console.log("🔄 Starting image processing for API compatibility")
+
+  const MAX_PAYLOAD_SIZE = 10 * 1024 * 1024 // 10MB target for API payload
+  const MAX_DIMENSION = 2048 // Maximum width/height
+
+  // If file is already small enough, return as-is
+  if (file.size <= MAX_PAYLOAD_SIZE) {
+    console.log("✅ File already within size limits")
+    return new Uint8Array(await file.arrayBuffer())
+  }
+
+  console.log("🔄 File needs processing, size:", file.size)
+
+  // Try server-side processing with Sharp if available
+  if (typeof window === "undefined") {
+    try {
+      const sharp = require("sharp")
+      const buffer = Buffer.from(await file.arrayBuffer())
+
+      // Get image metadata
+      const metadata = await sharp(buffer).metadata()
+      console.log("📊 Original image metadata:", {
+        width: metadata.width,
+        height: metadata.height,
+        format: metadata.format,
+        size: buffer.length,
+      })
+
+      // Calculate resize dimensions
+      let { width, height } = metadata
+      if (!width || !height) {
+        throw new Error("Could not determine image dimensions")
+      }
+
+      // Scale down if too large
+      if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+        const scale = Math.min(MAX_DIMENSION / width, MAX_DIMENSION / height)
+        width = Math.round(width * scale)
+        height = Math.round(height * scale)
+        console.log("📏 Resizing to:", { width, height, scale })
+      }
+
+      // Process with progressive quality reduction
+      let quality = 85
+      let processedBuffer: Buffer
+
+      do {
+        console.log(`🔄 Processing with quality: ${quality}%`)
+
+        let pipeline = sharp(buffer).resize(width, height, {
+          kernel: sharp.kernel.lanczos3,
+          withoutEnlargement: true,
+        })
+
+        // Apply format-specific compression
+        if (file.type.includes("jpeg") || file.type.includes("jpg")) {
+          pipeline = pipeline.jpeg({ quality, progressive: true })
+        } else if (file.type.includes("png")) {
+          pipeline = pipeline.png({
+            quality,
+            compressionLevel: 9,
+            progressive: true,
+          })
+        } else if (file.type.includes("webp")) {
+          pipeline = pipeline.webp({ quality })
+        } else {
+          // Convert unknown formats to JPEG
+          pipeline = pipeline.jpeg({ quality, progressive: true })
+        }
+
+        processedBuffer = await pipeline.toBuffer()
+        console.log(`📊 Processed size: ${processedBuffer.length} bytes`)
+
+        quality -= 10
+      } while (processedBuffer.length > MAX_PAYLOAD_SIZE && quality > 20)
+
+      if (processedBuffer.length > MAX_PAYLOAD_SIZE) {
+        console.warn("⚠️ Could not reduce size enough with Sharp, trying canvas fallback")
+        return await processImageWithCanvas(file, MAX_PAYLOAD_SIZE, MAX_DIMENSION)
+      }
+
+      console.log("✅ Sharp processing successful")
+      return new Uint8Array(processedBuffer)
+    } catch (sharpError) {
+      console.warn("⚠️ Sharp processing failed, falling back to canvas:", sharpError)
+      return await processImageWithCanvas(file, MAX_PAYLOAD_SIZE, MAX_DIMENSION)
+    }
+  }
+
+  // Client-side processing with canvas
+  return await processImageWithCanvas(file, MAX_PAYLOAD_SIZE, MAX_DIMENSION)
+}
+
+async function processImageWithCanvas(file: File, maxSize: number, maxDimension: number): Promise<Uint8Array> {
+  console.log("🔄 Processing image with canvas")
+
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.crossOrigin = "anonymous"
+
+    img.onload = () => {
+      try {
+        // Calculate dimensions
+        let { width, height } = img
+
+        if (width > maxDimension || height > maxDimension) {
+          const scale = Math.min(maxDimension / width, maxDimension / height)
+          width = Math.round(width * scale)
+          height = Math.round(height * scale)
+          console.log("📏 Canvas resizing to:", { width, height, scale })
+        }
+
+        // Create canvas
+        const canvas = document.createElement("canvas")
+        const ctx = canvas.getContext("2d")
+        if (!ctx) {
+          throw new Error("Could not get canvas context")
+        }
+
+        canvas.width = width
+        canvas.height = height
+
+        // Draw and compress
+        ctx.drawImage(img, 0, 0, width, height)
+
+        // Try different quality levels
+        let quality = 0.85
+        let blob: Blob | null = null
+
+        const tryCompress = () => {
+          canvas.toBlob(
+            (result) => {
+              if (!result) {
+                reject(new Error("Failed to create blob"))
+                return
+              }
+
+              console.log(`📊 Canvas compression at ${quality}: ${result.size} bytes`)
+
+              if (result.size <= maxSize || quality <= 0.2) {
+                blob = result
+                finishProcessing()
+              } else {
+                quality -= 0.1
+                tryCompress()
+              }
+            },
+            "image/jpeg",
+            quality,
+          )
+        }
+
+        const finishProcessing = async () => {
+          if (!blob) {
+            reject(new Error("No blob created"))
+            return
+          }
+
+          const arrayBuffer = await blob.arrayBuffer()
+          console.log("✅ Canvas processing successful")
+          resolve(new Uint8Array(arrayBuffer))
+        }
+
+        tryCompress()
+      } catch (error) {
+        reject(error)
+      }
+    }
+
+    img.onerror = () => {
+      reject(new Error("Failed to load image"))
+    }
+
+    // Load image
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      if (e.target?.result) {
+        img.src = e.target.result as string
+      }
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
+export function createTestImage(width = 512, height = 512): string {
+  const canvas = document.createElement("canvas")
+  const ctx = canvas.getContext("2d")
+  if (!ctx) throw new Error("Could not get canvas context")
+
+  canvas.width = width
+  canvas.height = height
+
+  // Create gradient background
+  const gradient = ctx.createLinearGradient(0, 0, width, height)
+  gradient.addColorStop(0, "#ff6b6b")
+  gradient.addColorStop(0.5, "#4ecdc4")
+  gradient.addColorStop(1, "#45b7d1")
+
+  ctx.fillStyle = gradient
+  ctx.fillRect(0, 0, width, height)
+
+  // Add grid pattern
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.3)"
+  ctx.lineWidth = 1
+
+  const gridSize = 50
+  for (let x = 0; x <= width; x += gridSize) {
+    ctx.beginPath()
+    ctx.moveTo(x, 0)
+    ctx.lineTo(x, height)
+    ctx.stroke()
+  }
+
+  for (let y = 0; y <= height; y += gridSize) {
+    ctx.beginPath()
+    ctx.moveTo(0, y)
+    ctx.lineTo(width, y)
+    ctx.stroke()
+  }
+
+  // Add text
+  ctx.fillStyle = "white"
+  ctx.font = "bold 24px Arial"
+  ctx.textAlign = "center"
+  ctx.fillText("TEST IMAGE", width / 2, height / 2 - 20)
+  ctx.fillText(`${width}x${height}`, width / 2, height / 2 + 20)
+
+  // Add corner markers
+  const markerSize = 20
+  ctx.fillStyle = "yellow"
+  ctx.fillRect(0, 0, markerSize, markerSize)
+  ctx.fillRect(width - markerSize, 0, markerSize, markerSize)
+  ctx.fillRect(0, height - markerSize, markerSize, markerSize)
+  ctx.fillRect(width - markerSize, height - markerSize, markerSize, markerSize)
+
+  return canvas.toDataURL("image/jpeg", 0.9)
+}
