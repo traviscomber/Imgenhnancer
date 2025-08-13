@@ -23,6 +23,8 @@ import {
   Users,
   AlertTriangle,
   Sparkles,
+  FileImage,
+  FileArchiveIcon as Compress,
 } from "lucide-react"
 import { LoginForm } from "@/components/auth/login-form"
 import { SignupForm } from "@/components/auth/signup-form"
@@ -32,6 +34,7 @@ import { UserManagement } from "@/components/admin/user-management"
 import { RoleManagement } from "@/components/admin/role-management"
 import { preProcessImage, postProcessImage, type EnhancementToggles } from "@/utils/image-processing"
 import { generateDomemaster, type DomemasterOptions } from "@/utils/domemaster"
+import { compressLargeImageInStages, createProgressivePreview, type CompressionResult } from "@/utils/image-compression"
 
 // Define enhancement models first - Clarity Upscaler as default
 const ENHANCEMENT_MODELS = [
@@ -39,7 +42,7 @@ const ENHANCEMENT_MODELS = [
     id: "clarity-upscaler",
     name: "Clarity Upscaler (AI-Optimized Default)",
     description:
-      "High-quality AI upscaling with intelligent parameter optimization. Automatically adjusts settings based on image analysis.",
+      "High-quality AI upscaling with intelligent parameter optimization. Automatically adjusts settings based on image analysis. Supports very large images.",
     maxUpscale: 4,
     replicateModel: "philz1337x/clarity-upscaler",
     version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
@@ -49,12 +52,13 @@ const ENHANCEMENT_MODELS = [
     inputField: "image",
     asianFaceCompatibility: "good" as const,
     westernBias: false,
+    maxFileSize: 100 * 1024 * 1024, // 100MB
   },
   {
     id: "real-esrgan-4x",
     name: "Real-ESRGAN 4x (ASEAN-Safe)",
     description:
-      "AI-powered image upscaling optimized for Indonesian/ASEAN facial features. Preserves natural skin tones and facial characteristics.",
+      "AI-powered image upscaling optimized for Indonesian/ASEAN facial features. Preserves natural skin tones and facial characteristics. Handles large files efficiently.",
     maxUpscale: 4,
     replicateModel: "nightmareai/real-esrgan",
     version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
@@ -64,11 +68,13 @@ const ENHANCEMENT_MODELS = [
     inputField: "image",
     asianFaceCompatibility: "excellent" as const,
     westernBias: false,
+    maxFileSize: 50 * 1024 * 1024, // 50MB
   },
   {
     id: "real-esrgan-2x",
     name: "Real-ESRGAN 2x (Fast, ASEAN-Safe)",
-    description: "Faster 2x upscaling that preserves Indonesian facial features without Western bias",
+    description:
+      "Faster 2x upscaling that preserves Indonesian facial features without Western bias. Optimized for large batch processing.",
     maxUpscale: 2,
     replicateModel: "nightmareai/real-esrgan",
     version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
@@ -78,12 +84,13 @@ const ENHANCEMENT_MODELS = [
     inputField: "image",
     asianFaceCompatibility: "excellent" as const,
     westernBias: false,
+    maxFileSize: 75 * 1024 * 1024, // 75MB
   },
   {
     id: "gfpgan-face",
     name: "GFPGAN Face Enhancement (Western Bias Warning)",
     description:
-      "⚠️ Face restoration trained on Western datasets. May alter Indonesian/ASEAN facial features to appear more Western.",
+      "⚠️ Face restoration trained on Western datasets. May alter Indonesian/ASEAN facial features to appear more Western. Limited file size support.",
     maxUpscale: 4,
     replicateModel: "tencentarc/gfpgan",
     version: "9283608cc6b7be6b65a8e44983db012355fde4132009bf99d976b2f0896856a3",
@@ -93,12 +100,13 @@ const ENHANCEMENT_MODELS = [
     inputField: "img",
     asianFaceCompatibility: "warning" as const,
     westernBias: true,
+    maxFileSize: 25 * 1024 * 1024, // 25MB
   },
   {
     id: "codeformer-face",
     name: "CodeFormer Face Restoration (Strong Western Bias)",
     description:
-      "⚠️ Advanced face restoration with strong Western dataset bias. Will significantly alter Indonesian facial characteristics.",
+      "⚠️ Advanced face restoration with strong Western dataset bias. Will significantly alter Indonesian facial characteristics. Small file sizes only.",
     maxUpscale: 4,
     replicateModel: "sczhou/codeformer",
     version: "7de2ea26c616d5bf2245ad0d5e24f0ff9a6204578a5c876db53142edd9d2cd56",
@@ -108,6 +116,7 @@ const ENHANCEMENT_MODELS = [
     inputField: "image",
     asianFaceCompatibility: "poor" as const,
     westernBias: true,
+    maxFileSize: 20 * 1024 * 1024, // 20MB
   },
 ]
 
@@ -135,6 +144,7 @@ interface ProcessingJob {
   status: string
   startTime: number
   progress: string
+  compressionInfo?: CompressionResult
 }
 
 interface CompletedJob {
@@ -153,6 +163,9 @@ interface CompletedJob {
   processingTime: string
   predictionId?: string
   preserveAsianFeatures: boolean
+  compressionApplied?: boolean
+  originalFileSize?: number
+  processedFileSize?: number
 }
 
 const AIImageEnhancementPortal = () => {
@@ -282,23 +295,51 @@ const AIImageEnhancementPortal = () => {
   const isAdmin = user?.email === "admin@example.com" || user?.email === "demo@example.com"
 
   const handleFileSelect = useCallback(
-    (files: FileList) => {
+    async (files: FileList) => {
       if (!user) {
         setShowAuth(true)
         return
       }
-      const newFiles = Array.from(files).map((file) => ({
-        id: Date.now() + Math.random(),
-        file,
-        name: file.name,
-        size: file.size,
-        preview: URL.createObjectURL(file),
-        status: "ready",
-        error: null,
-      }))
+
+      const newFiles = await Promise.all(
+        Array.from(files).map(async (file) => {
+          const selectedModel = getCurrentModel()
+          const maxFileSize = selectedModel?.maxFileSize || 50 * 1024 * 1024
+
+          // Create progressive preview for large files
+          let preview: string
+          try {
+            if (file.size > 5 * 1024 * 1024) {
+              // 5MB+
+              preview = await createProgressivePreview(file)
+            } else {
+              preview = URL.createObjectURL(file)
+            }
+          } catch (error) {
+            console.warn("Failed to create preview:", error)
+            preview = URL.createObjectURL(file)
+          }
+
+          return {
+            id: Date.now() + Math.random(),
+            file,
+            name: file.name,
+            size: file.size,
+            preview,
+            status: file.size > maxFileSize ? "size-warning" : "ready",
+            error: null,
+            sizeWarning:
+              file.size > maxFileSize
+                ? `File size (${formatFileSize(file.size)}) exceeds model limit (${formatFileSize(maxFileSize)}). Compression will be applied.`
+                : null,
+            compressionNeeded: file.size > maxFileSize,
+          }
+        }),
+      )
+
       setSelectedFiles((prev) => [...prev, ...newFiles])
     },
-    [user],
+    [user, enhancementSettings.model],
   )
 
   const handleDrop = useCallback(
@@ -334,6 +375,11 @@ const AIImageEnhancementPortal = () => {
   const getMaxUpscale = () => {
     const selectedModel = getCurrentModel()
     return selectedModel?.maxUpscale || 4
+  }
+
+  const getMaxFileSize = () => {
+    const selectedModel = getCurrentModel()
+    return selectedModel?.maxFileSize || 50 * 1024 * 1024
   }
 
   async function exportDomemasterForJob(job: CompletedJob) {
@@ -394,6 +440,54 @@ const AIImageEnhancementPortal = () => {
     setProcessingQueue((prev) => [...prev, job])
 
     try {
+      // Handle large file compression if needed
+      let uploadFile = fileToProcess.file
+      const selectedModel = getCurrentModel()
+      const maxFileSize = selectedModel?.maxFileSize || 50 * 1024 * 1024
+
+      if (fileToProcess.file.size > maxFileSize) {
+        setProcessingQueue((prev) =>
+          prev.map((j) => (j.id === job.id ? { ...j, progress: "Compressing large image..." } : j)),
+        )
+
+        try {
+          const compressionResult = await compressLargeImageInStages(fileToProcess.file, maxFileSize)
+          uploadFile = new File([compressionResult.blob], fileToProcess.file.name, {
+            type: compressionResult.blob.type,
+          })
+
+          // Update job with compression info
+          setProcessingQueue((prev) =>
+            prev.map((j) =>
+              j.id === job.id
+                ? {
+                    ...j,
+                    progress: `Compression complete (${compressionResult.compressionRatio.toFixed(2)}x reduction)...`,
+                    compressionInfo: compressionResult,
+                  }
+                : j,
+            ),
+          )
+
+          console.log(
+            `✅ Large file compressed: ${formatFileSize(fileToProcess.file.size)} → ${formatFileSize(uploadFile.size)}`,
+          )
+        } catch (compressionError) {
+          console.error("Compression failed:", compressionError)
+          setProcessingQueue((prev) => prev.filter((j) => j.id !== job.id))
+          setSelectedFiles((prev) => [
+            ...prev,
+            {
+              ...fileToProcess,
+              status: "failed",
+              error: "Failed to compress large image",
+              details: compressionError instanceof Error ? compressionError.message : "Unknown compression error",
+            },
+          ])
+          return
+        }
+      }
+
       // Pre-process on client (light, safe)
       setProcessingQueue((prev) => prev.map((j) => (j.id === job.id ? { ...j, progress: "Pre-processing..." } : j)))
 
@@ -402,38 +496,33 @@ const AIImageEnhancementPortal = () => {
         enhancementSettings.pre?.denoise !== "off" ||
         enhancementSettings.pre?.whiteBalance === "auto"
 
-      let uploadBlob: Blob
+      let processedFile = uploadFile
       if (needPre) {
         try {
-          uploadBlob = await preProcessImage(fileToProcess.file, enhancementSettings.pre)
+          const preProcessedBlob = await preProcessImage(uploadFile, enhancementSettings.pre)
+          processedFile = new File([preProcessedBlob], uploadFile.name.replace(/\.(\w+)$/, "") + ".png", {
+            type: "image/png",
+          })
         } catch (error) {
           console.error("Pre-processing error:", error)
           // Fall back to original file if pre-processing fails
-          uploadBlob = fileToProcess.file
         }
-      } else {
-        uploadBlob = fileToProcess.file
       }
-
-      const uploadFile = new File([uploadBlob], fileToProcess.file.name.replace(/\.(\w+)$/, "") + ".png", {
-        type: "image/png",
-      })
 
       // Build FormData
       const formData = new FormData()
-      formData.append("file", uploadFile, uploadFile.name)
+      formData.append("file", processedFile, processedFile.name)
       formData.append("settings", JSON.stringify(enhancementSettings))
 
-      const selectedModel = getCurrentModel()
       const modelName = selectedModel?.replicateModel || "unknown-model"
 
       setProcessingQueue((prev) =>
         prev.map((j) => (j.id === job.id ? { ...j, progress: `Uploading to ${modelName}...` } : j)),
       )
 
-      // Call API (let browser set multipart boundary)
+      // Call API with extended timeout for large files
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 10 * 60 * 1000)
+      const timeoutId = setTimeout(() => controller.abort(), 15 * 60 * 1000) // 15 minutes
       let response: Response
       try {
         response = await fetch("/api/enhance-replicate", {
@@ -506,7 +595,7 @@ const AIImageEnhancementPortal = () => {
       }
 
       // Ensure we have a valid model ID and name with complete safety
-      const finalModelId = result.model || enhancementSettings?.model || "real-esrgan-4x"
+      const finalModelId = result.model || enhancementSettings?.model || "clarity-upscaler"
       const finalModelName = getModelName(finalModelId)
 
       const completedJob: CompletedJob = {
@@ -525,6 +614,9 @@ const AIImageEnhancementPortal = () => {
         processingTime: result.processingTime || "Unknown",
         predictionId: result.predictionId,
         preserveAsianFeatures: enhancementSettings?.preserveAsianFeatures || false,
+        compressionApplied: result.compressionApplied || false,
+        originalFileSize: result.originalSize,
+        processedFileSize: result.processedSize,
       }
 
       setCompletedJobs((prev) => [...prev, completedJob])
@@ -647,11 +739,20 @@ const AIImageEnhancementPortal = () => {
           const isPortrait = aspectRatio < 1
           const resolution = img.width * img.height
           const isHighRes = resolution > 2000000 // 2MP+
+          const isVeryHighRes = resolution > 8000000 // 8MP+
 
           // AI-optimized parameters based on analysis
           const optimizedSettings: Partial<EnhancementSettings> = {
-            // Upscale factor based on current resolution
-            upscaleFactor: isHighRes ? 2 : resolution < 500000 ? 4 : 3,
+            // Upscale factor based on current resolution and file size
+            upscaleFactor: isVeryHighRes ? 2 : isHighRes ? 3 : resolution < 500000 ? 4 : 3,
+
+            // Model selection based on image characteristics
+            model:
+              file.size > 50 * 1024 * 1024
+                ? "clarity-upscaler"
+                : hasDetails && !isHighNoise
+                  ? "real-esrgan-4x"
+                  : "clarity-upscaler",
 
             // Pre-processing optimization
             pre: {
@@ -677,6 +778,7 @@ const AIImageEnhancementPortal = () => {
             isHighNoise,
             hasDetails,
             resolution: `${img.width}x${img.height}`,
+            fileSize: formatFileSize(file.size),
             optimizedSettings,
           })
 
@@ -722,20 +824,14 @@ const AIImageEnhancementPortal = () => {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-white">AI Enhancement Portal</h1>
-                <p className="text-sm text-blue-200">Optimized for Indonesian/ASEAN Facial Features</p>
+                <p className="text-sm text-blue-200">Large File Support • Up to 100MB • Intelligent Compression</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2 text-sm">
                 <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
-                <span className="text-green-400">ASEAN-Optimized ✅</span>
-                <span className="text-xs text-gray-400">
-                  {
-                    ENHANCEMENT_MODELS.filter((m) => m.status === "working" && m.asianFaceCompatibility === "excellent")
-                      .length
-                  }{" "}
-                  ASEAN-safe models
-                </span>
+                <span className="text-green-400">Large Files ✅</span>
+                <span className="text-xs text-gray-400">Up to {formatFileSize(getMaxFileSize())} per file</span>
               </div>
 
               {user ? (
@@ -897,7 +993,13 @@ const AIImageEnhancementPortal = () => {
             {/* Upload Area */}
             <div className="lg:col-span-2">
               <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-8">
-                <h2 className="text-xl font-semibold text-white mb-6">Upload Images for Enhancement</h2>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold text-white">Upload Large Images for Enhancement</h2>
+                  <div className="flex items-center space-x-2 text-sm text-green-400">
+                    <FileImage className="w-4 h-4" />
+                    <span>Up to {formatFileSize(getMaxFileSize())}</span>
+                  </div>
+                </div>
 
                 <div
                   onDrop={handleDrop}
@@ -913,18 +1015,21 @@ const AIImageEnhancementPortal = () => {
                 >
                   <ImageIcon className="w-12 h-12 text-blue-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-white mb-2">
-                    {user ? "Drop images here or click to browse" : "Sign in to upload images"}
+                    {user ? "Drop large images here or click to browse" : "Sign in to upload images"}
                   </h3>
-                  <p className="text-blue-200 mb-4">Supports: JPG, PNG, WebP, HEIC, TIFF up to 50MB</p>
-                  <p className="text-sm text-gray-400">
-                    Enhanced with{" "}
-                    {
-                      ENHANCEMENT_MODELS.filter(
-                        (m) => m.status === "working" && m.asianFaceCompatibility === "excellent",
-                      ).length
-                    }{" "}
-                    ASEAN-optimized AI Models
+                  <p className="text-blue-200 mb-4">
+                    Supports: JPG, PNG, WebP, HEIC, TIFF up to {formatFileSize(getMaxFileSize())}
                   </p>
+                  <div className="flex items-center justify-center space-x-4 text-sm text-gray-400">
+                    <div className="flex items-center space-x-1">
+                      <Compress className="w-4 h-4" />
+                      <span>Intelligent Compression</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Sparkles className="w-4 h-4" />
+                      <span>AI Parameter Optimization</span>
+                    </div>
+                  </div>
                   {!user && (
                     <button
                       onClick={() => setShowAuth(true)}
@@ -959,7 +1064,23 @@ const AIImageEnhancementPortal = () => {
                             />
                             <div>
                               <p className="text-white font-medium">{file.name}</p>
-                              <p className="text-sm text-gray-400">{formatFileSize(file.size)}</p>
+                              <div className="flex items-center space-x-2 text-sm text-gray-400">
+                                <span>{formatFileSize(file.size)}</span>
+                                {file.compressionNeeded && (
+                                  <div className="flex items-center space-x-1 text-yellow-400">
+                                    <Compress className="w-3 h-3" />
+                                    <span>Will compress</span>
+                                  </div>
+                                )}
+                              </div>
+                              {file.status === "size-warning" && (
+                                <div className="mt-1">
+                                  <div className="flex items-center space-x-2">
+                                    <AlertTriangle className="w-4 h-4 text-yellow-400" />
+                                    <p className="text-sm text-yellow-400">Large file - compression will be applied</p>
+                                  </div>
+                                </div>
+                              )}
                               {file.status === "failed" && (
                                 <div className="mt-1">
                                   <div className="flex items-center space-x-2">
@@ -980,7 +1101,7 @@ const AIImageEnhancementPortal = () => {
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
-                            {file.status === "ready" && (
+                            {(file.status === "ready" || file.status === "size-warning") && (
                               <button
                                 onClick={() => startProcessing(file.id)}
                                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
@@ -1019,6 +1140,28 @@ const AIImageEnhancementPortal = () => {
                 <h3 className="text-lg font-semibold text-white mb-6">Enhancement Settings</h3>
 
                 <div className="space-y-6">
+                  {/* Large File Support Info */}
+                  <div className="bg-gradient-to-r from-green-900/20 to-blue-900/20 rounded-lg p-4 border border-green-500/20">
+                    <h4 className="text-white font-medium mb-3 flex items-center gap-2">
+                      <FileImage className="w-4 h-4 text-green-300" />
+                      Large File Support
+                    </h4>
+                    <div className="space-y-2 text-sm text-gray-300">
+                      <div className="flex justify-between">
+                        <span>Max file size:</span>
+                        <span className="text-green-400">{formatFileSize(getMaxFileSize())}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Auto compression:</span>
+                        <span className="text-green-400">✅ Enabled</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Progressive loading:</span>
+                        <span className="text-green-400">✅ Enabled</span>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* AI Parameter Optimization */}
                   <div className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 rounded-lg p-4 border border-purple-500/20">
                     <h4 className="text-white font-medium mb-3 flex items-center gap-2">
@@ -1026,7 +1169,7 @@ const AIImageEnhancementPortal = () => {
                       AI Parameter Optimization
                     </h4>
                     <p className="text-sm text-gray-300 mb-3">
-                      Clarity Upscaler with intelligent parameter selection based on image analysis
+                      Intelligent parameter selection based on image analysis and file size
                     </p>
                     <div className="flex flex-wrap gap-3">
                       <button
@@ -1047,10 +1190,11 @@ const AIImageEnhancementPortal = () => {
                       </button>
                       <button
                         onClick={() => {
-                          // Dome-optimized settings
+                          // Large file optimized settings
                           setDomePreset((d) => ({ ...d, enabled: true, size: 8192, bleedPercent: 3, overlay: true }))
                           setEnhancementSettings((prev) => ({
                             ...prev,
+                            model: "clarity-upscaler", // Best for large files
                             targetUse: "dome",
                             upscaleFactor: Math.min(prev.upscaleFactor, getMaxUpscale()),
                             pre: { deblock: "low", denoise: "low", whiteBalance: "auto" },
@@ -1061,12 +1205,12 @@ const AIImageEnhancementPortal = () => {
                         }}
                         className="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm"
                       >
-                        Dome 8K Preset
+                        Large File Preset
                       </button>
                     </div>
                     <div className="mt-3 text-xs text-purple-200 bg-purple-900/20 rounded p-2">
-                      💡 <strong>AI Analysis:</strong> Automatically detects brightness, noise, detail level, and
-                      resolution to optimize enhancement parameters for best results.
+                      💡 <strong>AI Analysis:</strong> Automatically detects file size, brightness, noise, detail level,
+                      and resolution to optimize enhancement parameters and model selection for best results.
                     </div>
                   </div>
 
@@ -1095,14 +1239,23 @@ const AIImageEnhancementPortal = () => {
                         </option>
                       ))}
                     </select>
-                    <p className="text-xs text-gray-400 mt-1">
-                      {getCurrentModel()?.description || "Model description not available"}
-                      {getCurrentModel()?.id === "clarity-upscaler" && (
-                        <span className="block mt-1 text-purple-300">
-                          🤖 <strong>AI-Optimized:</strong> Best results with automatic parameter tuning
+                    <div className="mt-2 space-y-1">
+                      <p className="text-xs text-gray-400">
+                        {getCurrentModel()?.description || "Model description not available"}
+                      </p>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-gray-400">Max file size:</span>
+                        <span className="text-blue-400">
+                          {formatFileSize(getCurrentModel()?.maxFileSize || 50 * 1024 * 1024)}
                         </span>
+                      </div>
+                      {getCurrentModel()?.id === "clarity-upscaler" && (
+                        <div className="text-xs text-purple-300 bg-purple-900/20 rounded p-2">
+                          🤖 <strong>AI-Optimized:</strong> Best results with automatic parameter tuning and large file
+                          support
+                        </div>
                       )}
-                    </p>
+                    </div>
                     {getCurrentModel()?.westernBias && (
                       <div className="mt-2 p-3 bg-yellow-900/20 border border-yellow-500/20 rounded-lg">
                         <div className="flex items-start space-x-2">
@@ -1363,7 +1516,8 @@ const AIImageEnhancementPortal = () => {
 
                   {/* Options summary */}
                   <div className="text-xs text-gray-400">
-                    Safe defaults: Deblock/denoise low, WB auto, local contrast/sharpen low, grain off. Domemaster:{" "}
+                    Large file support: Up to {formatFileSize(getMaxFileSize())} with intelligent compression.
+                    Domemaster:{" "}
                     {domePreset.enabled ? `${domePreset.size}×${domePreset.size} con máscara` : "desactivado"}.
                   </div>
                 </div>
@@ -1384,6 +1538,10 @@ const AIImageEnhancementPortal = () => {
                   <div className="flex justify-between text-white font-medium">
                     <span>Target:</span>
                     <span>{getTargetResolution()}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-300">
+                    <span>Max file size:</span>
+                    <span className="text-blue-400">{formatFileSize(getMaxFileSize())}</span>
                   </div>
                   <div className="flex justify-between text-gray-300">
                     <span>Feature preservation:</span>
@@ -1427,13 +1585,23 @@ const AIImageEnhancementPortal = () => {
                         />
                         <div>
                           <p className="text-white font-medium">{job.file?.name || "Unknown file"}</p>
-                          <p className="text-sm text-gray-400">
-                            {safeGetModelProperty(job.settings?.model, "name", "Unknown Model")} •{" "}
-                            {job.settings?.upscaleFactor || 2}x
+                          <div className="flex items-center space-x-2 text-sm text-gray-400">
+                            <span>{safeGetModelProperty(job.settings?.model, "name", "Unknown Model")}</span>
+                            <span>•</span>
+                            <span>{job.settings?.upscaleFactor || 2}x</span>
+                            {job.compressionInfo && (
+                              <>
+                                <span>•</span>
+                                <div className="flex items-center space-x-1 text-yellow-400">
+                                  <Compress className="w-3 h-3" />
+                                  <span>{job.compressionInfo.compressionRatio.toFixed(1)}x compressed</span>
+                                </div>
+                              </>
+                            )}
                             {job.settings?.preserveAsianFeatures && (
                               <span className="ml-2 text-green-400">🇮🇩 ASEAN-Safe</span>
                             )}
-                          </p>
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -1475,6 +1643,12 @@ const AIImageEnhancementPortal = () => {
                       <div className="flex items-center space-x-2 mb-3">
                         <CheckCircle className="w-4 h-4 text-green-400" />
                         <span className="text-sm text-green-400">Enhanced with Replicate</span>
+                        {job.compressionApplied && (
+                          <div className="flex items-center space-x-1 text-yellow-400">
+                            <Compress className="w-3 h-3" />
+                            <span className="text-xs">Compressed</span>
+                          </div>
+                        )}
                       </div>
 
                       <div className="space-y-2 text-sm text-gray-300 mb-4">
@@ -1482,6 +1656,14 @@ const AIImageEnhancementPortal = () => {
                           <span>Original:</span>
                           <span>{job.originalSize || "Unknown size"}</span>
                         </div>
+                        {job.compressionApplied && job.originalFileSize && job.processedFileSize && (
+                          <div className="flex justify-between">
+                            <span>Compressed:</span>
+                            <span className="text-yellow-400">
+                              {formatFileSize(job.originalFileSize)} → {formatFileSize(job.processedFileSize)}
+                            </span>
+                          </div>
+                        )}
                         <div className="flex justify-between">
                           <span>Model:</span>
                           <span className="text-blue-400 font-mono text-xs">{job.modelName || "Unknown Model"}</span>

@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
 import Replicate from "replicate"
+import { compressLargeImageInStages } from "@/utils/image-compression"
 
 export async function POST(request: NextRequest) {
-  console.log("🚀 Starting Replicate enhancement...")
+  console.log("🚀 Starting Replicate enhancement with large payload support...")
 
   try {
     // Check API token
@@ -10,7 +11,7 @@ export async function POST(request: NextRequest) {
       console.error("❌ REPLICATE_API_TOKEN not configured")
       return NextResponse.json(
         { success: false, error: "REPLICATE_API_TOKEN not configured", step: "config_check" },
-        { status: 500 }
+        { status: 500 },
       )
     }
 
@@ -25,11 +26,11 @@ export async function POST(request: NextRequest) {
       console.error("❌ Failed to initialize Replicate client:", error)
       return NextResponse.json(
         { success: false, error: "Failed to initialize Replicate client", step: "client_init", details: error.message },
-        { status: 500 }
+        { status: 500 },
       )
     }
 
-    // Parse FormData with detailed error handling
+    // Parse FormData with detailed error handling and size limits
     let formData: FormData
     try {
       formData = await request.formData()
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest) {
       console.error("❌ Failed to parse FormData:", error)
       return NextResponse.json(
         { success: false, error: "Failed to parse form data", step: "formdata_parse", details: error.message },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
@@ -46,10 +47,7 @@ export async function POST(request: NextRequest) {
     const file = formData.get("file") as File
     if (!file) {
       console.error("❌ No file provided in FormData")
-      return NextResponse.json(
-        { success: false, error: "No file provided", step: "file_extraction" },
-        { status: 400 }
-      )
+      return NextResponse.json({ success: false, error: "No file provided", step: "file_extraction" }, { status: 400 })
     }
 
     console.log(`✅ File extracted: ${file.name} (${file.size} bytes, ${file.type})`)
@@ -59,8 +57,38 @@ export async function POST(request: NextRequest) {
       console.error("❌ Invalid file type:", file.type)
       return NextResponse.json(
         { success: false, error: "File must be an image", step: "file_validation" },
-        { status: 400 }
+        { status: 400 },
       )
+    }
+
+    // Handle large files with intelligent compression
+    let processedFile = file
+    const maxPayloadSize = 20 * 1024 * 1024 // 20MB limit for API
+
+    if (file.size > maxPayloadSize) {
+      console.log(
+        `🔄 Large file detected (${(file.size / 1024 / 1024).toFixed(2)}MB), applying intelligent compression...`,
+      )
+
+      try {
+        const compressionResult = await compressLargeImageInStages(file, maxPayloadSize)
+        processedFile = new File([compressionResult.blob], file.name, { type: compressionResult.blob.type })
+
+        console.log(
+          `✅ Compression successful: ${(file.size / 1024 / 1024).toFixed(2)}MB → ${(processedFile.size / 1024 / 1024).toFixed(2)}MB (${compressionResult.compressionRatio.toFixed(2)}x reduction)`,
+        )
+      } catch (compressionError: any) {
+        console.error("❌ Compression failed:", compressionError)
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Failed to compress large image",
+            step: "compression",
+            details: compressionError.message,
+          },
+          { status: 413 },
+        )
+      }
     }
 
     // Extract settings
@@ -75,37 +103,53 @@ export async function POST(request: NextRequest) {
       console.warn("⚠️ Failed to parse settings, using defaults:", error.message)
     }
 
-    // Convert file to base64 data URL
+    // Convert file to base64 data URL with progress tracking
     let imageDataUrl: string
     try {
-      const arrayBuffer = await file.arrayBuffer()
+      console.log("🔄 Converting to base64...")
+      const arrayBuffer = await processedFile.arrayBuffer()
       const base64 = Buffer.from(arrayBuffer).toString("base64")
-      imageDataUrl = `data:${file.type};base64,${base64}`
-      console.log(`✅ Image converted to base64 (${base64.length} chars)`)
+      imageDataUrl = `data:${processedFile.type};base64,${base64}`
+      console.log(
+        `✅ Image converted to base64 (${base64.length} chars, ${(base64.length / 1024 / 1024).toFixed(2)}MB)`,
+      )
     } catch (error: any) {
       console.error("❌ Failed to convert image to base64:", error)
       return NextResponse.json(
         { success: false, error: "Failed to process image", step: "image_conversion", details: error.message },
-        { status: 500 }
+        { status: 500 },
       )
     }
 
-    // Model configuration
+    // Model configuration with enhanced settings for large images
     const modelConfigs: Record<string, any> = {
       "real-esrgan-4x": {
         model: "nightmareai/real-esrgan",
         version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
-        input: { image: imageDataUrl, scale: settings.upscaleFactor || 4 },
+        input: {
+          image: imageDataUrl,
+          scale: settings.upscaleFactor || 4,
+          // Enhanced settings for large images
+          face_enhance: settings.faceEnhance || false,
+        },
       },
       "real-esrgan-2x": {
         model: "nightmareai/real-esrgan",
         version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
-        input: { image: imageDataUrl, scale: 2 },
+        input: {
+          image: imageDataUrl,
+          scale: 2,
+          face_enhance: settings.faceEnhance || false,
+        },
       },
       "gfpgan-face": {
         model: "tencentarc/gfpgan",
         version: "9283608cc6b7be6b65a8e44983db012355fde4132009bf99d976b2f0896856a3",
-        input: { img: imageDataUrl, scale: settings.upscaleFactor || 2 },
+        input: {
+          img: imageDataUrl,
+          scale: settings.upscaleFactor || 2,
+          version: "1.4",
+        },
       },
       "codeformer-face": {
         model: "sczhou/codeformer",
@@ -130,24 +174,27 @@ export async function POST(request: NextRequest) {
           resemblance: 0.6,
           tiling: false,
           sd_model: "juggernaut_reborn.safetensors [338b85bc4f]",
+          // Enhanced settings for large images
+          hdr: settings.hdr || false,
+          sharpen: settings.sharpen || 0,
         },
       },
     }
 
-    const modelId = settings.model || "real-esrgan-4x"
+    const modelId = settings.model || "clarity-upscaler"
     const config = modelConfigs[modelId]
 
     if (!config) {
       console.error("❌ Unknown model:", modelId)
       return NextResponse.json(
         { success: false, error: `Unknown model: ${modelId}`, step: "model_config" },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
     console.log(`✅ Using model: ${config.model} (${modelId})`)
 
-    // Create prediction
+    // Create prediction with extended timeout for large images
     let prediction: any
     try {
       console.log("🔄 Creating prediction...")
@@ -165,21 +212,21 @@ export async function POST(request: NextRequest) {
       console.error("❌ Failed to create prediction:", error)
       return NextResponse.json(
         { success: false, error: "Failed to create prediction", step: "create_prediction", details: error.message },
-        { status: 500 }
+        { status: 500 },
       )
     }
 
-    // Wait for completion with timeout
+    // Wait for completion with extended timeout for large images
     const startTime = Date.now()
-    const timeout = 10 * 60 * 1000 // 10 minutes
+    const timeout = 15 * 60 * 1000 // 15 minutes for large images
     let finalPrediction: any
 
     try {
-      console.log("⏳ Waiting for prediction to complete...")
-      
+      console.log("⏳ Waiting for prediction to complete (extended timeout for large images)...")
+
       while (true) {
         if (Date.now() - startTime > timeout) {
-          throw new Error("Prediction timed out after 10 minutes")
+          throw new Error("Prediction timed out after 15 minutes")
         }
 
         try {
@@ -206,14 +253,14 @@ export async function POST(request: NextRequest) {
           throw new Error("Prediction was canceled")
         }
 
-        // Wait before next check
-        await new Promise((resolve) => setTimeout(resolve, 2000))
+        // Longer wait intervals for large images
+        await new Promise((resolve) => setTimeout(resolve, 3000))
       }
     } catch (error: any) {
       console.error("❌ Prediction processing failed:", error)
       return NextResponse.json(
         { success: false, error: error.message, step: "prediction_wait", predictionId: prediction.id },
-        { status: 500 }
+        { status: 500 },
       )
     }
 
@@ -223,7 +270,7 @@ export async function POST(request: NextRequest) {
       console.error("❌ No output from prediction")
       return NextResponse.json(
         { success: false, error: "No output from prediction", step: "output_extraction", predictionId: prediction.id },
-        { status: 500 }
+        { status: 500 },
       )
     }
 
@@ -237,7 +284,7 @@ export async function POST(request: NextRequest) {
       console.error("❌ Unexpected output format:", typeof output)
       return NextResponse.json(
         { success: false, error: "Unexpected output format", step: "output_format", predictionId: prediction.id },
-        { status: 500 }
+        { status: 500 },
       )
     }
 
@@ -245,7 +292,7 @@ export async function POST(request: NextRequest) {
       console.error("❌ Invalid download URL:", downloadUrl)
       return NextResponse.json(
         { success: false, error: "Invalid download URL", step: "url_validation", predictionId: prediction.id },
-        { status: 500 }
+        { status: 500 },
       )
     }
 
@@ -261,12 +308,15 @@ export async function POST(request: NextRequest) {
       predictionId: prediction.id,
       fileSize: "Enhanced image",
       upscaleFactor: settings.upscaleFactor || 2,
+      originalSize: file.size,
+      processedSize: processedFile.size,
+      compressionApplied: file.size !== processedFile.size,
     })
   } catch (error: any) {
     console.error("❌ Unexpected error:", error)
     return NextResponse.json(
       { success: false, error: error.message || "Unexpected error", step: "unexpected_error" },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }
