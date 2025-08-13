@@ -1,29 +1,7 @@
 "use client"
 
-import type React from "react"
-
 import { useState, useRef, useCallback, useEffect } from "react"
-import {
-  Upload,
-  ImageIcon,
-  Settings,
-  Download,
-  Zap,
-  Loader2,
-  CheckCircle,
-  Play,
-  X,
-  RefreshCw,
-  AlertCircle,
-  Search,
-  TestTube,
-  Key,
-  Shield,
-  LogIn,
-  Users,
-  AlertTriangle,
-  Sparkles,
-} from "lucide-react"
+import { Upload, ImageIcon, Settings, Download, Zap, Loader2, CheckCircle, Play, X, RefreshCw, AlertCircle, Search, TestTube, Key, Shield, LogIn, Users, AlertTriangle, Sparkles } from 'lucide-react'
 import { LoginForm } from "@/components/auth/login-form"
 import { SignupForm } from "@/components/auth/signup-form"
 import { UserMenu } from "@/components/auth/user-menu"
@@ -33,33 +11,17 @@ import { RoleManagement } from "@/components/admin/role-management"
 import { preProcessImage, postProcessImage, type EnhancementToggles } from "@/utils/image-processing"
 import { generateDomemaster, type DomemasterOptions } from "@/utils/domemaster"
 
-// Define enhancement models first - Clarity Upscaler as default
+// Define enhancement models first
 const ENHANCEMENT_MODELS = [
   {
-    id: "clarity-upscaler",
-    name: "Clarity Upscaler (AI-Optimized Default)",
-    description:
-      "High-quality AI upscaling with intelligent parameter optimization. Automatically adjusts settings based on image analysis.",
-    maxUpscale: 4,
-    replicateModel: "philz1337x/clarity-upscaler",
-    version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
-    category: "upscaling",
-    recommended: true,
-    status: "working",
-    inputField: "image",
-    asianFaceCompatibility: "good" as const,
-    westernBias: false,
-  },
-  {
     id: "real-esrgan-4x",
-    name: "Real-ESRGAN 4x (ASEAN-Safe)",
-    description:
-      "AI-powered image upscaling optimized for Indonesian/ASEAN facial features. Preserves natural skin tones and facial characteristics.",
+    name: "Real-ESRGAN 4x (Recommended for ASEAN)",
+    description: "AI-powered image upscaling optimized for Indonesian/ASEAN facial features. Preserves natural skin tones and facial characteristics.",
     maxUpscale: 4,
     replicateModel: "nightmareai/real-esrgan",
     version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
     category: "upscaling",
-    recommended: false,
+    recommended: true,
     status: "working",
     inputField: "image",
     asianFaceCompatibility: "excellent" as const,
@@ -82,8 +44,7 @@ const ENHANCEMENT_MODELS = [
   {
     id: "gfpgan-face",
     name: "GFPGAN Face Enhancement (Western Bias Warning)",
-    description:
-      "⚠️ Face restoration trained on Western datasets. May alter Indonesian/ASEAN facial features to appear more Western.",
+    description: "⚠️ Face restoration trained on Western datasets. May alter Indonesian/ASEAN facial features to appear more Western.",
     maxUpscale: 4,
     replicateModel: "tencentarc/gfpgan",
     version: "9283608cc6b7be6b65a8e44983db012355fde4132009bf99d976b2f0896856a3",
@@ -97,8 +58,7 @@ const ENHANCEMENT_MODELS = [
   {
     id: "codeformer-face",
     name: "CodeFormer Face Restoration (Strong Western Bias)",
-    description:
-      "⚠️ Advanced face restoration with strong Western dataset bias. Will significantly alter Indonesian facial characteristics.",
+    description: "⚠️ Advanced face restoration with strong Western dataset bias. Will significantly alter Indonesian facial characteristics.",
     maxUpscale: 4,
     replicateModel: "sczhou/codeformer",
     version: "7de2ea26c616d5bf2245ad0d5e24f0ff9a6204578a5c876db53142edd9d2cd56",
@@ -107,6 +67,20 @@ const ENHANCEMENT_MODELS = [
     status: "working",
     inputField: "image",
     asianFaceCompatibility: "poor" as const,
+    westernBias: true,
+  },
+  {
+    id: "clarity-upscaler",
+    name: "Clarity Upscaler (Face Correction Warning)",
+    description: "⚠️ High-quality upscaling with face correction that may not preserve Indonesian/ASEAN facial characteristics",
+    maxUpscale: 4,
+    replicateModel: "philz1337x/clarity-upscaler",
+    version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
+    category: "upscaling",
+    recommended: false,
+    status: "working",
+    inputField: "image",
+    asianFaceCompatibility: "warning" as const,
     westernBias: true,
   },
 ]
@@ -174,9 +148,9 @@ const AIImageEnhancementPortal = () => {
   const [isDiscovering, setIsDiscovering] = useState(false)
   const [isTesting, setIsTesting] = useState(false)
 
-  // Enhancement Settings with safe defaults - Clarity Upscaler as default
+  // Enhancement Settings with safe defaults
   const [enhancementSettings, setEnhancementSettings] = useState<EnhancementSettings>({
-    model: "clarity-upscaler",
+    model: "real-esrgan-4x",
     upscaleFactor: 2,
     targetUse: "display",
     format: "PNG",
@@ -222,11 +196,7 @@ const AIImageEnhancementPortal = () => {
     return model.name
   }
 
-  const safeGetModelProperty = (
-    modelId: string | undefined | null,
-    property: keyof (typeof ENHANCEMENT_MODELS)[0],
-    fallback: any = "Unknown",
-  ) => {
+  const safeGetModelProperty = (modelId: string | undefined | null, property: keyof typeof ENHANCEMENT_MODELS[0], fallback: any = "Unknown") => {
     if (!modelId) return fallback
     const model = getModelById(modelId)
     return model[property] || fallback
@@ -446,9 +416,7 @@ const AIImageEnhancementPortal = () => {
       }
 
       const contentType = response.headers.get("content-type") || ""
-      const result = contentType.includes("application/json")
-        ? await response.json()
-        : { success: false, error: await response.text() }
+      const result = contentType.includes("application/json") ? await response.json() : { success: false, error: await response.text() }
 
       // Remove from queue
       setProcessingQueue((prev) => prev.filter((j) => j.id !== job.id))
@@ -478,20 +446,10 @@ const AIImageEnhancementPortal = () => {
       if (needPost && result.downloadUrl) {
         try {
           // Proxy fetch to bypass CORS
-          setProcessingQueue(
-            (prev) =>
-              [
-                ...prev,
-                {
-                  id: `post-${job.id}`,
-                  file: job.file,
-                  settings: job.settings,
-                  status: "processing",
-                  startTime: Date.now(),
-                  progress: "Post-processing...",
-                },
-              ] as any,
-          )
+          setProcessingQueue((prev) => [
+            ...prev,
+            { id: `post-${job.id}`, file: job.file, settings: job.settings, status: "processing", startTime: Date.now(), progress: "Post-processing..." },
+          ] as any)
           const proxied = await fetch(`/api/proxy-image?url=${encodeURIComponent(result.downloadUrl)}`)
           if (!proxied.ok) throw new Error(`Proxy fetch failed: ${proxied.status}`)
           const blob = await proxied.blob()
@@ -592,111 +550,6 @@ const AIImageEnhancementPortal = () => {
     }
   }
 
-  // AI-powered parameter optimization based on image analysis
-  const optimizeParametersWithAI = async (file: File) => {
-    try {
-      // Analyze image characteristics
-      const img = new Image()
-      const canvas = document.createElement("canvas")
-      const ctx = canvas.getContext("2d")
-
-      return new Promise<Partial<EnhancementSettings>>((resolve) => {
-        img.onload = () => {
-          canvas.width = Math.min(img.width, 512) // Sample size for analysis
-          canvas.height = Math.min(img.height, 512)
-          ctx?.drawImage(img, 0, 0, canvas.width, canvas.height)
-
-          const imageData = ctx?.getImageData(0, 0, canvas.width, canvas.height)
-          if (!imageData) {
-            resolve({}) // Fallback to defaults
-            return
-          }
-
-          // Analyze image characteristics
-          const pixels = imageData.data
-          let totalBrightness = 0
-          const totalContrast = 0
-          let noiseLevel = 0
-          let edgeCount = 0
-
-          // Calculate brightness and detect noise/edges
-          for (let i = 0; i < pixels.length; i += 4) {
-            const r = pixels[i]
-            const g = pixels[i + 1]
-            const b = pixels[i + 2]
-            const brightness = (r + g + b) / 3
-            totalBrightness += brightness
-
-            // Simple edge detection
-            if (i > canvas.width * 4) {
-              const prevR = pixels[i - canvas.width * 4]
-              const prevG = pixels[i - canvas.width * 4 + 1]
-              const prevB = pixels[i - canvas.width * 4 + 2]
-              const prevBrightness = (prevR + prevG + prevB) / 3
-              const diff = Math.abs(brightness - prevBrightness)
-              if (diff > 30) edgeCount++
-              if (diff > 5 && diff < 15) noiseLevel++
-            }
-          }
-
-          const avgBrightness = totalBrightness / (pixels.length / 4)
-          const isLowLight = avgBrightness < 100
-          const isHighNoise = noiseLevel > (pixels.length / 4) * 0.1
-          const hasDetails = edgeCount > (pixels.length / 4) * 0.05
-          const aspectRatio = img.width / img.height
-          const isPortrait = aspectRatio < 1
-          const resolution = img.width * img.height
-          const isHighRes = resolution > 2000000 // 2MP+
-
-          // AI-optimized parameters based on analysis
-          const optimizedSettings: Partial<EnhancementSettings> = {
-            // Upscale factor based on current resolution
-            upscaleFactor: isHighRes ? 2 : resolution < 500000 ? 4 : 3,
-
-            // Pre-processing optimization
-            pre: {
-              deblock: file.type === "image/jpeg" ? (isHighNoise ? "medium" : "low") : "off",
-              denoise: isHighNoise ? "medium" : isLowLight ? "low" : "off",
-              whiteBalance: isLowLight || avgBrightness < 80 ? "auto" : "off",
-            },
-
-            // Post-processing optimization
-            post: {
-              localContrast: isLowLight ? "medium" : hasDetails ? "low" : "off",
-              sharpen: hasDetails && !isHighNoise ? "low" : "off",
-              grain: avgBrightness > 200 ? "very-low" : "off", // Add grain to very bright/flat images
-            },
-
-            // Target use optimization
-            targetUse: isPortrait ? "display" : resolution > 4000000 ? "print" : "display",
-          }
-
-          console.log("🤖 AI Analysis:", {
-            avgBrightness: Math.round(avgBrightness),
-            isLowLight,
-            isHighNoise,
-            hasDetails,
-            resolution: `${img.width}x${img.height}`,
-            optimizedSettings,
-          })
-
-          resolve(optimizedSettings)
-          URL.revokeObjectURL(img.src)
-        }
-
-        img.onerror = () => {
-          resolve({}) // Fallback to defaults
-          URL.revokeObjectURL(img.src)
-        }
-
-        img.src = URL.createObjectURL(file)
-      })
-    } catch (error) {
-      console.warn("AI optimization failed, using defaults:", error)
-      return {}
-    }
-  }
-
   // Show authentication modal if not logged in
   if (!user && showAuth) {
     return (
@@ -730,11 +583,7 @@ const AIImageEnhancementPortal = () => {
                 <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
                 <span className="text-green-400">ASEAN-Optimized ✅</span>
                 <span className="text-xs text-gray-400">
-                  {
-                    ENHANCEMENT_MODELS.filter((m) => m.status === "working" && m.asianFaceCompatibility === "excellent")
-                      .length
-                  }{" "}
-                  ASEAN-safe models
+                  {ENHANCEMENT_MODELS.filter((m) => m.status === "working" && m.asianFaceCompatibility === "excellent").length} ASEAN-safe models
                 </span>
               </div>
 
@@ -861,9 +710,7 @@ const AIImageEnhancementPortal = () => {
                   <div className="flex items-center justify-between mb-6">
                     <div>
                       <h3 className="text-xl font-semibold text-white mb-2">Model Discovery</h3>
-                      <p className="text-gray-300">
-                        Test available Replicate models for Indonesian/ASEAN image enhancement
-                      </p>
+                      <p className="text-gray-300">Test available Replicate models for Indonesian/ASEAN image enhancement</p>
                     </div>
                     <button
                       onClick={runReplicateDiscovery}
@@ -917,13 +764,7 @@ const AIImageEnhancementPortal = () => {
                   </h3>
                   <p className="text-blue-200 mb-4">Supports: JPG, PNG, WebP, HEIC, TIFF up to 50MB</p>
                   <p className="text-sm text-gray-400">
-                    Enhanced with{" "}
-                    {
-                      ENHANCEMENT_MODELS.filter(
-                        (m) => m.status === "working" && m.asianFaceCompatibility === "excellent",
-                      ).length
-                    }{" "}
-                    ASEAN-optimized AI Models
+                    Enhanced with {ENHANCEMENT_MODELS.filter((m) => m.status === "working" && m.asianFaceCompatibility === "excellent").length} ASEAN-optimized AI Models
                   </p>
                   {!user && (
                     <button
@@ -1019,54 +860,55 @@ const AIImageEnhancementPortal = () => {
                 <h3 className="text-lg font-semibold text-white mb-6">Enhancement Settings</h3>
 
                 <div className="space-y-6">
-                  {/* AI Parameter Optimization */}
-                  <div className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 rounded-lg p-4 border border-purple-500/20">
+                  {/* NUEVO: Presets rápidos */}
+                  <div className="bg-white/5 rounded-lg p-4">
                     <h4 className="text-white font-medium mb-3 flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-purple-300" />
-                      AI Parameter Optimization
+                      <Sparkles className="w-4 h-4 text-yellow-300" />
+                      Presets
                     </h4>
-                    <p className="text-sm text-gray-300 mb-3">
-                      Clarity Upscaler with intelligent parameter selection based on image analysis
-                    </p>
                     <div className="flex flex-wrap gap-3">
                       <button
-                        onClick={async () => {
-                          if (selectedFiles.length > 0) {
-                            const optimized = await optimizeParametersWithAI(selectedFiles[0].file)
-                            setEnhancementSettings((prev) => ({
-                              ...prev,
-                              ...optimized,
-                            }))
-                          }
-                        }}
-                        disabled={selectedFiles.length === 0}
-                        className="px-4 py-2 rounded-md bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white text-sm flex items-center gap-2"
-                      >
-                        <Sparkles className="w-4 h-4" />
-                        Optimize for Selected Image
-                      </button>
-                      <button
                         onClick={() => {
-                          // Dome-optimized settings
+                          // Dome 8K preset
                           setDomePreset((d) => ({ ...d, enabled: true, size: 8192, bleedPercent: 3, overlay: true }))
                           setEnhancementSettings((prev) => ({
                             ...prev,
                             targetUse: "dome",
+                            pre: { ...prev.pre, deblock: "low", denoise: "low", whiteBalance: "auto" },
+                            post: { ...prev.post, localContrast: "low", sharpen: "low", grain: "off" },
                             upscaleFactor: Math.min(prev.upscaleFactor, getMaxUpscale()),
-                            pre: { deblock: "low", denoise: "low", whiteBalance: "auto" },
-                            post: { localContrast: "low", sharpen: "low", grain: "off" },
                             format: "PNG",
                             quality: 95,
                           }))
                         }}
-                        className="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm"
+                        className="px-3 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm"
                       >
-                        Dome 8K Preset
+                        Dome 8K
                       </button>
-                    </div>
-                    <div className="mt-3 text-xs text-purple-200 bg-purple-900/20 rounded p-2">
-                      💡 <strong>AI Analysis:</strong> Automatically detects brightness, noise, detail level, and
-                      resolution to optimize enhancement parameters for best results.
+                      <button
+                        onClick={() => {
+                          // Dome 12K preset
+                          setDomePreset((d) => ({ ...d, enabled: true, size: 12288, bleedPercent: 3, overlay: true }))
+                          setEnhancementSettings((prev) => ({
+                            ...prev,
+                            targetUse: "dome",
+                            pre: { ...prev.pre, deblock: "low", denoise: "low", whiteBalance: "auto" },
+                            post: { ...prev.post, localContrast: "low", sharpen: "low", grain: "off" },
+                            upscaleFactor: Math.min(prev.upscaleFactor, getMaxUpscale()),
+                            format: "PNG",
+                            quality: 95,
+                          }))
+                        }}
+                        className="px-3 py-2 rounded-md bg-purple-600 hover:bg-purple-700 text-white text-sm"
+                      >
+                        Dome 12K
+                      </button>
+                      <button
+                        onClick={() => setDomePreset((d) => ({ ...d, enabled: false }))}
+                        className="px-3 py-2 rounded-md bg-white/10 hover:bg-white/20 text-white text-sm"
+                      >
+                        Desactivar Dome
+                      </button>
                     </div>
                   </div>
 
@@ -1087,29 +929,25 @@ const AIImageEnhancementPortal = () => {
                       }}
                       className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white"
                     >
-                      {ENHANCEMENT_MODELS.filter((m) => m.status === "working").map((model) => (
-                        <option key={model.id} value={model.id} className="bg-slate-800">
-                          {model.name} {model.recommended && "⭐"}
-                          {model.asianFaceCompatibility === "excellent" && " 🇮🇩"}
-                          {model.westernBias && " ⚠️"}
-                        </option>
-                      ))}
+                      {ENHANCEMENT_MODELS
+                        .filter((m) => m.status === "working")
+                        .map((model) => (
+                          <option key={model.id} value={model.id} className="bg-slate-800">
+                            {model.name} {model.recommended && "⭐"} 
+                            {model.asianFaceCompatibility === 'excellent' && " 🇮🇩"}
+                            {model.westernBias && " ⚠️"}
+                          </option>
+                        ))}
                     </select>
                     <p className="text-xs text-gray-400 mt-1">
                       {getCurrentModel()?.description || "Model description not available"}
-                      {getCurrentModel()?.id === "clarity-upscaler" && (
-                        <span className="block mt-1 text-purple-300">
-                          🤖 <strong>AI-Optimized:</strong> Best results with automatic parameter tuning
-                        </span>
-                      )}
                     </p>
                     {getCurrentModel()?.westernBias && (
                       <div className="mt-2 p-3 bg-yellow-900/20 border border-yellow-500/20 rounded-lg">
                         <div className="flex items-start space-x-2">
                           <AlertTriangle className="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
                           <div className="text-xs text-yellow-200">
-                            <strong>Western Bias Warning:</strong> This model may alter Indonesian/ASEAN facial features
-                            to appear more Western.
+                            <strong>Western Bias Warning:</strong> This model may alter Indonesian/ASEAN facial features to appear more Western.
                           </div>
                         </div>
                       </div>
@@ -1147,23 +985,12 @@ const AIImageEnhancementPortal = () => {
                         <label className="block text-xs text-gray-300 mb-1">JPEG Deblock</label>
                         <select
                           value={enhancementSettings.pre.deblock}
-                          onChange={(e) =>
-                            setEnhancementSettings((prev) => ({
-                              ...prev,
-                              pre: { ...prev.pre, deblock: e.target.value as any },
-                            }))
-                          }
+                          onChange={(e) => setEnhancementSettings((prev) => ({ ...prev, pre: { ...prev.pre, deblock: e.target.value as any } }))}
                           className="w-full bg-white/10 border border-white/20 rounded px-3 py-2 text-white"
                         >
-                          <option value="off" className="bg-slate-800">
-                            Off
-                          </option>
-                          <option value="low" className="bg-slate-800">
-                            Low (recommended)
-                          </option>
-                          <option value="medium" className="bg-slate-800">
-                            Medium
-                          </option>
+                          <option value="off" className="bg-slate-800">Off</option>
+                          <option value="low" className="bg-slate-800">Low (recommended)</option>
+                          <option value="medium" className="bg-slate-800">Medium</option>
                         </select>
                         <p className="text-xs text-gray-400 mt-1">Reduce block/ringing before upscaling.</p>
                       </div>
@@ -1172,23 +999,12 @@ const AIImageEnhancementPortal = () => {
                         <label className="block text-xs text-gray-300 mb-1">Denoise</label>
                         <select
                           value={enhancementSettings.pre.denoise}
-                          onChange={(e) =>
-                            setEnhancementSettings((prev) => ({
-                              ...prev,
-                              pre: { ...prev.pre, denoise: e.target.value as any },
-                            }))
-                          }
+                          onChange={(e) => setEnhancementSettings((prev) => ({ ...prev, pre: { ...prev.pre, denoise: e.target.value as any } }))}
                           className="w-full bg-white/10 border border-white/20 rounded px-3 py-2 text-white"
                         >
-                          <option value="off" className="bg-slate-800">
-                            Off
-                          </option>
-                          <option value="low" className="bg-slate-800">
-                            Low (recommended)
-                          </option>
-                          <option value="medium" className="bg-slate-800">
-                            Medium
-                          </option>
+                          <option value="off" className="bg-slate-800">Off</option>
+                          <option value="low" className="bg-slate-800">Low (recommended)</option>
+                          <option value="medium" className="bg-slate-800">Medium</option>
                         </select>
                         <p className="text-xs text-gray-400 mt-1">Light noise reduction (chroma-friendly).</p>
                       </div>
@@ -1197,20 +1013,11 @@ const AIImageEnhancementPortal = () => {
                         <label className="block text-xs text-gray-300 mb-1">White Balance</label>
                         <select
                           value={enhancementSettings.pre.whiteBalance}
-                          onChange={(e) =>
-                            setEnhancementSettings((prev) => ({
-                              ...prev,
-                              pre: { ...prev.pre, whiteBalance: e.target.value as any },
-                            }))
-                          }
+                          onChange={(e) => setEnhancementSettings((prev) => ({ ...prev, pre: { ...prev.pre, whiteBalance: e.target.value as any } }))}
                           className="w-full bg-white/10 border border-white/20 rounded px-3 py-2 text-white"
                         >
-                          <option value="off" className="bg-slate-800">
-                            Off
-                          </option>
-                          <option value="auto" className="bg-slate-800">
-                            Auto (recommended)
-                          </option>
+                          <option value="off" className="bg-slate-800">Off</option>
+                          <option value="auto" className="bg-slate-800">Auto (recommended)</option>
                         </select>
                         <p className="text-xs text-gray-400 mt-1">Subtle gray-world WB to stabilize tones.</p>
                       </div>
@@ -1225,23 +1032,12 @@ const AIImageEnhancementPortal = () => {
                         <label className="block text-xs text-gray-300 mb-1">Local Contrast</label>
                         <select
                           value={enhancementSettings.post.localContrast}
-                          onChange={(e) =>
-                            setEnhancementSettings((prev) => ({
-                              ...prev,
-                              post: { ...prev.post, localContrast: e.target.value as any },
-                            }))
-                          }
+                          onChange={(e) => setEnhancementSettings((prev) => ({ ...prev, post: { ...prev.post, localContrast: e.target.value as any } }))}
                           className="w-full bg-white/10 border border-white/20 rounded px-3 py-2 text-white"
                         >
-                          <option value="off" className="bg-slate-800">
-                            Off
-                          </option>
-                          <option value="low" className="bg-slate-800">
-                            Low (recommended)
-                          </option>
-                          <option value="medium" className="bg-slate-800">
-                            Medium
-                          </option>
+                          <option value="off" className="bg-slate-800">Off</option>
+                          <option value="low" className="bg-slate-800">Low (recommended)</option>
+                          <option value="medium" className="bg-slate-800">Medium</option>
                         </select>
                         <p className="text-xs text-gray-400 mt-1">Gentle pop without halos.</p>
                       </div>
@@ -1250,23 +1046,12 @@ const AIImageEnhancementPortal = () => {
                         <label className="block text-xs text-gray-300 mb-1">Sharpen</label>
                         <select
                           value={enhancementSettings.post.sharpen}
-                          onChange={(e) =>
-                            setEnhancementSettings((prev) => ({
-                              ...prev,
-                              post: { ...prev.post, sharpen: e.target.value as any },
-                            }))
-                          }
+                          onChange={(e) => setEnhancementSettings((prev) => ({ ...prev, post: { ...prev.post, sharpen: e.target.value as any } }))}
                           className="w-full bg-white/10 border border-white/20 rounded px-3 py-2 text-white"
                         >
-                          <option value="off" className="bg-slate-800">
-                            Off
-                          </option>
-                          <option value="low" className="bg-slate-800">
-                            Low (recommended)
-                          </option>
-                          <option value="medium" className="bg-slate-800">
-                            Medium
-                          </option>
+                          <option value="off" className="bg-slate-800">Off</option>
+                          <option value="low" className="bg-slate-800">Low (recommended)</option>
+                          <option value="medium" className="bg-slate-800">Medium</option>
                         </select>
                         <p className="text-xs text-gray-400 mt-1">Edge-aware sharpen to avoid plastic look.</p>
                       </div>
@@ -1275,23 +1060,12 @@ const AIImageEnhancementPortal = () => {
                         <label className="block text-xs text-gray-300 mb-1">Add Grain</label>
                         <select
                           value={enhancementSettings.post.grain}
-                          onChange={(e) =>
-                            setEnhancementSettings((prev) => ({
-                              ...prev,
-                              post: { ...prev.post, grain: e.target.value as any },
-                            }))
-                          }
+                          onChange={(e) => setEnhancementSettings((prev) => ({ ...prev, post: { ...prev.post, grain: e.target.value as any } }))}
                           className="w-full bg-white/10 border border-white/20 rounded px-3 py-2 text-white"
                         >
-                          <option value="off" className="bg-slate-800">
-                            Off
-                          </option>
-                          <option value="very-low" className="bg-slate-800">
-                            Very Low
-                          </option>
-                          <option value="low" className="bg-slate-800">
-                            Low
-                          </option>
+                          <option value="off" className="bg-slate-800">Off</option>
+                          <option value="very-low" className="bg-slate-800">Very Low</option>
+                          <option value="low" className="bg-slate-800">Low</option>
                         </select>
                         <p className="text-xs text-gray-400 mt-1">Subtle texture to reduce {"AI plasticity"}.</p>
                       </div>
@@ -1317,18 +1091,12 @@ const AIImageEnhancementPortal = () => {
                         <label className="block text-xs text-gray-300 mb-1">Resolución</label>
                         <select
                           value={domePreset.size}
-                          onChange={(e) => setDomePreset((d) => ({ ...d, size: Number.parseInt(e.target.value, 10) }))}
+                          onChange={(e) => setDomePreset((d) => ({ ...d, size: parseInt(e.target.value, 10) }))}
                           className="w-full bg-white/10 border border-white/20 rounded px-3 py-2 text-white"
                         >
-                          <option value={4096} className="bg-slate-800">
-                            4K (preview)
-                          </option>
-                          <option value={8192} className="bg-slate-800">
-                            8K (recomendado)
-                          </option>
-                          <option value={12288} className="bg-slate-800">
-                            12K (alto detalle)
-                          </option>
+                          <option value={4096} className="bg-slate-800">4K (preview)</option>
+                          <option value={8192} className="bg-slate-800">8K (recomendado)</option>
+                          <option value={12288} className="bg-slate-800">12K (alto detalle)</option>
                         </select>
                       </div>
                       <div>
@@ -1339,9 +1107,7 @@ const AIImageEnhancementPortal = () => {
                           max={5}
                           step={0.5}
                           value={domePreset.bleedPercent}
-                          onChange={(e) =>
-                            setDomePreset((d) => ({ ...d, bleedPercent: Number.parseFloat(e.target.value) }))
-                          }
+                          onChange={(e) => setDomePreset((d) => ({ ...d, bleedPercent: parseFloat(e.target.value) }))}
                           className="w-full"
                         />
                         <div className="text-xs text-gray-400 mt-1">{domePreset.bleedPercent}%</div>
@@ -1353,18 +1119,17 @@ const AIImageEnhancementPortal = () => {
                           checked={domePreset.overlay}
                           onChange={(e) => setDomePreset((d) => ({ ...d, overlay: e.target.checked }))}
                         />
-                        <label htmlFor="overlay" className="text-xs text-gray-300">
-                          Overlays (guías 10°/ejes)
-                        </label>
+                        <label htmlFor="overlay" className="text-xs text-gray-300">Overlays (guías 10°/ejes)</label>
                       </div>
-                      <div className="text-xs text-gray-400">Salida: PNG 8-bit con fondo negro fuera del círculo.</div>
+                      <div className="text-xs text-gray-400">
+                        Salida: PNG 8-bit con fondo negro fuera del círculo.
+                      </div>
                     </div>
                   </div>
 
                   {/* Options summary */}
                   <div className="text-xs text-gray-400">
-                    Safe defaults: Deblock/denoise low, WB auto, local contrast/sharpen low, grain off. Domemaster:{" "}
-                    {domePreset.enabled ? `${domePreset.size}×${domePreset.size} con máscara` : "desactivado"}.
+                    Safe defaults: Deblock/denoise low, WB auto, local contrast/sharpen low, grain off. Domemaster: {domePreset.enabled ? `${domePreset.size}×${domePreset.size} con máscara` : "desactivado"}.
                   </div>
                 </div>
               </div>
@@ -1379,7 +1144,9 @@ const AIImageEnhancementPortal = () => {
                   </div>
                   <div className="flex justify-between text-gray-300">
                     <span>Selected model:</span>
-                    <span className="text-right">{getCurrentModel()?.name || "Unknown Model"}</span>
+                    <span className="text-right">
+                      {getCurrentModel()?.name || "Unknown Model"}
+                    </span>
                   </div>
                   <div className="flex justify-between text-white font-medium">
                     <span>Target:</span>
@@ -1394,9 +1161,7 @@ const AIImageEnhancementPortal = () => {
                   <div className="flex justify-between text-gray-300">
                     <span>Domemaster preset:</span>
                     <span className={domePreset.enabled ? "text-green-400" : "text-gray-400"}>
-                      {domePreset.enabled
-                        ? `${(domePreset.size / 1024).toFixed(0)}K • Bleed ${domePreset.bleedPercent}%`
-                        : "OFF"}
+                      {domePreset.enabled ? `${(domePreset.size/1024).toFixed(0)}K • Bleed ${domePreset.bleedPercent}%` : "OFF"}
                     </span>
                   </div>
                 </div>
@@ -1428,11 +1193,8 @@ const AIImageEnhancementPortal = () => {
                         <div>
                           <p className="text-white font-medium">{job.file?.name || "Unknown file"}</p>
                           <p className="text-sm text-gray-400">
-                            {safeGetModelProperty(job.settings?.model, "name", "Unknown Model")} •{" "}
-                            {job.settings?.upscaleFactor || 2}x
-                            {job.settings?.preserveAsianFeatures && (
-                              <span className="ml-2 text-green-400">🇮🇩 ASEAN-Safe</span>
-                            )}
+                            {safeGetModelProperty(job.settings?.model, "name", "Unknown Model")} • {job.settings?.upscaleFactor || 2}x
+                            {job.settings?.preserveAsianFeatures && <span className="ml-2 text-green-400">🇮🇩 ASEAN-Safe</span>}
                           </p>
                         </div>
                       </div>
@@ -1503,9 +1265,7 @@ const AIImageEnhancementPortal = () => {
                         {job.predictionId && (
                           <div className="flex justify-between">
                             <span>Prediction ID:</span>
-                            <span className="text-gray-400 font-mono text-xs">
-                              {String(job.predictionId).slice(0, 8)}...
-                            </span>
+                            <span className="text-gray-400 font-mono text-xs">{String(job.predictionId).slice(0, 8)}...</span>
                           </div>
                         )}
                       </div>
@@ -1524,18 +1284,10 @@ const AIImageEnhancementPortal = () => {
                           onClick={() => exportDomemasterForJob(job)}
                           disabled={!domePreset.enabled}
                           className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white py-2 rounded-lg transition-colors flex items-center justify-center space-x-2"
-                          title={
-                            domePreset.enabled
-                              ? `Exportar domemaster ${(domePreset.size / 1024).toFixed(0)}K`
-                              : "Activa el preset Dome en Settings"
-                          }
+                          title={domePreset.enabled ? `Exportar domemaster ${(domePreset.size/1024).toFixed(0)}K` : "Activa el preset Dome en Settings"}
                         >
                           <Sparkles className="w-4 h-4" />
-                          <span>
-                            {domePreset.enabled
-                              ? `Export Domemaster ${(domePreset.size / 1024).toFixed(0)}K`
-                              : "Enable Dome preset to export"}
-                          </span>
+                          <span>{domePreset.enabled ? `Export Domemaster ${(domePreset.size/1024).toFixed(0)}K` : "Enable Dome preset to export"}</span>
                         </button>
                       </div>
                     </div>
