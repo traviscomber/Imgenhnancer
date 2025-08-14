@@ -1,10 +1,10 @@
-export type DomemasterProjection = "equidistant" | "equisolid" | "stereographic"
+export type DomemasterProjection = "equidistant" | "equisolid" | "orthographic" | "stereographic"
 
 export interface DomemasterOptions {
-  size: number // Output size (e.g., 8192 for 8K)
-  bleedPercent: number // Black border percentage (0-5%)
+  size: number // Output resolution (e.g., 4096, 8192)
+  bleedPercent: number // Black border percentage (0-50)
   overlay: boolean // Show guide overlays
-  projection: "equidistant" | "stereographic" // Fisheye projection type
+  projection: "equidistant" | "equisolid" | "orthographic" | "stereographic" // Projection type
 }
 
 export interface DomemasterSettings {
@@ -144,33 +144,33 @@ function sampleEquirectangular(
 /**
  * Draw guide overlays on the domemaster
  */
-function drawGuideOverlays(ctx: CanvasRenderingContext2D, size: number): void {
+function drawGuideOverlays(ctx: CanvasRenderingContext2D, size: number) {
   const center = size / 2
   const radius = center * 0.97 // Slightly inside the circle
 
   ctx.save()
   ctx.strokeStyle = "rgba(255, 255, 255, 0.8)"
-  ctx.lineWidth = 2
+  ctx.lineWidth = Math.max(1, size / 2048) // Scale line width with resolution
   ctx.setLineDash([10, 5])
 
   // Center crosshairs
+  const crosshairSize = Math.max(20, size / 200)
   ctx.beginPath()
-  ctx.moveTo(center - 30, center)
-  ctx.lineTo(center + 30, center)
-  ctx.moveTo(center, center - 30)
-  ctx.lineTo(center, center + 30)
+  ctx.moveTo(center - crosshairSize, center)
+  ctx.lineTo(center + crosshairSize, center)
+  ctx.moveTo(center, center - crosshairSize)
+  ctx.lineTo(center, center + crosshairSize)
   ctx.stroke()
 
-  // Concentric circles at 30°, 60°, 90° elevation
-  const elevations = [30, 60, 90]
-  elevations.forEach((elevation) => {
+  // Concentric circles at elevation angles (10°, 20°, 30°, 40°, 50°, 60°, 70°, 80°)
+  for (let elevation = 10; elevation <= 80; elevation += 10) {
     const elevationRad = (elevation * Math.PI) / 180
     const circleRadius = (elevationRad / (Math.PI / 2)) * radius
 
     ctx.beginPath()
     ctx.arc(center, center, circleRadius, 0, 2 * Math.PI)
     ctx.stroke()
-  })
+  }
 
   // Azimuth lines every 30°
   for (let azimuth = 0; azimuth < 360; azimuth += 30) {
@@ -185,7 +185,7 @@ function drawGuideOverlays(ctx: CanvasRenderingContext2D, size: number): void {
   }
 
   // Corner markers for alignment
-  const markerSize = 20
+  const markerSize = Math.max(10, size / 400)
   const corners = [
     { x: markerSize, y: markerSize },
     { x: size - markerSize, y: markerSize },
@@ -194,15 +194,42 @@ function drawGuideOverlays(ctx: CanvasRenderingContext2D, size: number): void {
   ]
 
   ctx.setLineDash([])
-  ctx.lineWidth = 3
+  ctx.lineWidth = Math.max(2, size / 1024)
+  ctx.strokeStyle = "rgba(255, 0, 0, 0.7)"
   corners.forEach((corner) => {
     ctx.beginPath()
-    ctx.moveTo(corner.x - 10, corner.y)
-    ctx.lineTo(corner.x + 10, corner.y)
-    ctx.moveTo(corner.x, corner.y - 10)
-    ctx.lineTo(corner.x, corner.y + 10)
+    ctx.moveTo(corner.x - markerSize / 2, corner.y)
+    ctx.lineTo(corner.x + markerSize / 2, corner.y)
+    ctx.moveTo(corner.x, corner.y - markerSize / 2)
+    ctx.lineTo(corner.x, corner.y + markerSize / 2)
     ctx.stroke()
   })
+
+  // Cardinal direction labels
+  ctx.fillStyle = "rgba(255, 255, 255, 0.9)"
+  ctx.font = `${Math.max(12, size / 200)}px Arial`
+  ctx.textAlign = "center"
+  ctx.textBaseline = "middle"
+
+  const labelRadius = radius * 0.9
+  const directions = [
+    { label: "N", angle: -Math.PI / 2 },
+    { label: "E", angle: 0 },
+    { label: "S", angle: Math.PI / 2 },
+    { label: "W", angle: Math.PI },
+  ]
+
+  directions.forEach((dir) => {
+    const x = center + Math.cos(dir.angle) * labelRadius
+    const y = center + Math.sin(dir.angle) * labelRadius
+    ctx.fillText(dir.label, x, y)
+  })
+
+  // Center zenith marker
+  ctx.fillStyle = "rgba(255, 0, 0, 0.8)"
+  ctx.beginPath()
+  ctx.arc(center, center, Math.max(2, size / 512), 0, 2 * Math.PI)
+  ctx.fill()
 
   ctx.restore()
 }
@@ -213,113 +240,81 @@ function drawGuideOverlays(ctx: CanvasRenderingContext2D, size: number): void {
 export async function generateDomemaster(imageBlob: Blob, options: DomemasterOptions): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const img = new Image()
-    img.crossOrigin = "anonymous"
+    const canvas = document.createElement("canvas")
+    const ctx = canvas.getContext("2d")
+
+    if (!ctx) {
+      reject(new Error("Could not get canvas context"))
+      return
+    }
 
     img.onload = () => {
       try {
-        // Create source canvas for equirectangular image
-        const sourceCanvas = document.createElement("canvas")
-        const sourceCtx = sourceCanvas.getContext("2d")
-        if (!sourceCtx) {
-          reject(new Error("Could not get source canvas context"))
-          return
-        }
+        const { size, bleedPercent, overlay, projection } = options
 
-        sourceCanvas.width = img.width
-        sourceCanvas.height = img.height
-        sourceCtx.drawImage(img, 0, 0)
+        canvas.width = size
+        canvas.height = size
 
-        const sourceImageData = sourceCtx.getImageData(0, 0, img.width, img.height)
+        // Fill with black background
+        ctx.fillStyle = "#000000"
+        ctx.fillRect(0, 0, size, size)
 
-        // Create output canvas for domemaster
-        const outputCanvas = document.createElement("canvas")
-        const outputCtx = outputCanvas.getContext("2d")
-        if (!outputCtx) {
-          reject(new Error("Could not get output canvas context"))
-          return
-        }
+        const centerX = size / 2
+        const centerY = size / 2
+        const radius = (size / 2) * (1 - bleedPercent / 100)
 
-        outputCanvas.width = options.size
-        outputCanvas.height = options.size
-        const outputImageData = outputCtx.createImageData(options.size, options.size)
+        console.log(`🔄 Generating ${size}x${size} domemaster with ${projection} projection...`)
 
-        const center = options.size / 2
-        const maxRadius = center * (1 - options.bleedPercent / 100)
+        // Create image data for pixel manipulation
+        const imageData = ctx.createImageData(size, size)
+        const data = imageData.data
 
-        console.log(`🔄 Generating ${options.size}x${options.size} domemaster...`)
+        // Process each pixel
+        for (let y = 0; y < size; y++) {
+          for (let x = 0; x < size; x++) {
+            const dx = x - centerX
+            const dy = y - centerY
+            const distance = Math.sqrt(dx * dx + dy * dy)
 
-        // Process each pixel in the output domemaster
-        for (let y = 0; y < options.size; y++) {
-          for (let x = 0; x < options.size; x++) {
-            const outputIdx = (y * options.size + x) * 4
+            if (distance <= radius) {
+              // Convert dome coordinates to spherical coordinates
+              const { theta, phi } = domeToSpherical(dx, dy, radius, projection)
 
-            // Convert to centered coordinates (-1 to 1)
-            const fx = (x - center) / maxRadius
-            const fy = (y - center) / maxRadius
+              // Convert spherical to equirectangular coordinates
+              const srcX = ((theta + Math.PI) / (2 * Math.PI)) * img.width
+              const srcY = (phi / Math.PI) * img.height
 
-            // Check if pixel is within the fisheye circle
-            const distanceFromCenter = Math.sqrt(fx * fx + fy * fy)
-            if (distanceFromCenter > 1) {
-              // Outside circle - set to black
-              outputImageData.data[outputIdx] = 0
-              outputImageData.data[outputIdx + 1] = 0
-              outputImageData.data[outputIdx + 2] = 0
-              outputImageData.data[outputIdx + 3] = 255
-              continue
-            }
+              // Bilinear interpolation
+              const color = bilinearSample(img, srcX, srcY)
 
-            // Convert fisheye coordinates to 3D sphere
-            const theta = Math.atan2(fy, fx)
-            let phi: number
-
-            if (options.projection === "equidistant") {
-              phi = distanceFromCenter * (Math.PI / 2)
+              const idx = (y * size + x) * 4
+              data[idx] = color.r
+              data[idx + 1] = color.g
+              data[idx + 2] = color.b
+              data[idx + 3] = 255
             } else {
-              // Stereographic
-              phi = 2 * Math.atan(distanceFromCenter * Math.tan(Math.PI / 4))
+              // Outside dome - keep black
+              const idx = (y * size + x) * 4
+              data[idx] = 0
+              data[idx + 1] = 0
+              data[idx + 2] = 0
+              data[idx + 3] = 255
             }
-
-            // Convert to 3D coordinates
-            const point3D: Point3D = {
-              x: Math.sin(phi) * Math.cos(theta),
-              y: Math.cos(phi),
-              z: Math.sin(phi) * Math.sin(theta),
-            }
-
-            // Convert 3D to equirectangular UV coordinates
-            const u = (Math.atan2(point3D.z, point3D.x) + Math.PI) / (2 * Math.PI)
-            const v = Math.acos(Math.max(-1, Math.min(1, point3D.y))) / Math.PI
-
-            // Sample from equirectangular image
-            const pixel = sampleEquirectangular(sourceImageData, u, v)
-
-            // Set output pixel
-            outputImageData.data[outputIdx] = Math.round(pixel.r)
-            outputImageData.data[outputIdx + 1] = Math.round(pixel.g)
-            outputImageData.data[outputIdx + 2] = Math.round(pixel.b)
-            outputImageData.data[outputIdx + 3] = Math.round(pixel.a)
-          }
-
-          // Progress logging
-          if (y % Math.floor(options.size / 10) === 0) {
-            const progress = Math.round((y / options.size) * 100)
-            console.log(`🔄 Domemaster progress: ${progress}%`)
           }
         }
 
-        // Put the processed image data to canvas
-        outputCtx.putImageData(outputImageData, 0, 0)
+        // Draw the processed image
+        ctx.putImageData(imageData, 0, 0)
 
-        // Draw guide overlays if requested
-        if (options.overlay) {
-          drawGuideOverlays(outputCtx, options.size)
+        // Add overlay guides if requested
+        if (overlay) {
+          drawDomemasterOverlay(ctx, size, radius)
         }
 
-        // Convert to blob
-        outputCanvas.toBlob(
+        canvas.toBlob(
           (blob) => {
             if (blob) {
-              console.log(`✅ Domemaster generated: ${options.size}x${options.size}`)
+              console.log(`✅ Domemaster generated: ${size}x${size} (${Math.round(blob.size / 1024)}KB)`)
               resolve(blob)
             } else {
               reject(new Error("Failed to create domemaster blob"))
@@ -330,17 +325,226 @@ export async function generateDomemaster(imageBlob: Blob, options: DomemasterOpt
           1.0,
         )
       } catch (error) {
-        reject(new Error(`Domemaster generation failed: ${error instanceof Error ? error.message : "Unknown error"}`))
+        reject(error)
         URL.revokeObjectURL(img.src)
       }
     }
 
     img.onerror = () => {
-      reject(new Error("Failed to load image for domemaster generation"))
+      reject(new Error("Failed to load source image"))
       URL.revokeObjectURL(img.src)
     }
 
+    img.crossOrigin = "anonymous"
     img.src = URL.createObjectURL(imageBlob)
+  })
+}
+
+/**
+ * Convert dome coordinates to spherical coordinates
+ */
+function domeToSpherical(
+  dx: number,
+  dy: number,
+  radius: number,
+  projection: DomemasterOptions["projection"],
+): { theta: number; phi: number } {
+  const r = Math.sqrt(dx * dx + dy * dy) / radius
+
+  let phi: number
+  switch (projection) {
+    case "equidistant":
+      phi = r * (Math.PI / 2)
+      break
+    case "equisolid":
+      phi = 2 * Math.asin(r / 2)
+      break
+    case "orthographic":
+      phi = Math.asin(r)
+      break
+    case "stereographic":
+      phi = 2 * Math.atan(r / 2)
+      break
+    default:
+      phi = r * (Math.PI / 2)
+  }
+
+  const theta = Math.atan2(dy, dx)
+
+  return { theta, phi }
+}
+
+/**
+ * Bilinear interpolation sampling
+ */
+function bilinearSample(img: HTMLImageElement, x: number, y: number): { r: number; g: number; b: number } {
+  // Create a temporary canvas to sample the image
+  const canvas = document.createElement("canvas")
+  const ctx = canvas.getContext("2d")
+
+  if (!ctx) {
+    return { r: 0, g: 0, b: 0 }
+  }
+
+  canvas.width = img.width
+  canvas.height = img.height
+  ctx.drawImage(img, 0, 0)
+
+  // Clamp coordinates
+  x = Math.max(0, Math.min(img.width - 1, x))
+  y = Math.max(0, Math.min(img.height - 1, y))
+
+  const x1 = Math.floor(x)
+  const y1 = Math.floor(y)
+  const x2 = Math.min(x1 + 1, img.width - 1)
+  const y2 = Math.min(y1 + 1, img.height - 1)
+
+  const fx = x - x1
+  const fy = y - y1
+
+  try {
+    const p1 = ctx.getImageData(x1, y1, 1, 1).data
+    const p2 = ctx.getImageData(x2, y1, 1, 1).data
+    const p3 = ctx.getImageData(x1, y2, 1, 1).data
+    const p4 = ctx.getImageData(x2, y2, 1, 1).data
+
+    const r = (1 - fx) * (1 - fy) * p1[0] + fx * (1 - fy) * p2[0] + (1 - fx) * fy * p3[0] + fx * fy * p4[0]
+    const g = (1 - fx) * (1 - fy) * p1[1] + fx * (1 - fy) * p2[1] + (1 - fx) * fy * p3[1] + fx * fy * p4[1]
+    const b = (1 - fx) * (1 - fy) * p1[2] + fx * (1 - fy) * p2[2] + (1 - fx) * fy * p3[2] + fx * fy * p4[2]
+
+    return { r: Math.round(r), g: Math.round(g), b: Math.round(b) }
+  } catch {
+    return { r: 0, g: 0, b: 0 }
+  }
+}
+
+/**
+ * Draw overlay guides on domemaster
+ */
+function drawDomemasterOverlay(ctx: CanvasRenderingContext2D, size: number, radius: number) {
+  const centerX = size / 2
+  const centerY = size / 2
+
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.3)"
+  ctx.lineWidth = 2
+
+  // Draw elevation circles (10°, 30°, 60°, 90°)
+  const elevations = [10, 30, 60, 90]
+  elevations.forEach((elev) => {
+    const r = (elev / 90) * radius
+    ctx.beginPath()
+    ctx.arc(centerX, centerY, r, 0, 2 * Math.PI)
+    ctx.stroke()
+  })
+
+  // Draw azimuth lines (every 30°)
+  for (let az = 0; az < 360; az += 30) {
+    const angle = (az * Math.PI) / 180
+    const x2 = centerX + Math.cos(angle) * radius
+    const y2 = centerY + Math.sin(angle) * radius
+
+    ctx.beginPath()
+    ctx.moveTo(centerX, centerY)
+    ctx.lineTo(x2, y2)
+    ctx.stroke()
+  }
+
+  // Draw cardinal directions
+  ctx.fillStyle = "rgba(255, 255, 255, 0.8)"
+  ctx.font = `${Math.round(size / 40)}px Arial`
+  ctx.textAlign = "center"
+  ctx.textBaseline = "middle"
+
+  const labelRadius = radius * 0.9
+  const directions = [
+    { label: "N", angle: -Math.PI / 2 },
+    { label: "E", angle: 0 },
+    { label: "S", angle: Math.PI / 2 },
+    { label: "W", angle: Math.PI },
+  ]
+
+  directions.forEach(({ label, angle }) => {
+    const x = centerX + Math.cos(angle) * labelRadius
+    const y = centerY + Math.sin(angle) * labelRadius
+    ctx.fillText(label, x, y)
+  })
+}
+
+/**
+ * Generate synthetic equirectangular test pattern
+ */
+export function generateTestPattern(width = 4096, height = 2048): Promise<Blob> {
+  return new Promise((resolve) => {
+    const canvas = document.createElement("canvas")
+    const ctx = canvas.getContext("2d")!
+
+    canvas.width = width
+    canvas.height = height
+
+    // Create gradient background
+    const gradient = ctx.createLinearGradient(0, 0, width, height)
+    gradient.addColorStop(0, "#1a1a2e")
+    gradient.addColorStop(0.5, "#16213e")
+    gradient.addColorStop(1, "#0f3460")
+
+    ctx.fillStyle = gradient
+    ctx.fillRect(0, 0, width, height)
+
+    // Add grid lines
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.3)"
+    ctx.lineWidth = 2
+
+    // Longitude lines (vertical)
+    for (let x = 0; x <= width; x += width / 24) {
+      ctx.beginPath()
+      ctx.moveTo(x, 0)
+      ctx.lineTo(x, height)
+      ctx.stroke()
+    }
+
+    // Latitude lines (horizontal)
+    for (let y = 0; y <= height; y += height / 12) {
+      ctx.beginPath()
+      ctx.moveTo(0, y)
+      ctx.lineTo(width, y)
+      ctx.stroke()
+    }
+
+    // Add text labels
+    ctx.fillStyle = "white"
+    ctx.font = "24px Arial"
+    ctx.textAlign = "center"
+    ctx.fillText("EQUIRECTANGULAR TEST PATTERN", width / 2, height / 10)
+    ctx.fillText("360° × 180° Coverage", width / 2, height / 8)
+
+    // Add directional markers
+    ctx.font = "bold 16px Arial"
+    ctx.fillText("ZENITH", width / 2, height * 0.05)
+    ctx.fillText("HORIZON", width / 2, height / 2 + 10)
+    ctx.fillText("NADIR", width / 2, height * 0.95)
+
+    // Cardinal directions
+    ctx.fillText("0°", width / 2, height * 0.15)
+    ctx.fillText("90°", width * 0.75, height * 0.15)
+    ctx.fillText("180°", width - 50, height * 0.15)
+    ctx.fillText("270°", width * 0.25, height * 0.15)
+
+    // Add corner markers
+    const markerSize = 20
+    ctx.fillStyle = "red"
+    ctx.fillRect(0, 0, markerSize, markerSize)
+    ctx.fillRect(width - markerSize, 0, markerSize, markerSize)
+    ctx.fillRect(0, height - markerSize, markerSize, markerSize)
+    ctx.fillRect(width - markerSize, height - markerSize, markerSize, markerSize)
+
+    // Convert to blob
+    canvas.toBlob(
+      (blob) => {
+        resolve(blob!)
+      },
+      "image/png",
+      1.0,
+    )
   })
 }
 
@@ -352,7 +556,7 @@ export const DOMEMASTER_PRESETS = {
     size: 4096,
     bleedPercent: 2,
     overlay: true,
-    projection: "equidistant" as const,
+    projection: "equidistant",
     name: "Dome 4K Preview",
     description: "4K domemaster for preview and testing",
   },
@@ -360,7 +564,7 @@ export const DOMEMASTER_PRESETS = {
     size: 8192,
     bleedPercent: 3,
     overlay: true,
-    projection: "equidistant" as const,
+    projection: "equidistant",
     name: "Dome 8K Standard",
     description: "8K domemaster for most planetarium systems",
   },
@@ -368,7 +572,7 @@ export const DOMEMASTER_PRESETS = {
     size: 12288,
     bleedPercent: 3,
     overlay: false,
-    projection: "equidistant" as const,
+    projection: "equidistant",
     name: "Dome 12K Ultra",
     description: "12K domemaster for high-end planetarium systems",
   },
@@ -376,7 +580,7 @@ export const DOMEMASTER_PRESETS = {
     size: 16384,
     bleedPercent: 2,
     overlay: false,
-    projection: "equidistant" as const,
+    projection: "equidistant",
     name: "Dome 16K Extreme",
     description: "16K domemaster for cutting-edge installations",
   },
@@ -385,13 +589,23 @@ export const DOMEMASTER_PRESETS = {
 /**
  * Validate domemaster options
  */
-export function validateDomemasterOptions(options: Partial<DomemasterOptions>): DomemasterOptions {
-  return {
-    size: Math.max(512, Math.min(16384, options.size || 8192)),
-    bleedPercent: Math.max(0, Math.min(10, options.bleedPercent || 3)),
-    overlay: options.overlay !== false,
-    projection: options.projection || "equidistant",
+export function validateDomemasterOptions(options: DomemasterOptions): string[] {
+  const errors: string[] = []
+
+  if (options.size <= 0 || options.size > 16384) {
+    errors.push("Size must be between 1 and 16384 pixels")
   }
+
+  if (options.bleedPercent < 0 || options.bleedPercent > 50) {
+    errors.push("Bleed percent must be between 0 and 50")
+  }
+
+  const validProjections = ["equidistant", "equisolid", "orthographic", "stereographic"]
+  if (!validProjections.includes(options.projection)) {
+    errors.push(`Projection must be one of: ${validProjections.join(", ")}`)
+  }
+
+  return errors
 }
 
 /**
