@@ -1,25 +1,3 @@
 {
-  "functions": {
-    "app/api/enhance-replicate/route.ts": {
-      "maxDuration": 1800
-    },
-    "app/api/enhance-v2/route.ts": {
-      "maxDuration": 1800
-    },
-    "app/api/enhance/route.ts": {
-      "maxDuration": 1800
-    },
-    "app/api/enhance-fal/route.ts": {
-      "maxDuration": 1800
-    },
-    "app/api/simple-enhance/route.ts": {
-      "maxDuration": 1800
-    }
-  },
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
-    }
-  ]
+  "installCommand": "pnpm install --no-frozen-lockfile"
 }

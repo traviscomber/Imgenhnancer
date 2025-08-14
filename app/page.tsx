@@ -32,7 +32,6 @@ import { UserManagement } from "@/components/admin/user-management"
 import { RoleManagement } from "@/components/admin/role-management"
 import { preProcessImage, postProcessImage, type EnhancementToggles } from "@/utils/image-processing"
 import { generateDomemaster, type DomemasterOptions } from "@/utils/domemaster"
-import { DomemasterTestWorkflow } from "@/components/domemaster-test-workflow"
 
 // Define enhancement models first - Clarity Upscaler as default
 const ENHANCEMENT_MODELS = [
@@ -412,6 +411,22 @@ const AIImageEnhancementPortal = () => {
       return
     }
 
+    // Check file size before processing
+    const maxSize = 15 * 1024 * 1024 // 15MB (increased for mobile photos)
+    if (fileToProcess.file.size > maxSize) {
+      setSelectedFiles((prev) => [
+        ...prev.filter((f) => f.id !== fileId),
+        {
+          ...fileToProcess,
+          status: "failed",
+          error: `File too large (${formatFileSize(fileToProcess.file.size)}). Maximum size is 15MB.`,
+          details: "file_too_large",
+          step: "validation",
+        },
+      ])
+      return
+    }
+
     // Move into queue
     setSelectedFiles((prev) => prev.filter((f) => f.id !== fileId))
     const job: ProcessingJob = {
@@ -425,6 +440,28 @@ const AIImageEnhancementPortal = () => {
     setProcessingQueue((prev) => [...prev, job])
 
     try {
+      // Compress large images (especially mobile photos) on client side
+      setProcessingQueue((prev) =>
+        prev.map((j) => (j.id === job.id ? { ...j, progress: "Compressing for upload..." } : j)),
+      )
+
+      let processedFile = fileToProcess.file
+
+      // Compress if file is large (mobile photos are often 5-20MB)
+      if (fileToProcess.file.size > 3 * 1024 * 1024) {
+        // 3MB threshold
+        try {
+          const { compressImageForUpload } = await import("@/utils/image-processing")
+          processedFile = await compressImageForUpload(fileToProcess.file, 3) // 3MB max
+          console.log(
+            `📱 Mobile photo compressed: ${formatFileSize(fileToProcess.file.size)} → ${formatFileSize(processedFile.size)}`,
+          )
+        } catch (compressionError) {
+          console.error("Compression failed, using original:", compressionError)
+          // Continue with original file if compression fails
+        }
+      }
+
       // Pre-process on client (light, safe)
       setProcessingQueue((prev) => prev.map((j) => (j.id === job.id ? { ...j, progress: "Pre-processing..." } : j)))
 
@@ -436,18 +473,18 @@ const AIImageEnhancementPortal = () => {
       let uploadBlob: Blob
       if (needPre) {
         try {
-          uploadBlob = await preProcessImage(fileToProcess.file, enhancementSettings.pre)
+          uploadBlob = await preProcessImage(processedFile, enhancementSettings.pre)
         } catch (error) {
           console.error("Pre-processing error:", error)
-          // Fall back to original file if pre-processing fails
-          uploadBlob = fileToProcess.file
+          // Fall back to processed file if pre-processing fails
+          uploadBlob = processedFile
         }
       } else {
-        uploadBlob = fileToProcess.file
+        uploadBlob = processedFile
       }
 
-      const uploadFile = new File([uploadBlob], fileToProcess.file.name.replace(/\.(\w+)$/, "") + ".png", {
-        type: "image/png",
+      const uploadFile = new File([uploadBlob], processedFile.name.replace(/\.(\w+)$/, "") + ".jpg", {
+        type: "image/jpeg", // Use JPEG for better compression
       })
 
       // Build FormData
@@ -462,9 +499,10 @@ const AIImageEnhancementPortal = () => {
         prev.map((j) => (j.id === job.id ? { ...j, progress: `Uploading to ${modelName}...` } : j)),
       )
 
-      // Call API (let browser set multipart boundary)
+      // Call API with improved error handling
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 10 * 60 * 1000)
+      const timeoutId = setTimeout(() => controller.abort(), 15 * 60 * 1000) // 15 minutes
+
       let response: Response
       try {
         response = await fetch("/api/enhance-replicate", {
@@ -472,27 +510,56 @@ const AIImageEnhancementPortal = () => {
           body: formData,
           signal: controller.signal,
         })
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId)
+
+        let errorMessage = "Network error"
+        if (fetchError.name === "AbortError") {
+          errorMessage = "Request timed out after 15 minutes"
+        } else if (fetchError.message.includes("fetch")) {
+          errorMessage = "Failed to connect to server"
+        } else {
+          errorMessage = fetchError.message || "Unknown network error"
+        }
+
+        throw new Error(errorMessage)
       } finally {
         clearTimeout(timeoutId)
       }
 
-      const contentType = response.headers.get("content-type") || ""
-      const result = contentType.includes("application/json")
-        ? await response.json()
-        : { success: false, error: await response.text() }
+      // Improved response handling
+      let result: any
+      try {
+        const contentType = response.headers.get("content-type") || ""
+        if (contentType.includes("application/json")) {
+          result = await response.json()
+        } else {
+          const text = await response.text()
+          result = { success: false, error: text || `HTTP ${response.status}` }
+        }
+      } catch (parseError: any) {
+        result = {
+          success: false,
+          error: "Failed to parse server response",
+          details: parseError.message,
+        }
+      }
 
       // Remove from queue
       setProcessingQueue((prev) => prev.filter((j) => j.id !== job.id))
 
       if (!response.ok || !result?.success) {
+        const errorMsg = result?.error || `HTTP ${response.status}`
+        const details = result?.details || result?.step || "Unknown error"
+
         setSelectedFiles((prev) => [
           ...prev,
           {
             ...fileToProcess,
             status: "failed",
-            error: result?.error || `HTTP ${response.status}`,
-            details: result?.details || null,
-            step: result?.step || "unknown",
+            error: errorMsg,
+            details: details,
+            step: result?.step || "api_error",
           },
         ])
         return
@@ -567,8 +634,8 @@ const AIImageEnhancementPortal = () => {
         {
           ...fileToProcess,
           status: "failed",
-          error: error?.message || "Network error",
-          details: error?.name || null,
+          error: error?.message || "Processing failed",
+          details: error?.name || "Unknown error",
           step: "client_error",
         },
       ])
@@ -646,6 +713,7 @@ const AIImageEnhancementPortal = () => {
           // Analyze image characteristics
           const pixels = imageData.data
           let totalBrightness = 0
+          const totalContrast = 0
           let noiseLevel = 0
           let edgeCount = 0
 
@@ -796,7 +864,6 @@ const AIImageEnhancementPortal = () => {
             { id: "upload", label: "Upload & Enhance", icon: Upload },
             { id: "processing", label: "Processing Queue", icon: Settings },
             { id: "results", label: "Enhanced Images", icon: Download },
-            { id: "test-workflow", label: "Test Workflow", icon: TestTube },
             ...(isAdmin ? [{ id: "admin", label: "Admin", icon: Shield }] : []),
           ].map((tab) => (
             <button
@@ -946,7 +1013,7 @@ const AIImageEnhancementPortal = () => {
                   <h3 className="text-lg font-medium text-white mb-2">
                     {user ? "Drop images here or click to browse" : "Sign in to upload images"}
                   </h3>
-                  <p className="text-blue-200 mb-4">Supports: JPG, PNG, WebP, HEIC, TIFF up to 50MB</p>
+                  <p className="text-blue-200 mb-4">Supports: JPG, PNG, WebP, HEIC, TIFF up to 15MB</p>
                   <p className="text-sm text-gray-400">
                     Enhanced with{" "}
                     {
@@ -1574,12 +1641,6 @@ const AIImageEnhancementPortal = () => {
                 ))}
               </div>
             )}
-          </div>
-        )}
-
-        {activeTab === "test-workflow" && (
-          <div className="space-y-8">
-            <DomemasterTestWorkflow />
           </div>
         )}
       </div>
