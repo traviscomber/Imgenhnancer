@@ -33,13 +33,13 @@ import { RoleManagement } from "@/components/admin/role-management"
 import { preProcessImage, postProcessImage, type EnhancementToggles } from "@/utils/image-processing"
 import { generateDomemaster, type DomemasterOptions } from "@/utils/domemaster"
 
-// Define enhancement models first - Clarity Upscaler as default
+// Define enhancement models first - Updated with face enhancement options
 const ENHANCEMENT_MODELS = [
   {
     id: "clarity-upscaler",
     name: "Clarity Upscaler (AI-Optimized Default)",
     description:
-      "High-quality AI upscaling with intelligent parameter optimization. Automatically adjusts settings based on image analysis.",
+      "High-quality AI upscaling with intelligent parameter optimization. Includes face enhancement for portraits.",
     maxUpscale: 4,
     replicateModel: "philz1337x/clarity-upscaler",
     version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
@@ -49,6 +49,23 @@ const ENHANCEMENT_MODELS = [
     inputField: "image",
     asianFaceCompatibility: "good" as const,
     westernBias: false,
+    faceEnhancement: true,
+  },
+  {
+    id: "clarity-upscaler-no-face",
+    name: "Clarity Upscaler (No Face Enhancement)",
+    description:
+      "High-quality AI upscaling without face enhancement. Preserves original facial features and expressions exactly as they are.",
+    maxUpscale: 4,
+    replicateModel: "philz1337x/clarity-upscaler",
+    version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
+    category: "upscaling",
+    recommended: false,
+    status: "working",
+    inputField: "image",
+    asianFaceCompatibility: "excellent" as const,
+    westernBias: false,
+    faceEnhancement: false,
   },
   {
     id: "real-esrgan-4x",
@@ -64,6 +81,7 @@ const ENHANCEMENT_MODELS = [
     inputField: "image",
     asianFaceCompatibility: "excellent" as const,
     westernBias: false,
+    faceEnhancement: false,
   },
   {
     id: "real-esrgan-2x",
@@ -78,6 +96,7 @@ const ENHANCEMENT_MODELS = [
     inputField: "image",
     asianFaceCompatibility: "excellent" as const,
     westernBias: false,
+    faceEnhancement: false,
   },
   {
     id: "gfpgan-face",
@@ -93,6 +112,7 @@ const ENHANCEMENT_MODELS = [
     inputField: "img",
     asianFaceCompatibility: "warning" as const,
     westernBias: true,
+    faceEnhancement: true,
   },
   {
     id: "codeformer-face",
@@ -108,6 +128,7 @@ const ENHANCEMENT_MODELS = [
     inputField: "image",
     asianFaceCompatibility: "poor" as const,
     westernBias: true,
+    faceEnhancement: true,
   },
 ]
 
@@ -287,15 +308,30 @@ const AIImageEnhancementPortal = () => {
         setShowAuth(true)
         return
       }
-      const newFiles = Array.from(files).map((file) => ({
-        id: Date.now() + Math.random(),
-        file,
-        name: file.name,
-        size: file.size,
-        preview: URL.createObjectURL(file),
-        status: "ready",
-        error: null,
-      }))
+      const newFiles = Array.from(files).map((file) => {
+        // Check file size and warn user
+        const fileSizeMB = file.size / (1024 * 1024)
+        let warning = null
+
+        if (fileSizeMB > 5) {
+          warning = "Very large file - will be heavily compressed"
+        } else if (fileSizeMB > 2) {
+          warning = "Large file - will be compressed for API compatibility"
+        } else if (fileSizeMB > 1) {
+          warning = "File will be compressed for optimal processing"
+        }
+
+        return {
+          id: Date.now() + Math.random(),
+          file,
+          name: file.name,
+          size: file.size,
+          preview: URL.createObjectURL(file),
+          status: "ready",
+          error: null,
+          warning: warning,
+        }
+      })
       setSelectedFiles((prev) => [...prev, ...newFiles])
     },
     [user],
@@ -447,18 +483,45 @@ const AIImageEnhancementPortal = () => {
 
       let processedFile = fileToProcess.file
 
-      // Compress if file is large (mobile photos are often 5-20MB)
-      if (fileToProcess.file.size > 3 * 1024 * 1024) {
-        // 3MB threshold
+      // More aggressive compression for API compatibility
+      if (fileToProcess.file.size > 800 * 1024) {
+        // 800KB threshold (very aggressive)
         try {
           const { compressImageForUpload } = await import("@/utils/image-processing")
-          processedFile = await compressImageForUpload(fileToProcess.file, 3) // 3MB max
+          processedFile = await compressImageForUpload(fileToProcess.file, 0.8) // 800KB max
           console.log(
-            `📱 Mobile photo compressed: ${formatFileSize(fileToProcess.file.size)} → ${formatFileSize(processedFile.size)}`,
+            `📱 Image compressed for API: ${formatFileSize(fileToProcess.file.size)} → ${formatFileSize(processedFile.size)}`,
+          )
+
+          // Show compression info to user
+          setProcessingQueue((prev) =>
+            prev.map((j) =>
+              j.id === job.id
+                ? {
+                    ...j,
+                    progress: `Compressed to ${formatFileSize(processedFile.size)} for API compatibility...`,
+                  }
+                : j,
+            ),
           )
         } catch (compressionError) {
-          console.error("Compression failed, using original:", compressionError)
-          // Continue with original file if compression fails
+          console.error("Compression failed:", compressionError)
+          // If compression fails and file is too large, show error
+          if (fileToProcess.file.size > 1 * 1024 * 1024) {
+            setProcessingQueue((prev) => prev.filter((j) => j.id !== job.id))
+            setSelectedFiles((prev) => [
+              ...prev,
+              {
+                ...fileToProcess,
+                status: "failed",
+                error: `Image too large (${formatFileSize(fileToProcess.file.size)}) and compression failed. Please manually resize to under 1MB.`,
+                details: "compression_failed",
+                step: "client_compression",
+              },
+            ])
+            return
+          }
+          // Continue with original file if compression fails but file is not too large
         }
       }
 
@@ -1075,6 +1138,14 @@ const AIImageEnhancementPortal = () => {
                                   {file.step && <p className="text-xs text-gray-500 mt-1">Failed at: {file.step}</p>}
                                 </div>
                               )}
+                              {file.warning && (
+                                <div className="mt-1">
+                                  <div className="flex items-center space-x-2">
+                                    <AlertTriangle className="w-4 h-4 text-yellow-400" />
+                                    <p className="text-sm text-yellow-400">{file.warning}</p>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
@@ -1190,6 +1261,7 @@ const AIImageEnhancementPortal = () => {
                           {model.name} {model.recommended && "⭐"}
                           {model.asianFaceCompatibility === "excellent" && " 🇮🇩"}
                           {model.westernBias && " ⚠️"}
+                          {!model.faceEnhancement && " 👤❌"}
                         </option>
                       ))}
                     </select>
@@ -1200,6 +1272,11 @@ const AIImageEnhancementPortal = () => {
                           🤖 <strong>AI-Optimized:</strong> Best results with automatic parameter tuning
                         </span>
                       )}
+                      {getCurrentModel()?.id === "clarity-upscaler-no-face" && (
+                        <span className="block mt-1 text-green-300">
+                          👤❌ <strong>No Face Enhancement:</strong> Preserves original facial features exactly
+                        </span>
+                      )}
                     </p>
                     {getCurrentModel()?.westernBias && (
                       <div className="mt-2 p-3 bg-yellow-900/20 border border-yellow-500/20 rounded-lg">
@@ -1208,6 +1285,17 @@ const AIImageEnhancementPortal = () => {
                           <div className="text-xs text-yellow-200">
                             <strong>Western Bias Warning:</strong> This model may alter Indonesian/ASEAN facial features
                             to appear more Western.
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {!getCurrentModel()?.faceEnhancement && (
+                      <div className="mt-2 p-3 bg-green-900/20 border border-green-500/20 rounded-lg">
+                        <div className="flex items-start space-x-2">
+                          <CheckCircle className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                          <div className="text-xs text-green-200">
+                            <strong>Face Preservation:</strong> This model will not alter facial features, expressions,
+                            or characteristics.
                           </div>
                         </div>
                       </div>
@@ -1487,6 +1575,12 @@ const AIImageEnhancementPortal = () => {
                     <span>Feature preservation:</span>
                     <span className={enhancementSettings.preserveAsianFeatures ? "text-green-400" : "text-gray-400"}>
                       {enhancementSettings.preserveAsianFeatures ? "✅ Enabled" : "❌ Disabled"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-gray-300">
+                    <span>Face enhancement:</span>
+                    <span className={getCurrentModel()?.faceEnhancement ? "text-yellow-400" : "text-green-400"}>
+                      {getCurrentModel()?.faceEnhancement ? "⚠️ Enabled" : "✅ Disabled"}
                     </span>
                   </div>
                   <div className="flex justify-between text-gray-300">

@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { Buffer } from "buffer"
 
 export async function POST(request: NextRequest) {
   console.log("🚀 Starting Replicate enhancement...")
@@ -79,18 +80,19 @@ export async function POST(request: NextRequest) {
       const arrayBuffer = await file.arrayBuffer()
       const buffer = Buffer.from(arrayBuffer)
 
-      // Check if base64 will be too large (4MB limit for most APIs)
+      // Check if base64 will be too large - be very conservative
       const estimatedBase64Size = (buffer.length * 4) / 3
-      const maxBase64Size = 4 * 1024 * 1024 // 4MB
+      const maxBase64Size = 1.2 * 1024 * 1024 // Reduced to 1.2MB max for base64
 
       if (estimatedBase64Size > maxBase64Size) {
         console.error(`❌ Image too large for API: ${Math.round(estimatedBase64Size / 1024 / 1024)}MB estimated base64`)
         return NextResponse.json(
           {
             success: false,
-            error: `Image is too large for processing. Please use an image smaller than ${Math.round((maxBase64Size / 1024 / 1024) * 0.75)}MB.`,
+            error: `Image is still too large after compression. Please use an image under 800KB before uploading.`,
             step: "size_check",
-            details: `Estimated base64 size: ${Math.round(estimatedBase64Size / 1024 / 1024)}MB`,
+            details: `Current size: ${Math.round(estimatedBase64Size / 1024 / 1024)}MB, Maximum: 1.2MB base64`,
+            suggestion: "Try using a smaller image or compress it further before uploading.",
           },
           { status: 413 },
         )
@@ -114,7 +116,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Model configuration
+    // Model configuration with face enhancement control
     const modelId = settings.model || "clarity-upscaler"
     const modelConfigs: Record<string, any> = {
       "clarity-upscaler": {
@@ -127,6 +129,23 @@ export async function POST(request: NextRequest) {
           resemblance: 0.6,
           tiling: false,
           sd_model: "juggernaut_reborn.safetensors [338b85bc4f]",
+        },
+      },
+      "clarity-upscaler-no-face": {
+        version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
+        input: {
+          image: imageDataUrl,
+          scale_factor: settings.upscaleFactor || 2,
+          dynamic: 6,
+          creativity: 0.35,
+          resemblance: 0.6,
+          tiling: false,
+          sd_model: "juggernaut_reborn.safetensors [338b85bc4f]",
+          // Disable face enhancement by setting face-related parameters to minimal values
+          face_enhance: false,
+          codeformer_fidelity: 0.0, // Disable CodeFormer face enhancement
+          background_enhance: true, // Keep background enhancement
+          only_center_face: false, // Don't focus on faces
         },
       },
       "real-esrgan-4x": {
@@ -149,6 +168,9 @@ export async function POST(request: NextRequest) {
     }
 
     console.log(`✅ Using model: ${modelId} (version: ${config.version})`)
+    if (modelId === "clarity-upscaler-no-face") {
+      console.log("🚫 Face enhancement disabled for this model")
+    }
 
     // Create prediction using direct API call
     let prediction: any
@@ -184,7 +206,8 @@ export async function POST(request: NextRequest) {
 
         if (response.status === 413 || responseText.includes("Request Entity Too Large")) {
           errorMessage = "Image too large for Replicate API"
-          userMessage = "Image file is too large for the AI service. Try using a smaller image (under 3MB recommended)."
+          userMessage =
+            "Image file is too large for the AI service. Try using a smaller image (under 3MB recommended) or compress it on the client side."
         } else if (response.status === 401) {
           errorMessage = "Invalid API token"
           userMessage = "Authentication failed with AI service"
@@ -378,6 +401,7 @@ export async function POST(request: NextRequest) {
       fileSize: "Enhanced image",
       upscaleFactor: settings.upscaleFactor || 2,
       originalSize: `${Math.round(file.size / 1024)}KB`,
+      faceEnhancement: modelId !== "clarity-upscaler-no-face",
     })
   } catch (error: any) {
     console.error("❌ Unexpected error:", error)
