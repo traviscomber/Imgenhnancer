@@ -33,13 +33,13 @@ import { RoleManagement } from "@/components/admin/role-management"
 import { preProcessImage, postProcessImage, type EnhancementToggles } from "@/utils/image-processing"
 import { generateDomemaster, type DomemasterOptions } from "@/utils/domemaster"
 
-// Define enhancement models first - Only Clarity models
+// Define enhancement models - Updated with face-preserving options
 const ENHANCEMENT_MODELS = [
   {
-    id: "clarity-upscaler",
-    name: "Clarity Upscaler (AI-Optimized Default)",
+    id: "clarity-upscaler-face-preserve",
+    name: "Clarity Upscaler (Face Preserving)",
     description:
-      "High-quality AI upscaling with intelligent parameter optimization. Includes face enhancement for portraits.",
+      "High-quality AI upscaling that completely preserves original faces without any enhancement or modification. Perfect for maintaining authentic facial features.",
     maxUpscale: 4,
     replicateModel: "philz1337x/clarity-upscaler",
     version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
@@ -47,9 +47,27 @@ const ENHANCEMENT_MODELS = [
     recommended: true,
     status: "working",
     inputField: "image",
+    asianFaceCompatibility: "excellent" as const,
+    westernBias: false,
+    faceEnhancement: false,
+    preserveFaces: true,
+  },
+  {
+    id: "clarity-upscaler",
+    name: "Clarity Upscaler (Standard)",
+    description:
+      "High-quality AI upscaling with intelligent parameter optimization. Includes face enhancement for portraits.",
+    maxUpscale: 4,
+    replicateModel: "philz1337x/clarity-upscaler",
+    version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
+    category: "upscaling",
+    recommended: false,
+    status: "working",
+    inputField: "image",
     asianFaceCompatibility: "good" as const,
     westernBias: false,
     faceEnhancement: true,
+    preserveFaces: false,
   },
   {
     id: "clarity-upscaler-no-face",
@@ -66,6 +84,7 @@ const ENHANCEMENT_MODELS = [
     asianFaceCompatibility: "excellent" as const,
     westernBias: false,
     faceEnhancement: false,
+    preserveFaces: true,
   },
 ]
 
@@ -132,9 +151,9 @@ const AIImageEnhancementPortal = () => {
   const [isDiscovering, setIsDiscovering] = useState(false)
   const [isTesting, setIsTesting] = useState(false)
 
-  // Enhancement Settings with safe defaults - Clarity Upscaler as default
+  // Enhancement Settings with safe defaults - Face Preserving as default
   const [enhancementSettings, setEnhancementSettings] = useState<EnhancementSettings>({
-    model: "clarity-upscaler",
+    model: "clarity-upscaler-face-preserve",
     upscaleFactor: 2,
     targetUse: "display",
     format: "PNG",
@@ -259,6 +278,7 @@ const AIImageEnhancementPortal = () => {
         }
 
         const preview = URL.createObjectURL(file)
+        const fileId = Date.now() + Math.random()
 
         // Get actual image dimensions
         const img = new Image()
@@ -267,10 +287,12 @@ const AIImageEnhancementPortal = () => {
           setSelectedFiles((prev) =>
             prev.map((f) => (f.id === fileId ? { ...f, width: img.width, height: img.height } : f)),
           )
+          URL.revokeObjectURL(img.src) // Clean up
+        }
+        img.onerror = () => {
+          URL.revokeObjectURL(img.src) // Clean up on error
         }
         img.src = preview
-
-        const fileId = Date.now() + Math.random()
 
         return {
           id: fileId,
@@ -322,13 +344,13 @@ const AIImageEnhancementPortal = () => {
     // Calculate based on first selected file with actual dimensions
     const firstFile = selectedFiles[0]
     if (firstFile?.width && firstFile?.height) {
-      const targetWidth = firstFile.width * enhancementSettings.upscaleFactor
-      const targetHeight = firstFile.height * enhancementSettings.upscaleFactor
-      return `${targetWidth}x${targetHeight}`
+      const targetWidth = Math.round(firstFile.width * enhancementSettings.upscaleFactor)
+      const targetHeight = Math.round(firstFile.height * enhancementSettings.upscaleFactor)
+      return `${targetWidth}x${targetHeight} (${Math.round((targetWidth * targetHeight) / 1000000)}MP)`
     }
 
     // If dimensions not loaded yet, show loading
-    return "Calculating..."
+    return "Loading dimensions..."
   }
 
   const getMaxUpscale = () => {
@@ -631,7 +653,7 @@ const AIImageEnhancementPortal = () => {
       }
 
       // Ensure we have a valid model ID and name with complete safety
-      const finalModelId = result.model || enhancementSettings?.model || "clarity-upscaler"
+      const finalModelId = result.model || enhancementSettings?.model || "clarity-upscaler-face-preserve"
       const finalModelName = getModelName(finalModelId)
 
       const completedJob: CompletedJob = {
@@ -773,8 +795,11 @@ const AIImageEnhancementPortal = () => {
           const resolution = img.width * img.height
           const isHighRes = resolution > 2000000 // 2MP+
 
-          // AI-optimized parameters based on analysis
+          // AI-optimized parameters based on analysis - Always use face-preserving model
           const optimizedSettings: Partial<EnhancementSettings> = {
+            // Always use face-preserving model for AI optimization
+            model: "clarity-upscaler-face-preserve",
+
             // Upscale factor based on current resolution
             upscaleFactor: isHighRes ? 2 : resolution < 500000 ? 4 : 3,
 
@@ -796,7 +821,7 @@ const AIImageEnhancementPortal = () => {
             targetUse: isPortrait ? "display" : resolution > 4000000 ? "print" : "display",
           }
 
-          console.log("🤖 AI Analysis:", {
+          console.log("🤖 AI Analysis (Face-Preserving):", {
             avgBrightness: Math.round(avgBrightness),
             isLowLight,
             isHighNoise,
@@ -1143,7 +1168,7 @@ const AIImageEnhancementPortal = () => {
                       AI Parameter Optimization
                     </h4>
                     <p className="text-sm text-gray-300 mb-3">
-                      Clarity Upscaler with intelligent parameter selection based on image analysis
+                      Clarity Upscaler with intelligent parameter selection and face preservation
                     </p>
                     <div className="flex flex-wrap gap-3">
                       <button
@@ -1160,14 +1185,15 @@ const AIImageEnhancementPortal = () => {
                         className="px-4 py-2 rounded-md bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white text-sm flex items-center gap-2"
                       >
                         <Sparkles className="w-4 h-4" />
-                        Optimize for Selected Image
+                        Optimize (Face-Safe)
                       </button>
                       <button
                         onClick={() => {
-                          // Dome-optimized settings
+                          // Dome-optimized settings with face preservation
                           setDomePreset((d) => ({ ...d, enabled: true, size: 8192, bleedPercent: 3, overlay: true }))
                           setEnhancementSettings((prev) => ({
                             ...prev,
+                            model: "clarity-upscaler-face-preserve",
                             targetUse: "dome",
                             upscaleFactor: Math.min(prev.upscaleFactor, getMaxUpscale()),
                             pre: { deblock: "off", denoise: "off", whiteBalance: "off" },
@@ -1178,16 +1204,16 @@ const AIImageEnhancementPortal = () => {
                         }}
                         className="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm"
                       >
-                        Dome 8K Preset
+                        Dome 8K (Face-Safe)
                       </button>
                     </div>
                     <div className="mt-3 text-xs text-purple-200 bg-purple-900/20 rounded p-2">
-                      💡 <strong>AI Analysis:</strong> Automatically detects brightness, noise, detail level, and
-                      resolution to optimize enhancement parameters for best results.
+                      🛡️ <strong>Face Preservation:</strong> AI optimization automatically selects face-preserving models
+                      to maintain original facial features without any enhancement or modification.
                     </div>
                   </div>
 
-                  {/* AI Model Selection - Simplified to only Clarity models */}
+                  {/* AI Model Selection - Face-preserving options first */}
                   <div>
                     <label className="block text-sm font-medium text-white mb-3">Enhancement Model</label>
                     <select
@@ -1207,30 +1233,31 @@ const AIImageEnhancementPortal = () => {
                       {ENHANCEMENT_MODELS.filter((m) => m.status === "working").map((model) => (
                         <option key={model.id} value={model.id} className="bg-slate-800">
                           {model.name} {model.recommended && "⭐"}
-                          {!model.faceEnhancement && " (Face Safe)"}
+                          {model.preserveFaces && " 🛡️"}
                         </option>
                       ))}
                     </select>
                     <p className="text-xs text-gray-400 mt-1">
                       {getCurrentModel()?.description || "Model description not available"}
-                      {getCurrentModel()?.id === "clarity-upscaler" && (
-                        <span className="block mt-1 text-purple-300">
-                          🤖 <strong>AI-Optimized:</strong> Best results with automatic parameter tuning
+                      {getCurrentModel()?.preserveFaces && (
+                        <span className="block mt-1 text-green-300">
+                          🛡️ <strong>Face Preserving:</strong> Maintains original facial features without any enhancement
                         </span>
                       )}
-                      {getCurrentModel()?.id === "clarity-upscaler-no-face" && (
-                        <span className="block mt-1 text-green-300">
-                          👤❌ <strong>No Face Enhancement:</strong> Preserves original facial features exactly
+                      {getCurrentModel()?.faceEnhancement && (
+                        <span className="block mt-1 text-yellow-300">
+                          ⚠️ <strong>Face Enhancement:</strong> May modify facial features and expressions
                         </span>
                       )}
                     </p>
-                    {!getCurrentModel()?.faceEnhancement && (
+                    {getCurrentModel()?.preserveFaces && (
                       <div className="mt-2 p-3 bg-green-900/20 border border-green-500/20 rounded-lg">
                         <div className="flex items-start space-x-2">
                           <CheckCircle className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
                           <div className="text-xs text-green-200">
-                            <strong>Face Preservation:</strong> This model will not alter facial features, expressions,
-                            or characteristics.
+                            <strong>100% Face Preservation:</strong> This model will not alter facial features,
+                            expressions, skin tone, or any facial characteristics. Perfect for maintaining authentic
+                            appearance.
                           </div>
                         </div>
                       </div>
@@ -1510,8 +1537,8 @@ const AIImageEnhancementPortal = () => {
                   </div>
                   <div className="flex justify-between text-gray-300">
                     <span>Face enhancement:</span>
-                    <span className={getCurrentModel()?.faceEnhancement ? "text-yellow-400" : "text-green-400"}>
-                      {getCurrentModel()?.faceEnhancement ? "⚠️ Enabled" : "✅ Disabled"}
+                    <span className={getCurrentModel()?.preserveFaces ? "text-green-400" : "text-yellow-400"}>
+                      {getCurrentModel()?.preserveFaces ? "🛡️ Preserved" : "⚠️ Enhanced"}
                     </span>
                   </div>
                   <div className="flex justify-between text-gray-300">

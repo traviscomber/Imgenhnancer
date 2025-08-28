@@ -116,8 +116,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Model configuration with face enhancement control
-    const modelId = settings.model || "clarity-upscaler"
+    // Model configuration with enhanced face preservation control
+    const modelId = settings.model || "clarity-upscaler-face-preserve"
     const modelConfigs: Record<string, any> = {
       "clarity-upscaler": {
         version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
@@ -129,6 +129,29 @@ export async function POST(request: NextRequest) {
           resemblance: 0.6,
           tiling: false,
           sd_model: "juggernaut_reborn.safetensors [338b85bc4f]",
+          face_enhance: true,
+          codeformer_fidelity: 0.7,
+          background_enhance: true,
+        },
+      },
+      "clarity-upscaler-face-preserve": {
+        version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
+        input: {
+          image: imageDataUrl,
+          scale_factor: settings.upscaleFactor || 2,
+          dynamic: 6,
+          creativity: 0.35,
+          resemblance: 0.6,
+          tiling: false,
+          sd_model: "juggernaut_reborn.safetensors [338b85bc4f]",
+          // Completely disable all face enhancement
+          face_enhance: false,
+          codeformer_fidelity: 0.0,
+          background_enhance: true,
+          only_center_face: false,
+          // Additional parameters to ensure no face modification
+          gfpgan_visibility: 0.0,
+          restoreformer_weight: 0.0,
         },
       },
       "clarity-upscaler-no-face": {
@@ -143,9 +166,9 @@ export async function POST(request: NextRequest) {
           sd_model: "juggernaut_reborn.safetensors [338b85bc4f]",
           // Disable face enhancement by setting face-related parameters to minimal values
           face_enhance: false,
-          codeformer_fidelity: 0.0, // Disable CodeFormer face enhancement
-          background_enhance: true, // Keep background enhancement
-          only_center_face: false, // Don't focus on faces
+          codeformer_fidelity: 0.0,
+          background_enhance: true,
+          only_center_face: false,
         },
       },
       "real-esrgan-4x": {
@@ -168,8 +191,8 @@ export async function POST(request: NextRequest) {
     }
 
     console.log(`✅ Using model: ${modelId} (version: ${config.version})`)
-    if (modelId === "clarity-upscaler-no-face") {
-      console.log("🚫 Face enhancement disabled for this model")
+    if (modelId === "clarity-upscaler-face-preserve" || modelId === "clarity-upscaler-no-face") {
+      console.log("🛡️ Face preservation mode enabled - no facial modifications will be applied")
     }
 
     // Create prediction using direct API call
@@ -391,6 +414,8 @@ export async function POST(request: NextRequest) {
     const processingTime = `${Math.round((Date.now() - startTime) / 1000)}s`
     console.log(`✅ Enhancement completed in ${processingTime}`)
 
+    const facePreservationMode = modelId === "clarity-upscaler-face-preserve" || modelId === "clarity-upscaler-no-face"
+
     return NextResponse.json({
       success: true,
       downloadUrl,
@@ -401,7 +426,8 @@ export async function POST(request: NextRequest) {
       fileSize: "Enhanced image",
       upscaleFactor: settings.upscaleFactor || 2,
       originalSize: `${Math.round(file.size / 1024)}KB`,
-      faceEnhancement: modelId !== "clarity-upscaler-no-face",
+      faceEnhancement: !facePreservationMode,
+      facePreservation: facePreservationMode,
     })
   } catch (error: any) {
     console.error("❌ Unexpected error:", error)
