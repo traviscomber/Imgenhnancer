@@ -23,7 +23,6 @@ import {
   Users,
   AlertTriangle,
   Sparkles,
-  Sliders,
 } from "lucide-react"
 import { LoginForm } from "@/components/auth/login-form"
 import { SignupForm } from "@/components/auth/signup-form"
@@ -89,36 +88,6 @@ const ENHANCEMENT_MODELS = [
   },
 ]
 
-interface ClarityUpscalerSettings {
-  // Core settings
-  scale_factor: number
-  dynamic: number
-  creativity: number
-  resemblance: number
-
-  // Face enhancement settings
-  face_enhance: boolean
-  codeformer_fidelity: number
-  background_enhance: boolean
-  only_center_face: boolean
-
-  // Advanced settings
-  tiling: boolean
-  sd_model: string
-  scheduler: string
-  num_inference_steps: number
-  guidance_scale: number
-  strength: number
-  seed: number | null
-
-  // Additional enhancement options
-  sharpen: number
-  hdr: number
-  color_fix: boolean
-  custom_width: number | null
-  custom_height: number | null
-}
-
 interface EnhancementSettings {
   model: string
   upscaleFactor: number
@@ -129,7 +98,6 @@ interface EnhancementSettings {
   preserveAsianFeatures: boolean
   pre: EnhancementToggles["pre"]
   post: EnhancementToggles["post"]
-  clarity: ClarityUpscalerSettings
 }
 
 // NUEVO: Opciones de domemaster (preset/exportación)
@@ -182,9 +150,8 @@ const AIImageEnhancementPortal = () => {
   const [configResults, setConfigResults] = useState<any>(null)
   const [isDiscovering, setIsDiscovering] = useState(false)
   const [isTesting, setIsTesting] = useState(false)
-  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false)
 
-  // Enhancement Settings with comprehensive Clarity Upscaler parameters
+  // Enhancement Settings with safe defaults - Face Preserving as default
   const [enhancementSettings, setEnhancementSettings] = useState<EnhancementSettings>({
     model: "clarity-upscaler-face-preserve",
     upscaleFactor: 2,
@@ -203,36 +170,205 @@ const AIImageEnhancementPortal = () => {
       sharpen: "off",
       grain: "off",
     },
-    clarity: {
-      // Core Clarity Upscaler settings
-      scale_factor: 2,
-      dynamic: 6,
-      creativity: 0.35,
-      resemblance: 0.6,
-
-      // Face enhancement (disabled by default for face preservation)
-      face_enhance: false,
-      codeformer_fidelity: 0.0,
-      background_enhance: true,
-      only_center_face: false,
-
-      // Advanced settings
-      tiling: false,
-      sd_model: "juggernaut_reborn.safetensors [338b85bc4f]",
-      scheduler: "DPM++ 2M Karras",
-      num_inference_steps: 18,
-      guidance_scale: 7.0,
-      strength: 1.0,
-      seed: null,
-
-      // Enhancement options
-      sharpen: 0.0,
-      hdr: 0.0,
-      color_fix: false,
-      custom_width: null,
-      custom_height: null,
-    },
   })
+
+  // ASEAN Face Preservation Presets
+  const ASEAN_FACE_PRESETS = [
+    {
+      id: "asean-portrait-safe",
+      name: "ASEAN Portrait (Ultra Safe)",
+      description:
+        "Maximum face preservation for Indonesian/Malaysian/Thai/Filipino portraits. Zero facial modification.",
+      icon: "🛡️",
+      settings: {
+        model: "clarity-upscaler-face-preserve",
+        upscaleFactor: 2,
+        targetUse: "display",
+        format: "PNG",
+        quality: 98,
+        faceEnhance: false,
+        preserveAsianFeatures: true,
+        pre: {
+          deblock: "off",
+          denoise: "off",
+          whiteBalance: "off",
+        },
+        post: {
+          localContrast: "off",
+          sharpen: "off",
+          grain: "off",
+        },
+      },
+      domeSettings: {
+        enabled: false,
+        size: 4096,
+        bleedPercent: 2,
+        overlay: false,
+        projection: "equidistant" as const,
+      },
+    },
+    {
+      id: "asean-family-photo",
+      name: "ASEAN Family Photo",
+      description: "Gentle enhancement for family photos with multiple ASEAN faces. Preserves all facial features.",
+      icon: "👨‍👩‍👧‍👦",
+      settings: {
+        model: "clarity-upscaler-face-preserve",
+        upscaleFactor: 3,
+        targetUse: "print",
+        format: "PNG",
+        quality: 95,
+        faceEnhance: false,
+        preserveAsianFeatures: true,
+        pre: {
+          deblock: "low",
+          denoise: "off",
+          whiteBalance: "off",
+        },
+        post: {
+          localContrast: "off",
+          sharpen: "off",
+          grain: "very-low",
+        },
+      },
+      domeSettings: {
+        enabled: false,
+        size: 6144,
+        bleedPercent: 3,
+        overlay: false,
+        projection: "equidistant" as const,
+      },
+    },
+    {
+      id: "asean-wedding-photo",
+      name: "ASEAN Wedding Photo",
+      description: "High-quality enhancement for wedding photos. Preserves natural skin tones and facial features.",
+      icon: "💒",
+      settings: {
+        model: "clarity-upscaler-face-preserve",
+        upscaleFactor: 4,
+        targetUse: "print",
+        format: "PNG",
+        quality: 98,
+        faceEnhance: false,
+        preserveAsianFeatures: true,
+        pre: {
+          deblock: "low",
+          denoise: "low",
+          whiteBalance: "auto",
+        },
+        post: {
+          localContrast: "low",
+          sharpen: "off",
+          grain: "very-low",
+        },
+      },
+      domeSettings: {
+        enabled: false,
+        size: 8192,
+        bleedPercent: 2,
+        overlay: false,
+        projection: "equidistant" as const,
+      },
+    },
+    {
+      id: "asean-id-document",
+      name: "ASEAN ID/Document Photo",
+      description: "Perfect for official documents. Maintains exact facial features required for identification.",
+      icon: "🆔",
+      settings: {
+        model: "clarity-upscaler-face-preserve",
+        upscaleFactor: 2,
+        targetUse: "document",
+        format: "PNG",
+        quality: 100,
+        faceEnhance: false,
+        preserveAsianFeatures: true,
+        pre: {
+          deblock: "off",
+          denoise: "off",
+          whiteBalance: "off",
+        },
+        post: {
+          localContrast: "off",
+          sharpen: "off",
+          grain: "off",
+        },
+      },
+      domeSettings: {
+        enabled: false,
+        size: 2048,
+        bleedPercent: 0,
+        overlay: false,
+        projection: "equidistant" as const,
+      },
+    },
+    {
+      id: "asean-cultural-heritage",
+      name: "ASEAN Cultural Heritage",
+      description:
+        "For traditional photos, cultural events, and heritage documentation. Preserves authentic appearance.",
+      icon: "🏛️",
+      settings: {
+        model: "clarity-upscaler-face-preserve",
+        upscaleFactor: 4,
+        targetUse: "archive",
+        format: "PNG",
+        quality: 98,
+        faceEnhance: false,
+        preserveAsianFeatures: true,
+        pre: {
+          deblock: "medium",
+          denoise: "low",
+          whiteBalance: "auto",
+        },
+        post: {
+          localContrast: "low",
+          sharpen: "off",
+          grain: "low",
+        },
+      },
+      domeSettings: {
+        enabled: false,
+        size: 8192,
+        bleedPercent: 3,
+        overlay: false,
+        projection: "equidistant" as const,
+      },
+    },
+    {
+      id: "asean-mobile-selfie",
+      name: "ASEAN Mobile Selfie",
+      description: "Optimized for mobile selfies and casual photos. Gentle enhancement while preserving natural look.",
+      icon: "🤳",
+      settings: {
+        model: "clarity-upscaler-face-preserve",
+        upscaleFactor: 2,
+        targetUse: "social",
+        format: "PNG",
+        quality: 92,
+        faceEnhance: false,
+        preserveAsianFeatures: true,
+        pre: {
+          deblock: "low",
+          denoise: "low",
+          whiteBalance: "auto",
+        },
+        post: {
+          localContrast: "off",
+          sharpen: "off",
+          grain: "very-low",
+        },
+      },
+      domeSettings: {
+        enabled: false,
+        size: 4096,
+        bleedPercent: 2,
+        overlay: false,
+        projection: "equidistant" as const,
+      },
+    },
+  ]
 
   // NUEVO: estado del preset domemaster
   const [domePreset, setDomePreset] = useState<DomePresetState>({
@@ -270,22 +406,6 @@ const AIImageEnhancementPortal = () => {
     const model = getModelById(modelId)
     return model[property] || fallback
   }
-
-  // Update clarity settings when model changes
-  useEffect(() => {
-    const currentModel = getCurrentModel()
-    if (currentModel) {
-      setEnhancementSettings((prev) => ({
-        ...prev,
-        clarity: {
-          ...prev.clarity,
-          scale_factor: prev.upscaleFactor,
-          face_enhance: currentModel.faceEnhancement && !currentModel.preserveFaces,
-          codeformer_fidelity: currentModel.preserveFaces ? 0.0 : 0.7,
-        },
-      }))
-    }
-  }, [enhancementSettings.model, enhancementSettings.upscaleFactor])
 
   // Check for existing session on mount
   useEffect(() => {
@@ -895,35 +1015,11 @@ const AIImageEnhancementPortal = () => {
               grain: avgBrightness > 200 ? "very-low" : "off", // Add grain to very bright/flat images
             },
 
-            // Clarity-specific optimizations
-            clarity: {
-              scale_factor: isHighRes ? 2 : resolution < 500000 ? 4 : 3,
-              dynamic: isLowLight ? 8 : hasDetails ? 6 : 4,
-              creativity: isHighNoise ? 0.2 : hasDetails ? 0.35 : 0.5,
-              resemblance: isPortrait ? 0.8 : 0.6,
-              face_enhance: false, // Always disabled for face preservation
-              codeformer_fidelity: 0.0,
-              background_enhance: true,
-              only_center_face: false,
-              tiling: false,
-              sd_model: "juggernaut_reborn.safetensors [338b85bc4f]",
-              scheduler: "DPM++ 2M Karras",
-              num_inference_steps: isHighRes ? 20 : 18,
-              guidance_scale: isLowLight ? 8.0 : 7.0,
-              strength: isHighNoise ? 0.8 : 1.0,
-              seed: null,
-              sharpen: hasDetails ? 0.2 : 0.0,
-              hdr: isLowLight ? 0.3 : 0.0,
-              color_fix: isLowLight || avgBrightness < 80,
-              custom_width: null,
-              custom_height: null,
-            },
-
             // Target use optimization
             targetUse: isPortrait ? "display" : resolution > 4000000 ? "print" : "display",
           }
 
-          console.log("🤖 AI Analysis (Face-Preserving + Clarity):", {
+          console.log("🤖 AI Analysis (Face-Preserving):", {
             avgBrightness: Math.round(avgBrightness),
             isLowLight,
             isHighNoise,
@@ -1315,6 +1411,66 @@ const AIImageEnhancementPortal = () => {
                     </div>
                   </div>
 
+                  {/* ASEAN Face Preservation Presets */}
+                  <div className="bg-gradient-to-r from-emerald-900/20 to-teal-900/20 rounded-lg p-4 border border-emerald-500/20">
+                    <h4 className="text-white font-medium mb-3 flex items-center gap-2">
+                      🇮🇩🇲🇾🇹🇭🇵🇭 ASEAN Face Preservation Presets
+                    </h4>
+                    <p className="text-sm text-gray-300 mb-4">
+                      Specialized presets designed to preserve Indonesian, Malaysian, Thai, Filipino, and other ASEAN
+                      facial features without any modification.
+                    </p>
+
+                    <div className="grid grid-cols-1 gap-2 mb-4">
+                      {ASEAN_FACE_PRESETS.map((preset) => (
+                        <button
+                          key={preset.id}
+                          onClick={() => {
+                            setEnhancementSettings((prev) => ({
+                              ...prev,
+                              ...preset.settings,
+                            }))
+                            setDomePreset((prev) => ({
+                              ...prev,
+                              ...preset.domeSettings,
+                            }))
+                          }}
+                          className="flex items-start gap-3 p-3 rounded-md bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/20 hover:border-emerald-500/40 transition-all text-left"
+                        >
+                          <span className="text-lg flex-shrink-0 mt-0.5">{preset.icon}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-white mb-1">{preset.name}</div>
+                            <div className="text-xs text-gray-300 leading-relaxed">{preset.description}</div>
+                            <div className="flex items-center gap-2 mt-2 text-xs">
+                              <span className="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded">
+                                {preset.settings.upscaleFactor}x upscale
+                              </span>
+                              <span className="bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded">
+                                {preset.settings.format}
+                              </span>
+                              <span className="bg-green-500/20 text-green-300 px-2 py-0.5 rounded">🛡️ Face Safe</span>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="bg-emerald-900/20 border border-emerald-500/20 rounded p-3">
+                      <div className="flex items-start space-x-2">
+                        <CheckCircle className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                        <div className="text-xs text-emerald-200">
+                          <strong>100% ASEAN Face Preservation Guarantee:</strong> These presets are specifically
+                          designed to maintain authentic ASEAN facial features, skin tones, eye shapes, and cultural
+                          characteristics without any Western bias or modification.
+                        </div>
+                      </div>
+                      <div className="mt-2 text-xs text-emerald-300">
+                        ✅ Preserves natural skin tones • ✅ Maintains eye shape • ✅ Keeps facial structure • ✅ No
+                        Western bias
+                      </div>
+                    </div>
+                  </div>
+
                   {/* AI Model Selection - Face-preserving options first */}
                   <div>
                     <label className="block text-sm font-medium text-white mb-3">Enhancement Model</label>
@@ -1377,17 +1533,9 @@ const AIImageEnhancementPortal = () => {
                       max={getMaxUpscale()}
                       step={1}
                       value={enhancementSettings.upscaleFactor}
-                      onChange={(e) => {
-                        const newFactor = Number.parseInt(e.target.value)
-                        setEnhancementSettings((prev) => ({
-                          ...prev,
-                          upscaleFactor: newFactor,
-                          clarity: {
-                            ...prev.clarity,
-                            scale_factor: newFactor,
-                          },
-                        }))
-                      }}
+                      onChange={(e) =>
+                        setEnhancementSettings((prev) => ({ ...prev, upscaleFactor: Number.parseInt(e.target.value) }))
+                      }
                       className="w-full"
                     />
                     <div className="flex justify-between text-xs text-gray-400 mt-1">
@@ -1395,387 +1543,6 @@ const AIImageEnhancementPortal = () => {
                       <span>Target: {getTargetResolution()}</span>
                       <span>{getMaxUpscale()}x</span>
                     </div>
-                  </div>
-
-                  {/* Advanced Clarity Settings Toggle */}
-                  <div className="bg-white/5 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="text-white font-medium flex items-center gap-2">
-                        <Sliders className="w-4 h-4" />
-                        Advanced Clarity Settings
-                      </h4>
-                      <button
-                        onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
-                        className="text-blue-400 hover:text-blue-300 text-sm"
-                      >
-                        {showAdvancedSettings ? "Hide" : "Show"}
-                      </button>
-                    </div>
-
-                    {showAdvancedSettings && (
-                      <div className="space-y-4">
-                        {/* Core Quality Settings */}
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-xs text-gray-300 mb-1">
-                              Dynamic: {enhancementSettings.clarity.dynamic}
-                            </label>
-                            <input
-                              type="range"
-                              min={1}
-                              max={10}
-                              step={1}
-                              value={enhancementSettings.clarity.dynamic}
-                              onChange={(e) =>
-                                setEnhancementSettings((prev) => ({
-                                  ...prev,
-                                  clarity: { ...prev.clarity, dynamic: Number.parseInt(e.target.value) },
-                                }))
-                              }
-                              className="w-full"
-                            />
-                            <p className="text-xs text-gray-400 mt-1">Detail enhancement strength</p>
-                          </div>
-
-                          <div>
-                            <label className="block text-xs text-gray-300 mb-1">
-                              Creativity: {enhancementSettings.clarity.creativity}
-                            </label>
-                            <input
-                              type="range"
-                              min={0}
-                              max={1}
-                              step={0.05}
-                              value={enhancementSettings.clarity.creativity}
-                              onChange={(e) =>
-                                setEnhancementSettings((prev) => ({
-                                  ...prev,
-                                  clarity: { ...prev.clarity, creativity: Number.parseFloat(e.target.value) },
-                                }))
-                              }
-                              className="w-full"
-                            />
-                            <p className="text-xs text-gray-400 mt-1">AI creativity level</p>
-                          </div>
-
-                          <div>
-                            <label className="block text-xs text-gray-300 mb-1">
-                              Resemblance: {enhancementSettings.clarity.resemblance}
-                            </label>
-                            <input
-                              type="range"
-                              min={0}
-                              max={1}
-                              step={0.05}
-                              value={enhancementSettings.clarity.resemblance}
-                              onChange={(e) =>
-                                setEnhancementSettings((prev) => ({
-                                  ...prev,
-                                  clarity: { ...prev.clarity, resemblance: Number.parseFloat(e.target.value) },
-                                }))
-                              }
-                              className="w-full"
-                            />
-                            <p className="text-xs text-gray-400 mt-1">Original image similarity</p>
-                          </div>
-
-                          <div>
-                            <label className="block text-xs text-gray-300 mb-1">
-                              Strength: {enhancementSettings.clarity.strength}
-                            </label>
-                            <input
-                              type="range"
-                              min={0}
-                              max={1}
-                              step={0.05}
-                              value={enhancementSettings.clarity.strength}
-                              onChange={(e) =>
-                                setEnhancementSettings((prev) => ({
-                                  ...prev,
-                                  clarity: { ...prev.clarity, strength: Number.parseFloat(e.target.value) },
-                                }))
-                              }
-                              className="w-full"
-                            />
-                            <p className="text-xs text-gray-400 mt-1">Enhancement intensity</p>
-                          </div>
-                        </div>
-
-                        {/* AI Model Selection */}
-                        <div>
-                          <label className="block text-xs text-gray-300 mb-1">SD Model</label>
-                          <select
-                            value={enhancementSettings.clarity.sd_model}
-                            onChange={(e) =>
-                              setEnhancementSettings((prev) => ({
-                                ...prev,
-                                clarity: { ...prev.clarity, sd_model: e.target.value },
-                              }))
-                            }
-                            className="w-full bg-white/10 border border-white/20 rounded px-3 py-2 text-white text-xs"
-                          >
-                            <option value="juggernaut_reborn.safetensors [338b85bc4f]" className="bg-slate-800">
-                              Juggernaut Reborn (Recommended)
-                            </option>
-                            <option
-                              value="epicrealism_naturalSinRC1VAE.safetensors [90a4c676]"
-                              className="bg-slate-800"
-                            >
-                              Epic Realism
-                            </option>
-                            <option value="realvisxlV40.safetensors [f7fdcb51]" className="bg-slate-800">
-                              RealVis XL
-                            </option>
-                            <option value="sd_xl_base_1.0.safetensors [be9edd61]" className="bg-slate-800">
-                              SDXL Base
-                            </option>
-                          </select>
-                          <p className="text-xs text-gray-400 mt-1">Base AI model for enhancement</p>
-                        </div>
-
-                        {/* Scheduler and Steps */}
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-xs text-gray-300 mb-1">Scheduler</label>
-                            <select
-                              value={enhancementSettings.clarity.scheduler}
-                              onChange={(e) =>
-                                setEnhancementSettings((prev) => ({
-                                  ...prev,
-                                  clarity: { ...prev.clarity, scheduler: e.target.value },
-                                }))
-                              }
-                              className="w-full bg-white/10 border border-white/20 rounded px-3 py-2 text-white text-xs"
-                            >
-                              <option value="DPM++ 2M Karras" className="bg-slate-800">
-                                DPM++ 2M Karras
-                              </option>
-                              <option value="DPM++ SDE Karras" className="bg-slate-800">
-                                DPM++ SDE Karras
-                              </option>
-                              <option value="Euler a" className="bg-slate-800">
-                                Euler a
-                              </option>
-                              <option value="DDIM" className="bg-slate-800">
-                                DDIM
-                              </option>
-                            </select>
-                          </div>
-
-                          <div>
-                            <label className="block text-xs text-gray-300 mb-1">
-                              Steps: {enhancementSettings.clarity.num_inference_steps}
-                            </label>
-                            <input
-                              type="range"
-                              min={10}
-                              max={30}
-                              step={1}
-                              value={enhancementSettings.clarity.num_inference_steps}
-                              onChange={(e) =>
-                                setEnhancementSettings((prev) => ({
-                                  ...prev,
-                                  clarity: { ...prev.clarity, num_inference_steps: Number.parseInt(e.target.value) },
-                                }))
-                              }
-                              className="w-full"
-                            />
-                          </div>
-                        </div>
-
-                        {/* Guidance and Enhancement */}
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-xs text-gray-300 mb-1">
-                              Guidance: {enhancementSettings.clarity.guidance_scale}
-                            </label>
-                            <input
-                              type="range"
-                              min={1}
-                              max={15}
-                              step={0.5}
-                              value={enhancementSettings.clarity.guidance_scale}
-                              onChange={(e) =>
-                                setEnhancementSettings((prev) => ({
-                                  ...prev,
-                                  clarity: { ...prev.clarity, guidance_scale: Number.parseFloat(e.target.value) },
-                                }))
-                              }
-                              className="w-full"
-                            />
-                            <p className="text-xs text-gray-400 mt-1">AI guidance strength</p>
-                          </div>
-
-                          <div>
-                            <label className="block text-xs text-gray-300 mb-1">
-                              Sharpen: {enhancementSettings.clarity.sharpen}
-                            </label>
-                            <input
-                              type="range"
-                              min={0}
-                              max={1}
-                              step={0.1}
-                              value={enhancementSettings.clarity.sharpen}
-                              onChange={(e) =>
-                                setEnhancementSettings((prev) => ({
-                                  ...prev,
-                                  clarity: { ...prev.clarity, sharpen: Number.parseFloat(e.target.value) },
-                                }))
-                              }
-                              className="w-full"
-                            />
-                            <p className="text-xs text-gray-400 mt-1">Post-processing sharpening</p>
-                          </div>
-                        </div>
-
-                        {/* HDR and Color Fix */}
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-xs text-gray-300 mb-1">
-                              HDR: {enhancementSettings.clarity.hdr}
-                            </label>
-                            <input
-                              type="range"
-                              min={0}
-                              max={1}
-                              step={0.1}
-                              value={enhancementSettings.clarity.hdr}
-                              onChange={(e) =>
-                                setEnhancementSettings((prev) => ({
-                                  ...prev,
-                                  clarity: { ...prev.clarity, hdr: Number.parseFloat(e.target.value) },
-                                }))
-                              }
-                              className="w-full"
-                            />
-                            <p className="text-xs text-gray-400 mt-1">HDR tone mapping</p>
-                          </div>
-
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="color_fix"
-                              checked={enhancementSettings.clarity.color_fix}
-                              onChange={(e) =>
-                                setEnhancementSettings((prev) => ({
-                                  ...prev,
-                                  clarity: { ...prev.clarity, color_fix: e.target.checked },
-                                }))
-                              }
-                            />
-                            <label htmlFor="color_fix" className="text-xs text-gray-300">
-                              Color Fix
-                            </label>
-                          </div>
-                        </div>
-
-                        {/* Face Enhancement Controls (disabled for face-preserving models) */}
-                        <div className="border-t border-white/10 pt-4">
-                          <h5 className="text-sm font-medium text-white mb-3">Face Enhancement</h5>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="flex items-center space-x-2">
-                              <input
-                                type="checkbox"
-                                id="face_enhance"
-                                checked={enhancementSettings.clarity.face_enhance}
-                                disabled={getCurrentModel()?.preserveFaces}
-                                onChange={(e) =>
-                                  setEnhancementSettings((prev) => ({
-                                    ...prev,
-                                    clarity: { ...prev.clarity, face_enhance: e.target.checked },
-                                  }))
-                                }
-                              />
-                              <label htmlFor="face_enhance" className="text-xs text-gray-300">
-                                Face Enhancement {getCurrentModel()?.preserveFaces && "(Disabled)"}
-                              </label>
-                            </div>
-
-                            <div className="flex items-center space-x-2">
-                              <input
-                                type="checkbox"
-                                id="background_enhance"
-                                checked={enhancementSettings.clarity.background_enhance}
-                                onChange={(e) =>
-                                  setEnhancementSettings((prev) => ({
-                                    ...prev,
-                                    clarity: { ...prev.clarity, background_enhance: e.target.checked },
-                                  }))
-                                }
-                              />
-                              <label htmlFor="background_enhance" className="text-xs text-gray-300">
-                                Background Enhancement
-                              </label>
-                            </div>
-                          </div>
-
-                          {!getCurrentModel()?.preserveFaces && (
-                            <div className="mt-3">
-                              <label className="block text-xs text-gray-300 mb-1">
-                                CodeFormer Fidelity: {enhancementSettings.clarity.codeformer_fidelity}
-                              </label>
-                              <input
-                                type="range"
-                                min={0}
-                                max={1}
-                                step={0.1}
-                                value={enhancementSettings.clarity.codeformer_fidelity}
-                                onChange={(e) =>
-                                  setEnhancementSettings((prev) => ({
-                                    ...prev,
-                                    clarity: {
-                                      ...prev.clarity,
-                                      codeformer_fidelity: Number.parseFloat(e.target.value),
-                                    },
-                                  }))
-                                }
-                                className="w-full"
-                              />
-                              <p className="text-xs text-gray-400 mt-1">Face restoration strength</p>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Seed Control */}
-                        <div>
-                          <label className="block text-xs text-gray-300 mb-1">Seed (Optional)</label>
-                          <input
-                            type="number"
-                            placeholder="Random seed (leave empty for random)"
-                            value={enhancementSettings.clarity.seed || ""}
-                            onChange={(e) =>
-                              setEnhancementSettings((prev) => ({
-                                ...prev,
-                                clarity: {
-                                  ...prev.clarity,
-                                  seed: e.target.value ? Number.parseInt(e.target.value) : null,
-                                },
-                              }))
-                            }
-                            className="w-full bg-white/10 border border-white/20 rounded px-3 py-2 text-white text-xs"
-                          />
-                          <p className="text-xs text-gray-400 mt-1">For reproducible results</p>
-                        </div>
-
-                        {/* Tiling Option */}
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            id="tiling"
-                            checked={enhancementSettings.clarity.tiling}
-                            onChange={(e) =>
-                              setEnhancementSettings((prev) => ({
-                                ...prev,
-                                clarity: { ...prev.clarity, tiling: e.target.checked },
-                              }))
-                            }
-                          />
-                          <label htmlFor="tiling" className="text-xs text-gray-300">
-                            Enable Tiling (for seamless textures)
-                          </label>
-                        </div>
-                      </div>
-                    )}
                   </div>
 
                   {/* Pre-processing */}

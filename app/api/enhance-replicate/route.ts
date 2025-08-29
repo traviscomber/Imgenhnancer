@@ -116,61 +116,38 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Model configuration with comprehensive Clarity Upscaler parameters
+    // Model configuration with enhanced face preservation control
     const modelId = settings.model || "clarity-upscaler-face-preserve"
-    const claritySettings = settings.clarity || {}
-
     const modelConfigs: Record<string, any> = {
       "clarity-upscaler": {
         version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
         input: {
           image: imageDataUrl,
-          scale_factor: claritySettings.scale_factor || settings.upscaleFactor || 2,
-          dynamic: claritySettings.dynamic || 6,
-          creativity: claritySettings.creativity || 0.35,
-          resemblance: claritySettings.resemblance || 0.6,
-          tiling: claritySettings.tiling || false,
-          sd_model: claritySettings.sd_model || "juggernaut_reborn.safetensors [338b85bc4f]",
-          scheduler: claritySettings.scheduler || "DPM++ 2M Karras",
-          num_inference_steps: claritySettings.num_inference_steps || 18,
-          guidance_scale: claritySettings.guidance_scale || 7.0,
-          strength: claritySettings.strength || 1.0,
-          seed: claritySettings.seed || undefined,
-          sharpen: claritySettings.sharpen || 0.0,
-          hdr: claritySettings.hdr || 0.0,
-          color_fix: claritySettings.color_fix || false,
-          custom_width: claritySettings.custom_width || undefined,
-          custom_height: claritySettings.custom_height || undefined,
-          face_enhance: claritySettings.face_enhance !== false,
-          codeformer_fidelity: claritySettings.codeformer_fidelity || 0.7,
-          background_enhance: claritySettings.background_enhance !== false,
-          only_center_face: claritySettings.only_center_face || false,
+          scale_factor: settings.upscaleFactor || 2,
+          dynamic: 6,
+          creativity: 0.35,
+          resemblance: 0.6,
+          tiling: false,
+          sd_model: "juggernaut_reborn.safetensors [338b85bc4f]",
+          face_enhance: true,
+          codeformer_fidelity: 0.7,
+          background_enhance: true,
         },
       },
       "clarity-upscaler-face-preserve": {
         version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
         input: {
           image: imageDataUrl,
-          scale_factor: claritySettings.scale_factor || settings.upscaleFactor || 2,
-          dynamic: claritySettings.dynamic || 6,
-          creativity: claritySettings.creativity || 0.35,
-          resemblance: claritySettings.resemblance || 0.6,
-          tiling: claritySettings.tiling || false,
-          sd_model: claritySettings.sd_model || "juggernaut_reborn.safetensors [338b85bc4f]",
-          scheduler: claritySettings.scheduler || "DPM++ 2M Karras",
-          num_inference_steps: claritySettings.num_inference_steps || 18,
-          guidance_scale: claritySettings.guidance_scale || 7.0,
-          strength: claritySettings.strength || 1.0,
-          seed: claritySettings.seed || undefined,
-          sharpen: claritySettings.sharpen || 0.0,
-          hdr: claritySettings.hdr || 0.0,
-          color_fix: claritySettings.color_fix || false,
-          custom_width: claritySettings.custom_width || undefined,
-          custom_height: claritySettings.custom_height || undefined,
-          // Completely disable all face enhancement for face preservation
+          scale_factor: settings.upscaleFactor || 2,
+          dynamic: 6,
+          creativity: 0.35,
+          resemblance: 0.6,
+          tiling: false,
+          sd_model: "juggernaut_reborn.safetensors [338b85bc4f]",
+          // Completely disable all face enhancement
           face_enhance: false,
           codeformer_fidelity: 0.0,
-          background_enhance: claritySettings.background_enhance !== false,
+          background_enhance: true,
           only_center_face: false,
           // Additional parameters to ensure no face modification
           gfpgan_visibility: 0.0,
@@ -181,26 +158,16 @@ export async function POST(request: NextRequest) {
         version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
         input: {
           image: imageDataUrl,
-          scale_factor: claritySettings.scale_factor || settings.upscaleFactor || 2,
-          dynamic: claritySettings.dynamic || 6,
-          creativity: claritySettings.creativity || 0.35,
-          resemblance: claritySettings.resemblance || 0.6,
-          tiling: claritySettings.tiling || false,
-          sd_model: claritySettings.sd_model || "juggernaut_reborn.safetensors [338b85bc4f]",
-          scheduler: claritySettings.scheduler || "DPM++ 2M Karras",
-          num_inference_steps: claritySettings.num_inference_steps || 18,
-          guidance_scale: claritySettings.guidance_scale || 7.0,
-          strength: claritySettings.strength || 1.0,
-          seed: claritySettings.seed || undefined,
-          sharpen: claritySettings.sharpen || 0.0,
-          hdr: claritySettings.hdr || 0.0,
-          color_fix: claritySettings.color_fix || false,
-          custom_width: claritySettings.custom_width || undefined,
-          custom_height: claritySettings.custom_height || undefined,
+          scale_factor: settings.upscaleFactor || 2,
+          dynamic: 6,
+          creativity: 0.35,
+          resemblance: 0.6,
+          tiling: false,
+          sd_model: "juggernaut_reborn.safetensors [338b85bc4f]",
           // Disable face enhancement by setting face-related parameters to minimal values
           face_enhance: false,
           codeformer_fidelity: 0.0,
-          background_enhance: claritySettings.background_enhance !== false,
+          background_enhance: true,
           only_center_face: false,
         },
       },
@@ -224,8 +191,6 @@ export async function POST(request: NextRequest) {
     }
 
     console.log(`✅ Using model: ${modelId} (version: ${config.version})`)
-    console.log(`🎛️ Clarity settings:`, JSON.stringify(config.input, null, 2))
-
     if (modelId === "clarity-upscaler-face-preserve" || modelId === "clarity-upscaler-no-face") {
       console.log("🛡️ Face preservation mode enabled - no facial modifications will be applied")
     }
@@ -459,11 +424,10 @@ export async function POST(request: NextRequest) {
       processingTime,
       predictionId: prediction.id,
       fileSize: "Enhanced image",
-      upscaleFactor: claritySettings.scale_factor || settings.upscaleFactor || 2,
+      upscaleFactor: settings.upscaleFactor || 2,
       originalSize: `${Math.round(file.size / 1024)}KB`,
       faceEnhancement: !facePreservationMode,
       facePreservation: facePreservationMode,
-      claritySettings: config.input, // Return the actual settings used
     })
   } catch (error: any) {
     console.error("❌ Unexpected error:", error)
