@@ -35,7 +35,7 @@ const Footer = () => {
   }
 
   return (
-    <footer className="n3uralia-card border-t n3uralia-border-gold mt-16">
+    <footer className="n3uralia-card border-t border-[#DAA520]/30 mt-16">
       <div className="max-w-7xl mx-auto px-6 py-12">
         {/* Main Footer Content */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
@@ -43,7 +43,7 @@ const Footer = () => {
           <div className="lg:col-span-2">
             <div className="flex items-center space-x-3 mb-6">
               <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center n3uralia-glow-gold">
-                <Brain className="w-6 h-6 n3uralia-gold-accent" />
+                <Brain className="w-6 h-6 text-[#DAA520]" />
               </div>
               <div>
                 <h3 className="text-2xl font-bold text-white">n3uralia</h3>
@@ -58,23 +58,23 @@ const Footer = () => {
             {/* Status Indicators */}
             <div className="flex flex-wrap items-center gap-4 mb-6">
               <div className="flex items-center space-x-2 text-sm">
-                <div className="w-2 h-2 rounded-full n3uralia-pulse-gold" style={{ backgroundColor: "#DAA520" }}></div>
-                <span className="text-white">AI Models Online</span>
+                <div className="w-2 h-2 rounded-full animate-gold-pulse" style={{ backgroundColor: "#DAA520" }}></div>
+                <span className="text-[#DAA520]">AI Models Online</span>
               </div>
               <div className="flex items-center space-x-2 text-sm">
-                <Shield className="w-4 h-4 n3uralia-gold-accent" />
-                <span className="n3uralia-gold-glow">Face Preservation Active</span>
+                <Shield className="w-4 h-4 text-[#DAA520]" />
+                <span className="text-[#DAA520] drop-shadow-sm">Face Preservation Active</span>
               </div>
               <div className="flex items-center space-x-2 text-sm">
-                <Award className="w-4 h-4 n3uralia-gold-accent" />
-                <span className="n3uralia-gold-glow">ASEAN Certified</span>
+                <Award className="w-4 h-4 text-[#DAA520]" />
+                <span className="text-[#DAA520] drop-shadow-sm">ASEAN Certified</span>
               </div>
             </div>
 
             {/* Newsletter Signup */}
-            <div className="bg-white/5 rounded-lg p-4 border n3uralia-border-gold">
+            <div className="bg-white/5 rounded-lg p-4 border border-[#DAA520]/30">
               <h4 className="text-white font-medium mb-2 flex items-center gap-2">
-                <Mail className="w-4 h-4 n3uralia-gold-accent" />
+                <Mail className="w-4 h-4 text-[#DAA520]" />
                 Stay Updated
               </h4>
               <p className="text-sm n3uralia-text-muted mb-3">
@@ -86,15 +86,15 @@ const Footer = () => {
                   placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="flex-1 bg-white/10 border n3uralia-border-gold rounded-md px-3 py-2 text-sm text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-gold/30"
+                  className="flex-1 bg-white/10 border border-[#DAA520]/30 rounded-md px-3 py-2 text-sm text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-[#DAA520]/30"
                   required
                 />
                 <button
                   type="submit"
-                  className="n3uralia-button-gold px-4 py-2 rounded-md text-sm flex items-center gap-1"
+                  className="bg-gradient-to-r from-[#DAA520] to-[#FFD700] text-black px-4 py-2 rounded-md text-sm flex items-center gap-1 hover:from-[#FFD700] hover:to-[#FFA500] transition-all"
                   disabled={isSubscribed}
                 >
-                  {isSubscribed ? <>✓</> : <ArrowRight className="w-4 h-4" />}
+                  {isSubscribed ? <>✓</> : <ArrowRight className="w-4 h-4 text-[#DAA520]" />}
                 </button>
               </form>
             </div>
@@ -103,7 +103,7 @@ const Footer = () => {
           {/* Capabilities */}
           <div>
             <h4 className="text-white font-semibold mb-4 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 n3uralia-gold-accent" />
+              <Sparkles className="w-4 h-4 text-[#DAA520]" />
               Capabilities
             </h4>
             <ul className="space-y-3 text-sm n3uralia-text-muted">
@@ -137,7 +137,7 @@ const Footer = () => {
           {/* Support & Resources */}
           <div>
             <h4 className="text-white font-semibold mb-4 flex items-center gap-2">
-              <Users className="w-4 h-4 n3uralia-gold-accent" />
+              <Users className="w-4 h-4 text-[#DAA520]" />
               Support & Resources
             </h4>
             <ul className="space-y-3 text-sm n3uralia-text-muted">
@@ -152,15 +152,15 @@ const Footer = () => {
             {/* Contact Info */}
             <div className="mt-6 space-y-2 text-xs n3uralia-text-muted">
               <div className="flex items-center gap-2">
-                <MapPin className="w-3 h-3 n3uralia-gold-accent" />
+                <MapPin className="w-3 h-3 text-[#DAA520]" />
                 <span>Southeast Asia</span>
               </div>
               <div className="flex items-center gap-2">
-                <Mail className="w-3 h-3 n3uralia-gold-accent" />
+                <Mail className="w-3 h-3 text-[#DAA520]" />
                 <span>support@n3uralia.ai</span>
               </div>
               <div className="flex items-center gap-2">
-                <Globe className="w-3 h-3 n3uralia-gold-accent" />
+                <Globe className="w-3 h-3 text-[#DAA520]" />
                 <span>24/7 AI Processing</span>
               </div>
             </div>
@@ -169,20 +169,20 @@ const Footer = () => {
 
         {/* Stats Section */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
-          <div className="bg-white/5 rounded-lg p-4 text-center border n3uralia-border-gold">
-            <div className="text-2xl font-bold n3uralia-gold-glow mb-1">100%</div>
+          <div className="bg-white/5 rounded-lg p-4 text-center border border-[#DAA520]/30">
+            <div className="text-2xl font-bold text-[#DAA520] drop-shadow-sm mb-1">100%</div>
             <div className="text-xs n3uralia-text-muted">Face Preservation</div>
           </div>
-          <div className="bg-white/5 rounded-lg p-4 text-center border n3uralia-border-gold">
-            <div className="text-2xl font-bold n3uralia-gold-glow mb-1">4x</div>
+          <div className="bg-white/5 rounded-lg p-4 text-center border border-[#DAA520]/30">
+            <div className="text-2xl font-bold text-[#DAA520] drop-shadow-sm mb-1">4x</div>
             <div className="text-xs n3uralia-text-muted">Max Upscaling</div>
           </div>
-          <div className="bg-white/5 rounded-lg p-4 text-center border n3uralia-border-gold">
-            <div className="text-2xl font-bold n3uralia-gold-glow mb-1">8K</div>
+          <div className="bg-white/5 rounded-lg p-4 text-center border border-[#DAA520]/30">
+            <div className="text-2xl font-bold text-[#DAA520] drop-shadow-sm mb-1">8K</div>
             <div className="text-xs n3uralia-text-muted">Domemaster Output</div>
           </div>
-          <div className="bg-white/5 rounded-lg p-4 text-center border n3uralia-border-gold">
-            <div className="text-2xl font-bold n3uralia-gold-glow mb-1">ASEAN</div>
+          <div className="bg-white/5 rounded-lg p-4 text-center border border-[#DAA520]/30">
+            <div className="text-2xl font-bold text-[#DAA520] drop-shadow-sm mb-1">ASEAN</div>
             <div className="text-xs n3uralia-text-muted">Specialized</div>
           </div>
         </div>
@@ -192,14 +192,14 @@ const Footer = () => {
           <div className="flex items-center space-x-4">
             <span className="text-sm n3uralia-text-muted">Follow n3uralia:</span>
             <div className="flex space-x-3">
-              <button className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center hover:bg-white/20 transition-colors border n3uralia-border-gold">
-                <Twitter className="w-4 h-4 n3uralia-gold-accent" />
+              <button className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center hover:bg-white/20 transition-colors border border-[#DAA520]/30">
+                <Twitter className="w-4 h-4 text-[#DAA520]" />
               </button>
-              <button className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center hover:bg-white/20 transition-colors border n3uralia-border-gold">
-                <Github className="w-4 h-4 n3uralia-gold-accent" />
+              <button className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center hover:bg-white/20 transition-colors border border-[#DAA520]/30">
+                <Github className="w-4 h-4 text-[#DAA520]" />
               </button>
-              <button className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center hover:bg-white/20 transition-colors border n3uralia-border-gold">
-                <Linkedin className="w-4 h-4 n3uralia-gold-accent" />
+              <button className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center hover:bg-white/20 transition-colors border border-[#DAA520]/30">
+                <Linkedin className="w-4 h-4 text-[#DAA520]" />
               </button>
             </div>
           </div>
@@ -207,12 +207,12 @@ const Footer = () => {
           <div className="flex items-center space-x-6 text-sm">
             <span className="n3uralia-text-muted">Powered by</span>
             <div className="flex items-center space-x-2">
-              <Cpu className="w-4 h-4 n3uralia-gold-accent" />
-              <span className="n3uralia-gold-glow">Clarity Upscaler AI</span>
+              <Cpu className="w-4 h-4 text-[#DAA520]" />
+              <span className="text-[#DAA520] drop-shadow-sm">Clarity Upscaler AI</span>
             </div>
             <div className="flex items-center space-x-2">
-              <Zap className="w-4 h-4 n3uralia-gold-accent" />
-              <span className="n3uralia-gold-glow">Replicate Infrastructure</span>
+              <Zap className="w-4 h-4 text-[#DAA520]" />
+              <span className="text-[#DAA520] drop-shadow-sm">Replicate Infrastructure</span>
             </div>
           </div>
         </div>
@@ -233,9 +233,11 @@ const Footer = () => {
 
         {/* Cultural Recognition */}
         <div className="mt-8 text-center">
-          <div className="inline-flex items-center space-x-2 bg-white/5 px-4 py-2 rounded-full border n3uralia-border-gold">
-            <Heart className="w-4 h-4 n3uralia-gold-accent" />
-            <span className="text-sm n3uralia-gold-glow">Built with respect for ASEAN cultural diversity</span>
+          <div className="inline-flex items-center space-x-2 bg-white/5 px-4 py-2 rounded-full border border-[#DAA520]/30">
+            <Heart className="w-4 h-4 text-[#DAA520]" />
+            <span className="text-sm text-[#DAA520] drop-shadow-sm">
+              Built with respect for ASEAN cultural diversity
+            </span>
             <span className="text-lg">🇮🇩🇲🇾🇹🇭🇵🇭🇸🇬🇻🇳🇧🇳🇰🇭🇱🇦🇲🇲</span>
           </div>
         </div>

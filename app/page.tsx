@@ -1108,7 +1108,7 @@ const AIImageEnhancementPortal = () => {
                 <div className="flex items-center space-x-2">
                   <div
                     className="w-2 h-2 rounded-full n3uralia-pulse-gold"
-                    style={{ backgroundColor: "#DAA520" }}
+                    style={{ backgroundColor: "rgba(218, 165, 32, 1)" }}
                   ></div>
                   <span className="text-white">AI Online</span>
                 </div>
@@ -1178,7 +1178,7 @@ const AIImageEnhancementPortal = () => {
                   <div className="inline-flex items-center space-x-2 n3uralia-card px-4 py-2 rounded-full mb-6">
                     <div
                       className="w-2 h-2 rounded-full n3uralia-pulse-gold"
-                      style={{ backgroundColor: "#DAA520" }}
+                      style={{ backgroundColor: "rgba(218, 165, 32, 1)" }}
                     ></div>
                     <span className="text-sm n3uralia-text-muted">AI Enhancement Platform</span>
                   </div>
@@ -1273,7 +1273,7 @@ const AIImageEnhancementPortal = () => {
                     <h3 className="text-xl font-semibold text-white mb-4">{capability.title}</h3>
                     <p className="n3uralia-text-muted leading-relaxed mb-4">{capability.description}</p>
                     <div className="inline-flex items-center space-x-2 text-sm">
-                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "#DAA520" }}></div>
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "rgba(218, 165, 32, 1)" }}></div>
                       <span className="n3uralia-gold-glow">{capability.metric}</span>
                     </div>
                   </div>
@@ -1519,7 +1519,7 @@ const AIImageEnhancementPortal = () => {
                   <div className="flex items-center space-x-2 text-sm">
                     <div
                       className="w-2 h-2 rounded-full n3uralia-pulse-gold"
-                      style={{ backgroundColor: "#DAA520" }}
+                      style={{ backgroundColor: "rgba(218, 165, 32, 1)" }}
                     ></div>
                     <span className="text-white">AI Ready</span>
                   </div>
