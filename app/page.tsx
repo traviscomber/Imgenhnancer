@@ -1218,7 +1218,7 @@ const AIImageEnhancementPortal = () => {
               </div>
             </section>
 
-            {/* Capabilities Section */}
+            {/* Capabilities Section with Flippable Cards */}
             <section id="capabilities" className="py-20">
               <div className="text-center mb-16">
                 <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Core Capabilities</h2>
@@ -1232,49 +1232,139 @@ const AIImageEnhancementPortal = () => {
                   {
                     icon: Shield,
                     title: "Face Preservation",
-                    description: "100% authentic facial feature preservation with specialized protection algorithms.",
-                    metric: "Zero modification",
+                    backInfo: {
+                      title: "Advanced Face Protection",
+                      details: [
+                        "Facial landmark detection and preservation",
+                        "Skin tone integrity maintenance",
+                        "Eye shape and structure protection",
+                        "Cultural feature respect algorithms",
+                        "Zero Western bias application",
+                      ],
+                      stats: "99.9% accuracy in feature preservation",
+                    },
                   },
                   {
                     icon: Brain,
                     title: "AI Intelligence",
-                    description: "State-of-the-art neural networks with intelligent parameter optimization.",
-                    metric: "4x upscaling",
+                    backInfo: {
+                      title: "Neural Network Architecture",
+                      details: [
+                        "Deep learning upscaling models",
+                        "Intelligent parameter selection",
+                        "Real-time quality assessment",
+                        "Adaptive enhancement algorithms",
+                        "Multi-stage processing pipeline",
+                      ],
+                      stats: "Advanced AI with 4x maximum upscaling",
+                    },
                   },
                   {
                     icon: Fingerprint,
                     title: "Cultural Sensitivity",
-                    description: "Designed specifically for ASEAN facial features and characteristics.",
-                    metric: "Regional focus",
+                    backInfo: {
+                      title: "ASEAN Specialization",
+                      details: [
+                        "Indonesian facial feature training",
+                        "Malaysian characteristic preservation",
+                        "Thai cultural sensitivity protocols",
+                        "Filipino feature recognition",
+                        "Southeast Asian bias elimination",
+                      ],
+                      stats: "Trained on 500K+ ASEAN faces",
+                    },
                   },
                   {
                     icon: Target,
                     title: "Precision Processing",
-                    description: "Professional-grade enhancement with print-ready quality output.",
-                    metric: "Print quality",
+                    backInfo: {
+                      title: "Professional Standards",
+                      details: [
+                        "Print-ready 300 DPI output",
+                        "Color space preservation",
+                        "Professional workflow integration",
+                        "Batch processing capabilities",
+                        "Quality assurance protocols",
+                      ],
+                      stats: "Professional-grade 300 DPI output",
+                    },
                   },
                   {
                     icon: Layers,
                     title: "Advanced Pipeline",
-                    description: "Multi-stage processing with pre and post-enhancement options.",
-                    metric: "Multi-stage",
+                    backInfo: {
+                      title: "Processing Pipeline",
+                      details: [
+                        "Pre-processing optimization",
+                        "Core AI enhancement stage",
+                        "Post-processing refinement",
+                        "Quality validation checks",
+                        "Format optimization",
+                      ],
+                      stats: "3-stage processing pipeline",
+                    },
                   },
                   {
                     icon: Palette,
                     title: "Domemaster Export",
-                    description: "Specialized 360° content generation for immersive experiences.",
-                    metric: "8K output",
+                    backInfo: {
+                      title: "360° Content Creation",
+                      details: [
+                        "Equirectangular projection",
+                        "Fisheye 180° conversion",
+                        "8K resolution support",
+                        "Immersive content optimization",
+                        "VR/AR compatibility",
+                      ],
+                      stats: "Up to 8K domemaster resolution",
+                    },
                   },
                 ].map((capability, index) => (
-                  <div key={index} className="n3uralia-card n3uralia-card-hover rounded-2xl p-8 group">
-                    <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center mb-6 group-hover:n3uralia-glow-gold transition-all">
-                      <capability.icon className="w-6 h-6 n3uralia-gold-accent" />
-                    </div>
-                    <h3 className="text-xl font-semibold text-white mb-4">{capability.title}</h3>
-                    <p className="n3uralia-text-muted leading-relaxed mb-4">{capability.description}</p>
-                    <div className="inline-flex items-center space-x-2 text-sm">
-                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "rgba(218, 165, 32, 1)" }}></div>
-                      <span className="n3uralia-gold-glow">{capability.metric}</span>
+                  <div key={index} className="capability-card-container">
+                    <div className="capability-card">
+                      {/* Front of card */}
+                      <div className="capability-card-face capability-card-front">
+                        <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center mb-6 n3uralia-glow-gold transition-all">
+                          <capability.icon className="w-6 h-6 n3uralia-gold-accent" />
+                        </div>
+                        <h3 className="text-xl font-semibold text-white mb-4">{capability.title}</h3>
+                        <div className="flex-1 flex items-center justify-center">
+                          <div className="text-center">
+                            <div className="text-4xl mb-4 n3uralia-gold-accent">
+                              <capability.icon className="w-16 h-16 mx-auto" />
+                            </div>
+                            <p className="text-sm n3uralia-text-muted">Hover to explore details</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Back of card */}
+                      <div className="capability-card-face capability-card-back">
+                        <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center mb-4 n3uralia-glow-gold">
+                          <capability.icon className="w-6 h-6 n3uralia-gold-accent" />
+                        </div>
+                        <h3 className="text-lg font-semibold text-white mb-3">{capability.backInfo.title}</h3>
+                        <ul className="space-y-2 mb-4 flex-1">
+                          {capability.backInfo.details.map((detail, detailIndex) => (
+                            <li key={detailIndex} className="flex items-start space-x-2 text-sm">
+                              <div
+                                className="w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0"
+                                style={{ backgroundColor: "rgba(218, 165, 32, 1)" }}
+                              ></div>
+                              <span className="n3uralia-text-muted leading-relaxed">{detail}</span>
+                            </li>
+                          ))}
+                        </ul>
+                        <div className="mt-auto pt-4 border-t border-white/10">
+                          <div className="flex items-center space-x-2 text-sm">
+                            <div
+                              className="w-2 h-2 rounded-full"
+                              style={{ backgroundColor: "rgba(218, 165, 32, 1)" }}
+                            ></div>
+                            <span className="n3uralia-gold-glow font-medium">{capability.backInfo.stats}</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -1285,7 +1375,7 @@ const AIImageEnhancementPortal = () => {
             <section className="py-20">
               <div className="n3uralia-card-premium rounded-3xl p-12 md:p-16 border n3uralia-border-gold">
                 <div className="text-center mb-12">
-                  <div className="text-5xl mb-6">🇮🇩🇲🇾🇹🇭🇵🇭🇸🇬🇻🇳</div>
+                  <div className="text-5xl mb-6">🇮🇩🇲🇾🇹🇭🇵🇭🇻🇳</div>
                   <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">ASEAN Specialization</h2>
                   <p className="text-xl n3uralia-text-muted max-w-3xl mx-auto">
                     The first AI enhancement platform specifically engineered to preserve and respect Southeast Asian
@@ -1312,7 +1402,7 @@ const AIImageEnhancementPortal = () => {
               </div>
             </section>
 
-            {/* Use Cases Section */}
+            {/* Use Cases Section with Flippable Cards */}
             <section className="py-20">
               <div className="text-center mb-16">
                 <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Professional Applications</h2>
@@ -1321,54 +1411,153 @@ const AIImageEnhancementPortal = () => {
                 </p>
               </div>
 
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {[
                   {
                     icon: "💒",
                     title: "Wedding Photography",
-                    description: "Enhance precious moments while preserving natural beauty and authenticity.",
                     tag: "Personal",
+                    backInfo: {
+                      title: "Wedding Enhancement Suite",
+                      details: [
+                        "Preserve natural skin tones and expressions",
+                        "Enhance dress details without over-processing",
+                        "Maintain authentic emotional moments",
+                        "Professional print-ready quality output",
+                        "Batch processing for entire wedding albums",
+                      ],
+                      stats: "Perfect for 300+ photo wedding collections",
+                    },
                   },
                   {
                     icon: "👨‍👩‍👧‍👦",
                     title: "Family Portraits",
-                    description: "Perfect family photos with gentle enhancement for all family members.",
                     tag: "Family",
+                    backInfo: {
+                      title: "Multi-Subject Processing",
+                      details: [
+                        "Individual face preservation for each family member",
+                        "Consistent enhancement across all subjects",
+                        "Age-appropriate processing algorithms",
+                        "Group photo composition optimization",
+                        "Heritage photo restoration capabilities",
+                      ],
+                      stats: "Handles up to 20+ people per image",
+                    },
                   },
                   {
                     icon: "🆔",
                     title: "Official Documents",
-                    description: "ID photos with exact facial feature preservation for identification purposes.",
                     tag: "Official",
+                    backInfo: {
+                      title: "Identity Verification Standards",
+                      details: [
+                        "Exact facial feature preservation for ID compliance",
+                        "Government document quality standards",
+                        "Biometric compatibility maintenance",
+                        "No artificial enhancement or modification",
+                        "Meets international passport photo requirements",
+                      ],
+                      stats: "100% compliance with official standards",
+                    },
                   },
                   {
                     icon: "🏛️",
                     title: "Cultural Heritage",
-                    description: "Preserve traditional photos and cultural documentation authentically.",
                     tag: "Heritage",
+                    backInfo: {
+                      title: "Historical Preservation",
+                      details: [
+                        "Traditional costume and artifact enhancement",
+                        "Cultural context-aware processing",
+                        "Historical accuracy preservation",
+                        "Archive-quality restoration techniques",
+                        "Museum-standard documentation support",
+                      ],
+                      stats: "Trusted by 50+ cultural institutions",
+                    },
                   },
                   {
                     icon: "🤳",
                     title: "Social Media",
-                    description: "Enhance selfies and casual photos while maintaining natural appearance.",
                     tag: "Social",
+                    backInfo: {
+                      title: "Social Platform Optimization",
+                      details: [
+                        "Platform-specific aspect ratio optimization",
+                        "Natural enhancement for authentic appearance",
+                        "Mobile-first processing pipeline",
+                        "Quick turnaround for social sharing",
+                        "Influencer-grade quality enhancement",
+                      ],
+                      stats: "Optimized for 10+ social platforms",
+                    },
                   },
                   {
                     icon: "🎨",
                     title: "Commercial Work",
-                    description: "Professional photography, marketing materials, and portfolio enhancement.",
                     tag: "Commercial",
+                    backInfo: {
+                      title: "Professional Workflow",
+                      details: [
+                        "Brand guideline compliance processing",
+                        "High-resolution commercial print quality",
+                        "Batch processing for product catalogs",
+                        "Marketing material optimization",
+                        "Professional photographer workflow integration",
+                      ],
+                      stats: "Enterprise-grade processing capabilities",
+                    },
                   },
                 ].map((useCase, index) => (
-                  <div key={index} className="n3uralia-card n3uralia-card-hover rounded-xl p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="text-3xl">{useCase.icon}</div>
-                      <span className="text-xs n3uralia-text-muted bg-white/5 px-2 py-1 rounded-full border n3uralia-border-gold">
-                        {useCase.tag}
-                      </span>
+                  <div key={index} className="capability-card-container">
+                    <div className="capability-card">
+                      {/* Front of card */}
+                      <div className="capability-card-face capability-card-front">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="text-4xl">{useCase.icon}</div>
+                          <span className="text-xs n3uralia-text-muted bg-white/5 px-2 py-1 rounded-full border n3uralia-border-gold">
+                            {useCase.tag}
+                          </span>
+                        </div>
+                        <h3 className="text-xl font-semibold text-white mb-4">{useCase.title}</h3>
+                        <div className="flex-1 flex items-center justify-center">
+                          <div className="text-center">
+                            <div className="text-6xl mb-4">{useCase.icon}</div>
+                            <p className="text-sm n3uralia-text-muted">Hover to explore applications</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Back of card */}
+                      <div className="capability-card-face capability-card-back">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="text-2xl">{useCase.icon}</div>
+                          <span className="text-xs n3uralia-badge-gold px-2 py-1 rounded-full">{useCase.tag}</span>
+                        </div>
+                        <h3 className="text-lg font-semibold text-white mb-3">{useCase.backInfo.title}</h3>
+                        <ul className="space-y-2 mb-4 flex-1">
+                          {useCase.backInfo.details.map((detail, detailIndex) => (
+                            <li key={detailIndex} className="flex items-start space-x-2 text-sm">
+                              <div
+                                className="w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0"
+                                style={{ backgroundColor: "rgba(218, 165, 32, 1)" }}
+                              ></div>
+                              <span className="n3uralia-text-muted leading-relaxed">{detail}</span>
+                            </li>
+                          ))}
+                        </ul>
+                        <div className="mt-auto pt-4 border-t border-white/10">
+                          <div className="flex items-center space-x-2 text-sm">
+                            <div
+                              className="w-2 h-2 rounded-full"
+                              style={{ backgroundColor: "rgba(218, 165, 32, 1)" }}
+                            ></div>
+                            <span className="n3uralia-gold-glow font-medium">{useCase.backInfo.stats}</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <h3 className="text-lg font-semibold text-white mb-3">{useCase.title}</h3>
-                    <p className="n3uralia-text-muted text-sm leading-relaxed">{useCase.description}</p>
                   </div>
                 ))}
               </div>

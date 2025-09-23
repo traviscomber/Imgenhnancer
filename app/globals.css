@@ -599,6 +599,68 @@
     }
   }
 
+  /* Card Flip Animation Styles */
+  .capability-card-container {
+    perspective: 1000px;
+    height: 320px;
+  }
+
+  .capability-card {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-style: preserve-3d;
+    cursor: pointer;
+  }
+
+  .capability-card-container:hover .capability-card {
+    transform: rotateY(180deg);
+  }
+
+  .capability-card-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 1rem;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .capability-card-front {
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    z-index: 2;
+  }
+
+  .capability-card-back {
+    background: rgba(218, 165, 32, 0.02);
+    backdrop-filter: blur(25px);
+    border: 1px solid rgba(218, 165, 32, 0.25);
+    transform: rotateY(180deg);
+    z-index: 1;
+  }
+
+  .capability-card-back::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(218, 165, 32, 0.6), transparent);
+  }
+
+  /* Mobile touch support */
+  @media (hover: none) and (pointer: coarse) {
+    .capability-card-container:active .capability-card {
+      transform: rotateY(180deg);
+    }
+  }
+
   /* Override any colored elements with true gold where appropriate */
   .text-green-400,
   .text-green-600,
@@ -653,6 +715,14 @@
     .n3uralia-button-gold {
       min-height: 44px; /* Touch-friendly */
     }
+
+    .capability-card-container {
+      height: 280px;
+    }
+
+    .capability-card-face {
+      padding: 1.5rem;
+    }
   }
 
   /* High contrast mode support */
@@ -682,6 +752,14 @@
     .n3uralia-gradient {
       animation: none;
       background: #0a0a0a;
+    }
+
+    .capability-card {
+      transition: none;
+    }
+
+    .capability-card-container:hover .capability-card {
+      transform: none;
     }
   }
 
