@@ -30,6 +30,13 @@
     --chart-4: 0 0% 30%;
     --chart-5: 0 0% 10%;
     --radius: 0.75rem;
+
+    /* True Gold accent colors - not yellow */
+    --gold: 43 74% 66%; /* #DAA520 - Goldenrod */
+    --gold-muted: 43 74% 50%; /* #B8860B - Dark Goldenrod */
+    --gold-subtle: 43 74% 35%; /* #8B6914 - Darker Gold */
+    --gold-glow: 51 100% 50%; /* #FFD700 - Pure Gold */
+    --gold-light: 48 100% 88%; /* #FFF8DC - Cornsilk */
   }
 }
 
@@ -54,7 +61,7 @@
     scroll-behavior: smooth;
   }
 
-  /* Custom scrollbar - monochrome */
+  /* Custom scrollbar - with true gold accent */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -65,29 +72,42 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.15);
+    background: linear-gradient(45deg, #daa520, #ffd700);
     border-radius: 3px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.25);
+    background: linear-gradient(45deg, #ffd700, #ffa500);
   }
 
   /* Firefox scrollbar */
   * {
     scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.15) rgba(255, 255, 255, 0.02);
+    scrollbar-color: #daa520 rgba(255, 255, 255, 0.02);
   }
 }
 
 @layer components {
-  /* n3uralia Monochrome Design System */
+  /* n3uralia Monochrome + True Gold Design System */
 
-  /* Background Gradients - Pure Grayscale */
+  /* Background Gradients - With Gold Highlights */
   .n3uralia-gradient {
     background: linear-gradient(135deg, #000000 0%, #0f0f0f 25%, #1a1a1a 50%, #0f0f0f 75%, #000000 100%);
     background-size: 400% 400%;
     animation: gradientShift 25s ease infinite;
+    position: relative;
+  }
+
+  .n3uralia-gradient::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 20% 80%, rgba(218, 165, 32, 0.03) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255, 215, 0, 0.02) 0%, transparent 50%);
+    pointer-events: none;
   }
 
   @keyframes gradientShift {
@@ -102,22 +122,39 @@
     }
   }
 
-  /* Card Components - Monochrome Glass */
+  /* Card Components - Monochrome Glass with True Gold Accents */
   .n3uralia-card {
     background: rgba(255, 255, 255, 0.02);
     backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.08);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
   }
 
   .n3uralia-card-hover:hover {
     background: rgba(255, 255, 255, 0.04);
-    border-color: rgba(255, 255, 255, 0.15);
+    border-color: rgba(218, 165, 32, 0.3);
     transform: translateY(-2px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(218, 165, 32, 0.15);
   }
 
-  /* Button Components - Pure Monochrome */
+  .n3uralia-card-premium {
+    border: 1px solid rgba(218, 165, 32, 0.25);
+    background: rgba(218, 165, 32, 0.02);
+    position: relative;
+  }
+
+  .n3uralia-card-premium::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(218, 165, 32, 0.6), transparent);
+  }
+
+  /* Button Components - With True Gold Accents */
   .n3uralia-button-primary {
     background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
     color: #000000;
@@ -131,11 +168,23 @@
   .n3uralia-button-primary:hover {
     background: linear-gradient(135deg, #ffffff 0%, #e8e8e8 100%);
     transform: translateY(-1px);
-    box-shadow: 0 10px 30px rgba(255, 255, 255, 0.15);
+    box-shadow: 0 10px 30px rgba(255, 255, 255, 0.15), 0 0 20px rgba(218, 165, 32, 0.1);
   }
 
-  .n3uralia-button-primary:active {
-    transform: translateY(0);
+  .n3uralia-button-gold {
+    background: linear-gradient(135deg, #daa520 0%, #ffd700 100%);
+    color: #000000;
+    border: 1px solid rgba(218, 165, 32, 0.4);
+    font-weight: 600;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .n3uralia-button-gold:hover {
+    background: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 30px rgba(218, 165, 32, 0.4), 0 0 20px rgba(255, 215, 0, 0.3);
   }
 
   .n3uralia-button-secondary {
@@ -148,11 +197,12 @@
 
   .n3uralia-button-secondary:hover {
     background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.3);
+    border-color: rgba(218, 165, 32, 0.4);
     transform: translateY(-1px);
+    box-shadow: 0 0 15px rgba(218, 165, 32, 0.15);
   }
 
-  /* Text Components - Grayscale Only */
+  /* Text Components - With True Gold Accents */
   .n3uralia-text-muted {
     color: rgba(255, 255, 255, 0.6);
   }
@@ -165,9 +215,26 @@
     text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
   }
 
-  /* Border Components */
+  .n3uralia-gold-accent {
+    background: linear-gradient(135deg, #ffd700 0%, #daa520 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 0 20px rgba(218, 165, 32, 0.4);
+  }
+
+  .n3uralia-gold-glow {
+    color: #daa520;
+    text-shadow: 0 0 10px rgba(218, 165, 32, 0.4);
+  }
+
+  /* Border Components - With True Gold */
   .n3uralia-border {
     border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .n3uralia-border-gold {
+    border-color: rgba(218, 165, 32, 0.3);
   }
 
   .n3uralia-divider {
@@ -175,9 +242,18 @@
     background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%);
   }
 
-  /* Animation Components - Monochrome */
+  .n3uralia-divider-gold {
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(218, 165, 32, 0.4) 50%, transparent 100%);
+  }
+
+  /* Animation Components - With True Gold */
   .n3uralia-pulse {
     animation: n3uraliaPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .n3uralia-pulse-gold {
+    animation: n3uraliaPulseGold 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 
   @keyframes n3uraliaPulse {
@@ -192,6 +268,20 @@
     }
   }
 
+  @keyframes n3uraliaPulseGold {
+    0%,
+    100% {
+      opacity: 1;
+      transform: scale(1);
+      box-shadow: 0 0 10px rgba(218, 165, 32, 0.3);
+    }
+    50% {
+      opacity: 0.8;
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(218, 165, 32, 0.5);
+    }
+  }
+
   .n3uralia-glow {
     box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
     transition: box-shadow 0.3s ease;
@@ -201,7 +291,16 @@
     box-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
   }
 
-  /* Input Components - Monochrome */
+  .n3uralia-glow-gold {
+    box-shadow: 0 0 20px rgba(218, 165, 32, 0.15);
+    transition: box-shadow 0.3s ease;
+  }
+
+  .n3uralia-glow-gold:hover {
+    box-shadow: 0 0 30px rgba(218, 165, 32, 0.4);
+  }
+
+  /* Input Components - With True Gold Focus */
   .n3uralia-input {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -211,16 +310,16 @@
 
   .n3uralia-input:focus {
     background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.3);
+    border-color: rgba(218, 165, 32, 0.5);
     outline: none;
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 0 3px rgba(218, 165, 32, 0.15);
   }
 
   .n3uralia-input::placeholder {
     color: rgba(255, 255, 255, 0.4);
   }
 
-  /* Select Components - Monochrome */
+  /* Select Components - With True Gold Focus */
   .n3uralia-select {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -230,8 +329,9 @@
 
   .n3uralia-select:focus {
     background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.3);
+    border-color: rgba(218, 165, 32, 0.5);
     outline: none;
+    box-shadow: 0 0 0 3px rgba(218, 165, 32, 0.15);
   }
 
   .n3uralia-select option {
@@ -239,7 +339,7 @@
     color: #ffffff;
   }
 
-  /* Range Slider Components - Monochrome */
+  /* Range Slider Components - With True Gold */
   .n3uralia-range {
     -webkit-appearance: none;
     appearance: none;
@@ -254,33 +354,35 @@
     appearance: none;
     width: 16px;
     height: 16px;
-    background: #ffffff;
+    background: linear-gradient(135deg, #ffd700, #daa520);
     border-radius: 50%;
     cursor: pointer;
     transition: all 0.2s ease;
+    box-shadow: 0 0 10px rgba(218, 165, 32, 0.4);
   }
 
   .n3uralia-range::-webkit-slider-thumb:hover {
     transform: scale(1.2);
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 15px rgba(218, 165, 32, 0.6);
   }
 
   .n3uralia-range::-moz-range-thumb {
     width: 16px;
     height: 16px;
-    background: #ffffff;
+    background: linear-gradient(135deg, #ffd700, #daa520);
     border-radius: 50%;
     cursor: pointer;
     border: none;
     transition: all 0.2s ease;
+    box-shadow: 0 0 10px rgba(218, 165, 32, 0.4);
   }
 
   .n3uralia-range::-moz-range-thumb:hover {
     transform: scale(1.2);
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 15px rgba(218, 165, 32, 0.6);
   }
 
-  /* Loading Components - Monochrome */
+  /* Loading Components - With True Gold */
   .n3uralia-loading {
     position: relative;
     overflow: hidden;
@@ -293,7 +395,7 @@
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    background: linear-gradient(90deg, transparent, rgba(218, 165, 32, 0.3), transparent);
     animation: shimmer 2s infinite;
   }
 
@@ -306,7 +408,7 @@
     }
   }
 
-  /* Status Components - Monochrome */
+  /* Status Components - With True Gold */
   .n3uralia-status-online {
     color: #ffffff;
     position: relative;
@@ -320,9 +422,10 @@
     transform: translateY(-50%);
     width: 6px;
     height: 6px;
-    background: #ffffff;
+    background: #daa520;
     border-radius: 50%;
-    animation: n3uraliaPulse 2s infinite;
+    animation: n3uraliaPulseGold 2s infinite;
+    box-shadow: 0 0 10px rgba(218, 165, 32, 0.6);
   }
 
   .n3uralia-status-processing {
@@ -338,9 +441,10 @@
     transform: translateY(-50%);
     width: 6px;
     height: 6px;
-    background: rgba(255, 255, 255, 0.7);
+    background: #b8860b;
     border-radius: 50%;
     animation: spin 1s linear infinite;
+    box-shadow: 0 0 8px rgba(184, 134, 11, 0.4);
   }
 
   @keyframes spin {
@@ -352,7 +456,7 @@
     }
   }
 
-  /* Badge Components - Monochrome */
+  /* Badge Components - With True Gold */
   .n3uralia-badge {
     background: rgba(255, 255, 255, 0.1);
     color: #ffffff;
@@ -366,10 +470,26 @@
 
   .n3uralia-badge:hover {
     background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.3);
+    border-color: rgba(218, 165, 32, 0.4);
   }
 
-  /* Progress Components - Monochrome */
+  .n3uralia-badge-gold {
+    background: rgba(218, 165, 32, 0.15);
+    color: #daa520;
+    border: 1px solid rgba(218, 165, 32, 0.4);
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    transition: all 0.2s ease;
+  }
+
+  .n3uralia-badge-gold:hover {
+    background: rgba(218, 165, 32, 0.25);
+    border-color: rgba(218, 165, 32, 0.6);
+  }
+
+  /* Progress Components - With True Gold */
   .n3uralia-progress {
     background: rgba(255, 255, 255, 0.1);
     border-radius: 0.5rem;
@@ -377,12 +497,13 @@
   }
 
   .n3uralia-progress-bar {
-    background: linear-gradient(90deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.9));
+    background: linear-gradient(90deg, #b8860b, #daa520);
     height: 100%;
     border-radius: 0.5rem;
     transition: width 0.3s ease;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 0 10px rgba(218, 165, 32, 0.4);
   }
 
   .n3uralia-progress-bar::after {
@@ -392,7 +513,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.6), transparent);
     animation: progressShine 2s infinite;
   }
 
@@ -405,19 +526,19 @@
     }
   }
 
-  /* Tooltip Components - Monochrome */
+  /* Tooltip Components - With True Gold */
   .n3uralia-tooltip {
     background: rgba(0, 0, 0, 0.9);
     color: #ffffff;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(218, 165, 32, 0.3);
     backdrop-filter: blur(10px);
     font-size: 0.875rem;
     padding: 0.5rem 0.75rem;
     border-radius: 0.5rem;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), 0 0 10px rgba(218, 165, 32, 0.15);
   }
 
-  /* Modal Components - Monochrome */
+  /* Modal Components - With True Gold */
   .n3uralia-modal-overlay {
     background: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(10px);
@@ -425,22 +546,22 @@
 
   .n3uralia-modal {
     background: rgba(10, 10, 10, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(218, 165, 32, 0.2);
     backdrop-filter: blur(20px);
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5), 0 0 20px rgba(218, 165, 32, 0.15);
   }
 
-  /* Status Indicators - Monochrome Only */
+  /* Status Indicators - With True Gold */
   .status-success {
-    background: rgba(255, 255, 255, 0.2);
-    color: #ffffff;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(218, 165, 32, 0.2);
+    color: #daa520;
+    border: 1px solid rgba(218, 165, 32, 0.4);
   }
 
   .status-warning {
-    background: rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(218, 165, 32, 0.1);
+    color: #b8860b;
+    border: 1px solid rgba(218, 165, 32, 0.3);
   }
 
   .status-error {
@@ -449,12 +570,41 @@
     border: 1px solid rgba(255, 255, 255, 0.15);
   }
 
-  /* Override any colored elements */
+  /* Premium/Gold Elements */
+  .n3uralia-premium-indicator {
+    background: linear-gradient(45deg, rgba(218, 165, 32, 0.2), rgba(218, 165, 32, 0.1));
+    border: 1px solid rgba(218, 165, 32, 0.4);
+    color: #daa520;
+    position: relative;
+  }
+
+  .n3uralia-premium-indicator::before {
+    content: "✨";
+    position: absolute;
+    left: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+    animation: sparkle 2s ease-in-out infinite;
+  }
+
+  @keyframes sparkle {
+    0%,
+    100% {
+      opacity: 0.5;
+      transform: translateY(-50%) scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: translateY(-50%) scale(1.2);
+    }
+  }
+
+  /* Override any colored elements with true gold where appropriate */
   .text-green-400,
   .text-green-600,
   .bg-green-600 {
-    color: #ffffff !important;
-    background-color: rgba(255, 255, 255, 0.2) !important;
+    color: #daa520 !important;
+    background-color: rgba(218, 165, 32, 0.2) !important;
   }
 
   .text-red-400,
@@ -468,28 +618,28 @@
   .text-yellow-400,
   .text-yellow-300,
   .bg-yellow-600 {
-    color: rgba(255, 255, 255, 0.8) !important;
-    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: #daa520 !important;
+    background-color: rgba(218, 165, 32, 0.15) !important;
   }
 
   .text-blue-400,
   .text-blue-600,
   .bg-blue-600 {
-    color: #ffffff !important;
-    background-color: rgba(255, 255, 255, 0.15) !important;
+    color: #b8860b !important;
+    background-color: rgba(184, 134, 11, 0.15) !important;
   }
 
   .text-purple-400,
   .bg-purple-600 {
-    color: #ffffff !important;
-    background-color: rgba(255, 255, 255, 0.15) !important;
+    color: #b8860b !important;
+    background-color: rgba(184, 134, 11, 0.15) !important;
   }
 
   .border-green-500,
   .border-red-500,
   .border-yellow-500,
   .border-blue-500 {
-    border-color: rgba(255, 255, 255, 0.2) !important;
+    border-color: rgba(218, 165, 32, 0.4) !important;
   }
 
   /* Responsive Design */
@@ -499,7 +649,8 @@
     }
 
     .n3uralia-button-primary,
-    .n3uralia-button-secondary {
+    .n3uralia-button-secondary,
+    .n3uralia-button-gold {
       min-height: 44px; /* Touch-friendly */
     }
   }
@@ -507,17 +658,22 @@
   /* High contrast mode support */
   @media (prefers-contrast: high) {
     .n3uralia-card {
-      border-color: rgba(255, 255, 255, 0.3);
+      border-color: rgba(218, 165, 32, 0.5);
     }
 
     .n3uralia-text-muted {
       color: rgba(255, 255, 255, 0.8);
+    }
+
+    .n3uralia-gold-accent {
+      color: #ffd700;
     }
   }
 
   /* Reduced motion support */
   @media (prefers-reduced-motion: reduce) {
     .n3uralia-pulse,
+    .n3uralia-pulse-gold,
     .n3uralia-loading::after,
     .n3uralia-progress-bar::after {
       animation: none;
@@ -537,7 +693,7 @@
   }
 }
 
-/* Custom utility classes - Monochrome */
+/* Custom utility classes - With True Gold */
 @layer utilities {
   .text-shadow-sm {
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
@@ -551,6 +707,10 @@
     text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
   }
 
+  .text-shadow-gold {
+    text-shadow: 0 2px 8px rgba(218, 165, 32, 0.4);
+  }
+
   .backdrop-blur-xs {
     backdrop-filter: blur(2px);
   }
@@ -559,10 +719,35 @@
     backdrop-filter: blur(64px);
   }
 
-  /* Force monochrome on all elements */
+  /* True Gold utility classes */
+  .text-gold {
+    color: #daa520;
+  }
+
+  .text-gold-muted {
+    color: #b8860b;
+  }
+
+  .bg-gold {
+    background-color: rgba(218, 165, 32, 0.1);
+  }
+
+  .border-gold {
+    border-color: rgba(218, 165, 32, 0.4);
+  }
+
+  .ring-gold {
+    --tw-ring-color: rgba(218, 165, 32, 0.4);
+  }
+
+  /* Force monochrome on all elements with gold accents */
   .monochrome-override * {
     color: inherit !important;
     background-color: inherit !important;
     border-color: rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .gold-override * {
+    border-color: rgba(218, 165, 32, 0.3) !important;
   }
 }

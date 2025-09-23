@@ -1095,18 +1095,21 @@ const AIImageEnhancementPortal = () => {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center n3uralia-glow">
-                <Brain className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center n3uralia-glow-gold">
+                <Brain className="w-6 h-6 n3uralia-gold-accent" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white n3uralia-accent">n3uralia</h1>
+                <h1 className="text-xl font-bold text-white n3uralia-gold-accent">n3uralia</h1>
                 <p className="text-sm n3uralia-text-muted">AI Image Enhancement Platform</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
               <div className="hidden md:flex items-center space-x-3 text-sm">
                 <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 rounded-full bg-white n3uralia-pulse"></div>
+                  <div
+                    className="w-2 h-2 rounded-full n3uralia-pulse-gold"
+                    style={{ backgroundColor: "#DAA520" }}
+                  ></div>
                   <span className="text-white">AI Online</span>
                 </div>
                 <div className="w-px h-4 bg-white/20"></div>
@@ -1123,7 +1126,7 @@ const AIImageEnhancementPortal = () => {
               ) : (
                 <button
                   onClick={() => setShowAuth(true)}
-                  className="n3uralia-button-primary px-4 py-2 rounded-lg transition-all flex items-center space-x-2"
+                  className="n3uralia-button-gold px-4 py-2 rounded-lg transition-all flex items-center space-x-2"
                 >
                   <LogIn className="w-4 h-4" />
                   <span>Access Platform</span>
@@ -1154,7 +1157,7 @@ const AIImageEnhancementPortal = () => {
                 setActiveTab(tab.id)
               }}
               className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ${
-                activeTab === tab.id ? "bg-white text-black" : "text-white/70 hover:text-white hover:bg-white/5"
+                activeTab === tab.id ? "n3uralia-button-gold" : "text-white/70 hover:text-white hover:bg-white/5"
               }`}
             >
               <tab.icon className="w-4 h-4" />
@@ -1173,14 +1176,17 @@ const AIImageEnhancementPortal = () => {
               <div className="max-w-4xl mx-auto">
                 <div className="mb-8">
                   <div className="inline-flex items-center space-x-2 n3uralia-card px-4 py-2 rounded-full mb-6">
-                    <div className="w-2 h-2 rounded-full bg-white n3uralia-pulse"></div>
+                    <div
+                      className="w-2 h-2 rounded-full n3uralia-pulse-gold"
+                      style={{ backgroundColor: "#DAA520" }}
+                    ></div>
                     <span className="text-sm n3uralia-text-muted">AI Enhancement Platform</span>
                   </div>
                 </div>
                 <h1 className="text-6xl md:text-7xl font-bold text-white mb-8 leading-tight">
                   Precision
                   <br />
-                  <span className="n3uralia-accent">Enhancement</span>
+                  <span className="n3uralia-gold-accent">Enhancement</span>
                 </h1>
                 <p className="text-xl n3uralia-text-muted mb-12 leading-relaxed max-w-2xl mx-auto">
                   Professional AI image enhancement with cultural sensitivity. Preserve authenticity while achieving
@@ -1195,7 +1201,7 @@ const AIImageEnhancementPortal = () => {
                         setActiveTab("enhance")
                       }
                     }}
-                    className="n3uralia-button-primary px-8 py-4 rounded-lg text-lg font-semibold transition-all flex items-center justify-center space-x-2 group"
+                    className="n3uralia-button-gold px-8 py-4 rounded-lg text-lg font-semibold transition-all flex items-center justify-center space-x-2 group"
                   >
                     <Brain className="w-5 h-5 group-hover:rotate-12 transition-transform" />
                     <span>Start Enhancement</span>
@@ -1261,14 +1267,14 @@ const AIImageEnhancementPortal = () => {
                   },
                 ].map((capability, index) => (
                   <div key={index} className="n3uralia-card n3uralia-card-hover rounded-2xl p-8 group">
-                    <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center mb-6 group-hover:bg-white/20 transition-all">
-                      <capability.icon className="w-6 h-6 text-white" />
+                    <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center mb-6 group-hover:n3uralia-glow-gold transition-all">
+                      <capability.icon className="w-6 h-6 n3uralia-gold-accent" />
                     </div>
                     <h3 className="text-xl font-semibold text-white mb-4">{capability.title}</h3>
                     <p className="n3uralia-text-muted leading-relaxed mb-4">{capability.description}</p>
                     <div className="inline-flex items-center space-x-2 text-sm">
-                      <div className="w-2 h-2 rounded-full bg-white/50"></div>
-                      <span className="text-white/70">{capability.metric}</span>
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "#DAA520" }}></div>
+                      <span className="n3uralia-gold-glow">{capability.metric}</span>
                     </div>
                   </div>
                 ))}
@@ -1277,7 +1283,7 @@ const AIImageEnhancementPortal = () => {
 
             {/* ASEAN Focus Section */}
             <section className="py-20">
-              <div className="n3uralia-card rounded-3xl p-12 md:p-16 border border-white/10">
+              <div className="n3uralia-card-premium rounded-3xl p-12 md:p-16 border n3uralia-border-gold">
                 <div className="text-center mb-12">
                   <div className="text-5xl mb-6">🇮🇩🇲🇾🇹🇭🇵🇭🇸🇬🇻🇳</div>
                   <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">ASEAN Specialization</h2>
@@ -1294,9 +1300,9 @@ const AIImageEnhancementPortal = () => {
                     { icon: "✓", title: "Facial Structure", desc: "Authentic bone structure" },
                     { icon: "✓", title: "Cultural Authenticity", desc: "No Western bias applied" },
                   ].map((item, index) => (
-                    <div key={index} className="bg-white/5 rounded-xl p-6 text-center border border-white/10">
-                      <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-white font-bold">{item.icon}</span>
+                    <div key={index} className="bg-white/5 rounded-xl p-6 text-center border n3uralia-border-gold">
+                      <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4 n3uralia-glow-gold">
+                        <span className="n3uralia-gold-glow font-bold">{item.icon}</span>
                       </div>
                       <h4 className="text-white font-semibold mb-2">{item.title}</h4>
                       <p className="n3uralia-text-muted text-sm">{item.desc}</p>
@@ -1357,7 +1363,7 @@ const AIImageEnhancementPortal = () => {
                   <div key={index} className="n3uralia-card n3uralia-card-hover rounded-xl p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="text-3xl">{useCase.icon}</div>
-                      <span className="text-xs n3uralia-text-muted bg-white/5 px-2 py-1 rounded-full">
+                      <span className="text-xs n3uralia-text-muted bg-white/5 px-2 py-1 rounded-full border n3uralia-border-gold">
                         {useCase.tag}
                       </span>
                     </div>
@@ -1370,7 +1376,7 @@ const AIImageEnhancementPortal = () => {
 
             {/* CTA Section */}
             <section className="py-20">
-              <div className="n3uralia-card rounded-3xl p-12 md:p-16 text-center border border-white/10">
+              <div className="n3uralia-card-premium rounded-3xl p-12 md:p-16 text-center border n3uralia-border-gold">
                 <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Ready to Begin?</h2>
                 <p className="text-xl n3uralia-text-muted mb-12 max-w-2xl mx-auto">
                   Join professionals who trust n3uralia for culturally-sensitive AI image enhancement.
@@ -1384,7 +1390,7 @@ const AIImageEnhancementPortal = () => {
                         setActiveTab("enhance")
                       }
                     }}
-                    className="n3uralia-button-primary px-8 py-4 rounded-lg text-lg font-semibold transition-all flex items-center justify-center space-x-2"
+                    className="n3uralia-button-gold px-8 py-4 rounded-lg text-lg font-semibold transition-all flex items-center justify-center space-x-2"
                   >
                     <Brain className="w-5 h-5" />
                     <span>Start Enhancement</span>
@@ -1421,8 +1427,8 @@ const AIImageEnhancementPortal = () => {
                       onClick={() => setAdminSubTab(subTab.id)}
                       className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-all ${
                         adminSubTab === subTab.id
-                          ? "bg-white text-black"
-                          : "text-white/70 hover:text-white hover:bg-white/10"
+                          ? "n3uralia-button-gold"
+                          : "text-white/70 hover:text-white hover:bg-white/5"
                       }`}
                     >
                       <subTab.icon className="w-4 h-4" />
@@ -1446,7 +1452,7 @@ const AIImageEnhancementPortal = () => {
                     <button
                       onClick={testReplicateConfig}
                       disabled={isTesting}
-                      className="n3uralia-button-primary px-6 py-3 rounded-lg transition-all flex items-center space-x-2 disabled:opacity-50"
+                      className="n3uralia-button-gold px-6 py-3 rounded-lg transition-all flex items-center space-x-2 disabled:opacity-50"
                     >
                       {isTesting ? (
                         <>
@@ -1476,7 +1482,7 @@ const AIImageEnhancementPortal = () => {
                     <button
                       onClick={runReplicateDiscovery}
                       disabled={isDiscovering || !configResults?.summary?.replicateConfigured}
-                      className="n3uralia-button-primary px-6 py-3 rounded-lg transition-all flex items-center space-x-2 disabled:opacity-50"
+                      className="n3uralia-button-gold px-6 py-3 rounded-lg transition-all flex items-center space-x-2 disabled:opacity-50"
                     >
                       {isDiscovering ? (
                         <>
@@ -1511,7 +1517,10 @@ const AIImageEnhancementPortal = () => {
                     <p className="n3uralia-text-muted">Upload images for professional AI enhancement</p>
                   </div>
                   <div className="flex items-center space-x-2 text-sm">
-                    <div className="w-2 h-2 rounded-full bg-white n3uralia-pulse"></div>
+                    <div
+                      className="w-2 h-2 rounded-full n3uralia-pulse-gold"
+                      style={{ backgroundColor: "#DAA520" }}
+                    ></div>
                     <span className="text-white">AI Ready</span>
                   </div>
                 </div>
@@ -1519,7 +1528,7 @@ const AIImageEnhancementPortal = () => {
                 <div
                   onDrop={handleDrop}
                   onDragOver={handleDragOver}
-                  className="border-2 border-dashed border-white/20 rounded-xl p-12 text-center hover:border-white/40 transition-colors cursor-pointer group"
+                  className="border-2 border-dashed n3uralia-border-gold rounded-xl p-12 text-center hover:border-gold/60 transition-colors cursor-pointer group"
                   onClick={() => {
                     if (!user) {
                       setShowAuth(true)
@@ -1529,17 +1538,17 @@ const AIImageEnhancementPortal = () => {
                   }}
                 >
                   <div className="group-hover:scale-110 transition-transform">
-                    <ImageIcon className="w-12 h-12 text-white/70 mx-auto mb-4" />
+                    <ImageIcon className="w-12 h-12 n3uralia-gold-accent mx-auto mb-4" />
                   </div>
                   <h3 className="text-lg font-medium text-white mb-2">
                     {user ? "Drop images here or click to browse" : "Sign in to upload images"}
                   </h3>
                   <p className="n3uralia-text-muted mb-4">Supports: JPG, PNG, WebP, HEIC, TIFF up to 15MB</p>
-                  <p className="text-sm text-white/50">Enhanced with n3uralia AI Technology</p>
+                  <p className="text-sm n3uralia-gold-glow">Enhanced with n3uralia AI Technology</p>
                   {!user && (
                     <button
                       onClick={() => setShowAuth(true)}
-                      className="mt-4 n3uralia-button-primary px-6 py-2 rounded-lg transition-colors inline-flex items-center space-x-2"
+                      className="mt-4 n3uralia-button-gold px-6 py-2 rounded-lg transition-colors inline-flex items-center space-x-2"
                     >
                       <LogIn className="w-4 h-4" />
                       <span>Access Platform</span>
@@ -1563,7 +1572,7 @@ const AIImageEnhancementPortal = () => {
                       {selectedFiles.map((file) => (
                         <div
                           key={file.id}
-                          className="flex items-center justify-between bg-white/5 rounded-lg p-4 border border-white/10"
+                          className="flex items-center justify-between bg-white/5 rounded-lg p-4 border n3uralia-border-gold"
                         >
                           <div className="flex items-center space-x-4">
                             <img
@@ -1594,8 +1603,8 @@ const AIImageEnhancementPortal = () => {
                               {file.warning && (
                                 <div className="mt-1">
                                   <div className="flex items-center space-x-2">
-                                    <AlertTriangle className="w-4 h-4 text-white/80" />
-                                    <p className="text-sm text-white/80">{file.warning}</p>
+                                    <AlertTriangle className="w-4 h-4 n3uralia-gold-glow" />
+                                    <p className="text-sm n3uralia-gold-glow">{file.warning}</p>
                                   </div>
                                 </div>
                               )}
@@ -1605,7 +1614,7 @@ const AIImageEnhancementPortal = () => {
                             {file.status === "ready" && (
                               <button
                                 onClick={() => startProcessing(file.id)}
-                                className="n3uralia-button-primary px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                                className="n3uralia-button-gold px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
                               >
                                 <Play className="w-4 h-4" />
                                 <span>Enhance</span>
@@ -1614,7 +1623,7 @@ const AIImageEnhancementPortal = () => {
                             {file.status === "failed" && (
                               <button
                                 onClick={() => startProcessing(file.id)}
-                                className="bg-white/10 border border-white/20 hover:bg-white/20 text-white/80 px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                                className="bg-white/10 border n3uralia-border-gold hover:bg-white/20 text-white/80 px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
                               >
                                 <RefreshCw className="w-4 h-4" />
                                 <span>Retry</span>
@@ -1637,14 +1646,14 @@ const AIImageEnhancementPortal = () => {
 
             {/* Settings Panel */}
             <div className="space-y-6">
-              <div className="n3uralia-card rounded-2xl p-6">
+              <div className="n3uralia-card-premium rounded-2xl p-6">
                 <h3 className="text-lg font-semibold text-white mb-6">Enhancement Settings</h3>
 
                 <div className="space-y-6">
                   {/* AI Parameter Optimization */}
-                  <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+                  <div className="bg-white/5 rounded-lg p-4 border n3uralia-border-gold">
                     <h4 className="text-white font-medium mb-3 flex items-center gap-2">
-                      <Brain className="w-4 h-4 text-white/70" />
+                      <Brain className="w-4 h-4 n3uralia-gold-accent" />
                       AI Optimization
                     </h4>
                     <p className="text-sm n3uralia-text-muted mb-3">
@@ -1690,7 +1699,7 @@ const AIImageEnhancementPortal = () => {
                   </div>
 
                   {/* ASEAN Face Preservation Presets */}
-                  <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+                  <div className="bg-white/5 rounded-lg p-4 border n3uralia-border-gold">
                     <h4 className="text-white font-medium mb-3 flex items-center gap-2">🇮🇩🇲🇾🇹🇭🇵🇭 ASEAN Presets</h4>
                     <p className="text-sm n3uralia-text-muted mb-4">Specialized presets for Southeast Asian features</p>
 
@@ -1708,7 +1717,7 @@ const AIImageEnhancementPortal = () => {
                               ...preset.domeSettings,
                             }))
                           }}
-                          className="flex items-start gap-3 p-3 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all text-left"
+                          className="flex items-start gap-3 p-3 rounded-md bg-white/5 hover:bg-white/10 border n3uralia-border-gold hover:border-gold/40 transition-all text-left"
                         >
                           <span className="text-lg flex-shrink-0 mt-0.5">{preset.icon}</span>
                           <div className="flex-1 min-w-0">
@@ -1719,9 +1728,9 @@ const AIImageEnhancementPortal = () => {
                       ))}
                     </div>
 
-                    <div className="bg-white/5 border border-white/10 rounded p-3">
+                    <div className="bg-white/5 border n3uralia-border-gold rounded p-3">
                       <div className="flex items-start space-x-2">
-                        <CheckCircle className="w-4 h-4 text-white mt-0.5 flex-shrink-0" />
+                        <CheckCircle className="w-4 h-4 n3uralia-gold-accent mt-0.5 flex-shrink-0" />
                         <div className="text-xs text-white/70">
                           <strong>Face Preservation Guarantee:</strong> Maintains authentic ASEAN facial features
                           without Western bias.
@@ -1802,7 +1811,7 @@ const AIImageEnhancementPortal = () => {
                   </div>
                   <div className="flex justify-between n3uralia-text-muted">
                     <span>Face enhancement:</span>
-                    <span className={getCurrentModel()?.preserveFaces ? "text-white" : "text-white/80"}>
+                    <span className={getCurrentModel()?.preserveFaces ? "n3uralia-gold-glow" : "text-white/80"}>
                       {getCurrentModel()?.preserveFaces ? "🛡️ Preserved" : "⚠️ Enhanced"}
                     </span>
                   </div>
@@ -1820,7 +1829,7 @@ const AIImageEnhancementPortal = () => {
                 <p className="n3uralia-text-muted">Monitor your AI enhancement progress</p>
               </div>
               <div className="flex items-center space-x-2 text-sm">
-                <Cpu className="w-4 h-4 text-white/70" />
+                <Cpu className="w-4 h-4 n3uralia-gold-accent" />
                 <span className="text-white">AI Processing</span>
               </div>
             </div>
@@ -1833,7 +1842,7 @@ const AIImageEnhancementPortal = () => {
             ) : (
               <div className="space-y-4">
                 {processingQueue.map((job) => (
-                  <div key={job.id} className="bg-white/5 rounded-lg p-6 border border-white/10">
+                  <div key={job.id} className="bg-white/5 rounded-lg p-6 border n3uralia-border-gold">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center space-x-4">
                         <img
@@ -1850,7 +1859,7 @@ const AIImageEnhancementPortal = () => {
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Loader2 className="w-5 h-5 text-white/70 animate-spin" />
+                        <Loader2 className="w-5 h-5 n3uralia-gold-accent animate-spin" />
                         <span className="text-sm n3uralia-text-muted">{job.progress || "Processing..."}</span>
                       </div>
                     </div>
@@ -1869,16 +1878,18 @@ const AIImageEnhancementPortal = () => {
                 <p className="n3uralia-text-muted">Your AI-enhanced image collection</p>
               </div>
               <div className="flex items-center space-x-2 text-sm">
-                <Award className="w-4 h-4 text-white/70" />
+                <Award className="w-4 h-4 n3uralia-gold-accent" />
                 <span className="text-white">{completedJobs.length} Enhanced</span>
               </div>
             </div>
 
             {/* ASEAN Face Preservation Results Header */}
             {completedJobs.some((job) => job.model === "clarity-upscaler-face-preserve") && (
-              <div className="mb-6 bg-white/5 rounded-lg p-4 border border-white/10">
+              <div className="mb-6 bg-white/5 rounded-lg p-4 border n3uralia-border-gold">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center">🛡️</div>
+                  <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center n3uralia-glow-gold">
+                    🛡️
+                  </div>
                   <div>
                     <h3 className="text-white font-medium">ASEAN Face Preservation Active</h3>
                     <p className="text-sm n3uralia-text-muted">
@@ -1888,19 +1899,19 @@ const AIImageEnhancementPortal = () => {
                   </div>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-                  <div className="bg-white/5 rounded p-2 text-center border border-white/10">
+                  <div className="bg-white/5 rounded p-2 text-center border n3uralia-border-gold">
                     <div className="text-white font-medium">✅ Skin Tone</div>
                     <div className="n3uralia-text-muted">Preserved</div>
                   </div>
-                  <div className="bg-white/5 rounded p-2 text-center border border-white/10">
+                  <div className="bg-white/5 rounded p-2 text-center border n3uralia-border-gold">
                     <div className="text-white font-medium">✅ Eye Shape</div>
                     <div className="n3uralia-text-muted">Unchanged</div>
                   </div>
-                  <div className="bg-white/5 rounded p-2 text-center border border-white/10">
+                  <div className="bg-white/5 rounded p-2 text-center border n3uralia-border-gold">
                     <div className="text-white font-medium">✅ Facial Structure</div>
                     <div className="n3uralia-text-muted">Maintained</div>
                   </div>
-                  <div className="bg-white/5 rounded p-2 text-center border border-white/10">
+                  <div className="bg-white/5 rounded p-2 text-center border n3uralia-border-gold">
                     <div className="text-white font-medium">✅ Cultural Authenticity</div>
                     <div className="n3uralia-text-muted">Respected</div>
                   </div>
@@ -1915,7 +1926,7 @@ const AIImageEnhancementPortal = () => {
                 <p className="text-sm n3uralia-text-muted mt-2">Completed enhancements will appear here</p>
                 <button
                   onClick={() => setActiveTab("enhance")}
-                  className="mt-4 n3uralia-button-primary px-6 py-3 rounded-lg transition-all flex items-center space-x-2 mx-auto"
+                  className="mt-4 n3uralia-button-gold px-6 py-3 rounded-lg transition-all flex items-center space-x-2 mx-auto"
                 >
                   <Brain className="w-5 h-5" />
                   <span>Start Enhancing</span>
@@ -1940,15 +1951,15 @@ const AIImageEnhancementPortal = () => {
                     <div className="p-4">
                       <p className="text-white font-medium mb-2 truncate">{job.originalFileName || "Unknown file"}</p>
                       <div className="flex items-center space-x-2 mb-3">
-                        <CheckCircle className="w-4 h-4 text-white/70" />
-                        <span className="text-sm text-white/70">Enhanced with n3uralia AI</span>
+                        <CheckCircle className="w-4 h-4 n3uralia-gold-accent" />
+                        <span className="text-sm n3uralia-gold-glow">Enhanced with n3uralia AI</span>
                       </div>
 
                       {/* Face Preservation Status */}
                       {job.model === "clarity-upscaler-face-preserve" && (
-                        <div className="bg-white/5 border border-white/10 rounded p-2 mb-2">
+                        <div className="bg-white/5 border n3uralia-border-gold rounded p-2 mb-2">
                           <div className="flex items-center gap-2 mb-1">
-                            <CheckCircle className="w-4 h-4 text-white" />
+                            <CheckCircle className="w-4 h-4 n3uralia-gold-accent" />
                             <span className="text-xs text-white font-medium">ASEAN Face Preserved</span>
                           </div>
                           <div className="text-xs n3uralia-text-muted">
@@ -1960,12 +1971,12 @@ const AIImageEnhancementPortal = () => {
                       {/* Processing Method Badge */}
                       <div className="flex items-center gap-1 mb-2">
                         {job.preserveAsianFeatures && (
-                          <span className="bg-white/10 text-white px-2 py-0.5 rounded text-xs border border-white/20">
+                          <span className="bg-white/10 text-white px-2 py-0.5 rounded text-xs border n3uralia-border-gold">
                             🇮🇩🇲🇾🇹🇭🇵🇭 ASEAN Safe
                           </span>
                         )}
                         {job.model.includes("face-preserve") && (
-                          <span className="bg-white/10 text-white px-2 py-0.5 rounded text-xs border border-white/20">
+                          <span className="bg-white/10 text-white px-2 py-0.5 rounded text-xs border n3uralia-border-gold">
                             🛡️ Face Protected
                           </span>
                         )}
@@ -1990,7 +2001,7 @@ const AIImageEnhancementPortal = () => {
                       <div className="flex flex-col gap-2">
                         <button
                           onClick={() => window.open(job.downloadUrl, "_blank")}
-                          className="w-full n3uralia-button-primary py-2 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                          className="w-full n3uralia-button-gold py-2 rounded-lg transition-colors flex items-center justify-center space-x-2"
                         >
                           <Download className="w-4 h-4" />
                           <span>Download Enhanced</span>
