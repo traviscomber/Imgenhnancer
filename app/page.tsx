@@ -1320,20 +1320,19 @@ const AIImageEnhancementPortal = () => {
                     },
                   },
                 ].map((capability, index) => (
-                  <div key={index} className="capability-card-container">
+                  <div key={index} className="capability-card-container group">
                     <div className="capability-card">
                       {/* Front of card */}
                       <div className="capability-card-face capability-card-front">
                         <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center mb-6 n3uralia-glow-gold transition-all">
-                          <capability.icon className="w-6 h-6 n3uralia-gold-accent" />
+                          <capability.icon className="w-6 h-6 text-white/70 group-hover:n3uralia-gold-accent transition-colors" />
                         </div>
                         <h3 className="text-xl font-semibold text-white mb-4">{capability.title}</h3>
                         <div className="flex-1 flex items-center justify-center">
                           <div className="text-center">
-                            <div className="text-4xl mb-4 n3uralia-gold-accent">
-                              <capability.icon className="w-16 h-16 mx-auto" />
+                            <div className="text-4xl mb-4">
+                              <capability.icon className="w-16 h-16 mx-auto text-white/70 group-hover:n3uralia-gold-accent transition-colors" />
                             </div>
-                            <p className="text-sm n3uralia-text-muted">Hover to explore details</p>
                           </div>
                         </div>
                       </div>
@@ -1341,7 +1340,7 @@ const AIImageEnhancementPortal = () => {
                       {/* Back of card */}
                       <div className="capability-card-face capability-card-back">
                         <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center mb-4 n3uralia-glow-gold">
-                          <capability.icon className="w-6 h-6 n3uralia-gold-accent" />
+                          <capability.icon className="w-6 h-6 text-white/70 group-hover:n3uralia-gold-accent transition-colors" />
                         </div>
                         <h3 className="text-lg font-semibold text-white mb-3">{capability.backInfo.title}</h3>
                         <ul className="space-y-2 mb-4 flex-1">
@@ -1414,7 +1413,7 @@ const AIImageEnhancementPortal = () => {
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {[
                   {
-                    icon: "💒",
+                    icon: Heart, // Replace "💒" with Heart icon
                     title: "Wedding Photography",
                     tag: "Personal",
                     backInfo: {
@@ -1430,7 +1429,7 @@ const AIImageEnhancementPortal = () => {
                     },
                   },
                   {
-                    icon: "👨‍👩‍👧‍👦",
+                    icon: Users, // Replace "👨‍👩‍👧‍👦" with Users icon
                     title: "Family Portraits",
                     tag: "Family",
                     backInfo: {
@@ -1446,7 +1445,7 @@ const AIImageEnhancementPortal = () => {
                     },
                   },
                   {
-                    icon: "🆔",
+                    icon: Shield, // Replace "🆔" with Shield icon
                     title: "Official Documents",
                     tag: "Official",
                     backInfo: {
@@ -1462,7 +1461,7 @@ const AIImageEnhancementPortal = () => {
                     },
                   },
                   {
-                    icon: "🏛️",
+                    icon: Award, // Replace "🏛️" with Award icon
                     title: "Cultural Heritage",
                     tag: "Heritage",
                     backInfo: {
@@ -1478,7 +1477,7 @@ const AIImageEnhancementPortal = () => {
                     },
                   },
                   {
-                    icon: "🤳",
+                    icon: Eye, // Replace "🤳" with Eye icon
                     title: "Social Media",
                     tag: "Social",
                     backInfo: {
@@ -1494,7 +1493,7 @@ const AIImageEnhancementPortal = () => {
                     },
                   },
                   {
-                    icon: "🎨",
+                    icon: Palette, // Replace "🎨" with Palette icon
                     title: "Commercial Work",
                     tag: "Commercial",
                     backInfo: {
@@ -1510,7 +1509,7 @@ const AIImageEnhancementPortal = () => {
                     },
                   },
                 ].map((useCase, index) => (
-                  <div key={index} className="capability-card-container">
+                  <div key={index} className="capability-card-container group">
                     <div className="capability-card">
                       {/* Front of card */}
                       <div className="capability-card-face capability-card-front">
@@ -1522,8 +1521,9 @@ const AIImageEnhancementPortal = () => {
                         <h3 className="text-xl font-semibold text-white mb-4">{useCase.title}</h3>
                         <div className="flex-1 flex items-center justify-center">
                           <div className="text-center">
-                            <div className="text-6xl mb-4">{useCase.icon}</div>
-                            <p className="text-sm n3uralia-text-muted">Hover to explore applications</p>
+                            <div className="text-6xl mb-4">
+                              <useCase.icon className="w-16 h-16 mx-auto text-white/70 group-hover:n3uralia-gold-accent transition-colors" />
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1531,7 +1531,9 @@ const AIImageEnhancementPortal = () => {
                       {/* Back of card */}
                       <div className="capability-card-face capability-card-back">
                         <div className="flex items-start justify-between mb-4">
-                          <div className="text-2xl">{useCase.icon}</div>
+                          <div className="text-2xl">
+                            <useCase.icon className="w-8 h-8 text-white/70 group-hover:n3uralia-gold-accent transition-colors" />
+                          </div>
                           <span className="text-xs n3uralia-badge-gold px-2 py-1 rounded-full">{useCase.tag}</span>
                         </div>
                         <h3 className="text-lg font-semibold text-white mb-3">{useCase.backInfo.title}</h3>
