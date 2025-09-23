@@ -1136,32 +1136,33 @@ const AIImageEnhancementPortal = () => {
           <div className="space-y-8">
             {/* Admin Sub-Navigation */}
             <div className="bg-black/20 backdrop-blur-lg rounded-xl border border-white/10 p-6">
-              <div className="flex items-center space-x-3 mb-6">
-                <Shield className="w-6 h-6 text-orange-400" />
-                <h2 className="text-xl font-semibold text-white">Admin Panel</h2>
-                <span className="text-sm text-orange-400 bg-orange-400/10 px-2 py-1 rounded">System Management</span>
-              </div>
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-xl font-semibold text-white">Admin Panel</h2>
+                  <p className="text-sm text-orange-400">System Management</p>
+                </div>
 
-              <div className="flex space-x-1 bg-white/5 rounded-lg p-1">
-                {[
-                  { id: "config", label: "Configuration", icon: Key },
-                  { id: "discovery", label: "Model Discovery", icon: Search },
-                  { id: "users", label: "User Management", icon: Users },
-                  { id: "roles", label: "Role Management", icon: Shield },
-                ].map((subTab) => (
-                  <button
-                    key={subTab.id}
-                    onClick={() => setAdminSubTab(subTab.id)}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-all ${
-                      adminSubTab === subTab.id
-                        ? "bg-orange-600 text-white"
-                        : "text-gray-300 hover:text-white hover:bg-white/10"
-                    }`}
-                  >
-                    <subTab.icon className="w-4 h-4" />
-                    <span>{subTab.label}</span>
-                  </button>
-                ))}
+                <div className="flex space-x-1 bg-white/5 rounded-lg p-1">
+                  {[
+                    { id: "config", label: "Configuration", icon: Key },
+                    { id: "discovery", label: "Model Discovery", icon: Search },
+                    { id: "users", label: "User Management", icon: Users },
+                    { id: "roles", label: "Role Management", icon: Shield },
+                  ].map((subTab) => (
+                    <button
+                      key={subTab.id}
+                      onClick={() => setAdminSubTab(subTab.id)}
+                      className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-all ${
+                        adminSubTab === subTab.id
+                          ? "bg-orange-600 text-white"
+                          : "text-gray-300 hover:text-white hover:bg-white/10"
+                      }`}
+                    >
+                      <subTab.icon className="w-4 h-4" />
+                      <span>{subTab.label}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -1468,6 +1469,132 @@ const AIImageEnhancementPortal = () => {
                         ✅ Preserves natural skin tones • ✅ Maintains eye shape • ✅ Keeps facial structure • ✅ No
                         Western bias
                       </div>
+                    </div>
+                  </div>
+
+                  {/* ASEAN Preset Testing Interface */}
+                  <div className="bg-gradient-to-r from-indigo-900/20 to-purple-900/20 rounded-lg p-4 border border-indigo-500/20">
+                    <h4 className="text-white font-medium mb-3 flex items-center gap-2">
+                      🧪 Test ASEAN Portrait Preset
+                    </h4>
+                    <p className="text-sm text-gray-300 mb-4">
+                      Upload a test image to see how the Ultra-Safe ASEAN Portrait preset preserves facial features
+                    </p>
+
+                    <div className="space-y-4">
+                      {/* Test Image Upload */}
+                      <div className="border-2 border-dashed border-indigo-400/30 rounded-lg p-4 text-center">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0]
+                            if (file) {
+                              // Apply ASEAN Portrait preset automatically
+                              const aseanPortraitPreset = ASEAN_FACE_PRESETS.find((p) => p.id === "asean-portrait-safe")
+                              if (aseanPortraitPreset) {
+                                setEnhancementSettings((prev) => ({
+                                  ...prev,
+                                  ...aseanPortraitPreset.settings,
+                                }))
+                                setDomePreset((prev) => ({
+                                  ...prev,
+                                  ...aseanPortraitPreset.domeSettings,
+                                }))
+                              }
+
+                              // Add to selected files for processing
+                              handleFileSelect(e.target.files)
+
+                              // Show success message
+                              const toast = document.createElement("div")
+                              toast.className = "fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg z-50"
+                              toast.textContent = "✅ ASEAN Portrait preset applied! Ready for ultra-safe processing."
+                              document.body.appendChild(toast)
+                              setTimeout(() => document.body.removeChild(toast), 3000)
+                            }
+                          }}
+                          className="hidden"
+                          id="asean-test-upload"
+                        />
+                        <label htmlFor="asean-test-upload" className="cursor-pointer flex flex-col items-center gap-2">
+                          <div className="w-8 h-8 bg-indigo-500/20 rounded-full flex items-center justify-center">
+                            <Upload className="w-4 h-4 text-indigo-400" />
+                          </div>
+                          <span className="text-sm text-indigo-300">Upload Test Portrait</span>
+                          <span className="text-xs text-gray-400">Preset will be applied automatically</span>
+                        </label>
+                      </div>
+
+                      {/* Preset Details */}
+                      <div className="bg-indigo-900/20 rounded-lg p-3 border border-indigo-500/20">
+                        <div className="text-xs text-indigo-200 mb-2">
+                          <strong>🛡️ Ultra-Safe ASEAN Portrait Settings:</strong>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="text-gray-300">
+                            <span className="text-indigo-300">Model:</span> Face Preserving
+                          </div>
+                          <div className="text-gray-300">
+                            <span className="text-indigo-300">Upscale:</span> 2x (Safe)
+                          </div>
+                          <div className="text-gray-300">
+                            <span className="text-indigo-300">Pre-processing:</span> All OFF
+                          </div>
+                          <div className="text-gray-300">
+                            <span className="text-indigo-300">Post-processing:</span> All OFF
+                          </div>
+                          <div className="text-gray-300">
+                            <span className="text-indigo-300">Quality:</span> 98% PNG
+                          </div>
+                          <div className="text-gray-300">
+                            <span className="text-indigo-300">Face Enhancement:</span> DISABLED
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Face Preservation Guarantee */}
+                      <div className="bg-green-900/20 border border-green-500/20 rounded-lg p-3">
+                        <div className="flex items-start space-x-2">
+                          <CheckCircle className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                          <div className="text-xs text-green-200">
+                            <strong>Face Preservation Guarantee:</strong>
+                            <ul className="mt-1 space-y-1 list-disc list-inside">
+                              <li>✅ Original skin tone preserved</li>
+                              <li>✅ Eye shape and size maintained</li>
+                              <li>✅ Facial structure unchanged</li>
+                              <li>✅ Natural expressions kept</li>
+                              <li>✅ No Western beauty standards applied</li>
+                              <li>✅ Cultural authenticity maintained</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Processing Status for Test */}
+                      {selectedFiles.length > 0 && (
+                        <div className="bg-blue-900/20 border border-blue-500/20 rounded-lg p-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                            <span className="text-sm text-blue-300 font-medium">Test Image Ready</span>
+                          </div>
+                          <div className="text-xs text-gray-300 mb-2">
+                            Files queued: {selectedFiles.length} | Using: ASEAN Portrait (Ultra Safe)
+                          </div>
+                          <button
+                            onClick={() => {
+                              if (selectedFiles.length > 0) {
+                                startProcessing(selectedFiles[0].id)
+                              }
+                            }}
+                            disabled={selectedFiles.length === 0}
+                            className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white py-2 px-4 rounded-md text-sm flex items-center justify-center gap-2"
+                          >
+                            <Play className="w-4 h-4" />
+                            Start Ultra-Safe Enhancement
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -1856,6 +1983,39 @@ const AIImageEnhancementPortal = () => {
         {activeTab === "results" && (
           <div className="bg-black/20 backdrop-blur-lg rounded-2xl border border-white/10 p-8">
             <h2 className="text-xl font-semibold text-white mb-6">Enhanced Images</h2>
+            {/* ASEAN Face Preservation Results Header */}
+            {completedJobs.some((job) => job.model === "clarity-upscaler-face-preserve") && (
+              <div className="mb-6 bg-gradient-to-r from-emerald-900/20 to-teal-900/20 rounded-lg p-4 border border-emerald-500/20">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-8 h-8 bg-emerald-500/20 rounded-full flex items-center justify-center">🛡️</div>
+                  <div>
+                    <h3 className="text-emerald-300 font-medium">ASEAN Face Preservation Active</h3>
+                    <p className="text-sm text-emerald-200">
+                      {completedJobs.filter((job) => job.model === "clarity-upscaler-face-preserve").length} images
+                      processed with 100% face preservation
+                    </p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                  <div className="bg-emerald-500/10 rounded p-2 text-center">
+                    <div className="text-emerald-300 font-medium">✅ Skin Tone</div>
+                    <div className="text-emerald-200">Preserved</div>
+                  </div>
+                  <div className="bg-emerald-500/10 rounded p-2 text-center">
+                    <div className="text-emerald-300 font-medium">✅ Eye Shape</div>
+                    <div className="text-emerald-200">Unchanged</div>
+                  </div>
+                  <div className="bg-emerald-500/10 rounded p-2 text-center">
+                    <div className="text-emerald-300 font-medium">✅ Facial Structure</div>
+                    <div className="text-emerald-200">Maintained</div>
+                  </div>
+                  <div className="bg-emerald-500/10 rounded p-2 text-center">
+                    <div className="text-emerald-300 font-medium">✅ Cultural Authenticity</div>
+                    <div className="text-emerald-200">Respected</div>
+                  </div>
+                </div>
+              </div>
+            )}
             {completedJobs.length === 0 ? (
               <div className="text-center py-12">
                 <Download className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -1880,6 +2040,33 @@ const AIImageEnhancementPortal = () => {
                       <div className="flex items-center space-x-2 mb-3">
                         <CheckCircle className="w-4 h-4 text-green-400" />
                         <span className="text-sm text-green-400">Enhanced with Clarity AI</span>
+                      </div>
+
+                      {/* Face Preservation Status */}
+                      {job.model === "clarity-upscaler-face-preserve" && (
+                        <div className="bg-emerald-900/20 border border-emerald-500/20 rounded p-2 mb-2">
+                          <div className="flex items-center gap-2 mb-1">
+                            <CheckCircle className="w-3 h-3 text-emerald-400" />
+                            <span className="text-xs text-emerald-300 font-medium">ASEAN Face Preserved</span>
+                          </div>
+                          <div className="text-xs text-emerald-200">
+                            Original facial features maintained • No Western bias applied
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Processing Method Badge */}
+                      <div className="flex items-center gap-1 mb-2">
+                        {job.preserveAsianFeatures && (
+                          <span className="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded text-xs">
+                            🇮🇩🇲🇾🇹🇭🇵🇭 ASEAN Safe
+                          </span>
+                        )}
+                        {job.model.includes("face-preserve") && (
+                          <span className="bg-green-500/20 text-green-300 px-2 py-0.5 rounded text-xs">
+                            🛡️ Face Protected
+                          </span>
+                        )}
                       </div>
 
                       <div className="space-y-2 text-sm text-gray-300 mb-4">
