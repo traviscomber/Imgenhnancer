@@ -1515,7 +1515,6 @@ const AIImageEnhancementPortal = () => {
                       {/* Front of card */}
                       <div className="capability-card-face capability-card-front">
                         <div className="flex items-start justify-between mb-4">
-                          <div className="text-4xl">{useCase.icon}</div>
                           <span className="text-xs n3uralia-text-muted bg-white/5 px-2 py-1 rounded-full border n3uralia-border-gold">
                             {useCase.tag}
                           </span>
