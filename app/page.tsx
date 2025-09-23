@@ -1320,19 +1320,20 @@ const AIImageEnhancementPortal = () => {
                     },
                   },
                 ].map((capability, index) => (
-                  <div key={index} className="capability-card-container group">
+                  <div key={index} className="capability-card-container">
                     <div className="capability-card">
                       {/* Front of card */}
                       <div className="capability-card-face capability-card-front">
                         <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center mb-6 n3uralia-glow-gold transition-all">
-                          <capability.icon className="w-6 h-6 icon-monochrome" />
+                          <capability.icon className="w-6 h-6 n3uralia-gold-accent" />
                         </div>
                         <h3 className="text-xl font-semibold text-white mb-4">{capability.title}</h3>
                         <div className="flex-1 flex items-center justify-center">
                           <div className="text-center">
-                            <div className="text-4xl mb-4">
-                              <capability.icon className="w-16 h-16 mx-auto icon-monochrome" />
+                            <div className="text-4xl mb-4 n3uralia-gold-accent">
+                              <capability.icon className="w-16 h-16 mx-auto" />
                             </div>
+                            <p className="text-sm n3uralia-text-muted">Hover to explore details</p>
                           </div>
                         </div>
                       </div>
@@ -1340,7 +1341,7 @@ const AIImageEnhancementPortal = () => {
                       {/* Back of card */}
                       <div className="capability-card-face capability-card-back">
                         <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center mb-4 n3uralia-glow-gold">
-                          <capability.icon className="w-6 h-6 icon-monochrome" />
+                          <capability.icon className="w-6 h-6 n3uralia-gold-accent" />
                         </div>
                         <h3 className="text-lg font-semibold text-white mb-3">{capability.backInfo.title}</h3>
                         <ul className="space-y-2 mb-4 flex-1">
@@ -1413,7 +1414,7 @@ const AIImageEnhancementPortal = () => {
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {[
                   {
-                    icon: Heart, // Replace "💒" with Heart icon
+                    icon: "💒",
                     title: "Wedding Photography",
                     tag: "Personal",
                     backInfo: {
@@ -1429,7 +1430,7 @@ const AIImageEnhancementPortal = () => {
                     },
                   },
                   {
-                    icon: Users, // Replace "👨‍👩‍👧‍👦" with Users icon
+                    icon: "👨‍👩‍👧‍👦",
                     title: "Family Portraits",
                     tag: "Family",
                     backInfo: {
@@ -1445,7 +1446,7 @@ const AIImageEnhancementPortal = () => {
                     },
                   },
                   {
-                    icon: Shield, // Replace "🆔" with Shield icon
+                    icon: "🆔",
                     title: "Official Documents",
                     tag: "Official",
                     backInfo: {
@@ -1461,7 +1462,7 @@ const AIImageEnhancementPortal = () => {
                     },
                   },
                   {
-                    icon: Award, // Replace "🏛️" with Award icon
+                    icon: "🏛️",
                     title: "Cultural Heritage",
                     tag: "Heritage",
                     backInfo: {
@@ -1477,7 +1478,7 @@ const AIImageEnhancementPortal = () => {
                     },
                   },
                   {
-                    icon: Eye, // Replace "🤳" with Eye icon
+                    icon: "🤳",
                     title: "Social Media",
                     tag: "Social",
                     backInfo: {
@@ -1493,7 +1494,7 @@ const AIImageEnhancementPortal = () => {
                     },
                   },
                   {
-                    icon: Palette, // Replace "🎨" with Palette icon
+                    icon: "🎨",
                     title: "Commercial Work",
                     tag: "Commercial",
                     backInfo: {
@@ -1509,11 +1510,12 @@ const AIImageEnhancementPortal = () => {
                     },
                   },
                 ].map((useCase, index) => (
-                  <div key={index} className="capability-card-container group">
+                  <div key={index} className="capability-card-container">
                     <div className="capability-card">
                       {/* Front of card */}
                       <div className="capability-card-face capability-card-front">
                         <div className="flex items-start justify-between mb-4">
+                          <div className="text-4xl">{useCase.icon}</div>
                           <span className="text-xs n3uralia-text-muted bg-white/5 px-2 py-1 rounded-full border n3uralia-border-gold">
                             {useCase.tag}
                           </span>
@@ -1521,9 +1523,8 @@ const AIImageEnhancementPortal = () => {
                         <h3 className="text-xl font-semibold text-white mb-4">{useCase.title}</h3>
                         <div className="flex-1 flex items-center justify-center">
                           <div className="text-center">
-                            <div className="text-6xl mb-4">
-                              <useCase.icon className="w-16 h-16 mx-auto icon-monochrome" />
-                            </div>
+                            <div className="text-6xl mb-4">{useCase.icon}</div>
+                            <p className="text-sm n3uralia-text-muted">Hover to explore applications</p>
                           </div>
                         </div>
                       </div>
@@ -1531,9 +1532,7 @@ const AIImageEnhancementPortal = () => {
                       {/* Back of card */}
                       <div className="capability-card-face capability-card-back">
                         <div className="flex items-start justify-between mb-4">
-                          <div className="text-2xl">
-                            <useCase.icon className="w-8 h-8 icon-monochrome" />
-                          </div>
+                          <div className="text-2xl">{useCase.icon}</div>
                           <span className="text-xs n3uralia-badge-gold px-2 py-1 rounded-full">{useCase.tag}</span>
                         </div>
                         <h3 className="text-lg font-semibold text-white mb-3">{useCase.backInfo.title}</h3>
@@ -1646,7 +1645,7 @@ const AIImageEnhancementPortal = () => {
                     >
                       {isTesting ? (
                         <>
-                          <Loader2 className="w-5 h-5 animate-spin processing-icon" />
+                          <Loader2 className="w-5 h-5 animate-spin" />
                           <span>Testing...</span>
                         </>
                       ) : (
@@ -1676,7 +1675,7 @@ const AIImageEnhancementPortal = () => {
                     >
                       {isDiscovering ? (
                         <>
-                          <Loader2 className="w-5 h-5 animate-spin processing-icon" />
+                          <Loader2 className="w-5 h-5 animate-spin" />
                           <span>Discovering...</span>
                         </>
                       ) : (
@@ -1776,7 +1775,7 @@ const AIImageEnhancementPortal = () => {
                               {file.status === "failed" && (
                                 <div className="mt-1">
                                   <div className="flex items-center space-x-2">
-                                    <AlertCircle className="w-4 h-4 error-icon" />
+                                    <AlertCircle className="w-4 h-4 text-white/70" />
                                     <p className="text-sm text-white/70">Error: {file.error}</p>
                                   </div>
                                   {file.details && (
@@ -1793,7 +1792,7 @@ const AIImageEnhancementPortal = () => {
                               {file.warning && (
                                 <div className="mt-1">
                                   <div className="flex items-center space-x-2">
-                                    <AlertTriangle className="w-4 h-4 warning-icon" />
+                                    <AlertTriangle className="w-4 h-4 n3uralia-gold-glow" />
                                     <p className="text-sm n3uralia-gold-glow">{file.warning}</p>
                                   </div>
                                 </div>
@@ -1920,7 +1919,7 @@ const AIImageEnhancementPortal = () => {
 
                     <div className="bg-white/5 border n3uralia-border-gold rounded p-3">
                       <div className="flex items-start space-x-2">
-                        <CheckCircle className="w-4 h-4 success-icon mt-0.5 flex-shrink-0" />
+                        <CheckCircle className="w-4 h-4 n3uralia-gold-accent mt-0.5 flex-shrink-0" />
                         <div className="text-xs text-white/70">
                           <strong>Face Preservation Guarantee:</strong> Maintains authentic ASEAN facial features
                           without Western bias.
@@ -2019,13 +2018,13 @@ const AIImageEnhancementPortal = () => {
                 <p className="n3uralia-text-muted">Monitor your AI enhancement progress</p>
               </div>
               <div className="flex items-center space-x-2 text-sm">
-                <Cpu className="w-4 h-4 processing-icon" />
+                <Cpu className="w-4 h-4 n3uralia-gold-accent" />
                 <span className="text-white">AI Processing</span>
               </div>
             </div>
             {processingQueue.length === 0 ? (
               <div className="text-center py-12">
-                <Settings className="w-12 h-12 icon-monochrome mx-auto mb-4" />
+                <Settings className="w-12 h-12 text-white/30 mx-auto mb-4" />
                 <p className="text-white/70">No images currently processing</p>
                 <p className="text-sm n3uralia-text-muted mt-2">Start processing from the Enhancement tab</p>
               </div>
@@ -2049,7 +2048,7 @@ const AIImageEnhancementPortal = () => {
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Loader2 className="w-5 h-5 processing-icon animate-spin" />
+                        <Loader2 className="w-5 h-5 n3uralia-gold-accent animate-spin" />
                         <span className="text-sm n3uralia-text-muted">{job.progress || "Processing..."}</span>
                       </div>
                     </div>
@@ -2068,7 +2067,7 @@ const AIImageEnhancementPortal = () => {
                 <p className="n3uralia-text-muted">Your AI-enhanced image collection</p>
               </div>
               <div className="flex items-center space-x-2 text-sm">
-                <Award className="w-4 h-4 success-icon" />
+                <Award className="w-4 h-4 n3uralia-gold-accent" />
                 <span className="text-white">{completedJobs.length} Enhanced</span>
               </div>
             </div>
@@ -2111,7 +2110,7 @@ const AIImageEnhancementPortal = () => {
 
             {completedJobs.length === 0 ? (
               <div className="text-center py-12">
-                <ImageIcon className="w-12 h-12 icon-monochrome mx-auto mb-4" />
+                <ImageIcon className="w-12 h-12 text-white/30 mx-auto mb-4" />
                 <p className="text-white/70">No enhanced images yet</p>
                 <p className="text-sm n3uralia-text-muted mt-2">Completed enhancements will appear here</p>
                 <button
@@ -2141,7 +2140,7 @@ const AIImageEnhancementPortal = () => {
                     <div className="p-4">
                       <p className="text-white font-medium mb-2 truncate">{job.originalFileName || "Unknown file"}</p>
                       <div className="flex items-center space-x-2 mb-3">
-                        <CheckCircle className="w-4 h-4 success-icon" />
+                        <CheckCircle className="w-4 h-4 n3uralia-gold-accent" />
                         <span className="text-sm n3uralia-gold-glow">Enhanced with n3uralia AI</span>
                       </div>
 
@@ -2149,7 +2148,7 @@ const AIImageEnhancementPortal = () => {
                       {job.model === "clarity-upscaler-face-preserve" && (
                         <div className="bg-white/5 border n3uralia-border-gold rounded p-2 mb-2">
                           <div className="flex items-center gap-2 mb-1">
-                            <CheckCircle className="w-4 h-4 success-icon" />
+                            <CheckCircle className="w-4 h-4 n3uralia-gold-accent" />
                             <span className="text-xs text-white font-medium">ASEAN Face Preserved</span>
                           </div>
                           <div className="text-xs n3uralia-text-muted">

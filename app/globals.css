@@ -1,61 +1,42 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
-  }
+    --background: 0 0% 3%;
+    --foreground: 0 0% 97%;
+    --card: 0 0% 5%;
+    --card-foreground: 0 0% 97%;
+    --popover: 0 0% 5%;
+    --popover-foreground: 0 0% 97%;
+    --primary: 0 0% 97%;
+    --primary-foreground: 0 0% 3%;
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 97%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 60%;
+    --accent: 0 0% 10%;
+    --accent-foreground: 0 0% 97%;
+    --destructive: 0 0% 20%;
+    --destructive-foreground: 0 0% 97%;
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 0 0% 80%;
+    --chart-1: 0 0% 90%;
+    --chart-2: 0 0% 70%;
+    --chart-3: 0 0% 50%;
+    --chart-4: 0 0% 30%;
+    --chart-5: 0 0% 10%;
+    --radius: 0.75rem;
 
-  .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    /* True Gold accent colors - not yellow */
+    --gold: 43 74% 66%; /* #DAA520 - Goldenrod */
+    --gold-muted: 43 74% 50%; /* #B8860B - Dark Goldenrod */
+    --gold-subtle: 43 74% 35%; /* #8B6914 - Darker Gold */
+    --gold-glow: 51 100% 50%; /* #FFD700 - Pure Gold */
+    --gold-light: 48 100% 88%; /* #FFF8DC - Cornsilk */
   }
 }
 
@@ -63,262 +44,788 @@
   * {
     @apply border-border;
   }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
+    font-feature-settings: "cv11", "ss01";
+    font-variation-settings: "opsz" 32;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: #0a0a0a;
+    color: #f5f5f5;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Custom scrollbar - with true gold accent */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(45deg, #daa520, #ffd700);
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(45deg, #ffd700, #ffa500);
+  }
+
+  /* Firefox scrollbar */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #daa520 rgba(255, 255, 255, 0.02);
   }
 }
 
-/* n3uralia Design System */
-.n3uralia-gradient {
-  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%);
-}
+@layer components {
+  /* n3uralia Monochrome + True Gold Design System */
 
-.n3uralia-card {
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.n3uralia-card-premium {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(218, 165, 32, 0.2);
-}
-
-.n3uralia-card-hover {
-  transition: all 0.3s ease;
-}
-
-.n3uralia-card-hover:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-  border-color: rgba(218, 165, 32, 0.3);
-}
-
-.n3uralia-border {
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-.n3uralia-border-gold {
-  border-color: rgba(218, 165, 32, 0.2);
-}
-
-.n3uralia-text-muted {
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.n3uralia-gold-accent {
-  color: #daa520;
-}
-
-.n3uralia-gold-glow {
-  color: #daa520;
-  text-shadow: 0 0 10px rgba(218, 165, 32, 0.3);
-}
-
-.n3uralia-glow-gold {
-  box-shadow: 0 0 20px rgba(218, 165, 32, 0.2);
-}
-
-.n3uralia-pulse-gold {
-  animation: pulse-gold 2s infinite;
-}
-
-@keyframes pulse-gold {
-  0%,
-  100% {
-    opacity: 1;
-    box-shadow: 0 0 10px rgba(218, 165, 32, 0.5);
+  /* Background Gradients - With Gold Highlights */
+  .n3uralia-gradient {
+    background: linear-gradient(135deg, #000000 0%, #0f0f0f 25%, #1a1a1a 50%, #0f0f0f 75%, #000000 100%);
+    background-size: 400% 400%;
+    animation: gradientShift 25s ease infinite;
+    position: relative;
   }
-  50% {
-    opacity: 0.7;
-    box-shadow: 0 0 20px rgba(218, 165, 32, 0.8);
+
+  .n3uralia-gradient::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 20% 80%, rgba(218, 165, 32, 0.03) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255, 215, 0, 0.02) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  @keyframes gradientShift {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  /* Card Components - Monochrome Glass with True Gold Accents */
+  .n3uralia-card {
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+  }
+
+  .n3uralia-card-hover:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(218, 165, 32, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(218, 165, 32, 0.15);
+  }
+
+  .n3uralia-card-premium {
+    border: 1px solid rgba(218, 165, 32, 0.25);
+    background: rgba(218, 165, 32, 0.02);
+    position: relative;
+  }
+
+  .n3uralia-card-premium::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(218, 165, 32, 0.6), transparent);
+  }
+
+  /* Button Components - With True Gold Accents */
+  .n3uralia-button-primary {
+    background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+    color: #000000;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-weight: 600;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .n3uralia-button-primary:hover {
+    background: linear-gradient(135deg, #ffffff 0%, #e8e8e8 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 30px rgba(255, 255, 255, 0.15), 0 0 20px rgba(218, 165, 32, 0.1);
+  }
+
+  .n3uralia-button-gold {
+    background: linear-gradient(135deg, #daa520 0%, #ffd700 100%);
+    color: #000000;
+    border: 1px solid rgba(218, 165, 32, 0.4);
+    font-weight: 600;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .n3uralia-button-gold:hover {
+    background: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 30px rgba(218, 165, 32, 0.4), 0 0 20px rgba(255, 215, 0, 0.3);
+  }
+
+  .n3uralia-button-secondary {
+    background: rgba(255, 255, 255, 0.05);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-weight: 500;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .n3uralia-button-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(218, 165, 32, 0.4);
+    transform: translateY(-1px);
+    box-shadow: 0 0 15px rgba(218, 165, 32, 0.15);
+  }
+
+  /* Text Components - With True Gold Accents */
+  .n3uralia-text-muted {
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  .n3uralia-accent {
+    background: linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.8) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+  }
+
+  .n3uralia-gold-accent {
+    background: linear-gradient(135deg, #ffd700 0%, #daa520 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 0 20px rgba(218, 165, 32, 0.4);
+  }
+
+  .n3uralia-gold-glow {
+    color: #daa520;
+    text-shadow: 0 0 10px rgba(218, 165, 32, 0.4);
+  }
+
+  /* Border Components - With True Gold */
+  .n3uralia-border {
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .n3uralia-border-gold {
+    border-color: rgba(218, 165, 32, 0.3);
+  }
+
+  .n3uralia-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%);
+  }
+
+  .n3uralia-divider-gold {
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(218, 165, 32, 0.4) 50%, transparent 100%);
+  }
+
+  /* Animation Components - With True Gold */
+  .n3uralia-pulse {
+    animation: n3uraliaPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .n3uralia-pulse-gold {
+    animation: n3uraliaPulseGold 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes n3uraliaPulse {
+    0%,
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.7;
+      transform: scale(1.05);
+    }
+  }
+
+  @keyframes n3uraliaPulseGold {
+    0%,
+    100% {
+      opacity: 1;
+      transform: scale(1);
+      box-shadow: 0 0 10px rgba(218, 165, 32, 0.3);
+    }
+    50% {
+      opacity: 0.8;
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(218, 165, 32, 0.5);
+    }
+  }
+
+  .n3uralia-glow {
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+    transition: box-shadow 0.3s ease;
+  }
+
+  .n3uralia-glow:hover {
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+  }
+
+  .n3uralia-glow-gold {
+    box-shadow: 0 0 20px rgba(218, 165, 32, 0.15);
+    transition: box-shadow 0.3s ease;
+  }
+
+  .n3uralia-glow-gold:hover {
+    box-shadow: 0 0 30px rgba(218, 165, 32, 0.4);
+  }
+
+  /* Input Components - With True Gold Focus */
+  .n3uralia-input {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    transition: all 0.2s ease;
+  }
+
+  .n3uralia-input:focus {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(218, 165, 32, 0.5);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(218, 165, 32, 0.15);
+  }
+
+  .n3uralia-input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+  }
+
+  /* Select Components - With True Gold Focus */
+  .n3uralia-select {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    transition: all 0.2s ease;
+  }
+
+  .n3uralia-select:focus {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(218, 165, 32, 0.5);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(218, 165, 32, 0.15);
+  }
+
+  .n3uralia-select option {
+    background: #111111;
+    color: #ffffff;
+  }
+
+  /* Range Slider Components - With True Gold */
+  .n3uralia-range {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    outline: none;
+  }
+
+  .n3uralia-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: linear-gradient(135deg, #ffd700, #daa520);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 0 10px rgba(218, 165, 32, 0.4);
+  }
+
+  .n3uralia-range::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 15px rgba(218, 165, 32, 0.6);
+  }
+
+  .n3uralia-range::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: linear-gradient(135deg, #ffd700, #daa520);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+    box-shadow: 0 0 10px rgba(218, 165, 32, 0.4);
+  }
+
+  .n3uralia-range::-moz-range-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 15px rgba(218, 165, 32, 0.6);
+  }
+
+  /* Loading Components - With True Gold */
+  .n3uralia-loading {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .n3uralia-loading::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(218, 165, 32, 0.3), transparent);
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      left: -100%;
+    }
+    100% {
+      left: 100%;
+    }
+  }
+
+  /* Status Components - With True Gold */
+  .n3uralia-status-online {
+    color: #ffffff;
+    position: relative;
+  }
+
+  .n3uralia-status-online::before {
+    content: "";
+    position: absolute;
+    left: -12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 6px;
+    background: #daa520;
+    border-radius: 50%;
+    animation: n3uraliaPulseGold 2s infinite;
+    box-shadow: 0 0 10px rgba(218, 165, 32, 0.6);
+  }
+
+  .n3uralia-status-processing {
+    color: rgba(255, 255, 255, 0.7);
+    position: relative;
+  }
+
+  .n3uralia-status-processing::before {
+    content: "";
+    position: absolute;
+    left: -12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 6px;
+    background: #b8860b;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    box-shadow: 0 0 8px rgba(184, 134, 11, 0.4);
+  }
+
+  @keyframes spin {
+    from {
+      transform: translateY(-50%) rotate(0deg);
+    }
+    to {
+      transform: translateY(-50%) rotate(360deg);
+    }
+  }
+
+  /* Badge Components - With True Gold */
+  .n3uralia-badge {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    transition: all 0.2s ease;
+  }
+
+  .n3uralia-badge:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(218, 165, 32, 0.4);
+  }
+
+  .n3uralia-badge-gold {
+    background: rgba(218, 165, 32, 0.15);
+    color: #daa520;
+    border: 1px solid rgba(218, 165, 32, 0.4);
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    transition: all 0.2s ease;
+  }
+
+  .n3uralia-badge-gold:hover {
+    background: rgba(218, 165, 32, 0.25);
+    border-color: rgba(218, 165, 32, 0.6);
+  }
+
+  /* Progress Components - With True Gold */
+  .n3uralia-progress {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 0.5rem;
+    overflow: hidden;
+  }
+
+  .n3uralia-progress-bar {
+    background: linear-gradient(90deg, #b8860b, #daa520);
+    height: 100%;
+    border-radius: 0.5rem;
+    transition: width 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 10px rgba(218, 165, 32, 0.4);
+  }
+
+  .n3uralia-progress-bar::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.6), transparent);
+    animation: progressShine 2s infinite;
+  }
+
+  @keyframes progressShine {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  /* Tooltip Components - With True Gold */
+  .n3uralia-tooltip {
+    background: rgba(0, 0, 0, 0.9);
+    color: #ffffff;
+    border: 1px solid rgba(218, 165, 32, 0.3);
+    backdrop-filter: blur(10px);
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), 0 0 10px rgba(218, 165, 32, 0.15);
+  }
+
+  /* Modal Components - With True Gold */
+  .n3uralia-modal-overlay {
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+  }
+
+  .n3uralia-modal {
+    background: rgba(10, 10, 10, 0.95);
+    border: 1px solid rgba(218, 165, 32, 0.2);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5), 0 0 20px rgba(218, 165, 32, 0.15);
+  }
+
+  /* Status Indicators - With True Gold */
+  .status-success {
+    background: rgba(218, 165, 32, 0.2);
+    color: #daa520;
+    border: 1px solid rgba(218, 165, 32, 0.4);
+  }
+
+  .status-warning {
+    background: rgba(218, 165, 32, 0.1);
+    color: #b8860b;
+    border: 1px solid rgba(218, 165, 32, 0.3);
+  }
+
+  .status-error {
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  /* Premium/Gold Elements */
+  .n3uralia-premium-indicator {
+    background: linear-gradient(45deg, rgba(218, 165, 32, 0.2), rgba(218, 165, 32, 0.1));
+    border: 1px solid rgba(218, 165, 32, 0.4);
+    color: #daa520;
+    position: relative;
+  }
+
+  .n3uralia-premium-indicator::before {
+    content: "✨";
+    position: absolute;
+    left: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+    animation: sparkle 2s ease-in-out infinite;
+  }
+
+  @keyframes sparkle {
+    0%,
+    100% {
+      opacity: 0.5;
+      transform: translateY(-50%) scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: translateY(-50%) scale(1.2);
+    }
+  }
+
+  /* Card Flip Animation Styles */
+  .capability-card-container {
+    perspective: 1000px;
+    height: 320px;
+  }
+
+  .capability-card {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-style: preserve-3d;
+    cursor: pointer;
+  }
+
+  .capability-card-container:hover .capability-card {
+    transform: rotateY(180deg);
+  }
+
+  .capability-card-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 1rem;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .capability-card-front {
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    z-index: 2;
+  }
+
+  .capability-card-back {
+    background: rgba(218, 165, 32, 0.02);
+    backdrop-filter: blur(25px);
+    border: 1px solid rgba(218, 165, 32, 0.25);
+    transform: rotateY(180deg);
+    z-index: 1;
+  }
+
+  .capability-card-back::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(218, 165, 32, 0.6), transparent);
+  }
+
+  /* Mobile touch support */
+  @media (hover: none) and (pointer: coarse) {
+    .capability-card-container:active .capability-card {
+      transform: rotateY(180deg);
+    }
+  }
+
+  /* Override any colored elements with true gold where appropriate */
+  .text-green-400,
+  .text-green-600,
+  .bg-green-600 {
+    color: #daa520 !important;
+    background-color: rgba(218, 165, 32, 0.2) !important;
+  }
+
+  .text-red-400,
+  .text-red-300,
+  .bg-red-600,
+  .bg-red-900 {
+    color: rgba(255, 255, 255, 0.7) !important;
+    background-color: rgba(255, 255, 255, 0.05) !important;
+  }
+
+  .text-yellow-400,
+  .text-yellow-300,
+  .bg-yellow-600 {
+    color: #daa520 !important;
+    background-color: rgba(218, 165, 32, 0.15) !important;
+  }
+
+  .text-blue-400,
+  .text-blue-600,
+  .bg-blue-600 {
+    color: #b8860b !important;
+    background-color: rgba(184, 134, 11, 0.15) !important;
+  }
+
+  .text-purple-400,
+  .bg-purple-600 {
+    color: #b8860b !important;
+    background-color: rgba(184, 134, 11, 0.15) !important;
+  }
+
+  .border-green-500,
+  .border-red-500,
+  .border-yellow-500,
+  .border-blue-500 {
+    border-color: rgba(218, 165, 32, 0.4) !important;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .n3uralia-card {
+      backdrop-filter: blur(15px);
+    }
+
+    .n3uralia-button-primary,
+    .n3uralia-button-secondary,
+    .n3uralia-button-gold {
+      min-height: 44px; /* Touch-friendly */
+    }
+
+    .capability-card-container {
+      height: 280px;
+    }
+
+    .capability-card-face {
+      padding: 1.5rem;
+    }
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .n3uralia-card {
+      border-color: rgba(218, 165, 32, 0.5);
+    }
+
+    .n3uralia-text-muted {
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .n3uralia-gold-accent {
+      color: #ffd700;
+    }
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    .n3uralia-pulse,
+    .n3uralia-pulse-gold,
+    .n3uralia-loading::after,
+    .n3uralia-progress-bar::after {
+      animation: none;
+    }
+
+    .n3uralia-gradient {
+      animation: none;
+      background: #0a0a0a;
+    }
+
+    .capability-card {
+      transition: none;
+    }
+
+    .capability-card-container:hover .capability-card {
+      transform: none;
+    }
+  }
+
+  /* Dark mode optimization */
+  @media (prefers-color-scheme: dark) {
+    .n3uralia-card {
+      background: rgba(255, 255, 255, 0.03);
+    }
   }
 }
 
-.n3uralia-button-gold {
-  background: linear-gradient(135deg, #daa520 0%, #ffd700 100%);
-  color: #000;
-  font-weight: 600;
-  transition: all 0.3s ease;
-}
+/* Custom utility classes - With True Gold */
+@layer utilities {
+  .text-shadow-sm {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  }
 
-.n3uralia-button-gold:hover {
-  background: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
-  box-shadow: 0 10px 30px rgba(218, 165, 32, 0.3);
-  transform: translateY(-1px);
-}
+  .text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  }
 
-.n3uralia-button-secondary {
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
-}
+  .text-shadow-lg {
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+  }
 
-.n3uralia-button-secondary:hover {
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
-  border-color: rgba(218, 165, 32, 0.3);
-}
+  .text-shadow-gold {
+    text-shadow: 0 2px 8px rgba(218, 165, 32, 0.4);
+  }
 
-.n3uralia-badge-gold {
-  background: rgba(218, 165, 32, 0.2);
-  color: #daa520;
-  border: 1px solid rgba(218, 165, 32, 0.3);
-}
+  .backdrop-blur-xs {
+    backdrop-filter: blur(2px);
+  }
 
-.n3uralia-input {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #fff;
-}
+  .backdrop-blur-3xl {
+    backdrop-filter: blur(64px);
+  }
 
-.n3uralia-input:focus {
-  border-color: rgba(218, 165, 32, 0.5);
-  box-shadow: 0 0 0 2px rgba(218, 165, 32, 0.1);
-}
+  /* True Gold utility classes */
+  .text-gold {
+    color: #daa520;
+  }
 
-.n3uralia-select {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #fff;
-}
+  .text-gold-muted {
+    color: #b8860b;
+  }
 
-.n3uralia-range {
-  background: transparent;
-}
+  .bg-gold {
+    background-color: rgba(218, 165, 32, 0.1);
+  }
 
-.n3uralia-range::-webkit-slider-track {
-  background: rgba(255, 255, 255, 0.1);
-  height: 4px;
-  border-radius: 2px;
-}
+  .border-gold {
+    border-color: rgba(218, 165, 32, 0.4);
+  }
 
-.n3uralia-range::-webkit-slider-thumb {
-  background: #daa520;
-  height: 16px;
-  width: 16px;
-  border-radius: 50%;
-  border: none;
-  cursor: pointer;
-}
+  .ring-gold {
+    --tw-ring-color: rgba(218, 165, 32, 0.4);
+  }
 
-.n3uralia-range::-moz-range-track {
-  background: rgba(255, 255, 255, 0.1);
-  height: 4px;
-  border-radius: 2px;
-}
+  /* Force monochrome on all elements with gold accents */
+  .monochrome-override * {
+    color: inherit !important;
+    background-color: inherit !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+  }
 
-.n3uralia-range::-moz-range-thumb {
-  background: #daa520;
-  height: 16px;
-  width: 16px;
-  border-radius: 50%;
-  border: none;
-  cursor: pointer;
-}
-
-/* Capability Cards Flip Animation */
-.capability-card-container {
-  perspective: 1000px;
-  height: 300px;
-}
-
-.capability-card {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  transition: transform 0.6s;
-  transform-style: preserve-3d;
-}
-
-.capability-card-container:hover .capability-card {
-  transform: rotateY(180deg);
-}
-
-.capability-card-face {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  backface-visibility: hidden;
-  border-radius: 12px;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.capability-card-back {
-  transform: rotateY(180deg);
-}
-
-/* Icon color transitions - all icons start monochromatic */
-.icon-monochrome {
-  color: rgba(255, 255, 255, 0.7);
-  transition: color 0.3s ease;
-}
-
-.icon-monochrome:hover,
-.group:hover .icon-monochrome {
-  color: #daa520;
-}
-
-/* Ensure all Lucide icons are monochrome by default */
-svg[data-lucide] {
-  color: rgba(255, 255, 255, 0.7);
-  transition: color 0.3s ease;
-}
-
-.group:hover svg[data-lucide],
-svg[data-lucide]:hover {
-  color: #daa520;
-}
-
-/* Override for specific gold accent icons that should always be gold */
-.n3uralia-gold-accent svg[data-lucide],
-svg[data-lucide].n3uralia-gold-accent {
-  color: #daa520 !important;
-}
-
-/* Navigation icons */
-nav svg[data-lucide] {
-  color: rgba(255, 255, 255, 0.7);
-  transition: color 0.3s ease;
-}
-
-nav button:hover svg[data-lucide],
-nav button.n3uralia-button-gold svg[data-lucide] {
-  color: #000;
-}
-
-/* Header icons */
-header svg[data-lucide] {
-  color: rgba(255, 255, 255, 0.7);
-  transition: color 0.3s ease;
-}
-
-header .n3uralia-gold-accent svg[data-lucide] {
-  color: #daa520;
-}
-
-/* Processing status icons */
-.processing-icon {
-  color: #daa520;
-}
-
-/* Success/completion icons */
-.success-icon {
-  color: #daa520;
-}
-
-/* Error/warning icons remain contextual */
-.error-icon {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.warning-icon {
-  color: #daa520;
+  .gold-override * {
+    border-color: rgba(218, 165, 32, 0.3) !important;
+  }
 }
