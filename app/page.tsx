@@ -42,6 +42,7 @@ import { UserManagement } from "@/components/admin/user-management"
 import { RoleManagement } from "@/components/admin/role-management"
 import { preProcessImage, postProcessImage, type EnhancementToggles } from "@/utils/image-processing"
 import { generateDomemaster, type DomemasterOptions } from "@/utils/domemaster"
+import Footer from "@/components/footer"
 
 // Define enhancement models - Updated with face-preserving options
 const ENHANCEMENT_MODELS = [
@@ -2023,68 +2024,7 @@ const AIImageEnhancementPortal = () => {
       </main>
 
       {/* Footer */}
-      <footer className="n3uralia-card border-t n3uralia-border mt-16">
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div className="md:col-span-2">
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-8 h-8 bg-white/10 rounded-xl flex items-center justify-center">
-                  <Brain className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-white">n3uralia</h3>
-                  <p className="text-sm n3uralia-text-muted">AI Image Enhancement Platform</p>
-                </div>
-              </div>
-              <p className="n3uralia-text-muted text-sm leading-relaxed mb-4">
-                Advanced AI image enhancement platform with specialized ASEAN face preservation technology. Transform
-                your images while maintaining cultural authenticity and natural beauty.
-              </p>
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2 text-sm">
-                  <div className="w-2 h-2 rounded-full bg-white n3uralia-pulse"></div>
-                  <span className="text-white">AI Models Online</span>
-                </div>
-                <div className="flex items-center space-x-2 text-sm">
-                  <Shield className="w-4 h-4 text-white/70" />
-                  <span className="text-white/70">Face Preservation</span>
-                </div>
-              </div>
-            </div>
-            <div>
-              <h4 className="text-white font-semibold mb-4">Capabilities</h4>
-              <ul className="space-y-2 text-sm n3uralia-text-muted">
-                <li>AI Image Enhancement</li>
-                <li>ASEAN Face Preservation</li>
-                <li>4x Upscaling</li>
-                <li>Domemaster Export</li>
-                <li>Batch Processing</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-white font-semibold mb-4">Support</h4>
-              <ul className="space-y-2 text-sm n3uralia-text-muted">
-                <li>Documentation</li>
-                <li>API Reference</li>
-                <li>Community</li>
-                <li>Contact Support</li>
-                <li>Status Page</li>
-              </ul>
-            </div>
-          </div>
-          <div className="n3uralia-divider my-8"></div>
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-sm n3uralia-text-muted">© 2025 n3uralia AI Enhancement Platform. All rights reserved.</p>
-            <div className="flex items-center space-x-4 mt-4 md:mt-0">
-              <span className="text-sm n3uralia-text-muted">Powered by</span>
-              <div className="flex items-center space-x-2">
-                <Cpu className="w-4 h-4 text-white/70" />
-                <span className="text-sm text-white/70">Clarity Upscaler AI</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
 
       {/* Profile Dialog */}
       {user && (
