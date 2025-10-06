@@ -1,11 +1,10 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useRef } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { Upload, Sparkles, Download, Loader2, ArrowLeft, Zap, Shield, Wand2 } from "lucide-react"
+import { Upload, Sparkles, Download, Loader2, ArrowLeft, Shield, Wand2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -13,7 +12,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Slider } from "@/components/ui/slider"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 
 type EnhancedImage = {
@@ -28,8 +26,7 @@ export default function EnhancePage() {
   const [enhancedImages, setEnhancedImages] = useState<EnhancedImage[]>([])
   const [isEnhancing, setIsEnhancing] = useState(false)
   const [progress, setProgress] = useState(0)
-  const [upscaleFactor, setUpscaleFactor] = useState(4)
-  const [provider, setProvider] = useState<"fal" | "replicate">("fal")
+  const [upscaleFactor, setUpscaleFactor] = useState(2)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
 
@@ -72,19 +69,25 @@ export default function EnhancePage() {
         formData.append("image", file)
         formData.append("scale", upscaleFactor.toString())
 
-        const endpoint = provider === "fal" ? "/api/enhance-fal" : "/api/enhance-replicate"
+        console.log("Sending to Replicate API with scale:", upscaleFactor)
 
-        const response = await fetch(endpoint, {
+        const response = await fetch("/api/enhance-replicate", {
           method: "POST",
           body: formData,
         })
 
         if (!response.ok) {
           const errorData = await response.json()
+          console.error("API Error:", errorData)
           throw new Error(errorData.error || `Failed to enhance image ${i + 1}`)
         }
 
         const data = await response.json()
+        console.log("API Response:", data)
+
+        if (!data.output) {
+          throw new Error("No output URL in response")
+        }
 
         newEnhancedImages.push({
           id: `enhanced-${Date.now()}-${i}`,
@@ -165,12 +168,12 @@ export default function EnhancePage() {
       <div className="container mx-auto px-4 py-12">
         {/* Header */}
         <div className="text-center mb-12">
-          <Badge className="mb-4 bg-amber-500/20 text-amber-400 border-amber-500/30">AI Image Enhancer</Badge>
+          <Badge className="mb-4 bg-amber-500/20 text-amber-400 border-amber-500/30">Powered by Replicate AI</Badge>
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 bg-clip-text text-transparent">
             Enhance Your Images
           </h1>
           <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-            Upload your images and let AI enhance them with professional quality
+            Upload your images and let Replicate AI enhance them with professional quality
           </p>
         </div>
 
@@ -203,31 +206,7 @@ export default function EnhancePage() {
                 <CardDescription className="text-gray-400">Configure your image enhancement parameters</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-6">
-                  {/* Provider Selection */}
-                  <div className="space-y-2">
-                    <Label className="text-white">AI Provider</Label>
-                    <Select value={provider} onValueChange={(value: "fal" | "replicate") => setProvider(value)}>
-                      <SelectTrigger className="bg-black/40 border-white/10 text-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-gray-900 border-white/10">
-                        <SelectItem value="fal" className="text-white">
-                          <div className="flex items-center">
-                            <Zap className="w-4 h-4 mr-2 text-amber-400" />
-                            Fal AI (Fast)
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="replicate" className="text-white">
-                          <div className="flex items-center">
-                            <Shield className="w-4 h-4 mr-2 text-amber-400" />
-                            Replicate (Quality)
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
+                <div className="space-y-4">
                   {/* Upscale Factor */}
                   <div className="space-y-2">
                     <Label className="text-white">Upscale Factor: {upscaleFactor}x</Label>
@@ -239,15 +218,17 @@ export default function EnhancePage() {
                       step={1}
                       className="w-full"
                     />
+                    <p className="text-sm text-gray-400">
+                      Higher values produce larger, more detailed images but take longer to process
+                    </p>
                   </div>
                 </div>
 
                 <Alert className="bg-amber-500/10 border-amber-500/30">
-                  <Sparkles className="w-4 h-4 text-amber-400" />
+                  <Shield className="w-4 h-4 text-amber-400" />
                   <AlertDescription className="text-gray-300">
-                    {provider === "fal"
-                      ? "Fal AI provides fast enhancement with great quality, ideal for most use cases."
-                      : "Replicate offers maximum quality with face preservation, perfect for portraits."}
+                    Using Replicate AI for maximum quality enhancement with face preservation technology. Perfect for
+                    portraits, real estate, and professional photography.
                   </AlertDescription>
                 </Alert>
               </CardContent>

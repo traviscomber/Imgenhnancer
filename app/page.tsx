@@ -1,796 +1,529 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
-import { ImageComparisonSlider } from "@/components/image-comparison-slider"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Sparkles, Heart, Palette, Zap, Home, Users, Building2, Camera, ImageIcon } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-  Sparkles,
-  Zap,
-  Shield,
-  Clock,
-  Users,
-  CheckCircle2,
-  ArrowRight,
-  Upload,
-  Download,
-  Star,
-  MouseOff as Museum,
-  Heart,
-  Camera,
-  Home,
-  Palette,
-  Award,
-  TrendingUp,
-  ImageIcon,
-} from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { ImageComparisonSlider } from "@/components/image-comparison-slider"
+import Link from "next/link"
 
 export default function LandingPage() {
   const [activeTab, setActiveTab] = useState("home")
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden pt-32 pb-20 px-4">
-        {/* Animated background */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute inset-0 bg-gradient-to-r from-gold-500/20 via-purple-500/20 to-gold-500/20 animate-gradient"></div>
-        </div>
-
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="text-center space-y-8">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 n3uralia-badge-gold px-4 py-2 rounded-full text-sm font-medium">
-              <Sparkles className="w-4 h-4" />
-              <span>Powered by n3uralia AI</span>
-            </div>
-
-            {/* Main Heading */}
-            <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight">
-              Transform Your Images
-              <br />
-              <span className="text-gradient-gold">Beyond Imagination</span>
-            </h1>
-
-            {/* Subheading */}
-            <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-              Professional AI-powered image enhancement that brings clarity, detail, and life to every pixel. Perfect
-              for heritage restoration, professional photography, and creative projects.
-            </p>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-              <Link href="/enhance">
-                <Button size="lg" className="n3uralia-button-gold group text-lg px-8 py-6">
-                  <Sparkles className="w-5 h-5 mr-2 group-hover:rotate-12 transition-transform" />
-                  Try Enhancer Free
-                  <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </Link>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-gold-500/50 text-gold-400 hover:bg-gold-500/10 text-lg px-8 py-6 bg-transparent"
-                onClick={() => setActiveTab("examples")}
-              >
-                <ImageIcon className="w-5 h-5 mr-2" />
-                View Examples
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-black to-gray-900">
+      {/* Navigation */}
+      <nav className="border-b border-white/10 bg-black/20 backdrop-blur-sm sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <button onClick={scrollToTop} className="flex items-center space-x-2 group cursor-pointer">
+              <Sparkles className="w-8 h-8 text-amber-400 transition-all duration-300 group-hover:scale-110 group-hover:rotate-12 group-hover:text-amber-300" />
+              <span className="text-2xl font-bold text-white transition-all duration-300 group-hover:text-amber-400">
+                clar1ty
+              </span>
+            </button>
+            <Link href="/enhance">
+              <Button className="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-amber-500/50">
+                Try Enhancer
+                <Sparkles className="w-4 h-4 ml-2" />
               </Button>
-            </div>
-
-            {/* Trust Indicators */}
-            <div className="flex flex-wrap items-center justify-center gap-8 pt-8 text-gray-400">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-gold-400" />
-                <span>No signup required</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-gold-400" />
-                <span>Free to use</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-gold-400" />
-                <span>Instant results</span>
-              </div>
-            </div>
+            </Link>
           </div>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <section className="py-20 px-4">
+        <div className="container mx-auto text-center">
+          <Badge className="mb-6 bg-amber-500/20 text-amber-400 border-amber-500/30 px-4 py-2 text-sm">
+            Powered by Replicate AI
+          </Badge>
+          <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 bg-clip-text text-transparent">
+            AI Image Enhancement
+          </h1>
+          <p className="text-xl md:text-2xl text-gray-300 mb-12 max-w-3xl mx-auto">
+            Transform your images with professional-grade AI enhancement using Replicate technology
+          </p>
         </div>
       </section>
 
       {/* Main Content Tabs */}
-      <section className="py-20 px-4">
-        <div className="max-w-7xl mx-auto">
+      <section className="pb-20 px-4">
+        <div className="container mx-auto">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-4 bg-gray-900/50 border border-gold-500/20 p-1">
+            <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-4 mb-12 bg-black/40 border border-white/10 p-1">
               <TabsTrigger
                 value="home"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-gold-500 data-[state=active]:to-gold-600 data-[state=active]:text-black"
+                className="data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-400 transition-all duration-300"
               >
+                <Sparkles className="w-4 h-4 mr-2" />
                 Home
               </TabsTrigger>
               <TabsTrigger
                 value="examples"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-gold-500 data-[state=active]:to-gold-600 data-[state=active]:text-black"
+                className="data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-400 transition-all duration-300"
               >
+                <ImageIcon className="w-4 h-4 mr-2" />
                 Examples
               </TabsTrigger>
               <TabsTrigger
                 value="features"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-gold-500 data-[state=active]:to-gold-600 data-[state=active]:text-black"
+                className="data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-400 transition-all duration-300"
               >
+                <Zap className="w-4 h-4 mr-2" />
                 Features
               </TabsTrigger>
               <TabsTrigger
                 value="professional"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-gold-500 data-[state=active]:to-gold-600 data-[state=active]:text-black"
+                className="data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-400 transition-all duration-300"
               >
+                <Building2 className="w-4 h-4 mr-2" />
                 Professional Use
               </TabsTrigger>
             </TabsList>
 
             {/* Home Tab */}
-            <TabsContent value="home" className="mt-12 space-y-20">
-              {/* Featured Comparisons */}
-              <div className="space-y-12">
-                <div className="text-center space-y-4">
-                  <h2 className="text-4xl md:text-5xl font-bold text-white">
-                    See the <span className="text-gradient-gold">Difference</span>
-                  </h2>
-                  <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-                    Drag the slider to compare original photos with AI-enhanced results
+            <TabsContent value="home" className="space-y-12">
+              <div className="max-w-5xl mx-auto space-y-12">
+                {/* Wedding Portrait */}
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <Heart className="w-6 h-6 text-rose-400" />
+                    <h3 className="text-2xl font-bold text-white">Classic Wedding Portrait Enhancement</h3>
+                  </div>
+                  <p className="text-gray-300 mb-6">
+                    Restore precious wedding memories with AI-powered enhancement. Bring clarity to cherished moments.
                   </p>
+                  <ImageComparisonSlider
+                    beforeImage="/images/wedding-set1-before.png"
+                    afterImage="/images/wedding-set1-after.png"
+                    beforeLabel="Original Photo"
+                    afterLabel="AI Enhanced"
+                  />
                 </div>
 
-                <div className="space-y-12 max-w-5xl mx-auto">
-                  {/* Wedding Photo */}
-                  <div className="space-y-4">
-                    <h3 className="text-2xl font-bold text-white flex items-center gap-2">
-                      <Heart className="w-6 h-6 text-pink-400" />
-                      Classic Wedding Portrait
-                    </h3>
-                    <ImageComparisonSlider
-                      beforeImage="/images/wedding-set1-before.png"
-                      afterImage="/images/wedding-set1-after.png"
-                      beforeLabel="Original"
-                      afterLabel="Enhanced"
-                    />
-                    <p className="text-gray-400">Professional restoration of vintage wedding photography</p>
+                {/* Javanese Wedding Heritage */}
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <Users className="w-6 h-6 text-amber-400" />
+                    <h3 className="text-2xl font-bold text-white">Vintage Javanese Wedding Heritage</h3>
                   </div>
+                  <p className="text-gray-300 mb-6">
+                    Preserve cultural heritage with authentic restoration. Specialized for ASEAN traditional
+                    photography.
+                  </p>
+                  <ImageComparisonSlider
+                    beforeImage="/images/javanese-wedding-faded.png"
+                    afterImage="/images/javanese-wedding-restored.png"
+                    beforeLabel="Faded Heritage"
+                    afterLabel="Restored Treasure"
+                  />
+                </div>
 
-                  {/* Javanese Wedding Heritage */}
-                  <div className="space-y-4">
-                    <h3 className="text-2xl font-bold text-white flex items-center gap-2">
-                      <Museum className="w-6 h-6 text-purple-400" />
-                      Vintage Javanese Wedding Heritage
-                    </h3>
-                    <ImageComparisonSlider
-                      beforeImage="/images/javanese-wedding-faded.png"
-                      afterImage="/images/javanese-wedding-restored.png"
-                      beforeLabel="Faded Original"
-                      afterLabel="Restored"
-                    />
-                    <p className="text-gray-400">Preserving cultural heritage through AI restoration</p>
+                {/* Thai Family Portrait */}
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <Users className="w-6 h-6 text-blue-400" />
+                    <h3 className="text-2xl font-bold text-white">Thai Family Portrait Heritage</h3>
                   </div>
+                  <p className="text-gray-300 mb-6">
+                    Bring family history back to life with natural color restoration and authentic detail preservation.
+                  </p>
+                  <ImageComparisonSlider
+                    beforeImage="/images/thai-family-faded.png"
+                    afterImage="/images/thai-family-restored.png"
+                    beforeLabel="Faded Memories"
+                    afterLabel="Vibrant History"
+                  />
+                </div>
 
-                  {/* Thai Family Portrait */}
-                  <div className="space-y-4">
-                    <h3 className="text-2xl font-bold text-white flex items-center gap-2">
-                      <Users className="w-6 h-6 text-blue-400" />
-                      Thai Family Portrait Heritage
-                    </h3>
-                    <ImageComparisonSlider
-                      beforeImage="/images/thai-family-faded.png"
-                      afterImage="/images/thai-family-restored.png"
-                      beforeLabel="Faded Original"
-                      afterLabel="Restored"
-                    />
-                    <p className="text-gray-400">Bringing family memories back to life with authentic colors</p>
+                {/* Real Estate Interior */}
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <Home className="w-6 h-6 text-blue-500" />
+                    <h3 className="text-2xl font-bold text-white">Real Estate Interior Marketing</h3>
                   </div>
+                  <p className="text-gray-300 mb-6">
+                    Transform property photos into magazine-quality listings. Professional enhancement for faster sales.
+                  </p>
+                  <ImageComparisonSlider
+                    beforeImage="/images/real-estate-before.png"
+                    afterImage="/images/real-estate-after.png"
+                    beforeLabel="Vintage Photo"
+                    afterLabel="Enhanced"
+                  />
+                </div>
 
-                  {/* Abstract Art */}
-                  <div className="space-y-4">
-                    <h3 className="text-2xl font-bold text-white flex items-center gap-2">
-                      <Palette className="w-6 h-6 text-amber-400" />
-                      Digital Art Enhancement
-                    </h3>
-                    <ImageComparisonSlider
-                      beforeImage="/images/abstract-art-low.png"
-                      afterImage="/images/abstract-art-enhanced.png"
-                      beforeLabel="Low Quality"
-                      afterLabel="Enhanced"
-                    />
-                    <p className="text-gray-400">Professional-grade enhancement for digital artwork</p>
+                {/* Digital Art */}
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <Palette className="w-6 h-6 text-purple-400" />
+                    <h3 className="text-2xl font-bold text-white">Digital Art Enhancement</h3>
                   </div>
+                  <p className="text-gray-300 mb-6">
+                    Elevate digital artwork with professional-grade upscaling. Perfect for prints and high-resolution
+                    displays.
+                  </p>
+                  <ImageComparisonSlider
+                    beforeImage="/images/abstract-art-low.png"
+                    afterImage="/images/abstract-art-enhanced.png"
+                    beforeLabel="Low Resolution"
+                    afterLabel="High Definition"
+                  />
                 </div>
               </div>
 
-              {/* Quick Stats */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                <Card className="bg-gray-900/50 border-gold-500/20">
-                  <CardContent className="pt-6 text-center space-y-2">
-                    <div className="text-4xl font-bold text-gradient-gold">4K+</div>
-                    <div className="text-gray-400">Max Resolution</div>
-                  </CardContent>
-                </Card>
-                <Card className="bg-gray-900/50 border-gold-500/20">
-                  <CardContent className="pt-6 text-center space-y-2">
-                    <div className="text-4xl font-bold text-gradient-gold">8x</div>
-                    <div className="text-gray-400">Upscaling Power</div>
-                  </CardContent>
-                </Card>
-                <Card className="bg-gray-900/50 border-gold-500/20">
-                  <CardContent className="pt-6 text-center space-y-2">
-                    <div className="text-4xl font-bold text-gradient-gold">100%</div>
-                    <div className="text-gray-400">Free to Use</div>
-                  </CardContent>
-                </Card>
-                <Card className="bg-gray-900/50 border-gold-500/20">
-                  <CardContent className="pt-6 text-center space-y-2">
-                    <div className="text-4xl font-bold text-gradient-gold">30s</div>
-                    <div className="text-gray-400">Average Time</div>
-                  </CardContent>
-                </Card>
+              {/* CTA Section */}
+              <div className="text-center mt-16">
+                <Link href="/enhance">
+                  <Button className="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white px-8 py-6 text-lg transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-amber-500/50">
+                    <Sparkles className="w-5 h-5 mr-2" />
+                    Start Enhancing Your Images
+                  </Button>
+                </Link>
               </div>
             </TabsContent>
 
             {/* Examples Tab */}
-            <TabsContent value="examples" className="mt-12 space-y-12">
-              <div className="text-center space-y-4">
-                <h2 className="text-4xl md:text-5xl font-bold text-white">
-                  Real-World <span className="text-gradient-gold">Examples</span>
-                </h2>
-                <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-                  See how clar1ty transforms different types of images
-                </p>
-              </div>
-
-              <div className="space-y-16 max-w-5xl mx-auto">
-                {/* Heritage & Cultural */}
-                <div className="space-y-6">
-                  <div className="flex items-center gap-3">
-                    <Museum className="w-8 h-8 text-purple-400" />
-                    <h3 className="text-3xl font-bold text-white">Heritage & Cultural Preservation</h3>
+            <TabsContent value="examples" className="space-y-12">
+              <div className="max-w-5xl mx-auto space-y-16">
+                {/* Heritage Photography Section */}
+                <div className="space-y-8">
+                  <div className="text-center space-y-2">
+                    <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">Cultural Heritage</Badge>
+                    <h2 className="text-3xl font-bold text-white">ASEAN Heritage Photo Restoration</h2>
+                    <p className="text-gray-400">Preserve cultural memories with authentic restoration technology</p>
                   </div>
+
                   <div className="space-y-12">
+                    {/* Javanese Wedding */}
                     <div className="space-y-4">
-                      <h4 className="text-xl font-semibold text-white">Javanese Wedding Heritage</h4>
+                      <h3 className="text-xl font-semibold text-white">Traditional Javanese Wedding Ceremony</h3>
                       <ImageComparisonSlider
                         beforeImage="/images/javanese-wedding-faded.png"
                         afterImage="/images/javanese-wedding-restored.png"
-                        beforeLabel="Faded"
-                        afterLabel="Restored"
+                        beforeLabel="Faded Original"
+                        afterLabel="Restored Heritage"
                       />
                     </div>
+
+                    {/* Thai Family */}
                     <div className="space-y-4">
-                      <h4 className="text-xl font-semibold text-white">Thai Family Portrait</h4>
+                      <h3 className="text-xl font-semibold text-white">Thai Family Portrait</h3>
                       <ImageComparisonSlider
                         beforeImage="/images/thai-family-faded.png"
                         afterImage="/images/thai-family-restored.png"
-                        beforeLabel="Faded"
-                        afterLabel="Restored"
+                        beforeLabel="Faded Photograph"
+                        afterLabel="Restored Memory"
                       />
                     </div>
                   </div>
+
+                  <Card className="bg-gradient-to-br from-amber-900/20 to-yellow-900/20 border-amber-500/30">
+                    <CardContent className="p-6">
+                      <div className="flex items-start space-x-4">
+                        <Sparkles className="w-6 h-6 text-amber-400 flex-shrink-0 mt-1" />
+                        <div>
+                          <h4 className="text-white font-semibold mb-2">Heritage Preservation Excellence</h4>
+                          <p className="text-gray-300 text-sm">
+                            Our Replicate AI technology specializes in ASEAN cultural photography, maintaining authentic
+                            skin tones, traditional attire details, and cultural significance while removing age-related
+                            degradation.
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
 
-                {/* Wedding Photography */}
-                <div className="space-y-6">
-                  <div className="flex items-center gap-3">
-                    <Heart className="w-8 h-8 text-pink-400" />
-                    <h3 className="text-3xl font-bold text-white">Wedding & Portrait Photography</h3>
+                {/* Real Estate Marketing Section */}
+                <div className="space-y-8">
+                  <div className="text-center space-y-2">
+                    <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">Real Estate Marketing</Badge>
+                    <h2 className="text-3xl font-bold text-white">Professional Property Enhancement</h2>
+                    <p className="text-gray-400">Transform listings with magazine-quality photography</p>
                   </div>
-                  <div className="space-y-12">
-                    <div className="space-y-4">
-                      <h4 className="text-xl font-semibold text-white">Classic Wedding Portrait</h4>
-                      <ImageComparisonSlider
-                        beforeImage="/images/wedding-set1-before.png"
-                        afterImage="/images/wedding-set1-after.png"
-                        beforeLabel="Original"
-                        afterLabel="Enhanced"
-                      />
-                    </div>
-                    <div className="space-y-4">
-                      <h4 className="text-xl font-semibold text-white">Vintage Wedding Photo</h4>
-                      <ImageComparisonSlider
-                        beforeImage="/images/vintage-wedding-blur.png"
-                        afterImage="/images/vintage-wedding-clear.jpg"
-                        beforeLabel="Blurry"
-                        afterLabel="Sharp"
-                      />
-                    </div>
+
+                  <div className="space-y-4">
+                    <h3 className="text-xl font-semibold text-white">Interior Space Transformation</h3>
+                    <ImageComparisonSlider
+                      beforeImage="/images/real-estate-before.png"
+                      afterImage="/images/real-estate-after.png"
+                      beforeLabel="Vintage Photo"
+                      afterLabel="Enhanced"
+                    />
                   </div>
+
+                  <Card className="bg-gradient-to-br from-blue-900/20 to-cyan-900/20 border-blue-500/30">
+                    <CardContent className="p-6">
+                      <div className="flex items-start space-x-4">
+                        <Home className="w-6 h-6 text-blue-400 flex-shrink-0 mt-1" />
+                        <div>
+                          <h4 className="text-white font-semibold mb-2">Professional Marketing Impact</h4>
+                          <p className="text-gray-300 text-sm mb-3">
+                            Properties with enhanced photos receive 47% more inquiries and sell 32% faster with an
+                            average price boost of $15,000. Our Replicate technology corrects lighting, enhances colors,
+                            and creates magazine-quality results.
+                          </p>
+                          <div className="grid grid-cols-3 gap-4 mt-4">
+                            <div className="text-center">
+                              <div className="text-2xl font-bold text-blue-400">47%</div>
+                              <div className="text-xs text-gray-400">More Inquiries</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-2xl font-bold text-blue-400">32%</div>
+                              <div className="text-xs text-gray-400">Faster Sales</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-2xl font-bold text-blue-400">$15K</div>
+                              <div className="text-xs text-gray-400">Avg. Price Boost</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
 
-                {/* Digital Art */}
-                <div className="space-y-6">
-                  <div className="flex items-center gap-3">
-                    <Palette className="w-8 h-8 text-amber-400" />
-                    <h3 className="text-3xl font-bold text-white">Digital Art & Creative Work</h3>
+                {/* Digital Art Section */}
+                <div className="space-y-8">
+                  <div className="text-center space-y-2">
+                    <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">Digital Art</Badge>
+                    <h2 className="text-3xl font-bold text-white">Creative Upscaling</h2>
+                    <p className="text-gray-400">Professional-grade enhancement for digital artwork</p>
                   </div>
-                  <div className="space-y-12">
-                    <div className="space-y-4">
-                      <h4 className="text-xl font-semibold text-white">Abstract Digital Art</h4>
-                      <ImageComparisonSlider
-                        beforeImage="/images/abstract-art-low.png"
-                        afterImage="/images/abstract-art-enhanced.png"
-                        beforeLabel="Low Res"
-                        afterLabel="Enhanced"
-                      />
-                    </div>
+
+                  <div className="space-y-4">
+                    <h3 className="text-xl font-semibold text-white">Abstract Art Enhancement</h3>
+                    <ImageComparisonSlider
+                      beforeImage="/images/abstract-art-low.png"
+                      afterImage="/images/abstract-art-enhanced.png"
+                      beforeLabel="Low Resolution"
+                      afterLabel="High Definition"
+                    />
                   </div>
+
+                  <Card className="bg-gradient-to-br from-purple-900/20 to-pink-900/20 border-purple-500/30">
+                    <CardContent className="p-6">
+                      <div className="flex items-start space-x-4">
+                        <Palette className="w-6 h-6 text-purple-400 flex-shrink-0 mt-1" />
+                        <div>
+                          <h4 className="text-white font-semibold mb-2">Professional Art Processing</h4>
+                          <p className="text-gray-300 text-sm">
+                            Perfect for digital artists, designers, and creators. Our Replicate AI maintains artistic
+                            intent while dramatically increasing resolution for prints, displays, and professional
+                            portfolios.
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
               </div>
             </TabsContent>
 
             {/* Features Tab */}
-            <TabsContent value="features" className="mt-12 space-y-12">
-              <div className="text-center space-y-4">
-                <h2 className="text-4xl md:text-5xl font-bold text-white">
-                  Powerful <span className="text-gradient-gold">Features</span>
-                </h2>
-                <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-                  Everything you need for professional image enhancement
-                </p>
-              </div>
+            <TabsContent value="features" className="space-y-8">
+              <div className="max-w-4xl mx-auto">
+                <div className="text-center mb-12">
+                  <h2 className="text-4xl font-bold text-white mb-4">Powerful Features</h2>
+                  <p className="text-gray-400">Professional-grade enhancement powered by Replicate AI</p>
+                </div>
 
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[
-                  {
-                    icon: Sparkles,
-                    title: "AI-Powered Enhancement",
-                    description: "Advanced neural networks trained on millions of images for optimal results",
-                    color: "text-gold-400",
-                  },
-                  {
-                    icon: Zap,
-                    title: "Lightning Fast",
-                    description: "Get enhanced images in seconds with our optimized processing pipeline",
-                    color: "text-yellow-400",
-                  },
-                  {
-                    icon: Shield,
-                    title: "Privacy First",
-                    description: "Your images are processed securely and never stored on our servers",
-                    color: "text-blue-400",
-                  },
-                  {
-                    icon: Clock,
-                    title: "No Waiting",
-                    description: "Real-time processing with instant preview and download",
-                    color: "text-purple-400",
-                  },
-                  {
-                    icon: Users,
-                    title: "Face Preservation",
-                    description: "Special ASEAN-optimized models that preserve facial features authentically",
-                    color: "text-pink-400",
-                  },
-                  {
-                    icon: Star,
-                    title: "Professional Quality",
-                    description: "Export in multiple formats with up to 8x resolution increase",
-                    color: "text-amber-400",
-                  },
-                ].map((feature, index) => (
-                  <Card
-                    key={index}
-                    className="bg-gray-900/50 border-gold-500/20 hover:border-gold-500/40 transition-all group"
-                  >
-                    <CardContent className="pt-6 space-y-4 group-hover:scale-[1.02] transition-transform duration-300">
-                      <feature.icon
-                        className={`w-12 h-12 ${feature.color} group-hover:scale-110 transition-transform`}
-                      />
-                      <h3 className="text-xl font-bold text-white">{feature.title}</h3>
-                      <p className="text-gray-400">{feature.description}</p>
-                    </CardContent>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <Card className="bg-black/40 border-white/10 hover:border-amber-500/30 transition-all duration-300">
+                    <CardHeader>
+                      <Zap className="w-8 h-8 text-amber-400 mb-2" />
+                      <CardTitle className="text-white">AI-Powered Upscaling</CardTitle>
+                      <CardDescription className="text-gray-400">
+                        Advanced algorithms enhance resolution while preserving details
+                      </CardDescription>
+                    </CardHeader>
                   </Card>
-                ))}
-              </div>
 
-              {/* How it Works */}
-              <div className="space-y-8 pt-12">
-                <h3 className="text-3xl font-bold text-white text-center">How It Works</h3>
-                <div className="grid md:grid-cols-3 gap-8">
-                  {[
-                    {
-                      step: "1",
-                      icon: Upload,
-                      title: "Upload Your Image",
-                      description: "Drag and drop or select your image file",
-                    },
-                    {
-                      step: "2",
-                      icon: Sparkles,
-                      title: "AI Enhancement",
-                      description: "Our AI processes and enhances your image",
-                    },
-                    {
-                      step: "3",
-                      icon: Download,
-                      title: "Download Result",
-                      description: "Get your enhanced image instantly",
-                    },
-                  ].map((step, index) => (
-                    <div key={index} className="text-center space-y-4">
-                      <div className="relative inline-block">
-                        <div className="w-20 h-20 rounded-full bg-gradient-to-r from-gold-500 to-gold-600 flex items-center justify-center text-2xl font-bold text-black">
-                          {step.step}
-                        </div>
-                        <step.icon className="absolute -bottom-2 -right-2 w-8 h-8 text-gold-400" />
-                      </div>
-                      <h4 className="text-xl font-bold text-white">{step.title}</h4>
-                      <p className="text-gray-400">{step.description}</p>
-                    </div>
-                  ))}
+                  <Card className="bg-black/40 border-white/10 hover:border-amber-500/30 transition-all duration-300">
+                    <CardHeader>
+                      <Sparkles className="w-8 h-8 text-amber-400 mb-2" />
+                      <CardTitle className="text-white">Smart Enhancement</CardTitle>
+                      <CardDescription className="text-gray-400">
+                        Automatically detects and enhances key features in your images
+                      </CardDescription>
+                    </CardHeader>
+                  </Card>
+
+                  <Card className="bg-black/40 border-white/10 hover:border-amber-500/30 transition-all duration-300">
+                    <CardHeader>
+                      <Camera className="w-8 h-8 text-amber-400 mb-2" />
+                      <CardTitle className="text-white">Face Preservation</CardTitle>
+                      <CardDescription className="text-gray-400">
+                        Specialized face enhancement maintains natural features
+                      </CardDescription>
+                    </CardHeader>
+                  </Card>
+
+                  <Card className="bg-black/40 border-white/10 hover:border-amber-500/30 transition-all duration-300">
+                    <CardHeader>
+                      <ImageIcon className="w-8 h-8 text-amber-400 mb-2" />
+                      <CardTitle className="text-white">Batch Processing</CardTitle>
+                      <CardDescription className="text-gray-400">
+                        Enhance multiple images efficiently with Replicate technology
+                      </CardDescription>
+                    </CardHeader>
+                  </Card>
                 </div>
               </div>
             </TabsContent>
 
-            {/* Professional Applications Tab */}
-            <TabsContent value="professional" className="mt-12 space-y-20">
-              <div className="text-center space-y-4">
-                <h2 className="text-4xl md:text-5xl font-bold text-white">
-                  Professional <span className="text-gradient-gold">Applications</span>
-                </h2>
-                <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-                  Trusted by professionals across industries for mission-critical image enhancement
-                </p>
-              </div>
-
-              {/* Cultural Heritage Restoration */}
-              <div className="space-y-8">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center">
-                    <Museum className="w-8 h-8 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-3xl font-bold text-white">Cultural Heritage Restoration</h3>
-                    <p className="text-gray-400">Preserve history with museum-quality AI restoration</p>
-                  </div>
+            {/* Professional Use Tab */}
+            <TabsContent value="professional" className="space-y-8">
+              <div className="max-w-6xl mx-auto">
+                <div className="text-center mb-12">
+                  <h2 className="text-4xl font-bold text-white mb-4">Professional Applications</h2>
+                  <p className="text-gray-400">Trusted by professionals across industries</p>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-8">
-                  <Card className="bg-gray-900/50 border-purple-500/20 hover:border-gold-500/40 transition-all duration-300 hover:shadow-gold-lg group">
-                    <CardContent className="pt-6 space-y-4 group-hover:scale-[1.02] transition-transform duration-300">
-                      <h4 className="text-xl font-bold text-white">Museum & Archive Quality</h4>
-                      <ul className="space-y-3 text-gray-300">
-                        <li className="flex items-start gap-2">
-                          <CheckCircle2 className="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" />
-                          <span>Restore faded photographs and documents with 95% accuracy</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <CheckCircle2 className="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" />
-                          <span>Remove scratches, tears, and age-related damage</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <CheckCircle2 className="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" />
-                          <span>Recover lost details and color information</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <CheckCircle2 className="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" />
-                          <span>ASEAN-optimized for Southeast Asian heritage photos</span>
-                        </li>
-                      </ul>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="bg-gray-900/50 border-purple-500/20 hover:border-gold-500/40 transition-all duration-300 hover:shadow-gold-lg group">
-                    <CardContent className="pt-6 space-y-4 group-hover:scale-[1.02] transition-transform duration-300">
-                      <h4 className="text-xl font-bold text-white">Perfect For</h4>
-                      <div className="grid grid-cols-2 gap-3">
-                        {[
-                          "Archives",
-                          "Museums",
-                          "Family Heirlooms",
-                          "Historical Societies",
-                          "Cultural Organizations",
-                          "Digital Libraries",
-                        ].map((item) => (
-                          <div key={item} className="flex items-center gap-2 text-gray-300">
-                            <div className="w-2 h-2 rounded-full bg-purple-400"></div>
-                            <span>{item}</span>
-                          </div>
-                        ))}
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Cultural Heritage */}
+                  <Card className="group bg-black/40 border-white/10 hover:border-amber-500 hover:shadow-lg hover:shadow-amber-500/20 transition-all duration-300 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <CardHeader className="relative">
+                      <div className="w-12 h-12 rounded-lg bg-amber-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                        <Users className="w-6 h-6 text-amber-400" />
                       </div>
-                      <div className="pt-4 border-t border-gray-800">
-                        <div className="text-sm text-gray-400 italic">
-                          "clar1ty helped us restore over 500 heritage photos for our national collection. The results
-                          are remarkable."
-                        </div>
-                        <div className="text-sm text-purple-400 mt-2">— Dr. Sarah Chen, National Museum Curator</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-
-              {/* Wedding & Portrait Photography */}
-              <div className="space-y-8">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-pink-500 to-pink-700 flex items-center justify-center">
-                    <Camera className="w-8 h-8 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-3xl font-bold text-white">Wedding & Portrait Photography</h3>
-                    <p className="text-gray-400">Professional enhancement for life's most precious moments</p>
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-8">
-                  <Card className="bg-gray-900/50 border-pink-500/20 hover:border-gold-500/40 transition-all duration-300 hover:shadow-gold-lg group">
-                    <CardContent className="pt-6 space-y-4 group-hover:scale-[1.02] transition-transform duration-300">
-                      <h4 className="text-xl font-bold text-white">Professional Benefits</h4>
-                      <ul className="space-y-3 text-gray-300">
-                        <li className="flex items-start gap-2">
-                          <CheckCircle2 className="w-5 h-5 text-pink-400 mt-0.5 flex-shrink-0" />
-                          <span>Reduce post-processing time by 70%</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <CheckCircle2 className="w-5 h-5 text-pink-400 mt-0.5 flex-shrink-0" />
-                          <span>Deliver print-ready 4K images to clients</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <CheckCircle2 className="w-5 h-5 text-pink-400 mt-0.5 flex-shrink-0" />
-                          <span>Preserve authentic facial features and skin tones</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <CheckCircle2 className="w-5 h-5 text-pink-400 mt-0.5 flex-shrink-0" />
-                          <span>Enhance low-light and challenging conditions</span>
-                        </li>
-                      </ul>
-                      <div className="pt-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="text-center p-3 rounded-lg bg-pink-500/10">
-                            <div className="text-2xl font-bold text-pink-400">70%</div>
-                            <div className="text-sm text-gray-400">Time Saved</div>
-                          </div>
-                          <div className="text-center p-3 rounded-lg bg-pink-500/10">
-                            <div className="text-2xl font-bold text-pink-400">98%</div>
-                            <div className="text-sm text-gray-400">Client Satisfaction</div>
-                          </div>
-                        </div>
+                      <CardTitle className="text-white group-hover:text-amber-400 transition-colors duration-300">
+                        Cultural Heritage
+                      </CardTitle>
+                      <CardDescription className="text-gray-400">Museum-quality photo restoration</CardDescription>
+                    </CardHeader>
+                    <CardContent className="relative space-y-3">
+                      <div className="space-y-2 text-gray-300">
+                        <p className="flex items-start">
+                          <span className="text-amber-400 mr-2">•</span>
+                          <span>Preserve family and cultural heritage photos</span>
+                        </p>
+                        <p className="flex items-start">
+                          <span className="text-amber-400 mr-2">•</span>
+                          <span>ASEAN-specialized restoration technology</span>
+                        </p>
+                        <p className="flex items-start">
+                          <span className="text-amber-400 mr-2">•</span>
+                          <span>Maintain authentic skin tones and details</span>
+                        </p>
+                        <p className="flex items-start">
+                          <span className="text-amber-400 mr-2">•</span>
+                          <span>Perfect for museums and archives</span>
+                        </p>
                       </div>
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-gray-900/50 border-pink-500/20 hover:border-gold-500/40 transition-all duration-300 hover:shadow-gold-lg group">
-                    <CardContent className="pt-6 space-y-4 group-hover:scale-[1.02] transition-transform duration-300">
-                      <h4 className="text-xl font-bold text-white">Use Cases</h4>
-                      <div className="space-y-3">
-                        {[
-                          "Wedding ceremonies and receptions",
-                          "Family portraits and group photos",
-                          "Professional headshots",
-                          "Event photography",
-                          "Studio portraits",
-                          "Engagement sessions",
-                        ].map((useCase) => (
-                          <div key={useCase} className="flex items-center gap-2 text-gray-300">
-                            <Heart className="w-4 h-4 text-pink-400 flex-shrink-0" />
-                            <span>{useCase}</span>
-                          </div>
-                        ))}
+                  {/* Wedding Photography */}
+                  <Card className="group bg-black/40 border-white/10 hover:border-amber-500 hover:shadow-lg hover:shadow-amber-500/20 transition-all duration-300 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <CardHeader className="relative">
+                      <div className="w-12 h-12 rounded-lg bg-rose-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                        <Heart className="w-6 h-6 text-rose-400" />
                       </div>
-                      <div className="pt-4 border-t border-gray-800">
-                        <div className="text-sm text-gray-400 italic">
-                          "As a wedding photographer, clar1ty has revolutionized my workflow. My clients love the
-                          enhanced quality."
-                        </div>
-                        <div className="text-sm text-pink-400 mt-2">— Marcus Rodriguez, Professional Photographer</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-
-              {/* Real Estate Marketing */}
-              <div className="space-y-8">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
-                    <Home className="w-8 h-8 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-3xl font-bold text-white">Real Estate Marketing</h3>
-                    <p className="text-gray-400">Make properties shine with professional-grade enhancement</p>
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-8">
-                  <Card className="bg-gray-900/50 border-blue-500/20 hover:border-gold-500/40 transition-all duration-300 hover:shadow-gold-lg group">
-                    <CardContent className="pt-6 space-y-4 group-hover:scale-[1.02] transition-transform duration-300">
-                      <h4 className="text-xl font-bold text-white">Marketing Impact</h4>
-                      <div className="grid grid-cols-3 gap-4 mb-4">
-                        <div className="text-center p-4 rounded-lg bg-blue-500/10">
-                          <div className="text-3xl font-bold text-blue-400">47%</div>
-                          <div className="text-xs text-gray-400 mt-1">More Inquiries</div>
-                        </div>
-                        <div className="text-center p-4 rounded-lg bg-blue-500/10">
-                          <div className="text-3xl font-bold text-blue-400">32%</div>
-                          <div className="text-xs text-gray-400 mt-1">Faster Sales</div>
-                        </div>
-                        <div className="text-center p-4 rounded-lg bg-blue-500/10">
-                          <div className="text-3xl font-bold text-blue-400">$15K</div>
-                          <div className="text-xs text-gray-400 mt-1">Avg. Price Boost</div>
-                        </div>
-                      </div>
-                      <ul className="space-y-3 text-gray-300">
-                        <li className="flex items-start gap-2">
-                          <CheckCircle2 className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
-                          <span>Transform dim interiors into bright, inviting spaces</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <CheckCircle2 className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
-                          <span>Enhance property exteriors and curb appeal</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <CheckCircle2 className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
-                          <span>Correct lighting and perspective issues</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <CheckCircle2 className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
-                          <span>Create magazine-quality listing photos</span>
-                        </li>
-                      </ul>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="bg-gray-900/50 border-blue-500/20 hover:border-gold-500/40 transition-all duration-300 hover:shadow-gold-lg group">
-                    <CardContent className="pt-6 space-y-4 group-hover:scale-[1.02] transition-transform duration-300">
-                      <h4 className="text-xl font-bold text-white">Professional Advantages</h4>
-                      <div className="grid gap-3">
-                        {[
-                          { title: "Residential Listings", desc: "Homes, condos, apartments" },
-                          { title: "Commercial Properties", desc: "Offices, retail, warehouses" },
-                          { title: "Luxury Real Estate", desc: "High-end properties and estates" },
-                          { title: "Property Development", desc: "New construction marketing" },
-                          { title: "Airbnb & Rentals", desc: "Vacation rentals and STRs" },
-                          { title: "Virtual Tours", desc: "360° and walkthrough media" },
-                        ].map((item) => (
-                          <div key={item.title} className="p-3 rounded-lg bg-blue-500/5 border border-blue-500/10">
-                            <div className="font-semibold text-white">{item.title}</div>
-                            <div className="text-sm text-gray-400">{item.desc}</div>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="pt-4 border-t border-gray-800">
-                        <div className="text-sm text-gray-400 italic">
-                          "Our listings with clar1ty-enhanced photos receive significantly more views and sell faster."
-                        </div>
-                        <div className="text-sm text-blue-400 mt-2">— Jennifer Wu, Luxury Real Estate Agent</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-
-              {/* Digital Art & Design */}
-              <div className="space-y-8">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center">
-                    <Palette className="w-8 h-8 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-3xl font-bold text-white">Digital Art & Design</h3>
-                    <p className="text-gray-400">Elevate your creative work to professional standards</p>
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-8">
-                  <Card className="bg-gray-900/50 border-amber-500/20 hover:border-gold-500/40 transition-all duration-300 hover:shadow-gold-lg group">
-                    <CardContent className="pt-6 space-y-4 group-hover:scale-[1.02] transition-transform duration-300">
-                      <h4 className="text-xl font-bold text-white">Creative Workflow</h4>
-                      <ul className="space-y-3 text-gray-300">
-                        <li className="flex items-start gap-2">
-                          <CheckCircle2 className="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0" />
-                          <span>Upscale artwork for print and high-resolution displays</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <CheckCircle2 className="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0" />
-                          <span>Enhance digital illustrations and graphics</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <CheckCircle2 className="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0" />
-                          <span>Improve texture and detail in 3D renders</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <CheckCircle2 className="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0" />
-                          <span>Optimize assets for game development</span>
-                        </li>
-                      </ul>
-                      <div className="pt-4">
-                        <div className="grid grid-cols-3 gap-3">
-                          <div className="text-center p-3 rounded-lg bg-amber-500/10">
-                            <div className="text-2xl font-bold text-amber-400">4K+</div>
-                            <div className="text-xs text-gray-400 mt-1">Resolution</div>
-                          </div>
-                          <div className="text-center p-3 rounded-lg bg-amber-500/10">
-                            <div className="text-2xl font-bold text-amber-400">16-bit</div>
-                            <div className="text-xs text-gray-400 mt-1">Color Depth</div>
-                          </div>
-                          <div className="text-center p-3 rounded-lg bg-amber-500/10">
-                            <div className="text-2xl font-bold text-amber-400">300</div>
-                            <div className="text-xs text-gray-400 mt-1">DPI Output</div>
-                          </div>
-                        </div>
+                      <CardTitle className="text-white group-hover:text-amber-400 transition-colors duration-300">
+                        Wedding Photography
+                      </CardTitle>
+                      <CardDescription className="text-gray-400">Professional wedding enhancement</CardDescription>
+                    </CardHeader>
+                    <CardContent className="relative space-y-3">
+                      <div className="space-y-2 text-gray-300">
+                        <p className="flex items-start">
+                          <span className="text-amber-400 mr-2">•</span>
+                          <span>Enhance precious wedding memories</span>
+                        </p>
+                        <p className="flex items-start">
+                          <span className="text-amber-400 mr-2">•</span>
+                          <span>Correct lighting and exposure issues</span>
+                        </p>
+                        <p className="flex items-start">
+                          <span className="text-amber-400 mr-2">•</span>
+                          <span>Restore vintage wedding photographs</span>
+                        </p>
+                        <p className="flex items-start">
+                          <span className="text-amber-400 mr-2">•</span>
+                          <span>Professional-grade results for albums</span>
+                        </p>
                       </div>
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-gray-900/50 border-amber-500/20 hover:border-gold-500/40 transition-all duration-300 hover:shadow-gold-lg group">
-                    <CardContent className="pt-6 space-y-4 group-hover:scale-[1.02] transition-transform duration-300">
-                      <h4 className="text-xl font-bold text-white">Creative Applications</h4>
-                      <div className="space-y-3">
-                        {[
-                          { icon: Palette, text: "Digital illustrations and concept art" },
-                          { icon: ImageIcon, text: "NFT artwork and crypto collectibles" },
-                          { icon: Award, text: "Logo and brand identity design" },
-                          { icon: TrendingUp, text: "Social media content and marketing" },
-                          { icon: Star, text: "Print materials and merchandise" },
-                          { icon: Sparkles, text: "Web design and UI/UX assets" },
-                        ].map((item, idx) => (
-                          <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-amber-500/5">
-                            <item.icon className="w-5 h-5 text-amber-400 flex-shrink-0" />
-                            <span className="text-gray-300">{item.text}</span>
-                          </div>
-                        ))}
+                  {/* Real Estate */}
+                  <Card className="group bg-black/40 border-white/10 hover:border-amber-500 hover:shadow-lg hover:shadow-amber-500/20 transition-all duration-300 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <CardHeader className="relative">
+                      <div className="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                        <Home className="w-6 h-6 text-blue-400" />
                       </div>
-                      <div className="pt-4 border-t border-gray-800">
-                        <div className="text-sm text-gray-400 italic">
-                          "clar1ty is now an essential part of my digital art toolkit. The quality is unmatched."
-                        </div>
-                        <div className="text-sm text-amber-400 mt-2">— Alex Kim, Freelance Digital Artist</div>
+                      <CardTitle className="text-white group-hover:text-amber-400 transition-colors duration-300">
+                        Real Estate
+                      </CardTitle>
+                      <CardDescription className="text-gray-400">Property marketing enhancement</CardDescription>
+                    </CardHeader>
+                    <CardContent className="relative space-y-3">
+                      <div className="space-y-2 text-gray-300">
+                        <p className="flex items-start">
+                          <span className="text-amber-400 mr-2">•</span>
+                          <span>47% increase in property inquiries</span>
+                        </p>
+                        <p className="flex items-start">
+                          <span className="text-amber-400 mr-2">•</span>
+                          <span>32% faster sale times on average</span>
+                        </p>
+                        <p className="flex items-start">
+                          <span className="text-amber-400 mr-2">•</span>
+                          <span>Magazine-quality listing photos</span>
+                        </p>
+                        <p className="flex items-start">
+                          <span className="text-amber-400 mr-2">•</span>
+                          <span>$15K average price boost per property</span>
+                        </p>
                       </div>
                     </CardContent>
                   </Card>
-                </div>
-              </div>
 
-              {/* Comparison Table */}
-              <div className="space-y-6">
-                <h3 className="text-3xl font-bold text-white text-center">Quick Comparison</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-gold-500/20">
-                        <th className="text-left p-4 text-white">Use Case</th>
-                        <th className="text-left p-4 text-white">Primary Benefit</th>
-                        <th className="text-left p-4 text-white">Typical ROI</th>
-                        <th className="text-left p-4 text-white">Time Saved</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {[
-                        {
-                          useCase: "Cultural Heritage",
-                          benefit: "Museum-quality restoration",
-                          roi: "Preservation value",
-                          time: "Hours per photo",
-                        },
-                        {
-                          useCase: "Wedding Photography",
-                          benefit: "Client satisfaction",
-                          roi: "+98% ratings",
-                          time: "70% faster",
-                        },
-                        { useCase: "Real Estate", benefit: "Faster sales", roi: "+$15K avg", time: "Same day listing" },
-                        {
-                          useCase: "Digital Art",
-                          benefit: "Print quality",
-                          roi: "4K+ resolution",
-                          time: "Instant upscale",
-                        },
-                      ].map((row, idx) => (
-                        <tr key={idx} className="border-b border-gray-800 hover:bg-gray-900/30">
-                          <td className="p-4 text-gray-300 font-semibold">{row.useCase}</td>
-                          <td className="p-4 text-gray-400">{row.benefit}</td>
-                          <td className="p-4 text-gold-400">{row.roi}</td>
-                          <td className="p-4 text-green-400">{row.time}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  {/* Digital Art */}
+                  <Card className="group bg-black/40 border-white/10 hover:border-amber-500 hover:shadow-lg hover:shadow-amber-500/20 transition-all duration-300 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <CardHeader className="relative">
+                      <div className="w-12 h-12 rounded-lg bg-purple-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                        <Palette className="w-6 h-6 text-purple-400" />
+                      </div>
+                      <CardTitle className="text-white group-hover:text-amber-400 transition-colors duration-300">
+                        Digital Art
+                      </CardTitle>
+                      <CardDescription className="text-gray-400">Creative workflow enhancement</CardDescription>
+                    </CardHeader>
+                    <CardContent className="relative space-y-3">
+                      <div className="space-y-2 text-gray-300">
+                        <p className="flex items-start">
+                          <span className="text-amber-400 mr-2">•</span>
+                          <span>Upscale artwork for high-res prints</span>
+                        </p>
+                        <p className="flex items-start">
+                          <span className="text-amber-400 mr-2">•</span>
+                          <span>Maintain artistic style and intent</span>
+                        </p>
+                        <p className="flex items-start">
+                          <span className="text-amber-400 mr-2">•</span>
+                          <span>Perfect for portfolios and exhibitions</span>
+                        </p>
+                        <p className="flex items-start">
+                          <span className="text-amber-400 mr-2">•</span>
+                          <span>Professional-grade detail enhancement</span>
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
               </div>
             </TabsContent>
@@ -798,22 +531,18 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="py-20 px-4">
-        <div className="max-w-4xl mx-auto text-center space-y-8">
-          <h2 className="text-4xl md:text-5xl font-bold text-white">Ready to Transform Your Images?</h2>
-          <p className="text-xl text-gray-300">
-            Join thousands of professionals using clar1ty for AI-powered image enhancement
-          </p>
-          <Link href="/enhance">
-            <Button size="lg" className="n3uralia-button-gold group text-lg px-8 py-6">
-              <Sparkles className="w-5 h-5 mr-2 group-hover:rotate-12 transition-transform" />
-              Start Enhancing Now
-              <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-            </Button>
-          </Link>
+      {/* Footer */}
+      <footer className="border-t border-white/10 bg-black/20 py-8">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row items-center justify-between">
+            <div className="flex items-center space-x-2 mb-4 md:mb-0">
+              <Sparkles className="w-6 h-6 text-amber-400" />
+              <span className="text-white font-bold">clar1ty</span>
+            </div>
+            <p className="text-gray-400 text-sm">© 2025 clar1ty. Powered by Replicate AI.</p>
+          </div>
         </div>
-      </section>
+      </footer>
     </div>
   )
 }
