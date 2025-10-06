@@ -80,12 +80,12 @@ export function ImageComparisonSlider({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* After Image (Enhanced/HD) - Base layer, always visible */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+      {/* After Image (Enhanced/HD) - Base layer */}
+      <div className="absolute inset-0 pointer-events-none">
         <img
           src={afterImage || "/placeholder.svg"}
           alt={afterLabel}
-          className="max-w-full max-h-full object-contain"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-w-full max-h-full object-contain"
           draggable="false"
         />
         <div className="absolute top-4 right-4 pointer-events-none n3uralia-badge-gold px-3 py-1.5 rounded-full text-sm font-medium backdrop-blur-sm shadow-gold-md z-10">
@@ -98,14 +98,12 @@ export function ImageComparisonSlider({
         className="absolute inset-0 pointer-events-none"
         style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
       >
-        <div className="absolute inset-0 flex items-center justify-center">
-          <img
-            src={beforeImage || "/placeholder.svg"}
-            alt={beforeLabel}
-            className="max-w-full max-h-full object-contain"
-            draggable="false"
-          />
-        </div>
+        <img
+          src={beforeImage || "/placeholder.svg"}
+          alt={beforeLabel}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-w-full max-h-full object-contain"
+          draggable="false"
+        />
         <div className="absolute top-4 left-4 pointer-events-none bg-black/70 text-white px-3 py-1.5 rounded-full text-sm font-medium backdrop-blur-sm z-10">
           {beforeLabel}
         </div>

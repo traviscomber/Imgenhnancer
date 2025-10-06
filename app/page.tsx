@@ -80,7 +80,7 @@ export default function LandingPage() {
               </div>
             </section>
 
-            {/* Featured Comparison - Modern Indonesian Wedding */}
+            {/* Featured Comparison #1 - Modern Indonesian Wedding */}
             <section className="space-y-6">
               <div className="text-center space-y-2">
                 <Badge className="n3uralia-badge-gold">
@@ -90,16 +90,17 @@ export default function LandingPage() {
                 <h3 className="text-3xl font-bold">🇮🇩 Modern Indonesian Wedding</h3>
                 <p className="text-muted-foreground">4x Enhancement • Face Preserved • Traditional Attire</p>
               </div>
+              {/* FIRST COMPARISON SET: Using the new images provided by user */}
               <ImageComparisonSlider
-                beforeImage="/images/wedding-before.png"
-                afterImage="/images/wedding-after.png"
+                beforeImage="/images/wedding-set1-before.png"
+                afterImage="/images/wedding-set1-after.png"
                 beforeLabel="Original"
                 afterLabel="4x Enhanced"
                 className="max-w-4xl mx-auto"
               />
             </section>
 
-            {/* Vintage ASEAN Wedding Heritage */}
+            {/* Featured Comparison #2 - Vintage ASEAN Wedding Heritage */}
             <section className="space-y-6">
               <div className="text-center space-y-2">
                 <Badge className="n3uralia-badge-gold">
@@ -109,6 +110,7 @@ export default function LandingPage() {
                 <h3 className="text-3xl font-bold">🏛️ Vintage ASEAN Wedding Heritage</h3>
                 <p className="text-muted-foreground">Restoration • Cultural Preservation • Authentic Details</p>
               </div>
+              {/* SECOND COMPARISON SET: vintage-wedding-blur.png vs vintage-wedding-clear.jpg */}
               <ImageComparisonSlider
                 beforeImage="/images/vintage-wedding-blur.png"
                 afterImage="/images/vintage-wedding-clear.jpg"
@@ -226,12 +228,14 @@ export default function LandingPage() {
                 <p className="text-muted-foreground">See the power of AI image enhancement</p>
               </div>
               <div className="grid gap-8">
+                {/* Example 1: Modern Indonesian Wedding - Using new images */}
                 <ImageComparisonSlider
-                  beforeImage="/images/wedding-before.png"
-                  afterImage="/images/wedding-after.png"
+                  beforeImage="/images/wedding-set1-before.png"
+                  afterImage="/images/wedding-set1-after.png"
                   beforeLabel="Original"
                   afterLabel="Enhanced"
                 />
+                {/* Example 2: Vintage ASEAN Wedding Heritage */}
                 <ImageComparisonSlider
                   beforeImage="/images/vintage-wedding-blur.png"
                   afterImage="/images/vintage-wedding-clear.jpg"
