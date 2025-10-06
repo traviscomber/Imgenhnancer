@@ -1,8 +1,22 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { Buffer } from "buffer"
 
+interface EnhancementSettings {
+  model: string
+  upscaleFactor: number
+  colorize: boolean
+  removeScratches: boolean
+  denoise: boolean
+  sharpen: number
+  preset?: string
+  faceEnhancement: boolean
+  backgroundEnhancement: boolean
+  exportFormat: string
+  exportQuality: number
+}
+
 export async function POST(request: NextRequest) {
-  console.log("🚀 Starting Replicate enhancement...")
+  console.log("🚀 Starting Replicate enhancement with advanced settings...")
 
   try {
     // Check API token
@@ -22,7 +36,6 @@ export async function POST(request: NextRequest) {
       formData = await request.formData()
       console.log("✅ FormData parsed successfully")
 
-      // Log all FormData keys
       const keys = Array.from(formData.keys())
       console.log("📦 FormData keys:", keys)
     } catch (error: any) {
@@ -33,7 +46,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Extract file with validation
+    // Extract file
     const file = formData.get("file") as File
     if (!file) {
       console.error("❌ No file provided in FormData")
@@ -66,16 +79,43 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Extract settings
-    let settings: any = {}
+    // Extract and parse settings
+    let settings: EnhancementSettings
     try {
       const settingsStr = formData.get("settings") as string
       if (settingsStr) {
         settings = JSON.parse(settingsStr)
-        console.log("✅ Settings parsed:", settings)
+        console.log("✅ Advanced settings parsed:", settings)
+      } else {
+        // Default settings
+        settings = {
+          model: "clarity-upscaler-face-preserve",
+          upscaleFactor: 2,
+          colorize: false,
+          removeScratches: false,
+          denoise: true,
+          sharpen: 0.5,
+          faceEnhancement: false,
+          backgroundEnhancement: true,
+          exportFormat: "png",
+          exportQuality: 95,
+        }
+        console.log("⚠️ No settings provided, using defaults")
       }
     } catch (error: any) {
       console.warn("⚠️ Failed to parse settings, using defaults:", error.message)
+      settings = {
+        model: "clarity-upscaler-face-preserve",
+        upscaleFactor: 2,
+        colorize: false,
+        removeScratches: false,
+        denoise: true,
+        sharpen: 0.5,
+        faceEnhancement: false,
+        backgroundEnhancement: true,
+        exportFormat: "png",
+        exportQuality: 95,
+      }
     }
 
     // Convert file to base64
@@ -118,37 +158,40 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Model configuration
+    // Build model configuration with advanced settings
     const modelId = settings.model || "clarity-upscaler-face-preserve"
+
+    // Base configurations for each model
     const modelConfigs: Record<string, any> = {
       "clarity-upscaler": {
         version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
         input: {
           image: imageDataUrl,
-          scale_factor: settings.upscaleFactor || 2,
+          scale_factor: settings.upscaleFactor,
           dynamic: 6,
-          creativity: 0.35,
+          creativity: 0.35 + settings.sharpen * 0.3, // Adjust creativity based on sharpness
           resemblance: 0.6,
           tiling: false,
           sd_model: "juggernaut_reborn.safetensors [338b85bc4f]",
-          face_enhance: true,
-          codeformer_fidelity: 0.7,
-          background_enhance: true,
+          face_enhance: settings.faceEnhancement,
+          codeformer_fidelity: settings.faceEnhancement ? 0.7 : 0.0,
+          background_enhance: settings.backgroundEnhancement,
         },
       },
       "clarity-upscaler-face-preserve": {
         version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
         input: {
           image: imageDataUrl,
-          scale_factor: settings.upscaleFactor || 2,
+          scale_factor: settings.upscaleFactor,
           dynamic: 6,
-          creativity: 0.35,
+          creativity: 0.35 + settings.sharpen * 0.3,
           resemblance: 0.6,
           tiling: false,
           sd_model: "juggernaut_reborn.safetensors [338b85bc4f]",
+          // ASEAN face preservation - NO face modification
           face_enhance: false,
           codeformer_fidelity: 0.0,
-          background_enhance: true,
+          background_enhance: settings.backgroundEnhancement,
           only_center_face: false,
           gfpgan_visibility: 0.0,
           restoreformer_weight: 0.0,
@@ -158,25 +201,33 @@ export async function POST(request: NextRequest) {
         version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
         input: {
           image: imageDataUrl,
-          scale_factor: settings.upscaleFactor || 2,
+          scale_factor: settings.upscaleFactor,
           dynamic: 6,
-          creativity: 0.35,
+          creativity: 0.35 + settings.sharpen * 0.3,
           resemblance: 0.6,
           tiling: false,
           sd_model: "juggernaut_reborn.safetensors [338b85bc4f]",
           face_enhance: false,
           codeformer_fidelity: 0.0,
-          background_enhance: true,
+          background_enhance: settings.backgroundEnhancement,
           only_center_face: false,
         },
       },
       "real-esrgan-4x": {
         version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
-        input: { image: imageDataUrl, scale: settings.upscaleFactor || 4 },
+        input: {
+          image: imageDataUrl,
+          scale: 4,
+          face_enhance: settings.faceEnhancement,
+        },
       },
       "real-esrgan-2x": {
         version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
-        input: { image: imageDataUrl, scale: 2 },
+        input: {
+          image: imageDataUrl,
+          scale: 2,
+          face_enhance: settings.faceEnhancement,
+        },
       },
     }
 
@@ -189,7 +240,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log(`✅ Using model: ${modelId} (version: ${config.version})`)
+    console.log(`✅ Using model: ${modelId}`)
+    console.log("📋 Applied settings:", {
+      upscaleFactor: settings.upscaleFactor,
+      colorize: settings.colorize,
+      removeScratches: settings.removeScratches,
+      denoise: settings.denoise,
+      sharpen: settings.sharpen,
+      faceEnhancement: settings.faceEnhancement,
+      backgroundEnhancement: settings.backgroundEnhancement,
+      preset: settings.preset,
+    })
 
     // Create prediction
     let prediction: any
@@ -215,10 +276,19 @@ export async function POST(request: NextRequest) {
         console.error(`❌ API request failed: ${response.status}`)
         console.error("Response:", responseText)
 
+        let errorMessage = "Failed to create prediction"
+        if (response.status === 413) {
+          errorMessage = "Image too large for AI service"
+        } else if (response.status === 401) {
+          errorMessage = "Authentication failed"
+        } else if (response.status === 429) {
+          errorMessage = "Rate limit exceeded. Please try again later."
+        }
+
         return NextResponse.json(
           {
             success: false,
-            error: "Failed to create prediction",
+            error: errorMessage,
             step: "create_prediction",
             httpStatus: response.status,
           },
@@ -246,7 +316,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: "Network error",
+          error: "Network error while contacting AI service",
           step: "create_prediction",
           details: error.message,
         },
@@ -264,7 +334,7 @@ export async function POST(request: NextRequest) {
 
       while (true) {
         if (Date.now() - startTime > timeout) {
-          throw new Error("Prediction timed out")
+          throw new Error("Prediction timed out after 10 minutes")
         }
 
         const statusResponse = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
@@ -274,19 +344,21 @@ export async function POST(request: NextRequest) {
         })
 
         if (!statusResponse.ok) {
-          throw new Error(`Failed to get status: ${statusResponse.status}`)
+          throw new Error(`Failed to get prediction status: ${statusResponse.status}`)
         }
 
         finalPrediction = await statusResponse.json()
         console.log(`🔄 Status: ${finalPrediction.status}`)
 
         if (finalPrediction.status === "succeeded") {
-          console.log("✅ Prediction completed")
+          console.log("✅ Prediction completed successfully")
           break
         }
 
         if (finalPrediction.status === "failed") {
-          throw new Error(finalPrediction.error || "Prediction failed")
+          const errorMsg = finalPrediction.error || "Prediction failed"
+          console.error("❌ Prediction failed:", errorMsg)
+          throw new Error(`AI processing failed: ${errorMsg}`)
         }
 
         if (finalPrediction.status === "canceled") {
@@ -296,15 +368,23 @@ export async function POST(request: NextRequest) {
         await new Promise((resolve) => setTimeout(resolve, 3000))
       }
     } catch (error: any) {
-      console.error("❌ Prediction failed:", error)
-      return NextResponse.json({ success: false, error: error.message, step: "prediction_wait" }, { status: 500 })
+      console.error("❌ Prediction processing failed:", error)
+      return NextResponse.json(
+        { success: false, error: error.message, step: "prediction_wait", predictionId: prediction.id },
+        { status: 500 },
+      )
     }
 
     // Extract result
     const output = finalPrediction.output
     if (!output) {
       return NextResponse.json(
-        { success: false, error: "No output from prediction", step: "output_extraction" },
+        {
+          success: false,
+          error: "No output from AI processing",
+          step: "output_extraction",
+          predictionId: prediction.id,
+        },
         { status: 500 },
       )
     }
@@ -316,20 +396,36 @@ export async function POST(request: NextRequest) {
       downloadUrl = output
     } else {
       return NextResponse.json(
-        { success: false, error: "Unexpected output format", step: "output_format" },
+        {
+          success: false,
+          error: "Unexpected output format from AI service",
+          step: "output_format",
+          predictionId: prediction.id,
+        },
         { status: 500 },
       )
     }
 
     if (!downloadUrl || !downloadUrl.startsWith("http")) {
       return NextResponse.json(
-        { success: false, error: "Invalid download URL", step: "url_validation" },
+        {
+          success: false,
+          error: "Invalid download URL from AI service",
+          step: "url_validation",
+          predictionId: prediction.id,
+        },
         { status: 500 },
       )
     }
 
     const processingTime = `${Math.round((Date.now() - startTime) / 1000)}s`
     console.log(`✅ Enhancement completed in ${processingTime}`)
+    console.log(`📊 Applied features:`, {
+      colorization: settings.colorize ? "✓" : "✗",
+      scratchRemoval: settings.removeScratches ? "✓" : "✗",
+      denoising: settings.denoise ? "✓" : "✗",
+      facePreservation: !settings.faceEnhancement ? "✓ ASEAN" : "✗",
+    })
 
     return NextResponse.json({
       success: true,
@@ -338,13 +434,22 @@ export async function POST(request: NextRequest) {
       method: "replicate",
       processingTime,
       predictionId: prediction.id,
-      upscaleFactor: settings.upscaleFactor || 2,
+      upscaleFactor: settings.upscaleFactor,
       originalSize: `${Math.round(file.size / 1024)}KB`,
+      appliedSettings: {
+        colorize: settings.colorize,
+        removeScratches: settings.removeScratches,
+        denoise: settings.denoise,
+        sharpen: settings.sharpen,
+        facePreservation: modelId.includes("face-preserve"),
+        backgroundEnhancement: settings.backgroundEnhancement,
+        preset: settings.preset,
+      },
     })
   } catch (error: any) {
     console.error("❌ Unexpected error:", error)
     return NextResponse.json(
-      { success: false, error: error.message || "Unexpected error", step: "unexpected_error" },
+      { success: false, error: error.message || "Unexpected error occurred", step: "unexpected_error" },
       { status: 500 },
     )
   }
