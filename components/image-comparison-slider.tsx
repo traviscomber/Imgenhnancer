@@ -67,7 +67,7 @@ export function ImageComparisonSlider({
   return (
     <div
       ref={containerRef}
-      className={`relative w-full aspect-[4/3] overflow-hidden rounded-2xl select-none touch-none ${className}`}
+      className={`relative w-full aspect-[4/3] overflow-hidden rounded-2xl select-none touch-none bg-black ${className}`}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
@@ -75,11 +75,11 @@ export function ImageComparisonSlider({
       onTouchEnd={handleTouchEnd}
     >
       {/* After Image (Enhanced) - Full Width */}
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 flex items-center justify-center">
         <img
           src={afterImage || "/placeholder.svg"}
           alt={afterLabel}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain"
           draggable="false"
         />
         <div className="absolute top-4 right-4 n3uralia-badge-gold px-3 py-1.5 rounded-full text-sm font-medium backdrop-blur-sm shadow-gold-md">
@@ -89,13 +89,13 @@ export function ImageComparisonSlider({
 
       {/* Before Image (Original) - Clipped by Slider */}
       <div
-        className="absolute inset-0 overflow-hidden transition-none"
+        className="absolute inset-0 overflow-hidden transition-none flex items-center justify-center"
         style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
       >
         <img
           src={beforeImage || "/placeholder.svg"}
           alt={beforeLabel}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain"
           draggable="false"
         />
         <div className="absolute top-4 left-4 bg-black/70 text-white px-3 py-1.5 rounded-full text-sm font-medium backdrop-blur-sm">

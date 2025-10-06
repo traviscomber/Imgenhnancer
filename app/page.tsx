@@ -764,7 +764,9 @@ const AIImageEnhancementPortal = () => {
         uploadBlob = processedFile
       }
 
-      const uploadFile = new File([uploadBlob], processedFile.name.replace(/\.(\w+)$/, "") + ".jpg", {
+      // Update file type and name based on potential pre-processing result
+      const finalUploadFileName = processedFile.name.replace(/\.\w+$/, "") + ".jpg"
+      const uploadFile = new File([uploadBlob], finalUploadFileName, {
         type: "image/jpeg", // Use JPEG for better compression
       })
 
@@ -1426,17 +1428,37 @@ const AIImageEnhancementPortal = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <img
-                    src="/images/wedding-after.png"
-                    alt="Indonesian Wedding Portrait"
-                    className="rounded-2xl shadow-2xl ring-1 ring-gold-300/20"
-                  />
-                  <img
-                    src="/placeholder.svg?height=400&width=300"
-                    alt="Thai Traditional Portrait"
-                    className="rounded-2xl shadow-2xl ring-1 ring-gold-300/20 mt-8"
-                  />
+                {/* Updated comparison sliders - two before/after sets */}
+                <div className="space-y-6">
+                  {/* First comparison: Modern Indonesian Wedding */}
+                  <div>
+                    <ImageComparisonSlider
+                      beforeImage="/images/wedding-before.png"
+                      afterImage="/images/wedding-after.png"
+                      beforeLabel="Original"
+                      afterLabel="4x Enhanced"
+                      className="shadow-2xl ring-1 ring-gold-300/20"
+                    />
+                    <div className="mt-3 text-center">
+                      <p className="text-sm text-white/90 font-medium">🇮🇩 Modern Indonesian Wedding</p>
+                      <p className="text-xs text-white/60 mt-1">4x Enhancement • Face Preserved • Traditional Attire</p>
+                    </div>
+                  </div>
+
+                  {/* Second comparison: Vintage Heritage Wedding */}
+                  <div>
+                    <ImageComparisonSlider
+                      beforeImage="/images/vintage-wedding-blur.png"
+                      afterImage="/images/vintage-wedding-clear.jpg"
+                      beforeLabel="Heritage Photo"
+                      afterLabel="Restored"
+                      className="shadow-2xl ring-1 ring-gold-300/20"
+                    />
+                    <div className="mt-3 text-center">
+                      <p className="text-sm text-white/90 font-medium">🏛️ Vintage ASEAN Wedding Heritage</p>
+                      <p className="text-xs text-white/60 mt-1">Restoration • Cultural Preservation • Authentic Features</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </section>
@@ -1609,584 +1631,583 @@ const AIImageEnhancementPortal = () => {
                 </CardContent>
               </Card>
             </section>
-
-            {/* Placeholder for Enhance Tab Content */}
-            {activeTab === "enhance" && (
-              <section className="space-y-12">
-                {/* Add the enhance tab content here based on the updates, e.g., file uploads, settings */}
-                <div className="grid lg:grid-cols-3 gap-8">
-                  {/* Image Upload Area */}
-                  <div
-                    className="col-span-2 n3uralia-card rounded-xl p-8 flex flex-col items-center justify-center border-2 border-dashed border-white/20 cursor-pointer"
-                    onDrop={handleDrop}
-                    onDragOver={handleDragOver}
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <input
-                      type="file"
-                      multiple
-                      ref={fileInputRef}
-                      className="hidden"
-                      accept="image/*"
-                      onChange={(e) => e.target.files && handleFileSelect(e.target.files)}
-                    />
-                    <UploadCloud className="w-12 h-12 n3uralia-gold-accent mb-4" />
-                    <h3 className="text-xl font-bold text-white mb-2">Drag & Drop Your Images Here</h3>
-                    <p className="n3uralia-text-muted mb-4">Or click to select files</p>
-                    <p className="n3uralia-text-muted text-sm">Supports JPEG, PNG, WEBP. Max file size: 15MB</p>
-                  </div>
-
-                  {/* Enhancement Settings Panel */}
-                  <div className="n3uralia-card rounded-xl p-6">
-                    <h3 className="text-lg font-bold text-white mb-4">Enhancement Settings</h3>
-                    <div className="space-y-4">
-                      {/* Model Selection */}
-                      <div>
-                        <label className="block text-sm font-medium n3uralia-text-muted mb-2">AI Model</label>
-                        <select
-                          value={enhancementSettings.model}
-                          onChange={(e) => {
-                            setEnhancementSettings((prev) => ({
-                              ...prev,
-                              model: e.target.value,
-                              // Reset faceEnhance if model doesn't support it, or based on new model
-                              faceEnhance:
-                                ENHANCEMENT_MODELS.find((m) => m.id === e.target.value)?.faceEnhancement || false,
-                            }))
-                          }}
-                          className="w-full p-3 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-gold-500"
-                        >
-                          {ENHANCEMENT_MODELS.map((model) => (
-                            <option key={model.id} value={model.id} disabled={model.status !== "working"}>
-                              {model.name} {model.status !== "working" ? "(Unavailable)" : ""}
-                            </option>
-                          ))}
-                        </select>
-                        <p className="text-xs n3uralia-text-muted mt-1">
-                          {ENHANCEMENT_MODELS.find((m) => m.id === enhancementSettings.model)?.description}
-                        </p>
-                      </div>
-
-                      {/* Upscale Factor */}
-                      <div>
-                        <label className="block text-sm font-medium n3uralia-text-muted mb-2">Upscale Factor</label>
-                        <input
-                          type="range"
-                          min="1"
-                          max={getMaxUpscale()}
-                          value={enhancementSettings.upscaleFactor}
-                          onChange={(e) =>
-                            setEnhancementSettings((prev) => ({
-                              ...prev,
-                              upscaleFactor: Number.parseInt(e.target.value),
-                            }))
-                          }
-                          className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer"
-                        />
-                        <div className="flex justify-between text-xs n3uralia-text-muted">
-                          <span>1x</span>
-                          <span>{getMaxUpscale()}x</span>
-                        </div>
-                        <p className="text-xs n3uralia-text-muted mt-1">
-                          Target Resolution: <span className="font-semibold text-white">{getTargetResolution()}</span>
-                        </p>
-                      </div>
-
-                      {/* Preserve Asian Features */}
-                      <div className="flex items-center space-x-3">
-                        <input
-                          type="checkbox"
-                          id="preserveAsianFeatures"
-                          checked={enhancementSettings.preserveAsianFeatures}
-                          onChange={(e) =>
-                            setEnhancementSettings((prev) => ({ ...prev, preserveAsianFeatures: e.target.checked }))
-                          }
-                          className="w-5 h-5 accent-gold-500 rounded border-white/30 bg-white/10 focus:ring-gold-500"
-                        />
-                        <label htmlFor="preserveAsianFeatures" className="text-sm text-white font-medium">
-                          Preserve ASEAN Face Features (Recommended)
-                        </label>
-                      </div>
-
-                      {/* Face Enhance Toggle (conditional) */}
-                      {!getCurrentModel()?.preserveFaces && (
-                        <div className="flex items-center space-x-3">
-                          <input
-                            type="checkbox"
-                            id="faceEnhance"
-                            checked={enhancementSettings.faceEnhance}
-                            onChange={(e) =>
-                              setEnhancementSettings((prev) => ({ ...prev, faceEnhance: e.target.checked }))
-                            }
-                            className="w-5 h-5 accent-gold-500 rounded border-white/30 bg-white/10 focus:ring-gold-500"
-                          />
-                          <label htmlFor="faceEnhance" className="text-sm text-white font-medium">
-                            Face Enhancement
-                          </label>
-                        </div>
-                      )}
-
-                      {/* Target Use */}
-                      <div>
-                        <label className="block text-sm font-medium n3uralia-text-muted mb-2">Target Use</label>
-                        <select
-                          value={enhancementSettings.targetUse}
-                          onChange={(e) => setEnhancementSettings((prev) => ({ ...prev, targetUse: e.target.value }))}
-                          className="w-full p-3 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-gold-500"
-                        >
-                          <option value="display">Display (Web/Screen)</option>
-                          <option value="print">Print</option>
-                          <option value="social">Social Media</option>
-                          <option value="document">Document</option>
-                          <option value="archive">Archive</option>
-                        </select>
-                      </div>
-
-                      {/* Format */}
-                      <div>
-                        <label className="block text-sm font-medium n3uralia-text-muted mb-2">Format</label>
-                        <select
-                          value={enhancementSettings.format}
-                          onChange={(e) => setEnhancementSettings((prev) => ({ ...prev, format: e.target.value }))}
-                          className="w-full p-3 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-gold-500"
-                        >
-                          <option value="PNG">PNG</option>
-                          <option value="JPEG">JPEG</option>
-                          <option value="WEBP">WEBP</option>
-                        </select>
-                      </div>
-
-                      {/* Quality Slider (for JPEG/WEBP) */}
-                      {enhancementSettings.format !== "PNG" && (
-                        <div>
-                          <label className="block text-sm font-medium n3uralia-text-muted mb-2">
-                            Quality ({enhancementSettings.quality}%)
-                          </label>
-                          <input
-                            type="range"
-                            min="50"
-                            max="100"
-                            value={enhancementSettings.quality}
-                            onChange={(e) =>
-                              setEnhancementSettings((prev) => ({ ...prev, quality: Number.parseInt(e.target.value) }))
-                            }
-                            className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer"
-                          />
-                        </div>
-                      )}
-
-                      {/* Pre-processing Options */}
-                      <div className="mt-6">
-                        <h4 className="text-md font-semibold text-white mb-3">Pre-processing</h4>
-                        <div className="space-y-2">
-                          <div>
-                            <label className="block text-xs font-medium n3uralia-text-muted mb-1">Deblock</label>
-                            <select
-                              value={enhancementSettings.pre.deblock}
-                              onChange={(e) =>
-                                setEnhancementSettings((prev) => ({
-                                  ...prev,
-                                  pre: { ...prev.pre, deblock: e.target.value },
-                                }))
-                              }
-                              className="w-full p-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none"
-                            >
-                              <option value="off">Off</option>
-                              <option value="low">Low</option>
-                              <option value="medium">Medium</option>
-                              <option value="high">High</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium n3uralia-text-muted mb-1">Denoise</label>
-                            <select
-                              value={enhancementSettings.pre.denoise}
-                              onChange={(e) =>
-                                setEnhancementSettings((prev) => ({
-                                  ...prev,
-                                  pre: { ...prev.pre, denoise: e.target.value },
-                                }))
-                              }
-                              className="w-full p-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none"
-                            >
-                              <option value="off">Off</option>
-                              <option value="low">Low</option>
-                              <option value="medium">Medium</option>
-                              <option value="high">High</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium n3uralia-text-muted mb-1">White Balance</label>
-                            <select
-                              value={enhancementSettings.pre.whiteBalance}
-                              onChange={(e) =>
-                                setEnhancementSettings((prev) => ({
-                                  ...prev,
-                                  pre: { ...prev.pre, whiteBalance: e.target.value },
-                                }))
-                              }
-                              className="w-full p-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none"
-                            >
-                              <option value="off">Off</option>
-                              <option value="auto">Auto</option>
-                              <option value="neutral">Neutral</option>
-                            </select>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Post-processing Options */}
-                      <div className="mt-6">
-                        <h4 className="text-md font-semibold text-white mb-3">Post-processing</h4>
-                        <div className="space-y-2">
-                          <div>
-                            <label className="block text-xs font-medium n3uralia-text-muted mb-1">Local Contrast</label>
-                            <select
-                              value={enhancementSettings.post.localContrast}
-                              onChange={(e) =>
-                                setEnhancementSettings((prev) => ({
-                                  ...prev,
-                                  post: { ...prev.post, localContrast: e.target.value },
-                                }))
-                              }
-                              className="w-full p-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none"
-                            >
-                              <option value="off">Off</option>
-                              <option value="low">Low</option>
-                              <option value="medium">Medium</option>
-                              <option value="high">High</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium n3uralia-text-muted mb-1">Sharpen</label>
-                            <select
-                              value={enhancementSettings.post.sharpen}
-                              onChange={(e) =>
-                                setEnhancementSettings((prev) => ({
-                                  ...prev,
-                                  post: { ...prev.post, sharpen: e.target.value },
-                                }))
-                              }
-                              className="w-full p-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none"
-                            >
-                              <option value="off">Off</option>
-                              <option value="low">Low</option>
-                              <option value="medium">Medium</option>
-                              <option value="high">High</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium n3uralia-text-muted mb-1">Grain</label>
-                            <select
-                              value={enhancementSettings.post.grain}
-                              onChange={(e) =>
-                                setEnhancementSettings((prev) => ({
-                                  ...prev,
-                                  post: { ...prev.post, grain: e.target.value },
-                                }))
-                              }
-                              className="w-full p-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none"
-                            >
-                              <option value="off">Off</option>
-                              <option value="very-low">Very Low</option>
-                              <option value="low">Low</option>
-                              <option value="medium">Medium</option>
-                            </select>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      onClick={async () => {
-                        if (selectedFiles.length === 0) return
-                        // AI optimization logic
-                        const firstFile = selectedFiles[0].file
-                        const optimized = await optimizeParametersWithAI(firstFile)
-                        setEnhancementSettings((prev) => ({ ...prev, ...optimized }))
-                      }}
-                      className="mt-8 w-full n3uralia-button-gold px-6 py-3 rounded-lg text-lg font-semibold transition-all flex items-center justify-center space-x-2"
-                    >
-                      <Target className="w-5 h-5" />
-                      <span>Optimize Settings</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Selected Files Preview and Processing */}
-                {selectedFiles.length > 0 && (
-                  <div className="n3uralia-card rounded-xl p-6">
-                    <h3 className="text-lg font-bold text-white mb-4">Selected Files</h3>
-                    <div className="space-y-4">
-                      {selectedFiles.map((fileItem) => (
-                        <div
-                          key={fileItem.id}
-                          className="flex items-center justify-between p-4 rounded-lg bg-white/5 border border-white/15"
-                        >
-                          <div className="flex items-center space-x-4">
-                            <img
-                              src={fileItem.preview || "/placeholder.svg"}
-                              alt={fileItem.name}
-                              className="w-16 h-16 rounded-md object-cover"
-                            />
-                            <div>
-                              <p className="font-semibold text-white line-clamp-1">{fileItem.name}</p>
-                              <p className="text-sm n3uralia-text-muted">{formatFileSize(fileItem.size)}</p>
-                              {fileItem.warning && <p className="text-xs text-yellow-400 mt-1">{fileItem.warning}</p>}
-                              {fileItem.error && <p className="text-xs text-red-400 mt-1">{fileItem.error}</p>}
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-4">
-                            {fileItem.status === "ready" && (
-                              <button
-                                onClick={() => startProcessing(fileItem.id)}
-                                className="n3uralia-button-gold px-4 py-2 rounded-lg transition-all flex items-center space-x-2"
-                              >
-                                <Sparkles className="w-4 h-4" />
-                                <span>Enhance</span>
-                              </button>
-                            )}
-                            {fileItem.status === "failed" && (
-                              <button
-                                onClick={() => {
-                                  // Re-add to selected files to try again
-                                  setSelectedFiles((prev) => [...prev, fileItem])
-                                  // Remove from current list
-                                  setSelectedFiles((prev) => prev.filter((f) => f.id !== fileItem.id))
-                                }}
-                                className="n3uralia-button-secondary px-4 py-2 rounded-lg transition-all flex items-center space-x-2"
-                              >
-                                <RefreshCw className="w-4 h-4" />
-                                <span>Retry</span>
-                              </button>
-                            )}
-                            <button
-                              onClick={() => setSelectedFiles((prev) => prev.filter((f) => f.id !== fileItem.id))}
-                              className="text-red-500 hover:text-red-400 transition-colors"
-                            >
-                              <X className="w-6 h-6" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </section>
-            )}
-
-            {/* Placeholder for Processing Tab Content */}
-            {activeTab === "processing" && (
-              <section className="space-y-12">
-                <div className="n3uralia-card rounded-xl p-6">
-                  <h3 className="text-lg font-bold text-white mb-4">Processing Queue</h3>
-                  {processingQueue.length === 0 ? (
-                    <p className="n3uralia-text-muted">Your processing queue is empty.</p>
-                  ) : (
-                    <div className="space-y-4">
-                      {processingQueue.map((job) => (
-                        <div
-                          key={job.id}
-                          className="flex items-center justify-between p-4 rounded-lg bg-white/5 border border-white/15"
-                        >
-                          <div className="flex items-center space-x-4">
-                            <div className="relative w-16 h-16 rounded-md overflow-hidden">
-                              <img
-                                src={job.file.preview || "/placeholder.svg"}
-                                alt={job.file.name}
-                                className="w-full h-full object-cover opacity-50"
-                              />
-                              <div className="absolute inset-0 flex items-center justify-center">
-                                <Loader2 className="w-8 h-8 animate-spin n3uralia-gold-accent" />
-                              </div>
-                            </div>
-                            <div>
-                              <p className="font-semibold text-white line-clamp-1">{job.file.name}</p>
-                              <p className="text-sm n3uralia-text-muted">{job.progress}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-4">
-                            <span className="text-sm n3uralia-text-muted">
-                              {Math.round((Date.now() - job.startTime) / 1000)}s
-                            </span>
-                            <button
-                              onClick={() => {
-                                // Cancel job logic (implement if needed)
-                              }}
-                              className="text-gray-400 hover:text-red-400 transition-colors"
-                            >
-                              <X className="w-5 h-5" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="n3uralia-card rounded-xl p-6">
-                  <h3 className="text-lg font-bold text-white mb-4">Completed Jobs</h3>
-                  {completedJobs.length === 0 ? (
-                    <p className="n3uralia-text-muted">No jobs completed yet.</p>
-                  ) : (
-                    <div className="space-y-4">
-                      {completedJobs.map((job) => (
-                        <div
-                          key={job.id}
-                          className="p-4 rounded-lg bg-white/5 border border-white/15 flex items-center justify-between"
-                        >
-                          <div className="flex items-center space-x-4">
-                            <div className="relative w-16 h-16 rounded-md overflow-hidden">
-                              <img
-                                src={job.downloadUrl || "/placeholder.svg"}
-                                alt={job.originalFileName}
-                                className="w-full h-full object-cover"
-                              />
-                              <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                                <CheckCircle className="w-8 h-8 text-green-400" />
-                              </div>
-                            </div>
-                            <div>
-                              <p className="font-semibold text-white line-clamp-1">{job.originalFileName}</p>
-                              <p className="text-xs n3uralia-text-muted">
-                                Enhanced with {job.modelName} ({job.upscaleFactor}x)
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-4">
-                            <div className="text-right">
-                              <p className="text-sm n3uralia-text-muted">{job.fileSize}</p>
-                              <p className="text-xs n3uralia-text-muted">{job.processingTime}</p>
-                            </div>
-                            <a
-                              href={job.downloadUrl}
-                              download={
-                                job.originalFileName.replace(/\.[^/.]+$/, "") + "_enhanced." + job.model.split("-")[0]
-                              } // Basic extension guess
-                              onClick={(e) => {
-                                e.preventDefault() // Prevent default for custom logic
-                                if (domePreset.enabled) {
-                                  exportDomemasterForJob(job)
-                                } else {
-                                  window.open(job.downloadUrl, "_blank") // Open in new tab if not domemaster
-                                }
-                              }}
-                              className="n3uralia-button-gold px-4 py-2 rounded-lg transition-all flex items-center space-x-2"
-                            >
-                              {domePreset.enabled ? <Layers className="w-4 h-4" /> : <Download className="w-4 h-4" />}
-                              <span>{domePreset.enabled ? "Export Dome" : "Download"}</span>
-                            </a>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </section>
-            )}
-
-            {/* Placeholder for Gallery Tab Content */}
-            {activeTab === "gallery" && (
-              <section className="space-y-12">
-                <div className="n3uralia-card rounded-xl p-6">
-                  <h3 className="text-lg font-bold text-white mb-4">Image Gallery</h3>
-                  <p className="n3uralia-text-muted">Gallery functionality coming soon.</p>
-                  {/* Add gallery grid here */}
-                </div>
-              </section>
-            )}
-
-            {/* Placeholder for Admin Tab Content */}
-            {activeTab === "admin" && isAdmin && (
-              <section className="space-y-12">
-                <div className="flex space-x-1 n3uralia-card rounded-xl p-1 mb-6">
-                  {[
-                    { id: "config", label: "Configuration", icon: Settings },
-                    { id: "users", label: "User Management", icon: Users },
-                    { id: "roles", label: "Role Management", icon: Shield },
-                    { id: "discovery", label: "Replicate Discovery", icon: Search },
-                    { id: "test", label: "Test Config", icon: TestTube },
-                  ].map((subTab) => (
-                    <button
-                      key={subTab.id}
-                      onClick={() => setAdminSubTab(subTab.id)}
-                      className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ${
-                        adminSubTab === subTab.id
-                          ? "n3uralia-button-gold"
-                          : "text-white/70 hover:text-white hover:bg-white/5"
-                      }`}
-                    >
-                      <subTab.icon className="w-4 h-4" />
-                      <span>{subTab.label}</span>
-                    </button>
-                  ))}
-                </div>
-
-                {adminSubTab === "config" && (
-                  <div className="n3uralia-card rounded-xl p-6">
-                    <h3 className="text-lg font-bold text-white mb-4">Configuration</h3>
-                    <p className="n3uralia-text-muted">Admin configuration options.</p>
-                  </div>
-                )}
-                {adminSubTab === "users" && <UserManagement />}
-                {adminSubTab === "roles" && <RoleManagement />}
-                {adminSubTab === "discovery" && (
-                  <div className="n3uralia-card rounded-xl p-6">
-                    <h3 className="text-lg font-bold text-white mb-4">Replicate Discovery</h3>
-                    <button
-                      onClick={runReplicateDiscovery}
-                      disabled={isDiscovering}
-                      className="n3uralia-button-gold px-4 py-2 rounded-lg transition-all flex items-center space-x-2 disabled:opacity-50"
-                    >
-                      {isDiscovering ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-                      <span>Run Discovery</span>
-                    </button>
-                    {discoveryResults && (
-                      <pre className="mt-4 p-4 rounded-lg bg-white/5 border border-white/15 text-xs text-white/70 overflow-auto">
-                        {JSON.stringify(discoveryResults, null, 2)}
-                      </pre>
-                    )}
-                  </div>
-                )}
-                {adminSubTab === "test" && (
-                  <div className="n3uralia-card rounded-xl p-6">
-                    <h3 className="text-lg font-bold text-white mb-4">Test Replicate Configuration</h3>
-                    <button
-                      onClick={testReplicateConfig}
-                      disabled={isTesting}
-                      className="n3uralia-button-gold px-4 py-2 rounded-lg transition-all flex items-center space-x-2 disabled:opacity-50"
-                    >
-                      {isTesting ? <Loader2 className="w-4 h-4 animate-spin" /> : <TestTube className="w-4 h-4" />}
-                      <span>Test Configuration</span>
-                    </button>
-                    {configResults && (
-                      <pre className="mt-4 p-4 rounded-lg bg-white/5 border border-white/15 text-xs text-white/70 overflow-auto">
-                        {JSON.stringify(configResults, null, 2)}
-                      </pre>
-                    )}
-                  </div>
-                )}
-              </section>
-            )}
           </div>
         )}
-      </main>
 
-      {/* Footer */}
-      <Footer />
+        {/* Enhance Tab Content */}
+        {activeTab === "enhance" && (
+          <section className="space-y-12">
+            {/* Add the enhance tab content here based on the updates, e.g., file uploads, settings */}
+            <div className="grid lg:grid-cols-3 gap-8">
+              {/* Image Upload Area */}
+              <div
+                className="col-span-2 n3uralia-card rounded-xl p-8 flex flex-col items-center justify-center border-2 border-dashed border-white/20 cursor-pointer"
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <input
+                  type="file"
+                  multiple
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept="image/*"
+                  onChange={(e) => e.target.files && handleFileSelect(e.target.files)}
+                />
+                <UploadCloud className="w-12 h-12 n3uralia-gold-accent mb-4" />
+                <h3 className="text-xl font-bold text-white mb-2">Drag & Drop Your Images Here</h3>
+                <p className="n3uralia-text-muted mb-4">Or click to select files</p>
+                <p className="n3uralia-text-muted text-sm">Supports JPEG, PNG, WEBP. Max file size: 15MB</p>
+              </div>
 
-      {/* Profile Dialog from updates */}
-      {user && (
-        <ProfileDialog
-          user={user}
-          isOpen={showProfile}
-          onClose={() => setShowProfile(false)}
-          onUpdateProfile={handleUpdateProfile}
-          completedJobs={completedJobs.length}
-          totalProcessingTime={`${Math.floor(completedJobs.length * 1.5)}m`}
-        />
-      )}
-    </div>
-  )
+              {/* Enhancement Settings Panel */}
+              <div className="n3uralia-card rounded-xl p-6">
+                <h3 className="text-lg font-bold text-white mb-4">Enhancement Settings</h3>
+                <div className="space-y-4">
+                  {/* Model Selection */}
+                  <div>
+                    <label className="block text-sm font-medium n3uralia-text-muted mb-2">AI Model</label>
+                    <select
+                      value={enhancementSettings.model}
+                      onChange={(e) => {
+                        setEnhancementSettings((prev) => ({
+                          ...prev,
+                          model: e.target.value,
+                          // Reset faceEnhance if model doesn't support it, or based on new model
+                          faceEnhance:
+                            ENHANCEMENT_MODELS.find((m) => m.id === e.target.value)?.faceEnhancement || false,
+                        }))
+                      }}
+                      className="w-full p-3 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-gold-500"
+                    >
+                      {ENHANCEMENT_MODELS.map((model) => (
+                        <option key={model.id} value={model.id} disabled={model.status !== "working"}>
+                          {model.name} {model.status !== "working" ? "(Unavailable)" : ""}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-xs n3uralia-text-muted mt-1">
+                      {ENHANCEMENT_MODELS.find((m) => m.id === enhancementSettings.model)?.description}
+                    </p>
+                  </div>
+
+                  {/* Upscale Factor */}
+                  <div>
+                    <label className="block text-sm font-medium n3uralia-text-muted mb-2">Upscale Factor</label>
+                    <input
+                      type="range"
+                      min="1"
+                      max={getMaxUpscale()}
+                      value={enhancementSettings.upscaleFactor}
+                      onChange={(e) =>
+                        setEnhancementSettings((prev) => ({
+                          ...prev,
+                          upscaleFactor: Number.parseInt(e.target.value),
+                        }))
+                      }
+                      className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer"
+                    />
+                    <div className="flex justify-between text-xs n3uralia-text-muted">
+                      <span>1x</span>
+                      <span>{getMaxUpscale()}x</span>
+                    </div>
+                    <p className="text-xs n3uralia-text-muted mt-1">
+                      Target Resolution: <span className="font-semibold text-white">{getTargetResolution()}</span>
+                    </p>
+                  </div>
+
+                  {/* Preserve Asian Features */}
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="checkbox"
+                      id="preserveAsianFeatures"
+                      checked={enhancementSettings.preserveAsianFeatures}
+                      onChange={(e) =>
+                        setEnhancementSettings((prev) => ({ ...prev, preserveAsianFeatures: e.target.checked }))
+                      }
+                      className="w-5 h-5 accent-gold-500 rounded border-white/30 bg-white/10 focus:ring-gold-500"
+                    />
+                    <label htmlFor="preserveAsianFeatures" className="text-sm text-white font-medium">
+                      Preserve ASEAN Face Features (Recommended)
+                    </label>
+                  </div>
+
+                  {/* Face Enhance Toggle (conditional) */}
+                  {!getCurrentModel()?.preserveFaces && (
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        id="faceEnhance"
+                        checked={enhancementSettings.faceEnhance}
+                        onChange={(e) =>
+                          setEnhancementSettings((prev) => ({ ...prev, faceEnhance: e.target.checked }))
+                        }
+                        className="w-5 h-5 accent-gold-500 rounded border-white/30 bg-white/10 focus:ring-gold-500"
+                      />
+                      <label htmlFor="faceEnhance" className="text-sm text-white font-medium">
+                        Face Enhancement
+                      </label>
+                    </div>
+                  )}
+
+                  {/* Target Use */}
+                  <div>
+                    <label className="block text-sm font-medium n3uralia-text-muted mb-2">Target Use</label>
+                    <select
+                      value={enhancementSettings.targetUse}
+                      onChange={(e) => setEnhancementSettings((prev) => ({ ...prev, targetUse: e.target.value }))}
+                      className="w-full p-3 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-gold-500"
+                    >
+                      <option value="display">Display (Web/Screen)</option>
+                      <option value="print">Print</option>
+                      <option value="social">Social Media</option>
+                      <option value="document">Document</option>
+                      <option value="archive">Archive</option>
+                    </select>
+                  </div>
+
+                  {/* Format */}
+                  <div>
+                    <label className="block text-sm font-medium n3uralia-text-muted mb-2">Format</label>
+                    <select
+                      value={enhancementSettings.format}
+                      onChange={(e) => setEnhancementSettings((prev) => ({ ...prev, format: e.target.value }))}
+                      className="w-full p-3 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-gold-500"
+                    >
+                      <option value="PNG">PNG</option>
+                      <option value="JPEG">JPEG</option>
+                      <option value="WEBP">WEBP</option>
+                    </select>
+                  </div>
+
+                  {/* Quality Slider (for JPEG/WEBP) */}
+                  {enhancementSettings.format !== "PNG" && (
+                    <div>
+                      <label className="block text-sm font-medium n3uralia-text-muted mb-2">
+                        Quality ({enhancementSettings.quality}%)
+                      </label>
+                      <input
+                        type="range"
+                        min="50"
+                        max="100"
+                        value={enhancementSettings.quality}
+                        onChange={(e) =>
+                          setEnhancementSettings((prev) => ({ ...prev, quality: Number.parseInt(e.target.value) }))
+                        }
+                        className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer"
+                      />
+                    </div>
+                  )}
+
+                  {/* Pre-processing Options */}
+                  <div className="mt-6">
+                    <h4 className="text-md font-semibold text-white mb-3">Pre-processing</h4>
+                    <div className="space-y-2">
+                      <div>
+                        <label className="block text-xs font-medium n3uralia-text-muted mb-1">Deblock</label>
+                        <select
+                          value={enhancementSettings.pre.deblock}
+                          onChange={(e) =>
+                            setEnhancementSettings((prev) => ({
+                              ...prev,
+                              pre: { ...prev.pre, deblock: e.target.value },
+                            }))
+                          }
+                          className="w-full p-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none"
+                        >
+                          <option value="off">Off</option>
+                          <option value="low">Low</option>
+                          <option value="medium">Medium</option>
+                          <option value="high">High</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium n3uralia-text-muted mb-1">Denoise</label>
+                        <select
+                          value={enhancementSettings.pre.denoise}
+                          onChange={(e) =>
+                            setEnhancementSettings((prev) => ({
+                              ...prev,
+                              pre: { ...prev.pre, denoise: e.target.value },
+                            }))
+                          }
+                          className="w-full p-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none"
+                        >
+                          <option value="off">Off</option>
+                          <option value="low">Low</option>
+                          <option value="medium">Medium</option>
+                          <option value="high">High</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium n3uralia-text-muted mb-1">White Balance</label>
+                        <select
+                          value={enhancementSettings.pre.whiteBalance}
+                          onChange={(e) =>
+                            setEnhancementSettings((prev) => ({
+                              ...prev,
+                              pre: { ...prev.pre, whiteBalance: e.target.value },
+                            }))
+                          }
+                          className="w-full p-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none"
+                        >
+                          <option value="off">Off</option>
+                          <option value="auto">Auto</option>
+                          <option value="neutral">Neutral</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Post-processing Options */}
+                  <div className="mt-6">
+                    <h4 className="text-md font-semibold text-white mb-3">Post-processing</h4>
+                    <div className="space-y-2">
+                      <div>
+                        <label className="block text-xs font-medium n3uralia-text-muted mb-1">Local Contrast</label>
+                        <select
+                          value={enhancementSettings.post.localContrast}
+                          onChange={(e) =>
+                            setEnhancementSettings((prev) => ({
+                              ...prev,
+                              post: { ...prev.post, localContrast: e.target.value },
+                            }))
+                          }
+                          className="w-full p-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none"
+                        >
+                          <option value="off">Off</option>
+                          <option value="low">Low</option>
+                          <option value="medium">Medium</option>
+                          <option value="high">High</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium n3uralia-text-muted mb-1">Sharpen</label>
+                        <select
+                          value={enhancementSettings.post.sharpen}
+                          onChange={(e) =>
+                            setEnhancementSettings((prev) => ({
+                              ...prev,
+                              post: { ...prev.post, sharpen: e.target.value },
+                            }))
+                          }
+                          className="w-full p-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none"
+                        >
+                          <option value="off">Off</option>
+                          <option value="low">Low</option>
+                          <option value="medium">Medium</option>
+                          <option value="high">High</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium n3uralia-text-muted mb-1">Grain</label>
+                        <select
+                          value={enhancementSettings.post.grain}
+                          onChange={(e) =>
+                            setEnhancementSettings((prev) => ({
+                              ...prev,
+                              post: { ...prev.post, grain: e.target.value },
+                            }))
+                          }
+                          className="w-full p-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none"
+                        >
+                          <option value="off">Off</option>
+                          <option value="very-low">Very Low</option>
+                          <option value="low">Low</option>
+                          <option value="medium">Medium</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={async () => {
+                    if (selectedFiles.length === 0) return
+                    // AI optimization logic
+                    const firstFile = selectedFiles[0].file
+                    const optimized = await optimizeParametersWithAI(firstFile)
+                    setEnhancementSettings((prev) => ({ ...prev, ...optimized }))
+                  }}
+                  className="mt-8 w-full n3uralia-button-gold px-6 py-3 rounded-lg text-lg font-semibold transition-all flex items-center justify-center space-x-2"
+                >
+                  <Target className="w-5 h-5" />
+                  <span>Optimize Settings</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Selected Files Preview and Processing */}
+            {selectedFiles.length > 0 && (
+              <div className="n3uralia-card rounded-xl p-6">
+                <h3 className="text-lg font-bold text-white mb-4">Selected Files</h3>
+                <div className="space-y-4">
+                  {selectedFiles.map((fileItem) => (
+                    <div
+                      key={fileItem.id}
+                      className="flex items-center justify-between p-4 rounded-lg bg-white/5 border border-white/15"
+                    >
+                      <div className="flex items-center space-x-4">
+                        <img
+                          src={fileItem.preview || "/placeholder.svg"}
+                          alt={fileItem.name}
+                          className="w-16 h-16 rounded-md object-cover"
+                        />
+                        <div>
+                          <p className="font-semibold text-white line-clamp-1">{fileItem.name}</p>
+                          <p className="text-sm n3uralia-text-muted">{formatFileSize(fileItem.size)}</p>
+                          {fileItem.warning && <p className="text-xs text-yellow-400 mt-1">{fileItem.warning}</p>}
+                          {fileItem.error && <p className="text-xs text-red-400 mt-1">{fileItem.error}</p>}
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-4">
+                        {fileItem.status === "ready" && (
+                          <button
+                            onClick={() => startProcessing(fileItem.id)}
+                            className="n3uralia-button-gold px-4 py-2 rounded-lg transition-all flex items-center space-x-2"
+                          >
+                            <Sparkles className="w-4 h-4" />
+                            <span>Enhance</span>
+                          </button>
+                        )}
+                        {fileItem.status === "failed" && (
+                          <button
+                            onClick={() => {
+                              // Re-add to selected files to try again
+                              setSelectedFiles((prev) => [...prev, fileItem])
+                              // Remove from current list
+                              setSelectedFiles((prev) => prev.filter((f) => f.id !== fileItem.id))
+                            }}
+                            className="n3uralia-button-secondary px-4 py-2 rounded-lg transition-all flex items-center space-x-2"
+                          >
+                            <RefreshCw className="w-4 h-4" />
+                            <span>Retry</span>
+                          </button>
+                        )}
+                        <button
+                          onClick={() => setSelectedFiles((prev) => prev.filter((f) => f.id !== fileItem.id))}
+                          className="text-red-500 hover:text-red-400 transition-colors"
+                        >
+                          <X className="w-6 h-6" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* Processing Tab Content */}
+          {activeTab === "processing" && (
+            <section className="space-y-12">
+              <div className="n3uralia-card rounded-xl p-6">
+                <h3 className="text-lg font-bold text-white mb-4">Processing Queue</h3>
+                {processingQueue.length === 0 ? (
+                  <p className="n3uralia-text-muted">Your processing queue is empty.</p>
+                ) : (
+                  <div className="space-y-4">
+                    {processingQueue.map((job) => (
+                      <div
+                        key={job.id}
+                        className="flex items-center justify-between p-4 rounded-lg bg-white/5 border border-white/15"
+                      >
+                        <div className="flex items-center space-x-4">
+                          <div className="relative w-16 h-16 rounded-md overflow-hidden">
+                            <img
+                              src={job.file.preview || "/placeholder.svg"}
+                              alt={job.file.name}
+                              className="w-full h-full object-cover opacity-50"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <Loader2 className="w-8 h-8 animate-spin n3uralia-gold-accent" />
+                            </div>
+                          </div>
+                          <div>
+                            <p className="font-semibold text-white line-clamp-1">{job.file.name}</p>
+                            <p className="text-sm n3uralia-text-muted">{job.progress}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-4">
+                          <span className="text-sm n3uralia-text-muted">
+                            {Math.round((Date.now() - job.startTime) / 1000)}s
+                          </span>
+                          <button
+                            onClick={() => {
+                              // Cancel job logic (implement if needed)
+                            }}
+                            className="text-gray-400 hover:text-red-400 transition-colors"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="n3uralia-card rounded-xl p-6">
+                <h3 className="text-lg font-bold text-white mb-4">Completed Jobs</h3>
+                {completedJobs.length === 0 ? (
+                  <p className="n3uralia-text-muted">No jobs completed yet.</p>
+                ) : (
+                  <div className="space-y-4">
+                    {completedJobs.map((job) => (
+                      <div
+                        key={job.id}
+                        className="p-4 rounded-lg bg-white/5 border border-white/15 flex items-center justify-between"
+                      >
+                        <div className="flex items-center space-x-4">
+                          <div className="relative w-16 h-16 rounded-md overflow-hidden">
+                            <img
+                              src={job.downloadUrl || "/placeholder.svg"}
+                              alt={job.originalFileName}
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                              <CheckCircle className="w-8 h-8 text-green-400" />
+                            </div>
+                          </div>
+                          <div>
+                            <p className="font-semibold text-white line-clamp-1">{job.originalFileName}</p>
+                            <p className="text-xs n3uralia-text-muted">
+                              Enhanced with {job.modelName} ({job.upscaleFactor}x)
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-4">
+                          <div className="text-right">
+                            <p className="text-sm n3uralia-text-muted">{job.fileSize}</p>
+                            <p className="text-xs n3uralia-text-muted">{job.processingTime}</p>
+                          </div>
+                          <a
+                            href={job.downloadUrl}
+                            download={
+                              job.originalFileName.replace(/\.[^/.]+$/, "") + "_enhanced." + job.model.split("-")[0]
+                            } // Basic extension guess
+                            onClick={(e) => {
+                              e.preventDefault() // Prevent default for custom logic
+                              if (domePreset.enabled) {
+                                exportDomemasterForJob(job)
+                              } else {
+                                window.open(job.downloadUrl, "_blank") // Open in new tab if not domemaster
+                              }
+                            }}
+                            className="n3uralia-button-gold px-4 py-2 rounded-lg transition-all flex items-center space-x-2"
+                          >
+                            {domePreset.enabled ? <Layers className="w-4 h-4" /> : <Download className="w-4 h-4" />}
+                            <span>{domePreset.enabled ? "Export Dome" : "Download"}</span>
+                          </a>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+          {/* Gallery Tab Content */}
+          {activeTab === "gallery" && (
+            <section className="space-y-12">
+              <div className="n3uralia-card rounded-xl p-6">
+                <h3 className="text-lg font-bold text-white mb-4">Image Gallery</h3>
+                <p className="n3uralia-text-muted">Gallery functionality coming soon.</p>
+                {/* Add gallery grid here */}
+              </div>
+            </section>
+          )}
+
+          {/* Admin Tab Content */}
+          {activeTab === "admin" && isAdmin && (
+            <section className="space-y-12">
+              <div className="flex space-x-1 n3uralia-card rounded-xl p-1 mb-6">
+                {[
+                  { id: "config", label: "Configuration", icon: Settings },
+                  { id: "users", label: "User Management", icon: Users },
+                  { id: "roles", label: "Role Management", icon: Shield },
+                  { id: "discovery", label: "Replicate Discovery", icon: Search },
+                  { id: "test", label: "Test Config", icon: TestTube },
+                ].map((subTab) => (
+                  <button
+                    key={subTab.id}
+                    onClick={() => setAdminSubTab(subTab.id)}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ${
+                      adminSubTab === subTab.id
+                        ? "n3uralia-button-gold"
+                        : "text-white/70 hover:text-white hover:bg-white/5"
+                    }`}
+                  >
+                    <subTab.icon className="w-4 h-4" />
+                    <span>{subTab.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {adminSubTab === "config" && (
+                <div className="n3uralia-card rounded-xl p-6">
+                  <h3 className="text-lg font-bold text-white mb-4">Configuration</h3>
+                  <p className="n3uralia-text-muted">Admin configuration options.</p>
+                </div>
+              )}
+              {adminSubTab === "users" && <UserManagement />}
+              {adminSubTab === "roles" && <RoleManagement />}
+              {adminSubTab === "discovery" && (
+                <div className="n3uralia-card rounded-xl p-6">
+                  <h3 className="text-lg font-bold text-white mb-4">Replicate Discovery</h3>
+                  <button
+                    onClick={runReplicateDiscovery}
+                    disabled={isDiscovering}
+                    className="n3uralia-button-gold px-4 py-2 rounded-lg transition-all flex items-center space-x-2 disabled:opacity-50"
+                  >
+                    {isDiscovering ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                    <span>Run Discovery</span>
+                  </button>
+                  {discoveryResults && (
+                    <pre className="mt-4 p-4 rounded-lg bg-white/5 border border-white/15 text-xs text-white/70 overflow-auto">
+                      {JSON.stringify(discoveryResults, null, 2)}
+                    </pre>
+                  )}
+                </div>
+              )}
+              {adminSubTab === "test" && (
+                <div className="n3uralia-card rounded-xl p-6">
+                  <h3 className="text-lg font-bold text-white mb-4">Test Replicate Configuration</h3>
+                  <button
+                    onClick={testReplicateConfig}
+                    disabled={isTesting}
+                    className="n3uralia-button-gold px-4 py-2 rounded-lg transition-all flex items-center space-x-2 disabled:opacity-50"
+                  >
+                    {isTesting ? <Loader2 className="w-4 h-4 animate-spin" /> : <TestTube className="w-4 h-4" />}
+                    <span>Test Configuration</span>
+                  </button>
+                  {configResults && (
+                    <pre className="mt-4 p-4 rounded-lg bg-white/5 border border-white/15 text-xs text-white/70 overflow-auto">
+                      {JSON.stringify(configResults, null, 2)}
+                    </pre>
+                  )}
+                </div>
+              )}
+            </section>
+          )}
+        </main>
+
+        {/* Footer */}
+        <Footer />
+
+        {/* Profile Dialog from updates */}
+        {user && (
+          <ProfileDialog
+            user={user}
+            isOpen={showProfile}
+            onClose={() => setShowProfile(false)}
+            onUpdateProfile={handleUpdateProfile}
+            completedJobs={completedJobs.length}
+            totalProcessingTime={`${Math.floor(completedJobs.length * 1.5)}m`}
+          />
+        )}
+      </div>
+    )
 }
 
 export default AIImageEnhancementPortal
