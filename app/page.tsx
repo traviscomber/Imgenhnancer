@@ -72,7 +72,7 @@ export default function LandingPage() {
           <TabsContent value="home" className="space-y-16">
             {/* Before/After Comparisons */}
             <div className="space-y-12">
-              {/* Modern Indonesian Wedding */}
+              {/* Set 1: Modern Indonesian Wedding */}
               <div className="space-y-4">
                 <div className="flex items-center space-x-3">
                   <span className="text-3xl">🇮🇩</span>
@@ -87,7 +87,7 @@ export default function LandingPage() {
                 />
               </div>
 
-              {/* Vintage Javanese Wedding Heritage - UPDATED WITH NEW IMAGES */}
+              {/* Set 2: Vintage Javanese Wedding Heritage */}
               <div className="space-y-4">
                 <div className="flex items-center space-x-3">
                   <span className="text-3xl">🏛️</span>
@@ -99,6 +99,21 @@ export default function LandingPage() {
                   afterImage="/images/javanese-wedding-restored.png"
                   beforeLabel="Faded Original"
                   afterLabel="AI Restored"
+                />
+              </div>
+
+              {/* Set 3: Thai Family Portrait - NEW */}
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <span className="text-3xl">🇹🇭</span>
+                  <h3 className="text-2xl font-bold text-white">Thai Family Portrait Heritage</h3>
+                </div>
+                <p className="text-gray-400">Damaged 1930s family photo digitally restored</p>
+                <ImageComparisonSlider
+                  beforeImage="/images/thai-family-faded.png"
+                  afterImage="/images/thai-family-restored.png"
+                  beforeLabel="Damaged Original"
+                  afterLabel="Fully Restored"
                 />
               </div>
             </div>
@@ -238,6 +253,16 @@ export default function LandingPage() {
                     afterImage="/images/javanese-wedding-restored.png"
                     beforeLabel="Faded Original"
                     afterLabel="AI Restored"
+                  />
+                </div>
+
+                <div>
+                  <h4 className="text-xl text-gray-300 mb-3">Thai Family Portrait (1930s)</h4>
+                  <ImageComparisonSlider
+                    beforeImage="/images/thai-family-faded.png"
+                    afterImage="/images/thai-family-restored.png"
+                    beforeLabel="Damaged Original"
+                    afterLabel="Fully Restored"
                   />
                 </div>
               </div>
