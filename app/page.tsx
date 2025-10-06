@@ -91,7 +91,7 @@ export default function LandingPage() {
             {/* Home Tab */}
             <TabsContent value="home" className="space-y-12">
               <div className="max-w-5xl mx-auto space-y-12">
-                {/* Wedding Portrait */}
+                {/* Wedding Portrait - wedding-set1-before.png and wedding-set1-after.png */}
                 <div className="space-y-4">
                   <div className="flex items-center space-x-3 mb-4">
                     <Heart className="w-6 h-6 text-rose-400" />
@@ -108,7 +108,7 @@ export default function LandingPage() {
                   />
                 </div>
 
-                {/* Javanese Wedding Heritage */}
+                {/* Javanese Wedding Heritage - javanese-wedding-faded.png and javanese-wedding-restored.png */}
                 <div className="space-y-4">
                   <div className="flex items-center space-x-3 mb-4">
                     <Users className="w-6 h-6 text-amber-400" />
@@ -126,7 +126,7 @@ export default function LandingPage() {
                   />
                 </div>
 
-                {/* Thai Family Portrait */}
+                {/* Thai Family Portrait - thai-family-faded.png and thai-family-restored.png */}
                 <div className="space-y-4">
                   <div className="flex items-center space-x-3 mb-4">
                     <Users className="w-6 h-6 text-blue-400" />
@@ -143,7 +143,7 @@ export default function LandingPage() {
                   />
                 </div>
 
-                {/* Real Estate Interior */}
+                {/* Real Estate Interior - real-estate-before.png and real-estate-after.png */}
                 <div className="space-y-4">
                   <div className="flex items-center space-x-3 mb-4">
                     <Home className="w-6 h-6 text-blue-500" />
@@ -160,7 +160,7 @@ export default function LandingPage() {
                   />
                 </div>
 
-                {/* Digital Art */}
+                {/* Digital Art - abstract-art-low.png and abstract-art-enhanced.png */}
                 <div className="space-y-4">
                   <div className="flex items-center space-x-3 mb-4">
                     <Palette className="w-6 h-6 text-purple-400" />
@@ -202,7 +202,7 @@ export default function LandingPage() {
                   </div>
 
                   <div className="space-y-12">
-                    {/* Javanese Wedding */}
+                    {/* Javanese Wedding - javanese-wedding-faded.png and javanese-wedding-restored.png */}
                     <div className="space-y-4">
                       <h3 className="text-xl font-semibold text-white">Traditional Javanese Wedding Ceremony</h3>
                       <ImageComparisonSlider
@@ -213,7 +213,7 @@ export default function LandingPage() {
                       />
                     </div>
 
-                    {/* Thai Family */}
+                    {/* Thai Family - thai-family-faded.png and thai-family-restored.png */}
                     <div className="space-y-4">
                       <h3 className="text-xl font-semibold text-white">Thai Family Portrait</h3>
                       <ImageComparisonSlider
@@ -250,6 +250,7 @@ export default function LandingPage() {
                     <p className="text-gray-400">Transform listings with magazine-quality photography</p>
                   </div>
 
+                  {/* Real Estate - real-estate-before.png and real-estate-after.png */}
                   <div className="space-y-4">
                     <h3 className="text-xl font-semibold text-white">Interior Space Transformation</h3>
                     <ImageComparisonSlider
@@ -299,6 +300,7 @@ export default function LandingPage() {
                     <p className="text-gray-400">Professional-grade enhancement for digital artwork</p>
                   </div>
 
+                  {/* Digital Art - abstract-art-low.png and abstract-art-enhanced.png */}
                   <div className="space-y-4">
                     <h3 className="text-xl font-semibold text-white">Abstract Art Enhancement</h3>
                     <ImageComparisonSlider
