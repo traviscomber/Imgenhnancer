@@ -1,398 +1,267 @@
 "use client"
-
-import { useState } from "react"
+import Link from "next/link"
+import { Sparkles, Zap, Shield, Wand2, Camera, Building2, Palette, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { ImageComparisonSlider } from "@/components/image-comparison-slider"
-import { Sparkles, Upload, Zap, Shield, Globe, Heart, Camera, Palette, Building, MapPin, ImageIcon } from "lucide-react"
 import Footer from "@/components/footer"
 
 export default function LandingPage() {
-  const [activeTab, setActiveTab] = useState("home")
-
   return (
-    <div className="min-h-screen n3uralia-gradient">
-      {/* Header */}
-      <header className="n3uralia-card sticky top-0 z-50 border-b n3uralia-border">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-black to-gray-900">
+      {/* Navigation */}
+      <nav className="border-b border-white/10 bg-black/20 backdrop-blur-sm sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center n3uralia-glow-gold">
-                <Sparkles className="w-6 h-6 text-black" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold n3uralia-text-gold">n3uralia</h1>
-                <p className="text-xs text-muted-foreground">AI Image Enhancement Platform</p>
-              </div>
+            <div className="flex items-center space-x-2">
+              <Sparkles className="w-8 h-8 text-amber-400" />
+              <span className="text-2xl font-bold text-white">n3uralia</span>
             </div>
-            <nav className="hidden md:flex items-center gap-6">
-              <Button variant="ghost" size="sm" onClick={() => setActiveTab("home")}>
-                Home
-              </Button>
-              <Button variant="ghost" size="sm" onClick={() => setActiveTab("enhance")}>
-                Enhance
-              </Button>
-              <Button variant="ghost" size="sm" onClick={() => setActiveTab("examples")}>
-                Examples
-              </Button>
-              <Button className="n3uralia-button-gold">Get Started</Button>
-            </nav>
+            <div className="flex items-center space-x-4">
+              <Link href="/enhance">
+                <Button className="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700">
+                  Try Enhancer
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
-      </header>
+      </nav>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 py-12">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="hidden">
-            <TabsTrigger value="home">Home</TabsTrigger>
-            <TabsTrigger value="enhance">Enhance</TabsTrigger>
-            <TabsTrigger value="examples">Examples</TabsTrigger>
+      {/* Hero Section */}
+      <section className="container mx-auto px-4 py-20 text-center">
+        <Badge className="mb-4 bg-amber-500/20 text-amber-400 border-amber-500/30">AI-Powered Image Enhancement</Badge>
+        <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 bg-clip-text text-transparent">
+          Transform Your Images With AI Precision
+        </h1>
+        <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
+          Professional-grade image enhancement powered by advanced AI. Perfect for ASEAN heritage, portraits, and
+          cultural photography.
+        </p>
+        <Link href="/enhance">
+          <Button
+            size="lg"
+            className="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white px-8 py-6 text-lg"
+          >
+            <Sparkles className="w-5 h-5 mr-2" />
+            Start Enhancing Free
+          </Button>
+        </Link>
+      </section>
+
+      {/* Main Content Tabs */}
+      <section className="container mx-auto px-4 py-12">
+        <Tabs defaultValue="home" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-12 bg-black/40 border border-white/10">
+            <TabsTrigger
+              value="home"
+              className="data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-400"
+            >
+              Home
+            </TabsTrigger>
+            <TabsTrigger
+              value="examples"
+              className="data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-400"
+            >
+              Examples
+            </TabsTrigger>
           </TabsList>
 
-          {/* Home Tab */}
           <TabsContent value="home" className="space-y-16">
-            {/* Hero Section */}
-            <section className="text-center space-y-6 py-12">
-              <Badge className="n3uralia-badge-gold mx-auto">
-                <Sparkles className="w-3 h-3 mr-1" />
-                Powered by Advanced AI
-              </Badge>
-              <h2 className="text-5xl md:text-6xl font-bold n3uralia-text-gold leading-tight">
-                Transform Your Images
-                <br />
-                <span className="text-foreground">With AI Precision</span>
-              </h2>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Professional-grade image enhancement powered by state-of-the-art AI models. Restore, upscale, and
-                perfect your photos with a single click.
-              </p>
-              <div className="flex flex-wrap gap-4 justify-center pt-4">
-                <Button size="lg" className="n3uralia-button-gold" onClick={() => setActiveTab("enhance")}>
-                  <Upload className="w-4 h-4 mr-2" />
-                  Start Enhancing
-                </Button>
-                <Button size="lg" variant="outline" onClick={() => setActiveTab("examples")}>
-                  View Examples
-                </Button>
+            {/* Before/After Comparisons */}
+            <div className="space-y-12">
+              {/* Modern Indonesian Wedding */}
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <span className="text-3xl">🇮🇩</span>
+                  <h3 className="text-2xl font-bold text-white">Modern Indonesian Wedding</h3>
+                </div>
+                <p className="text-gray-400">Original photo vs 4x AI-enhanced clarity</p>
+                <ImageComparisonSlider
+                  beforeImage="/images/wedding-set1-before.png"
+                  afterImage="/images/wedding-set1-after.png"
+                  beforeLabel="Original"
+                  afterLabel="4x Enhanced"
+                />
               </div>
-            </section>
 
-            {/* Featured Comparison #1 - Modern Indonesian Wedding */}
-            <section className="space-y-6">
-              <div className="text-center space-y-2">
-                <Badge className="n3uralia-badge-gold">
-                  <Heart className="w-3 h-3 mr-1" />
-                  ASEAN Focus
-                </Badge>
-                <h3 className="text-3xl font-bold">🇮🇩 Modern Indonesian Wedding</h3>
-                <p className="text-muted-foreground">4x Enhancement • Face Preserved • Traditional Attire</p>
+              {/* Vintage ASEAN Wedding Heritage */}
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <span className="text-3xl">🏛️</span>
+                  <h3 className="text-2xl font-bold text-white">Vintage ASEAN Wedding Heritage</h3>
+                </div>
+                <p className="text-gray-400">Blurred vintage photo vs HD restoration</p>
+                <ImageComparisonSlider
+                  beforeImage="/images/vintage-wedding-blur.png"
+                  afterImage="/images/vintage-wedding-clear.jpg"
+                  beforeLabel="Heritage Photo"
+                  afterLabel="Restored"
+                />
               </div>
-              <ImageComparisonSlider
-                beforeImage="/images/wedding-set1-before.png"
-                afterImage="/images/wedding-set1-after.png"
-                beforeLabel="Original"
-                afterLabel="4x Enhanced"
-                className="max-w-4xl mx-auto"
-              />
-            </section>
-
-            {/* Featured Comparison #2 - Vintage ASEAN Wedding Heritage */}
-            <section className="space-y-6">
-              <div className="text-center space-y-2">
-                <Badge className="n3uralia-badge-gold">
-                  <Camera className="w-3 h-3 mr-1" />
-                  Heritage Restoration
-                </Badge>
-                <h3 className="text-3xl font-bold">🏛️ Vintage ASEAN Wedding Heritage</h3>
-                <p className="text-muted-foreground">Restoration • Cultural Preservation • Authentic Details</p>
-              </div>
-              <ImageComparisonSlider
-                beforeImage="/images/vintage-wedding-blur.png"
-                afterImage="/images/vintage-wedding-clear.jpg"
-                beforeLabel="Heritage Photo"
-                afterLabel="Restored"
-                className="max-w-4xl mx-auto"
-              />
-            </section>
+            </div>
 
             {/* Core Capabilities */}
-            <section className="space-y-8">
-              <div className="text-center space-y-2">
-                <h3 className="text-3xl font-bold">Core Capabilities</h3>
-                <p className="text-muted-foreground">Everything you need for professional image enhancement</p>
-              </div>
-              <div className="grid md:grid-cols-3 gap-6">
-                <Card className="n3uralia-card n3uralia-border hover-card">
-                  <CardHeader>
-                    <Zap className="w-10 h-10 mb-2 text-gold-500" />
-                    <CardTitle>AI Upscaling</CardTitle>
-                    <CardDescription>Scale images up to 4x while preserving quality and details</CardDescription>
-                  </CardHeader>
-                </Card>
-                <Card className="n3uralia-card n3uralia-border hover-card">
-                  <CardHeader>
-                    <Shield className="w-10 h-10 mb-2 text-gold-500" />
-                    <CardTitle>Face Preservation</CardTitle>
-                    <CardDescription>Advanced algorithms protect facial features during enhancement</CardDescription>
-                  </CardHeader>
-                </Card>
-                <Card className="n3uralia-card n3uralia-border hover-card">
-                  <CardHeader>
-                    <Sparkles className="w-10 h-10 mb-2 text-gold-500" />
-                    <CardTitle>Smart Enhancement</CardTitle>
-                    <CardDescription>Automatic optimization based on image content and context</CardDescription>
-                  </CardHeader>
-                </Card>
-              </div>
-            </section>
+            <div className="grid md:grid-cols-3 gap-6">
+              <Card className="bg-black/40 border-white/10 hover:border-amber-500/30 transition-all">
+                <CardHeader>
+                  <Zap className="w-12 h-12 text-amber-400 mb-4" />
+                  <CardTitle className="text-white">AI Upscaling</CardTitle>
+                  <CardDescription className="text-gray-400">
+                    Enhance resolution up to 4x while preserving natural details and textures
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+
+              <Card className="bg-black/40 border-white/10 hover:border-amber-500/30 transition-all">
+                <CardHeader>
+                  <Shield className="w-12 h-12 text-amber-400 mb-4" />
+                  <CardTitle className="text-white">Face Preservation</CardTitle>
+                  <CardDescription className="text-gray-400">
+                    Maintains authentic facial features, optimized for ASEAN and Indonesian faces
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+
+              <Card className="bg-black/40 border-white/10 hover:border-amber-500/30 transition-all">
+                <CardHeader>
+                  <Wand2 className="w-12 h-12 text-amber-400 mb-4" />
+                  <CardTitle className="text-white">Smart Enhancement</CardTitle>
+                  <CardDescription className="text-gray-400">
+                    Intelligent color correction, noise reduction, and detail enhancement
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            </div>
 
             {/* Professional Applications */}
-            <section className="space-y-8">
-              <div className="text-center space-y-2">
-                <h3 className="text-3xl font-bold">Professional Applications</h3>
-                <p className="text-muted-foreground">Trusted by professionals across industries</p>
-              </div>
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <Card className="n3uralia-card n3uralia-border hover-card text-center">
-                  <CardHeader>
-                    <Globe className="w-12 h-12 mx-auto mb-2 text-muted-foreground hover:text-gold-500 transition-colors" />
-                    <CardTitle className="text-lg">Cultural Heritage</CardTitle>
-                    <CardDescription className="text-sm">Restore and preserve historical photographs</CardDescription>
+            <div>
+              <h2 className="text-3xl font-bold text-white text-center mb-8">Professional Applications</h2>
+              <div className="grid md:grid-cols-4 gap-6">
+                <Card className="bg-black/40 border-white/10 hover:border-amber-500/30 transition-all group">
+                  <CardHeader className="text-center">
+                    <Users className="w-12 h-12 mx-auto mb-4 text-gray-400 group-hover:text-amber-400 transition-colors" />
+                    <CardTitle className="text-white">Cultural Heritage</CardTitle>
+                    <CardDescription className="text-gray-400">
+                      Restore and preserve historical photos and cultural artifacts
+                    </CardDescription>
                   </CardHeader>
                 </Card>
-                <Card className="n3uralia-card n3uralia-border hover-card text-center">
-                  <CardHeader>
-                    <Camera className="w-12 h-12 mx-auto mb-2 text-muted-foreground hover:text-gold-500 transition-colors" />
-                    <CardTitle className="text-lg">Photography</CardTitle>
-                    <CardDescription className="text-sm">Enhance wedding and portrait photography</CardDescription>
-                  </CardHeader>
-                </Card>
-                <Card className="n3uralia-card n3uralia-border hover-card text-center">
-                  <CardHeader>
-                    <Building className="w-12 h-12 mx-auto mb-2 text-muted-foreground hover:text-gold-500 transition-colors" />
-                    <CardTitle className="text-lg">Real Estate</CardTitle>
-                    <CardDescription className="text-sm">Improve property listing images</CardDescription>
-                  </CardHeader>
-                </Card>
-                <Card className="n3uralia-card n3uralia-border hover-card text-center">
-                  <CardHeader>
-                    <Palette className="w-12 h-12 mx-auto mb-2 text-muted-foreground hover:text-gold-500 transition-colors" />
-                    <CardTitle className="text-lg">Creative Arts</CardTitle>
-                    <CardDescription className="text-sm">Enhance artwork and design assets</CardDescription>
-                  </CardHeader>
-                </Card>
-              </div>
-            </section>
 
-            {/* More Showcase Examples */}
-            <section className="space-y-8">
-              <div className="text-center space-y-2">
-                <Badge className="n3uralia-badge-gold mx-auto">
-                  <ImageIcon className="w-3 h-3 mr-1" />
-                  More Examples
-                </Badge>
-                <h3 className="text-3xl font-bold">See The Difference</h3>
-                <p className="text-muted-foreground">Real results from our AI enhancement platform</p>
-              </div>
+                <Card className="bg-black/40 border-white/10 hover:border-amber-500/30 transition-all group">
+                  <CardHeader className="text-center">
+                    <Camera className="w-12 h-12 mx-auto mb-4 text-gray-400 group-hover:text-amber-400 transition-colors" />
+                    <CardTitle className="text-white">Photography</CardTitle>
+                    <CardDescription className="text-gray-400">
+                      Enhance wedding, portrait, and event photography
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
 
-              {/* Street Photography Example */}
-              <div className="space-y-4">
-                <div className="text-center space-y-1">
-                  <h4 className="text-xl font-semibold flex items-center justify-center gap-2">
-                    <MapPin className="w-5 h-5 text-gold-500" />
-                    ASEAN Street Photography
-                  </h4>
-                  <p className="text-sm text-muted-foreground">Low-res to 4K • Enhanced Details • Vibrant Colors</p>
-                </div>
-                <ImageComparisonSlider
-                  beforeImage="/images/street-before.jpg"
-                  afterImage="/images/street-after.jpg"
-                  beforeLabel="Low Resolution"
-                  afterLabel="4K Enhanced"
-                  className="max-w-4xl mx-auto"
-                />
-              </div>
+                <Card className="bg-black/40 border-white/10 hover:border-amber-500/30 transition-all group">
+                  <CardHeader className="text-center">
+                    <Building2 className="w-12 h-12 mx-auto mb-4 text-gray-400 group-hover:text-amber-400 transition-colors" />
+                    <CardTitle className="text-white">Real Estate</CardTitle>
+                    <CardDescription className="text-gray-400">
+                      Improve property photos for listings and marketing
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
 
-              {/* Portrait Example */}
-              <div className="space-y-4">
-                <div className="text-center space-y-1">
-                  <h4 className="text-xl font-semibold flex items-center justify-center gap-2">
-                    <Camera className="w-5 h-5 text-gold-500" />
-                    Portrait Enhancement
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    Face Preserved • Professional Quality • Natural Details
-                  </p>
-                </div>
-                <ImageComparisonSlider
-                  beforeImage="/images/portrait-before.jpg"
-                  afterImage="/images/portrait-after.jpg"
-                  beforeLabel="Grainy"
-                  afterLabel="Enhanced"
-                  className="max-w-4xl mx-auto"
-                />
+                <Card className="bg-black/40 border-white/10 hover:border-amber-500/30 transition-all group">
+                  <CardHeader className="text-center">
+                    <Palette className="w-12 h-12 mx-auto mb-4 text-gray-400 group-hover:text-amber-400 transition-colors" />
+                    <CardTitle className="text-white">Creative Arts</CardTitle>
+                    <CardDescription className="text-gray-400">
+                      Enhance digital art, illustrations, and creative projects
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
               </div>
-            </section>
+            </div>
 
             {/* CTA Section */}
-            <section className="text-center space-y-6 py-12 n3uralia-card rounded-2xl n3uralia-border">
-              <h3 className="text-3xl font-bold">Ready to Transform Your Images?</h3>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                Join thousands of professionals who trust n3uralia for their image enhancement needs
-              </p>
-              <Button size="lg" className="n3uralia-button-gold" onClick={() => setActiveTab("enhance")}>
-                <Sparkles className="w-4 h-4 mr-2" />
-                Get Started Free
-              </Button>
-            </section>
-          </TabsContent>
-
-          {/* Enhance Tab */}
-          <TabsContent value="enhance">
-            <Card className="n3uralia-card n3uralia-border">
-              <CardHeader>
-                <CardTitle>Image Enhancement</CardTitle>
-                <CardDescription>Upload your image to get started with AI enhancement</CardDescription>
-              </CardHeader>
-              <CardContent className="text-center py-12">
-                <Upload className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-muted-foreground mb-4">Enhancement feature coming soon</p>
-                <Button className="n3uralia-button-gold">
-                  <Upload className="w-4 h-4 mr-2" />
-                  Upload Image
-                </Button>
+            <Card className="bg-gradient-to-r from-amber-500/10 to-yellow-600/10 border-amber-500/30">
+              <CardContent className="p-12 text-center">
+                <h2 className="text-3xl font-bold text-white mb-4">Ready to Transform Your Images?</h2>
+                <p className="text-gray-300 mb-6 max-w-2xl mx-auto">
+                  Join thousands of photographers and content creators using our AI-powered enhancement tools
+                </p>
+                <Link href="/enhance">
+                  <Button
+                    size="lg"
+                    className="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white px-8 py-6 text-lg"
+                  >
+                    <Sparkles className="w-5 h-5 mr-2" />
+                    Start Enhancing Now
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* Examples Tab */}
-          <TabsContent value="examples">
-            <div className="space-y-12">
-              <div className="text-center space-y-2">
-                <h3 className="text-3xl font-bold">Enhancement Gallery</h3>
-                <p className="text-muted-foreground">Explore the full range of AI enhancement capabilities</p>
+          <TabsContent value="examples" className="space-y-12">
+            {/* Wedding & Portrait Photography */}
+            <div className="space-y-6">
+              <div className="flex items-center space-x-3">
+                <span className="text-3xl">💕</span>
+                <h3 className="text-3xl font-bold text-white">Wedding & Portrait Photography</h3>
               </div>
 
-              {/* Wedding & Portraits */}
               <div className="space-y-8">
-                <div className="text-left">
-                  <h4 className="text-2xl font-bold mb-2 flex items-center gap-2">
-                    <Heart className="w-6 h-6 text-gold-500" />
-                    Wedding & Portrait Photography
-                  </h4>
-                  <p className="text-muted-foreground">Professional enhancement for life's special moments</p>
-                </div>
-
-                <div className="space-y-6">
+                <div>
+                  <h4 className="text-xl text-gray-300 mb-3">Modern Indonesian Wedding</h4>
                   <ImageComparisonSlider
                     beforeImage="/images/wedding-set1-before.png"
                     afterImage="/images/wedding-set1-after.png"
                     beforeLabel="Original"
-                    afterLabel="Enhanced"
-                  />
-                  <ImageComparisonSlider
-                    beforeImage="/images/portrait-before.jpg"
-                    afterImage="/images/portrait-after.jpg"
-                    beforeLabel="Before"
-                    afterLabel="After"
+                    afterLabel="4x Enhanced"
                   />
                 </div>
               </div>
+            </div>
 
-              {/* Heritage & Restoration */}
+            {/* Cultural Heritage & Restoration */}
+            <div className="space-y-6">
+              <div className="flex items-center space-x-3">
+                <span className="text-3xl">🌍</span>
+                <h3 className="text-3xl font-bold text-white">Cultural Heritage & Restoration</h3>
+              </div>
+
               <div className="space-y-8">
-                <div className="text-left">
-                  <h4 className="text-2xl font-bold mb-2 flex items-center gap-2">
-                    <Globe className="w-6 h-6 text-gold-500" />
-                    Cultural Heritage & Restoration
-                  </h4>
-                  <p className="text-muted-foreground">Preserve history with AI-powered restoration</p>
-                </div>
-
-                <div className="space-y-6">
+                <div>
+                  <h4 className="text-xl text-gray-300 mb-3">Vintage Wedding Heritage</h4>
                   <ImageComparisonSlider
                     beforeImage="/images/vintage-wedding-blur.png"
                     afterImage="/images/vintage-wedding-clear.jpg"
-                    beforeLabel="Damaged"
-                    afterLabel="Restored"
-                  />
-                  <ImageComparisonSlider
-                    beforeImage="/images/family-before.jpg"
-                    afterImage="/images/family-after.jpg"
-                    beforeLabel="1960s Original"
-                    afterLabel="Restored & Colorized"
-                  />
-                  <ImageComparisonSlider
-                    beforeImage="/images/artifact-before.jpg"
-                    afterImage="/images/artifact-after.jpg"
-                    beforeLabel="Faded"
-                    afterLabel="Restored"
+                    beforeLabel="Blurred"
+                    afterLabel="HD Restored"
                   />
                 </div>
-              </div>
-
-              {/* Architecture & Landscapes */}
-              <div className="space-y-8">
-                <div className="text-left">
-                  <h4 className="text-2xl font-bold mb-2 flex items-center gap-2">
-                    <Building className="w-6 h-6 text-gold-500" />
-                    Architecture & Landscapes
-                  </h4>
-                  <p className="text-muted-foreground">Enhance architectural details and natural beauty</p>
-                </div>
-
-                <div className="space-y-6">
-                  <ImageComparisonSlider
-                    beforeImage="/images/temple-before.jpg"
-                    afterImage="/images/temple-after.jpg"
-                    beforeLabel="Faded"
-                    afterLabel="Vibrant"
-                  />
-                  <ImageComparisonSlider
-                    beforeImage="/images/landscape-before.jpg"
-                    afterImage="/images/landscape-after.jpg"
-                    beforeLabel="Low-Res"
-                    afterLabel="4K"
-                  />
-                </div>
-              </div>
-
-              {/* Street Photography */}
-              <div className="space-y-8">
-                <div className="text-left">
-                  <h4 className="text-2xl font-bold mb-2 flex items-center gap-2">
-                    <MapPin className="w-6 h-6 text-gold-500" />
-                    Street Photography
-                  </h4>
-                  <p className="text-muted-foreground">Capture the vibrancy of ASEAN urban life</p>
-                </div>
-
-                <div className="space-y-6">
-                  <ImageComparisonSlider
-                    beforeImage="/images/street-before.jpg"
-                    afterImage="/images/street-after.jpg"
-                    beforeLabel="Blurry"
-                    afterLabel="Sharp"
-                  />
-                </div>
-              </div>
-
-              {/* CTA in Examples */}
-              <div className="text-center space-y-6 py-12 n3uralia-card rounded-2xl n3uralia-border">
-                <h3 className="text-2xl font-bold">Want Results Like These?</h3>
-                <p className="text-muted-foreground">Start enhancing your own images with our AI platform</p>
-                <Button size="lg" className="n3uralia-button-gold" onClick={() => setActiveTab("enhance")}>
-                  <Upload className="w-4 h-4 mr-2" />
-                  Try It Now
-                </Button>
               </div>
             </div>
+
+            {/* CTA */}
+            <Card className="bg-gradient-to-r from-amber-500/10 to-yellow-600/10 border-amber-500/30">
+              <CardContent className="p-12 text-center">
+                <h2 className="text-3xl font-bold text-white mb-4">Want Results Like These?</h2>
+                <p className="text-gray-300 mb-6">Start enhancing your images with professional AI technology</p>
+                <Link href="/enhance">
+                  <Button
+                    size="lg"
+                    className="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white"
+                  >
+                    <Sparkles className="w-5 h-5 mr-2" />
+                    Try It Now
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
-      </main>
+      </section>
 
       <Footer />
     </div>
