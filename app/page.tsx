@@ -3,48 +3,60 @@
 import type React from "react"
 
 import { useState, useRef, useCallback, useEffect } from "react"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { ImageComparisonSlider } from "@/components/image-comparison-slider"
+import Footer from "@/components/footer"
 import {
+  Sparkles,
+  Zap,
+  Shield,
+  Palette,
+  Users,
+  Trophy,
+  Camera,
+  Brush,
+  Heart,
+  Building,
   ImageIcon,
+  Star,
+  ArrowRight,
+  CheckCircle2,
+  Brain,
+  Globe,
   Settings,
   Download,
   Loader2,
   CheckCircle,
-  Play,
   X,
   RefreshCw,
-  AlertCircle,
   Search,
   TestTube,
-  Key,
-  Shield,
   LogIn,
-  Users,
-  AlertTriangle,
-  Sparkles,
-  ArrowRight,
-  Globe,
   Cpu,
   Eye,
-  Award,
   Layers,
-  Maximize,
-  Heart,
-  Brain,
-  Palette,
   Target,
-  Fingerprint,
+  UploadCloud,
 } from "lucide-react"
+
+// Import auth components from updates
 import { LoginForm } from "@/components/auth/login-form"
 import { SignupForm } from "@/components/auth/signup-form"
 import { UserMenu } from "@/components/auth/user-menu"
 import { ProfileDialog } from "@/components/auth/profile-dialog"
+
+// Import admin components from updates
 import { UserManagement } from "@/components/admin/user-management"
 import { RoleManagement } from "@/components/admin/role-management"
+
+// Import utils from updates
 import { preProcessImage, postProcessImage, type EnhancementToggles } from "@/utils/image-processing"
 import { generateDomemaster, type DomemasterOptions } from "@/utils/domemaster"
-import Footer from "@/components/footer"
 
-// Define enhancement models - Updated with face-preserving options
+// Define enhancement models - Updated with face-preserving options from updates
 const ENHANCEMENT_MODELS = [
   {
     id: "clarity-upscaler-face-preserve",
@@ -99,6 +111,7 @@ const ENHANCEMENT_MODELS = [
   },
 ]
 
+// Define interfaces from updates
 interface EnhancementSettings {
   model: string
   upscaleFactor: number
@@ -143,8 +156,9 @@ interface CompletedJob {
   preserveAsianFeatures: boolean
 }
 
+// Rename component from LandingPage to AIImageEnhancementPortal
 const AIImageEnhancementPortal = () => {
-  // Authentication state
+  // Authentication state from updates
   const [user, setUser] = useState<any>(null)
   const [authMode, setAuthMode] = useState<"login" | "signup">("login")
   const [showAuth, setShowAuth] = useState(false)
@@ -152,6 +166,7 @@ const AIImageEnhancementPortal = () => {
   const [showProfile, setShowProfile] = useState(false)
 
   // Existing state
+  const [flippedCards, setFlippedCards] = useState<{ [key: string]: boolean }>({})
   const [selectedFiles, setSelectedFiles] = useState<any[]>([])
   const [processingQueue, setProcessingQueue] = useState<ProcessingJob[]>([])
   const [completedJobs, setCompletedJobs] = useState<CompletedJob[]>([])
@@ -162,7 +177,7 @@ const AIImageEnhancementPortal = () => {
   const [isDiscovering, setIsDiscovering] = useState(false)
   const [isTesting, setIsTesting] = useState(false)
 
-  // Enhancement Settings with safe defaults - Face Preserving as default
+  // Enhancement Settings with safe defaults - Face Preserving as default from updates
   const [enhancementSettings, setEnhancementSettings] = useState<EnhancementSettings>({
     model: "clarity-upscaler-face-preserve",
     upscaleFactor: 2,
@@ -183,7 +198,7 @@ const AIImageEnhancementPortal = () => {
     },
   })
 
-  // ASEAN Face Preservation Presets
+  // ASEAN Face Preservation Presets from updates
   const ASEAN_FACE_PRESETS = [
     {
       id: "asean-portrait-safe",
@@ -381,7 +396,7 @@ const AIImageEnhancementPortal = () => {
     },
   ]
 
-  // NUEVO: estado del preset domemaster
+  // NUEVO: estado del preset domemaster from updates
   const [domePreset, setDomePreset] = useState<DomePresetState>({
     enabled: false,
     size: 8192,
@@ -392,7 +407,14 @@ const AIImageEnhancementPortal = () => {
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
-  // Helper functions with complete safety
+  const toggleCard = (cardId: string) => {
+    setFlippedCards((prev) => ({
+      ...prev,
+      [cardId]: !prev[cardId],
+    }))
+  }
+
+  // Helper functions with complete safety from updates
   const getModelById = (modelId: string | undefined | null) => {
     if (!modelId) return ENHANCEMENT_MODELS[0]
     return ENHANCEMENT_MODELS.find((m) => m.id === modelId) || ENHANCEMENT_MODELS[0]
@@ -418,7 +440,7 @@ const AIImageEnhancementPortal = () => {
     return model[property] || fallback
   }
 
-  // Check for existing session on mount
+  // Check for existing session on mount from updates
   useEffect(() => {
     const savedUser = localStorage.getItem("ai-enhancer-user")
     if (savedUser) {
@@ -462,7 +484,7 @@ const AIImageEnhancementPortal = () => {
   const handleUpdateProfile = (updates: any) => {
     const updatedUser = { ...user, ...updates }
     setUser(updatedUser)
-    localStorage.setItem("ai-enhancer-user", JSON.stringify(updatedUser))
+    localStorage.setItem("ai-enhancer-user", JSON.JSON.stringify(updatedUser))
   }
 
   const isAdmin = user?.email === "admin@example.com" || user?.email === "demo@example.com"
@@ -949,7 +971,7 @@ const AIImageEnhancementPortal = () => {
     }
   }
 
-  // AI-powered parameter optimization based on image analysis
+  // AI-powered parameter optimization based on image analysis from updates
   const optimizeParametersWithAI = async (file: File) => {
     try {
       // Analyze image characteristics
@@ -1057,7 +1079,7 @@ const AIImageEnhancementPortal = () => {
     }
   }
 
-  // Replace color-based status indicators with monochrome
+  // Replace color-based status indicators with monochrome from updates
   const getStatusStyle = (status: string) => {
     switch (status) {
       case "completed":
@@ -1075,7 +1097,7 @@ const AIImageEnhancementPortal = () => {
     }
   }
 
-  // Show authentication modal if not logged in
+  // Show authentication modal if not logged in from updates
   if (!user && showAuth) {
     return (
       <div className="min-h-screen n3uralia-gradient flex items-center justify-center p-6">
@@ -1090,7 +1112,7 @@ const AIImageEnhancementPortal = () => {
 
   return (
     <div className="min-h-screen n3uralia-gradient">
-      {/* Header */}
+      {/* Header from updates */}
       <header className="n3uralia-card sticky top-0 z-50 border-b n3uralia-border">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
@@ -1137,7 +1159,7 @@ const AIImageEnhancementPortal = () => {
         </div>
       </header>
 
-      {/* Navigation */}
+      {/* Navigation from updates */}
       <nav className="max-w-7xl mx-auto px-6 py-6">
         <div className="flex space-x-1 n3uralia-card rounded-xl p-1">
           {[
@@ -1167,11 +1189,11 @@ const AIImageEnhancementPortal = () => {
         </div>
       </nav>
 
-      {/* Main Content */}
+      {/* Main Content from updates */}
       <main className="max-w-7xl mx-auto px-6 pb-12">
         {activeTab === "home" && (
           <div className="space-y-32">
-            {/* Hero Section - Enhanced with Visual Focus */}
+            {/* Hero Section - Enhanced with Interactive Comparison Slider from updates */}
             <section className="relative py-20 md:py-32">
               <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
                 <div>
@@ -1183,7 +1205,6 @@ const AIImageEnhancementPortal = () => {
                     <span className="text-sm n3uralia-text-muted">AI-Powered Enhancement</span>
                   </div>
 
-                  {/* Updated Hero Section Content */}
                   <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
                     ASEAN Face
                     <br />
@@ -1191,7 +1212,6 @@ const AIImageEnhancementPortal = () => {
                     <br />& Abstract Art
                   </h1>
 
-                  {/* Updated Paragraph Content */}
                   <p className="text-xl n3uralia-text-muted mb-8 leading-relaxed">
                     Specialized AI enhancement for Southeast Asian portraits and abstract artwork. Preserve authentic
                     facial features and artistic expression with zero Western bias.
@@ -1221,7 +1241,6 @@ const AIImageEnhancementPortal = () => {
                     </button>
                   </div>
 
-                  {/* Updated Stats Section */}
                   <div className="mt-12 flex items-center gap-8 text-sm">
                     <div>
                       <div className="text-2xl font-bold text-white mb-1">500K+</div>
@@ -1240,571 +1259,857 @@ const AIImageEnhancementPortal = () => {
                   </div>
                 </div>
 
+                {/* Interactive Before/After Comparison Slider */}
                 <div className="relative">
-                  <div className="n3uralia-card rounded-2xl overflow-hidden border n3uralia-border-gold">
-                    <img
-                      src="/images/hero-asean-bride.jpg"
-                      alt="Indonesian bride in traditional white kebaya and hijab - AI Enhanced 4x"
-                      className="w-full h-auto"
-                      onLoad={() => console.log("✅ Hero image loaded successfully!")}
-                      onError={(e) => {
-                        console.error("❌ Hero image failed to load:", e)
-                        console.log("Attempted path:", "/images/hero-asean-bride.jpg")
-                      }}
-                    />
-                    <div className="absolute top-4 right-4 n3uralia-badge-gold px-4 py-2 rounded-full flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4" />
-                      <span className="text-sm font-medium">4x Enhanced</span>
-                    </div>
-                  </div>
-
-                  {/* Debug information */}
-                  <div className="mt-2 text-xs n3uralia-text-muted text-center">
-                    Image path: /images/hero-asean-bride.jpg
+                  <ImageComparisonSlider
+                    beforeImage="/images/wedding-before.png"
+                    afterImage="/images/wedding-after.png"
+                    beforeLabel="Original"
+                    afterLabel="4x Enhanced"
+                    className="shadow-2xl ring-1 ring-gold-300/20"
+                  />
+                  <div className="mt-4 flex items-center justify-center gap-2 text-sm text-white/70">
+                    <CheckCircle className="w-4 h-4 n3uralia-gold-accent" />
+                    <span>🇮🇩 Indonesian Wedding • Face Preserved • 4x Enhancement</span>
                   </div>
                 </div>
               </div>
             </section>
 
-            {/* Live Examples Section */}
-            <section id="examples" className="py-20">
-              <div className="text-center mb-16">
-                <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">See The Difference</h2>
-                <p className="text-xl n3uralia-text-muted max-w-3xl mx-auto">
-                  Real transformations with authentic face preservation and artistic integrity
-                </p>
-              </div>
-
-              {/* Updated Examples Array */}
-              <div className="grid md:grid-cols-2 gap-8">
-                {[
-                  {
-                    title: "ASEAN Portrait - Wedding Photo",
-                    original: "/images/wedding-original.jpg",
-                    enhanced: "/images/wedding-enhanced.jpg",
-                    stats: "4x Upscale • 🇮🇩 Face Preserved • Cultural Authenticity",
-                  },
-                  {
-                    title: "Abstract Art - Digital Painting",
-                    original: "/images/abstract-original.jpg",
-                    enhanced: "/images/abstract-enhanced.jpg",
-                    stats: "4x Upscale • Texture Preserved • Artistic Integrity",
-                  },
-                  {
-                    title: "ASEAN Portrait - Family Photo",
-                    original: "/images/family-original.jpg",
-                    enhanced: "/images/family-enhanced.jpg",
-                    stats: "3x Upscale • 🇲🇾 Multi-Face • Natural Tones",
-                  },
-                  {
-                    title: "Abstract Art - Mixed Media",
-                    original: "/images/mixed-media-original.jpg",
-                    enhanced: "/images/mixed-media-enhanced.jpg",
-                    stats: "4x Upscale • Brushstroke Detail • Color Accuracy",
-                  },
-                ].map((example, index) => (
-                  <div key={index} className="n3uralia-card rounded-2xl overflow-hidden group">
-                    <div className="relative aspect-square">
-                      <div className="absolute inset-0 grid grid-cols-2">
-                        <div className="relative overflow-hidden">
-                          <img
-                            src={example.original || "/placeholder.svg"}
-                            alt="Original"
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="absolute bottom-4 left-4 bg-black/80 px-3 py-1 rounded text-white text-sm">
-                            Original
-                          </div>
-                        </div>
-                        <div className="relative overflow-hidden">
-                          <img
-                            src={example.enhanced || "/placeholder.svg"}
-                            alt="Enhanced"
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="absolute bottom-4 right-4 n3uralia-badge-gold px-3 py-1 rounded text-sm">
-                            Enhanced
-                          </div>
-                        </div>
-                      </div>
-                      <div className="absolute inset-y-0 left-1/2 w-0.5 bg-white/30 transform -translate-x-1/2"></div>
-                    </div>
-                    <div className="p-6 border-t n3uralia-border-gold">
-                      <h3 className="text-lg font-semibold text-white mb-2">{example.title}</h3>
-                      <div className="flex items-center gap-2 text-sm n3uralia-text-muted">
-                        <CheckCircle className="w-4 h-4 n3uralia-gold-accent" />
-                        <span>{example.stats}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="text-center mt-12">
-                <button
-                  onClick={() => {
-                    if (!user) {
-                      setShowAuth(true)
-                    } else {
-                      setActiveTab("enhance")
-                    }
-                  }}
-                  className="n3uralia-button-gold px-8 py-4 rounded-lg text-lg font-semibold transition-all inline-flex items-center space-x-2"
-                >
-                  <span>Enhance Your Images</span>
-                  <ArrowRight className="w-5 h-5" />
-                </button>
-              </div>
-            </section>
-
-            {/* How It Works Section */}
-            <section className="py-20">
-              <div className="text-center mb-16">
-                <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Simple 3-Step Process</h2>
-                <p className="text-xl n3uralia-text-muted max-w-3xl mx-auto">
-                  Professional results in seconds, no technical expertise required
-                </p>
-              </div>
-
-              <div className="grid md:grid-cols-3 gap-8">
-                {[
-                  {
-                    step: "01",
-                    icon: ImageIcon,
-                    title: "Upload Image",
-                    description: "Drag & drop or select images up to 15MB. Supports JPG, PNG, WebP, and more.",
-                  },
-                  {
-                    step: "02",
-                    icon: Settings,
-                    title: "Choose Settings",
-                    description: "Select from ASEAN-safe presets or use AI optimization for intelligent enhancement.",
-                  },
-                  {
-                    step: "03",
-                    icon: Download,
-                    title: "Download Result",
-                    description: "Get your enhanced image in seconds. Export as PNG or with domemaster projection.",
-                  },
-                ].map((item, index) => (
-                  <div key={index} className="n3uralia-card rounded-2xl p-8 text-center relative">
-                    <div className="absolute -top-4 left-8 n3uralia-badge-gold w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold">
-                      {item.step}
-                    </div>
-                    <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6 n3uralia-glow-gold">
-                      <item.icon className="w-8 h-8 n3uralia-gold-accent" />
-                    </div>
-                    <h3 className="text-xl font-semibold text-white mb-4">{item.title}</h3>
-                    <p className="n3uralia-text-muted leading-relaxed">{item.description}</p>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* Capabilities Section with Flippable Cards */}
-            <section className="py-20">
-              <div className="text-center mb-16">
-                <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Core Capabilities</h2>
-                <p className="text-xl n3uralia-text-muted max-w-3xl mx-auto">
-                  Advanced AI technology designed for professional results with cultural awareness
-                </p>
-              </div>
-
-              {/* Updated Capabilities Array */}
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {[
-                  {
-                    icon: Fingerprint,
-                    title: "ASEAN Face Preservation",
-                    backInfo: {
-                      title: "Southeast Asian Specialization",
-                      details: [
-                        "Indonesian, Malaysian, Thai, Filipino features",
-                        "Skin tone accuracy without lightening",
-                        "Eye shape and structure protection",
-                        "Natural facial proportions maintained",
-                        "Zero Western beauty standard bias",
-                      ],
-                      stats: "Trained on 500K+ ASEAN portraits",
-                    },
-                  },
-                  {
-                    icon: Palette,
-                    title: "Abstract Art Enhancement",
-                    backInfo: {
-                      title: "Artistic Integrity Protection",
-                      details: [
-                        "Brushstroke and texture preservation",
-                        "Color palette accuracy maintenance",
-                        "Compositional balance respect",
-                        "Mixed media detail enhancement",
-                        "Artist's intent preservation",
-                      ],
-                      stats: "Specialized algorithms for non-photographic art",
-                    },
-                  },
-                  {
-                    icon: Shield,
-                    title: "Cultural Authenticity",
-                    backInfo: {
-                      title: "Cultural Context Awareness",
-                      details: [
-                        "Traditional costume detail preservation",
-                        "Cultural skin tone standards",
-                        "Heritage photo restoration",
-                        "Regional facial characteristic respect",
-                        "Identity verification compliance",
-                      ],
-                      stats: "99.9% accuracy in cultural preservation",
-                    },
-                  },
-                  {
-                    icon: Brain,
-                    title: "Dual-Mode AI",
-                    backInfo: {
-                      title: "Specialized Processing Modes",
-                      details: [
-                        "Portrait mode: Face-aware algorithms",
-                        "Art mode: Texture and color focus",
-                        "Intelligent content detection",
-                        "Adaptive enhancement strategies",
-                        "Mode-specific optimization",
-                      ],
-                      stats: "Two specialized AI pipelines",
-                    },
-                  },
-                  {
-                    icon: Layers,
-                    title: "Detail Preservation",
-                    backInfo: {
-                      title: "Multi-Layer Analysis",
-                      details: [
-                        "Fine detail recovery and enhancement",
-                        "Texture authenticity maintenance",
-                        "Edge sharpness without artifacts",
-                        "Depth perception preservation",
-                        "Professional print quality output",
-                      ],
-                      stats: "8-bit to 16-bit processing pipeline",
-                    },
-                  },
-                  {
-                    icon: Target,
-                    title: "Purpose-Built Quality",
-                    backInfo: {
-                      title: "Output Optimization",
-                      details: [
-                        "Wedding photography specifications",
-                        "Gallery exhibition standards",
-                        "Official document compliance",
-                        "Social media platform optimization",
-                        "Archive-quality preservation",
-                      ],
-                      stats: "300 DPI print-ready output",
-                    },
-                  },
-                ].map((capability, index) => (
-                  <div key={index} className="capability-card-container">
-                    <div className="capability-card">
-                      {/* Front of card */}
-                      <div className="capability-card-face capability-card-front">
-                        <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center mb-6 n3uralia-glow-gold transition-all">
-                          <capability.icon className="w-6 h-6 n3uralia-gold-accent" />
-                        </div>
-                        <h3 className="text-xl font-semibold text-white mb-4">{capability.title}</h3>
-                        <div className="flex-1 flex items-center justify-center">
-                          <div className="text-center">
-                            <div className="text-4xl mb-4 n3uralia-gold-accent">
-                              <capability.icon className="w-16 h-16 mx-auto" />
-                            </div>
-                            <p className="text-sm n3uralia-text-muted">Hover to explore details</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Back of card */}
-                      <div className="capability-card-face capability-card-back">
-                        <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center mb-4 n3uralia-glow-gold">
-                          <capability.icon className="w-6 h-6 n3uralia-gold-accent" />
-                        </div>
-                        <h3 className="text-lg font-semibold text-white mb-3">{capability.backInfo.title}</h3>
-                        <ul className="space-y-2 mb-4 flex-1">
-                          {capability.backInfo.details.map((detail, detailIndex) => (
-                            <li key={detailIndex} className="flex items-start space-x-2 text-sm">
-                              <div
-                                className="w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0"
-                                style={{ backgroundColor: "rgba(218, 165, 32, 1)" }}
-                              ></div>
-                              <span className="n3uralia-text-muted leading-relaxed">{detail}</span>
-                            </li>
-                          ))}
-                        </ul>
-                        <div className="mt-auto pt-4 border-t border-white/10">
-                          <div className="flex items-center space-x-2 text-sm">
-                            <div
-                              className="w-2 h-2 rounded-full"
-                              style={{ backgroundColor: "rgba(218, 165, 32, 1)" }}
-                            ></div>
-                            <span className="n3uralia-gold-glow font-medium">{capability.backInfo.stats}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* ASEAN Focus Section */}
-            <section className="py-20">
-              <div className="n3uralia-card-premium rounded-3xl p-12 md:p-16 border n3uralia-border-gold">
-                <div className="text-center mb-12">
-                  <div className="text-5xl mb-6">🇮🇩🇲🇾🇹🇭🇵🇭🇻🇳</div>
-                  <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">ASEAN Specialization</h2>
-                  <p className="text-xl n3uralia-text-muted max-w-3xl mx-auto">
-                    The first AI enhancement platform specifically engineered to preserve and respect Southeast Asian
-                    facial features and cultural characteristics.
+            {/* Core Capabilities Section (modified for new component structure) */}
+            <section id="features" className="relative py-16 md:py-24 bg-gray-50/50 dark:bg-gray-900/50">
+              <div className="max-w-7xl mx-auto">
+                <div className="text-center space-y-4 mb-12">
+                  <Badge className="n3uralia-badge-gold mb-2">
+                    <Star className="w-4 h-4 mr-2" />
+                    Core Capabilities
+                  </Badge>
+                  <h2 className="text-3xl md:text-4xl font-bold text-white">
+                    Specialized AI Enhancement for{" "}
+                    <span className="bg-gradient-to-r from-gold-300 to-gold-500 text-transparent bg-clip-text">
+                      Cultural Authenticity
+                    </span>
+                  </h2>
+                  <p className="text-lg n3uralia-text-muted max-w-2xl mx-auto">
+                    Two core specializations: ASEAN face preservation and abstract art enhancement
                   </p>
                 </div>
 
-                {/* Updated ASEAN Focus Grid Items */}
                 <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {[
-                    { icon: "🇮🇩", title: "Indonesian Features", desc: "Natural skin tones & proportions" },
-                    { icon: "🇲🇾", title: "Malaysian Heritage", desc: "Cultural diversity preserved" },
-                    { icon: "🇹🇭", title: "Thai Characteristics", desc: "Traditional beauty standards" },
-                    { icon: "🇵🇭", title: "Filipino Identity", desc: "Authentic facial structure" },
-                    { icon: "🎨", title: "Abstract Art", desc: "Artistic expression respected" },
-                    { icon: "🖼️", title: "Gallery Quality", desc: "Exhibition-ready output" },
-                  ].map((item, index) => (
-                    <div key={index} className="bg-white/5 rounded-xl p-6 text-center border n3uralia-border-gold">
-                      <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4 n3uralia-glow-gold">
-                        <span className="n3uralia-gold-glow font-bold">{item.icon}</span>
-                      </div>
-                      <h4 className="text-white font-semibold mb-2">{item.title}</h4>
-                      <p className="n3uralia-text-muted text-sm">{item.desc}</p>
-                    </div>
+                    {
+                      id: "faces",
+                      icon: Users,
+                      title: "ASEAN Face Preservation",
+                      front: "Ultra-safe enhancement designed for Southeast Asian facial features",
+                      back: "Trained on 500K+ Indonesian, Malaysian, Thai, Filipino, and Vietnamese faces. Preserves authentic features including skin tone, eye shape, nose structure, and facial proportions without Western bias.",
+                    },
+                    {
+                      id: "abstract",
+                      icon: Palette,
+                      title: "Abstract Art Enhancement",
+                      front: "Specialized enhancement for abstract and artistic imagery",
+                      back: "Preserves artistic intent while enhancing texture, color depth, and detail. Perfect for digital paintings, mixed media, and abstract compositions.",
+                    },
+                    {
+                      id: "wedding",
+                      icon: Heart,
+                      title: "Wedding Photography",
+                      front: "Perfect for Southeast Asian wedding and portrait photography",
+                      back: "Enhance traditional wedding attire details, jewelry, and fabric textures while maintaining natural skin tones and facial authenticity across diverse ASEAN cultures.",
+                    },
+                    {
+                      id: "quality",
+                      icon: Sparkles,
+                      title: "4x Super Resolution",
+                      front: "Increase resolution up to 4x while maintaining quality",
+                      back: "Advanced AI upscaling that enhances fine details, reduces noise, and sharpens images without introducing artifacts. Optimized for both portraits and abstract art.",
+                    },
+                  ].map((capability) => (
+                    <Card
+                      key={capability.id}
+                      className="relative h-64 cursor-pointer transition-all duration-500 hover:shadow-gold-lg"
+                      style={{
+                        transformStyle: "preserve-3d",
+                        transform: flippedCards[capability.id] ? "rotateY(180deg)" : "rotateY(0deg)",
+                      }}
+                      onClick={() => toggleCard(capability.id)}
+                    >
+                      {/* Front of card */}
+                      <CardContent
+                        className="absolute inset-0 p-6 flex flex-col items-center justify-center text-center space-y-4 rounded-lg"
+                        style={{
+                          backfaceVisibility: "hidden",
+                          background:
+                            "linear-gradient(135deg, rgba(218, 165, 32, 0.1) 0%, rgba(255, 193, 7, 0.1) 100%)",
+                        }}
+                      >
+                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-gold-300 to-gold-500 flex items-center justify-center shadow-gold-md">
+                          <capability.icon className="w-8 h-8 text-black" />
+                        </div>
+                        <h3 className="text-xl font-bold text-white">{capability.title}</h3>
+                        <p className="text-gray-300">{capability.front}</p>
+                        <span className="text-xs text-gold-300">Click to learn more</span>
+                      </CardContent>
+
+                      {/* Back of card */}
+                      <CardContent
+                        className="absolute inset-0 p-6 flex flex-col justify-center text-center space-y-4 rounded-lg"
+                        style={{
+                          backfaceVisibility: "hidden",
+                          transform: "rotateY(180deg)",
+                          background:
+                            "linear-gradient(135deg, rgba(255, 215, 0, 0.05) 0%, rgba(218, 165, 32, 0.05) 100%)",
+                        }}
+                      >
+                        <p className="text-sm text-gray-300">{capability.back}</p>
+                        <span className="text-xs text-gold-400">Click to return</span>
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
               </div>
             </section>
 
-            {/* Use Cases Section with Flippable Cards */}
-            <section className="py-20">
-              <div className="text-center mb-16">
-                <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Professional Applications</h2>
-                <p className="text-xl n3uralia-text-muted max-w-3xl mx-auto">
-                  From personal memories to commercial projects, delivering exceptional results across all use cases
-                </p>
-              </div>
-
-              {/* Updated Use Cases Array */}
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {[
-                  {
-                    icon: "💒",
-                    title: "ASEAN Wedding Photography",
-                    tag: "Portrait",
-                    backInfo: {
-                      title: "Cultural Wedding Enhancement",
-                      details: [
-                        "Indonesian Javanese & Sundanese weddings",
-                        "Malaysian Malay & Chinese traditions",
-                        "Thai Buddhist ceremony preservation",
-                        "Filipino Catholic & cultural weddings",
-                        "Natural skin tone and makeup preservation",
-                      ],
-                      stats: "Perfect for 300+ photo wedding collections",
-                    },
-                  },
-                  {
-                    icon: "🎨",
-                    title: "Abstract Art Galleries",
-                    tag: "Art",
-                    backInfo: {
-                      title: "Exhibition-Grade Enhancement",
-                      details: [
-                        "Contemporary abstract artworks",
-                        "Mixed media composition preservation",
-                        "Brushstroke and texture detail",
-                        "Color palette accuracy for prints",
-                        "Artist portfolio optimization",
-                      ],
-                      stats: "Used by 50+ galleries and artists",
-                    },
-                  },
-                  {
-                    icon: "👨‍👩‍👧‍👦",
-                    title: "ASEAN Family Archives",
-                    tag: "Heritage",
-                    backInfo: {
-                      title: "Multi-Generational Preservation",
-                      details: [
-                        "Family reunion and gathering photos",
-                        "Heritage documentation projects",
-                        "Multi-ethnic family compositions",
-                        "Age-appropriate enhancement for all members",
-                        "Cultural clothing and background details",
-                      ],
-                      stats: "Handles up to 20+ people per image",
-                    },
-                  },
-                  {
-                    icon: "🆔",
-                    title: "Official ID Photos",
-                    tag: "Document",
-                    backInfo: {
-                      title: "Government Standard Compliance",
-                      details: [
-                        "Passport and visa photo requirements",
-                        "National ID card specifications",
-                        "Driving license photo standards",
-                        "Biometric verification compatibility",
-                        "100% facial feature preservation",
-                      ],
-                      stats: "Meets international ID photo standards",
-                    },
-                  },
-                  {
-                    icon: "🖼️",
-                    title: "Digital Art Prints",
-                    tag: "Art",
-                    backInfo: {
-                      title: "Commercial Art Production",
-                      details: [
-                        "Giclee print preparation",
-                        "Canvas reproduction optimization",
-                        "Limited edition print quality",
-                        "Color-managed workflow",
-                        "Gallery wrap and framing ready",
-                      ],
-                      stats: "300 DPI gallery-grade output",
-                    },
-                  },
-                  {
-                    icon: "🏛️",
-                    title: "Cultural Heritage",
-                    tag: "Heritage",
-                    backInfo: {
-                      title: "Museum-Quality Preservation",
-                      details: [
-                        "Traditional Southeast Asian portraits",
-                        "Historical cultural documentation",
-                        "Batik and traditional costume details",
-                        "Temple and ceremonial photography",
-                        "Archive-standard restoration",
-                      ],
-                      stats: "Trusted by cultural institutions",
-                    },
-                  },
-                ].map((useCase, index) => (
-                  <div key={index} className="capability-card-container">
-                    <div className="capability-card">
-                      {/* Front of card */}
-                      <div className="capability-card-face capability-card-front">
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="text-4xl">{useCase.icon}</div>
-                          <span className="text-xs n3uralia-text-muted bg-white/5 px-2 py-1 rounded-full border n3uralia-border-gold">
-                            {useCase.tag}
-                          </span>
+            {/* ASEAN Focus Section (modified for new component structure) */}
+            <section id="examples" className="container py-16 md:py-24">
+              <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+                <div className="space-y-6">
+                  <Badge className="n3uralia-badge-gold">
+                    <Globe className="w-4 h-4 mr-2" />
+                    Built for Southeast Asia
+                  </Badge>
+                  <h2 className="text-3xl md:text-4xl font-bold text-white">
+                    Celebrating{" "}
+                    <span className="bg-gradient-to-r from-gold-300 to-gold-500 text-transparent bg-clip-text">
+                      ASEAN Beauty
+                    </span>
+                  </h2>
+                  <p className="text-lg n3uralia-text-muted">
+                    Unlike generic AI models trained primarily on Western faces, n3uralia is specifically designed to
+                    understand and preserve the unique beauty of Southeast Asian features.
+                  </p>
+                  <div className="space-y-4">
+                    {[
+                      {
+                        country: "🇮🇩 Indonesia",
+                        features: "Preserves warm skin tones, almond eyes, traditional makeup",
+                      },
+                      {
+                        country: "🇲🇾 Malaysia",
+                        features: "Maintains diverse ethnic features, natural complexions",
+                      },
+                      {
+                        country: "🇹🇭 Thailand",
+                        features: "Enhances traditional styling, golden hour skin tones",
+                      },
+                      {
+                        country: "🇵🇭 Philippines",
+                        features: "Respects unique facial structure, warm undertones",
+                      },
+                      {
+                        country: "🇻🇳 Vietnam",
+                        features: "Preserves delicate features, natural beauty",
+                      },
+                    ].map((item) => (
+                      <div
+                        key={item.country}
+                        className="flex items-start gap-3 p-4 rounded-lg bg-white/5 border border-gold-200/20"
+                      >
+                        <CheckCircle2 className="w-5 h-5 n3uralia-gold-accent flex-shrink-0 mt-0.5" />
+                        <div>
+                          <div className="font-semibold text-white">{item.country}</div>
+                          <div className="text-sm n3uralia-text-muted">{item.features}</div>
                         </div>
-                        <h3 className="text-xl font-semibold text-white mb-4">{useCase.title}</h3>
-                        <div className="flex-1 flex items-center justify-center">
-                          <div className="text-center">
-                            <div className="text-6xl mb-4">{useCase.icon}</div>
-                            <p className="text-sm n3uralia-text-muted">Hover to explore applications</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <img
+                    src="/images/wedding-after.png"
+                    alt="Indonesian Wedding Portrait"
+                    className="rounded-2xl shadow-2xl ring-1 ring-gold-300/20"
+                  />
+                  <img
+                    src="/placeholder.svg?height=400&width=300"
+                    alt="Thai Traditional Portrait"
+                    className="rounded-2xl shadow-2xl ring-1 ring-gold-300/20 mt-8"
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* Professional Applications (modified for new component structure) */}
+            <section id="applications" className="container py-16 md:py-24 bg-gray-50/50 dark:bg-gray-900/50">
+              <div className="max-w-7xl mx-auto">
+                <div className="text-center space-y-4 mb-12">
+                  <Badge className="n3uralia-badge-gold mb-2">
+                    <Trophy className="w-4 h-4 mr-2" />
+                    Professional Applications
+                  </Badge>
+                  <h2 className="text-3xl md:text-4xl font-bold text-white">
+                    Trusted by{" "}
+                    <span className="bg-gradient-to-r from-gold-300 to-gold-500 text-transparent bg-clip-text">
+                      Creative Professionals
+                    </span>
+                  </h2>
+                  <p className="text-lg n3uralia-text-muted max-w-2xl mx-auto">
+                    From wedding photographers to digital artists, n3uralia delivers professional-grade enhancements
+                  </p>
+                </div>
+
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {[
+                    {
+                      id: "wedding-photo",
+                      icon: Camera,
+                      title: "Wedding Photography",
+                      front: "Enhance traditional wedding portraits and ceremonies",
+                      back: "Perfect for Indonesian kebaya, Malaysian baju kurung, Thai traditional dress, and Filipino barong. Preserves intricate fabric details and cultural authenticity.",
+                      color: "from-gold-300 to-gold-500",
+                    },
+                    {
+                      id: "family",
+                      icon: Users,
+                      title: "Family Portraits",
+                      front: "Restore and enhance precious family memories",
+                      back: "Bring old family photos back to life while maintaining authentic ASEAN features across generations. Perfect for multigenerational portraits.",
+                      color: "from-gold-400 to-amber-500",
+                    },
+                    {
+                      id: "abstract",
+                      icon: Brush,
+                      title: "Abstract Art",
+                      front: "Elevate digital paintings and mixed media",
+                      back: "Enhance texture, depth, and color vibrancy in abstract artwork while preserving artistic intent. Ideal for contemporary Southeast Asian artists.",
+                      color: "from-amber-400 to-gold-500",
+                    },
+                    {
+                      id: "commercial",
+                      icon: Building,
+                      title: "Commercial Photography",
+                      front: "Professional enhancement for marketing materials",
+                      back: "Enhance product photography, corporate headshots, and promotional materials with authentic ASEAN representation.",
+                      color: "from-gold-300 to-yellow-500",
+                    },
+                    {
+                      id: "heritage",
+                      icon: Shield,
+                      title: "Cultural Heritage",
+                      front: "Preserve historical and cultural documentation",
+                      back: "Restore and enhance archival photos of cultural ceremonies, traditional practices, and historical moments with respect for authenticity.",
+                      color: "from-yellow-500 to-gold-400",
+                    },
+                    {
+                      id: "digital-art",
+                      icon: Palette,
+                      title: "Digital Art Creation",
+                      front: "Upscale artwork for print and display",
+                      back: "Prepare digital art for large format printing and exhibition with AI-powered super resolution that maintains artistic quality.",
+                      color: "from-gold-500 to-amber-400",
+                    },
+                  ].map((app) => (
+                    <Card
+                      key={app.id}
+                      className="relative h-72 cursor-pointer transition-all duration-500 hover:shadow-gold-lg group"
+                      style={{
+                        transformStyle: "preserve-3d",
+                        transform: flippedCards[app.id] ? "rotateY(180deg)" : "rotateY(0deg)",
+                      }}
+                      onClick={() => toggleCard(app.id)}
+                    >
+                      {/* Front of card */}
+                      <CardContent
+                        className="absolute inset-0 p-6 flex flex-col items-center justify-center text-center space-y-4 rounded-lg"
+                        style={{
+                          backfaceVisibility: "hidden",
+                          background: `linear-gradient(135deg, rgba(218, 165, 32, 0.1) 0%, ${
+                            app.color.includes("amber")
+                              ? "rgba(255, 165, 0, 0.1)"
+                              : app.color.includes("yellow")
+                                ? "rgba(255, 255, 0, 0.1)"
+                                : "rgba(255, 193, 7, 0.1)"
+                          } 100%)`,
+                        }}
+                      >
+                        <div
+                          className={`w-16 h-16 rounded-full bg-gradient-to-br ${app.color} flex items-center justify-center shadow-gold-md group-hover:animate-gold-pulse`}
+                        >
+                          <app.icon className="w-8 h-8 text-black transition-transform group-hover:scale-110" />
+                        </div>
+                        <h3 className="text-xl font-bold text-white">{app.title}</h3>
+                        <p className="text-gray-300">{app.front}</p>
+                        <span className="text-xs text-gold-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                          Click to learn more
+                        </span>
+                      </CardContent>
+
+                      {/* Back of card */}
+                      <CardContent
+                        className="absolute inset-0 p-6 flex flex-col justify-center text-center space-y-4 rounded-lg"
+                        style={{
+                          backfaceVisibility: "hidden",
+                          transform: "rotateY(180deg)",
+                          background: `linear-gradient(135deg, rgba(218, 165, 32, 0.05) 0%, ${
+                            app.color.includes("amber")
+                              ? "rgba(255, 165, 0, 0.05)"
+                              : app.color.includes("yellow")
+                                ? "rgba(255, 255, 0, 0.05)"
+                                : "rgba(255, 193, 7, 0.05)"
+                          } 100%)`,
+                        }}
+                      >
+                        <p className="text-sm text-gray-300">{app.back}</p>
+                        <span className="text-xs text-gold-400">Click to return</span>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            {/* Call to Action (modified for new component structure) */}
+            <section className="container py-16 md:py-24">
+              <Card className="relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-gold-300/10 via-gold-400/10 to-gold-500/10 animate-gold-shimmer"></div>
+                <CardContent className="relative p-12 text-center space-y-6">
+                  <h2 className="text-3xl md:text-4xl font-bold text-white">Ready to Enhance Your Images?</h2>
+                  <p className="text-lg n3uralia-text-muted max-w-2xl mx-auto">
+                    Start enhancing your ASEAN portraits and abstract art with AI-powered precision. No signup required,
+                    completely free to use.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                    <Link href="/enhance">
+                      <Button
+                        size="lg"
+                        className="n3uralia-button-gold text-lg h-14 px-8 shadow-gold-lg hover:shadow-gold-xl"
+                      >
+                        <Zap className="w-5 h-5 mr-2" />
+                        Start Enhancing Now
+                        <ArrowRight className="w-5 h-5 ml-2" />
+                      </Button>
+                    </Link>
+                  </div>
+                  <div className="flex items-center justify-center gap-8 text-sm pt-4">
+                    <div className="flex items-center gap-2 n3uralia-text-muted">
+                      <Shield className="w-5 h-5 n3uralia-gold-accent" />
+                      <span>100% Free</span>
+                    </div>
+                    <div className="flex items-center gap-2 n3uralia-text-muted">
+                      <Sparkles className="w-5 h-5 n3uralia-gold-accent" />
+                      <span>No Watermarks</span>
+                    </div>
+                    <div className="flex items-center gap-2 n3uralia-text-muted">
+                      <Users className="w-5 h-5 n3uralia-gold-accent" />
+                      <span>Cultural Authenticity</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </section>
+
+            {/* Placeholder for Enhance Tab Content */}
+            {activeTab === "enhance" && (
+              <section className="space-y-12">
+                {/* Add the enhance tab content here based on the updates, e.g., file uploads, settings */}
+                <div className="grid lg:grid-cols-3 gap-8">
+                  {/* Image Upload Area */}
+                  <div
+                    className="col-span-2 n3uralia-card rounded-xl p-8 flex flex-col items-center justify-center border-2 border-dashed border-white/20 cursor-pointer"
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <input
+                      type="file"
+                      multiple
+                      ref={fileInputRef}
+                      className="hidden"
+                      accept="image/*"
+                      onChange={(e) => e.target.files && handleFileSelect(e.target.files)}
+                    />
+                    <UploadCloud className="w-12 h-12 n3uralia-gold-accent mb-4" />
+                    <h3 className="text-xl font-bold text-white mb-2">Drag & Drop Your Images Here</h3>
+                    <p className="n3uralia-text-muted mb-4">Or click to select files</p>
+                    <p className="n3uralia-text-muted text-sm">Supports JPEG, PNG, WEBP. Max file size: 15MB</p>
+                  </div>
+
+                  {/* Enhancement Settings Panel */}
+                  <div className="n3uralia-card rounded-xl p-6">
+                    <h3 className="text-lg font-bold text-white mb-4">Enhancement Settings</h3>
+                    <div className="space-y-4">
+                      {/* Model Selection */}
+                      <div>
+                        <label className="block text-sm font-medium n3uralia-text-muted mb-2">AI Model</label>
+                        <select
+                          value={enhancementSettings.model}
+                          onChange={(e) => {
+                            setEnhancementSettings((prev) => ({
+                              ...prev,
+                              model: e.target.value,
+                              // Reset faceEnhance if model doesn't support it, or based on new model
+                              faceEnhance:
+                                ENHANCEMENT_MODELS.find((m) => m.id === e.target.value)?.faceEnhancement || false,
+                            }))
+                          }}
+                          className="w-full p-3 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-gold-500"
+                        >
+                          {ENHANCEMENT_MODELS.map((model) => (
+                            <option key={model.id} value={model.id} disabled={model.status !== "working"}>
+                              {model.name} {model.status !== "working" ? "(Unavailable)" : ""}
+                            </option>
+                          ))}
+                        </select>
+                        <p className="text-xs n3uralia-text-muted mt-1">
+                          {ENHANCEMENT_MODELS.find((m) => m.id === enhancementSettings.model)?.description}
+                        </p>
+                      </div>
+
+                      {/* Upscale Factor */}
+                      <div>
+                        <label className="block text-sm font-medium n3uralia-text-muted mb-2">Upscale Factor</label>
+                        <input
+                          type="range"
+                          min="1"
+                          max={getMaxUpscale()}
+                          value={enhancementSettings.upscaleFactor}
+                          onChange={(e) =>
+                            setEnhancementSettings((prev) => ({
+                              ...prev,
+                              upscaleFactor: Number.parseInt(e.target.value),
+                            }))
+                          }
+                          className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer"
+                        />
+                        <div className="flex justify-between text-xs n3uralia-text-muted">
+                          <span>1x</span>
+                          <span>{getMaxUpscale()}x</span>
+                        </div>
+                        <p className="text-xs n3uralia-text-muted mt-1">
+                          Target Resolution: <span className="font-semibold text-white">{getTargetResolution()}</span>
+                        </p>
+                      </div>
+
+                      {/* Preserve Asian Features */}
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="checkbox"
+                          id="preserveAsianFeatures"
+                          checked={enhancementSettings.preserveAsianFeatures}
+                          onChange={(e) =>
+                            setEnhancementSettings((prev) => ({ ...prev, preserveAsianFeatures: e.target.checked }))
+                          }
+                          className="w-5 h-5 accent-gold-500 rounded border-white/30 bg-white/10 focus:ring-gold-500"
+                        />
+                        <label htmlFor="preserveAsianFeatures" className="text-sm text-white font-medium">
+                          Preserve ASEAN Face Features (Recommended)
+                        </label>
+                      </div>
+
+                      {/* Face Enhance Toggle (conditional) */}
+                      {!getCurrentModel()?.preserveFaces && (
+                        <div className="flex items-center space-x-3">
+                          <input
+                            type="checkbox"
+                            id="faceEnhance"
+                            checked={enhancementSettings.faceEnhance}
+                            onChange={(e) =>
+                              setEnhancementSettings((prev) => ({ ...prev, faceEnhance: e.target.checked }))
+                            }
+                            className="w-5 h-5 accent-gold-500 rounded border-white/30 bg-white/10 focus:ring-gold-500"
+                          />
+                          <label htmlFor="faceEnhance" className="text-sm text-white font-medium">
+                            Face Enhancement
+                          </label>
+                        </div>
+                      )}
+
+                      {/* Target Use */}
+                      <div>
+                        <label className="block text-sm font-medium n3uralia-text-muted mb-2">Target Use</label>
+                        <select
+                          value={enhancementSettings.targetUse}
+                          onChange={(e) => setEnhancementSettings((prev) => ({ ...prev, targetUse: e.target.value }))}
+                          className="w-full p-3 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-gold-500"
+                        >
+                          <option value="display">Display (Web/Screen)</option>
+                          <option value="print">Print</option>
+                          <option value="social">Social Media</option>
+                          <option value="document">Document</option>
+                          <option value="archive">Archive</option>
+                        </select>
+                      </div>
+
+                      {/* Format */}
+                      <div>
+                        <label className="block text-sm font-medium n3uralia-text-muted mb-2">Format</label>
+                        <select
+                          value={enhancementSettings.format}
+                          onChange={(e) => setEnhancementSettings((prev) => ({ ...prev, format: e.target.value }))}
+                          className="w-full p-3 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-gold-500"
+                        >
+                          <option value="PNG">PNG</option>
+                          <option value="JPEG">JPEG</option>
+                          <option value="WEBP">WEBP</option>
+                        </select>
+                      </div>
+
+                      {/* Quality Slider (for JPEG/WEBP) */}
+                      {enhancementSettings.format !== "PNG" && (
+                        <div>
+                          <label className="block text-sm font-medium n3uralia-text-muted mb-2">
+                            Quality ({enhancementSettings.quality}%)
+                          </label>
+                          <input
+                            type="range"
+                            min="50"
+                            max="100"
+                            value={enhancementSettings.quality}
+                            onChange={(e) =>
+                              setEnhancementSettings((prev) => ({ ...prev, quality: Number.parseInt(e.target.value) }))
+                            }
+                            className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer"
+                          />
+                        </div>
+                      )}
+
+                      {/* Pre-processing Options */}
+                      <div className="mt-6">
+                        <h4 className="text-md font-semibold text-white mb-3">Pre-processing</h4>
+                        <div className="space-y-2">
+                          <div>
+                            <label className="block text-xs font-medium n3uralia-text-muted mb-1">Deblock</label>
+                            <select
+                              value={enhancementSettings.pre.deblock}
+                              onChange={(e) =>
+                                setEnhancementSettings((prev) => ({
+                                  ...prev,
+                                  pre: { ...prev.pre, deblock: e.target.value },
+                                }))
+                              }
+                              className="w-full p-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none"
+                            >
+                              <option value="off">Off</option>
+                              <option value="low">Low</option>
+                              <option value="medium">Medium</option>
+                              <option value="high">High</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium n3uralia-text-muted mb-1">Denoise</label>
+                            <select
+                              value={enhancementSettings.pre.denoise}
+                              onChange={(e) =>
+                                setEnhancementSettings((prev) => ({
+                                  ...prev,
+                                  pre: { ...prev.pre, denoise: e.target.value },
+                                }))
+                              }
+                              className="w-full p-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none"
+                            >
+                              <option value="off">Off</option>
+                              <option value="low">Low</option>
+                              <option value="medium">Medium</option>
+                              <option value="high">High</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium n3uralia-text-muted mb-1">White Balance</label>
+                            <select
+                              value={enhancementSettings.pre.whiteBalance}
+                              onChange={(e) =>
+                                setEnhancementSettings((prev) => ({
+                                  ...prev,
+                                  pre: { ...prev.pre, whiteBalance: e.target.value },
+                                }))
+                              }
+                              className="w-full p-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none"
+                            >
+                              <option value="off">Off</option>
+                              <option value="auto">Auto</option>
+                              <option value="neutral">Neutral</option>
+                            </select>
                           </div>
                         </div>
                       </div>
 
-                      {/* Back of card */}
-                      <div className="capability-card-face capability-card-back">
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="text-2xl">{useCase.icon}</div>
-                          <span className="text-xs n3uralia-badge-gold px-2 py-1 rounded-full">{useCase.tag}</span>
-                        </div>
-                        <h3 className="text-lg font-semibold text-white mb-3">{useCase.backInfo.title}</h3>
-                        <ul className="space-y-2 mb-4 flex-1">
-                          {useCase.backInfo.details.map((detail, detailIndex) => (
-                            <li key={detailIndex} className="flex items-start space-x-2 text-sm">
-                              <div
-                                className="w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0"
-                                style={{ backgroundColor: "rgba(218, 165, 32, 1)" }}
-                              ></div>
-                              <span className="n3uralia-text-muted leading-relaxed">{detail}</span>
-                            </li>
-                          ))}
-                        </ul>
-                        <div className="mt-auto pt-4 border-t border-white/10">
-                          <div className="flex items-center space-x-2 text-sm">
-                            <div
-                              className="w-2 h-2 rounded-full"
-                              style={{ backgroundColor: "rgba(218, 165, 32, 1)" }}
-                            ></div>
-                            <span className="n3uralia-gold-glow font-medium">{useCase.backInfo.stats}</span>
+                      {/* Post-processing Options */}
+                      <div className="mt-6">
+                        <h4 className="text-md font-semibold text-white mb-3">Post-processing</h4>
+                        <div className="space-y-2">
+                          <div>
+                            <label className="block text-xs font-medium n3uralia-text-muted mb-1">Local Contrast</label>
+                            <select
+                              value={enhancementSettings.post.localContrast}
+                              onChange={(e) =>
+                                setEnhancementSettings((prev) => ({
+                                  ...prev,
+                                  post: { ...prev.post, localContrast: e.target.value },
+                                }))
+                              }
+                              className="w-full p-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none"
+                            >
+                              <option value="off">Off</option>
+                              <option value="low">Low</option>
+                              <option value="medium">Medium</option>
+                              <option value="high">High</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium n3uralia-text-muted mb-1">Sharpen</label>
+                            <select
+                              value={enhancementSettings.post.sharpen}
+                              onChange={(e) =>
+                                setEnhancementSettings((prev) => ({
+                                  ...prev,
+                                  post: { ...prev.post, sharpen: e.target.value },
+                                }))
+                              }
+                              className="w-full p-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none"
+                            >
+                              <option value="off">Off</option>
+                              <option value="low">Low</option>
+                              <option value="medium">Medium</option>
+                              <option value="high">High</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium n3uralia-text-muted mb-1">Grain</label>
+                            <select
+                              value={enhancementSettings.post.grain}
+                              onChange={(e) =>
+                                setEnhancementSettings((prev) => ({
+                                  ...prev,
+                                  post: { ...prev.post, grain: e.target.value },
+                                }))
+                              }
+                              className="w-full p-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none"
+                            >
+                              <option value="off">Off</option>
+                              <option value="very-low">Very Low</option>
+                              <option value="low">Low</option>
+                              <option value="medium">Medium</option>
+                            </select>
                           </div>
                         </div>
                       </div>
                     </div>
+                    <button
+                      onClick={async () => {
+                        if (selectedFiles.length === 0) return
+                        // AI optimization logic
+                        const firstFile = selectedFiles[0].file
+                        const optimized = await optimizeParametersWithAI(firstFile)
+                        setEnhancementSettings((prev) => ({ ...prev, ...optimized }))
+                      }}
+                      className="mt-8 w-full n3uralia-button-gold px-6 py-3 rounded-lg text-lg font-semibold transition-all flex items-center justify-center space-x-2"
+                    >
+                      <Target className="w-5 h-5" />
+                      <span>Optimize Settings</span>
+                    </button>
                   </div>
-                ))}
-              </div>
-            </section>
-
-            {/* CTA Section */}
-            <section className="py-20">
-              <div className="n3uralia-card-premium rounded-3xl p-12 md:p-16 text-center border n3uralia-border-gold">
-                {/* Updated CTA Section Text */}
-                <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Ready to Preserve Authenticity?</h2>
-                <p className="text-xl n3uralia-text-muted mb-12 max-w-2xl mx-auto">
-                  Join ASEAN photographers and abstract artists who trust n3uralia for culturally-aware and
-                  artistically-sensitive AI enhancement.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <button
-                    onClick={() => {
-                      if (!user) {
-                        setShowAuth(true)
-                      } else {
-                        setActiveTab("enhance")
-                      }
-                    }}
-                    className="n3uralia-button-gold px-8 py-4 rounded-lg text-lg font-semibold transition-all flex items-center justify-center space-x-2"
-                  >
-                    <Brain className="w-5 h-5" />
-                    <span>Start Enhancement</span>
-                  </button>
-                  <button className="n3uralia-button-secondary px-8 py-4 rounded-lg text-lg font-semibold transition-all flex items-center justify-center space-x-2">
-                    <Heart className="w-5 h-5" />
-                    <span>Learn More</span>
-                  </button>
-                </div>
-              </div>
-            </section>
-          </div>
-        )}
-
-        {activeTab === "admin" && isAdmin && (
-          <div className="space-y-8">
-            {/* Admin Sub-Navigation */}
-            <div className="n3uralia-card rounded-xl p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-xl font-semibold text-white">System Administration</h2>
-                  <p className="n3uralia-text-muted">Platform management and configuration</p>
                 </div>
 
-                <div className="flex space-x-1 bg-white/5 rounded-lg p-1">
+                {/* Selected Files Preview and Processing */}
+                {selectedFiles.length > 0 && (
+                  <div className="n3uralia-card rounded-xl p-6">
+                    <h3 className="text-lg font-bold text-white mb-4">Selected Files</h3>
+                    <div className="space-y-4">
+                      {selectedFiles.map((fileItem) => (
+                        <div
+                          key={fileItem.id}
+                          className="flex items-center justify-between p-4 rounded-lg bg-white/5 border border-white/15"
+                        >
+                          <div className="flex items-center space-x-4">
+                            <img
+                              src={fileItem.preview || "/placeholder.svg"}
+                              alt={fileItem.name}
+                              className="w-16 h-16 rounded-md object-cover"
+                            />
+                            <div>
+                              <p className="font-semibold text-white line-clamp-1">{fileItem.name}</p>
+                              <p className="text-sm n3uralia-text-muted">{formatFileSize(fileItem.size)}</p>
+                              {fileItem.warning && <p className="text-xs text-yellow-400 mt-1">{fileItem.warning}</p>}
+                              {fileItem.error && <p className="text-xs text-red-400 mt-1">{fileItem.error}</p>}
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-4">
+                            {fileItem.status === "ready" && (
+                              <button
+                                onClick={() => startProcessing(fileItem.id)}
+                                className="n3uralia-button-gold px-4 py-2 rounded-lg transition-all flex items-center space-x-2"
+                              >
+                                <Sparkles className="w-4 h-4" />
+                                <span>Enhance</span>
+                              </button>
+                            )}
+                            {fileItem.status === "failed" && (
+                              <button
+                                onClick={() => {
+                                  // Re-add to selected files to try again
+                                  setSelectedFiles((prev) => [...prev, fileItem])
+                                  // Remove from current list
+                                  setSelectedFiles((prev) => prev.filter((f) => f.id !== fileItem.id))
+                                }}
+                                className="n3uralia-button-secondary px-4 py-2 rounded-lg transition-all flex items-center space-x-2"
+                              >
+                                <RefreshCw className="w-4 h-4" />
+                                <span>Retry</span>
+                              </button>
+                            )}
+                            <button
+                              onClick={() => setSelectedFiles((prev) => prev.filter((f) => f.id !== fileItem.id))}
+                              className="text-red-500 hover:text-red-400 transition-colors"
+                            >
+                              <X className="w-6 h-6" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </section>
+            )}
+
+            {/* Placeholder for Processing Tab Content */}
+            {activeTab === "processing" && (
+              <section className="space-y-12">
+                <div className="n3uralia-card rounded-xl p-6">
+                  <h3 className="text-lg font-bold text-white mb-4">Processing Queue</h3>
+                  {processingQueue.length === 0 ? (
+                    <p className="n3uralia-text-muted">Your processing queue is empty.</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {processingQueue.map((job) => (
+                        <div
+                          key={job.id}
+                          className="flex items-center justify-between p-4 rounded-lg bg-white/5 border border-white/15"
+                        >
+                          <div className="flex items-center space-x-4">
+                            <div className="relative w-16 h-16 rounded-md overflow-hidden">
+                              <img
+                                src={job.file.preview || "/placeholder.svg"}
+                                alt={job.file.name}
+                                className="w-full h-full object-cover opacity-50"
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <Loader2 className="w-8 h-8 animate-spin n3uralia-gold-accent" />
+                              </div>
+                            </div>
+                            <div>
+                              <p className="font-semibold text-white line-clamp-1">{job.file.name}</p>
+                              <p className="text-sm n3uralia-text-muted">{job.progress}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-4">
+                            <span className="text-sm n3uralia-text-muted">
+                              {Math.round((Date.now() - job.startTime) / 1000)}s
+                            </span>
+                            <button
+                              onClick={() => {
+                                // Cancel job logic (implement if needed)
+                              }}
+                              className="text-gray-400 hover:text-red-400 transition-colors"
+                            >
+                              <X className="w-5 h-5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="n3uralia-card rounded-xl p-6">
+                  <h3 className="text-lg font-bold text-white mb-4">Completed Jobs</h3>
+                  {completedJobs.length === 0 ? (
+                    <p className="n3uralia-text-muted">No jobs completed yet.</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {completedJobs.map((job) => (
+                        <div
+                          key={job.id}
+                          className="p-4 rounded-lg bg-white/5 border border-white/15 flex items-center justify-between"
+                        >
+                          <div className="flex items-center space-x-4">
+                            <div className="relative w-16 h-16 rounded-md overflow-hidden">
+                              <img
+                                src={job.downloadUrl || "/placeholder.svg"}
+                                alt={job.originalFileName}
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                <CheckCircle className="w-8 h-8 text-green-400" />
+                              </div>
+                            </div>
+                            <div>
+                              <p className="font-semibold text-white line-clamp-1">{job.originalFileName}</p>
+                              <p className="text-xs n3uralia-text-muted">
+                                Enhanced with {job.modelName} ({job.upscaleFactor}x)
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-4">
+                            <div className="text-right">
+                              <p className="text-sm n3uralia-text-muted">{job.fileSize}</p>
+                              <p className="text-xs n3uralia-text-muted">{job.processingTime}</p>
+                            </div>
+                            <a
+                              href={job.downloadUrl}
+                              download={
+                                job.originalFileName.replace(/\.[^/.]+$/, "") + "_enhanced." + job.model.split("-")[0]
+                              } // Basic extension guess
+                              onClick={(e) => {
+                                e.preventDefault() // Prevent default for custom logic
+                                if (domePreset.enabled) {
+                                  exportDomemasterForJob(job)
+                                } else {
+                                  window.open(job.downloadUrl, "_blank") // Open in new tab if not domemaster
+                                }
+                              }}
+                              className="n3uralia-button-gold px-4 py-2 rounded-lg transition-all flex items-center space-x-2"
+                            >
+                              {domePreset.enabled ? <Layers className="w-4 h-4" /> : <Download className="w-4 h-4" />}
+                              <span>{domePreset.enabled ? "Export Dome" : "Download"}</span>
+                            </a>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
+
+            {/* Placeholder for Gallery Tab Content */}
+            {activeTab === "gallery" && (
+              <section className="space-y-12">
+                <div className="n3uralia-card rounded-xl p-6">
+                  <h3 className="text-lg font-bold text-white mb-4">Image Gallery</h3>
+                  <p className="n3uralia-text-muted">Gallery functionality coming soon.</p>
+                  {/* Add gallery grid here */}
+                </div>
+              </section>
+            )}
+
+            {/* Placeholder for Admin Tab Content */}
+            {activeTab === "admin" && isAdmin && (
+              <section className="space-y-12">
+                <div className="flex space-x-1 n3uralia-card rounded-xl p-1 mb-6">
                   {[
-                    { id: "config", label: "Configuration", icon: Key },
-                    { id: "discovery", label: "Model Discovery", icon: Search },
+                    { id: "config", label: "Configuration", icon: Settings },
                     { id: "users", label: "User Management", icon: Users },
                     { id: "roles", label: "Role Management", icon: Shield },
+                    { id: "discovery", label: "Replicate Discovery", icon: Search },
+                    { id: "test", label: "Test Config", icon: TestTube },
                   ].map((subTab) => (
                     <button
                       key={subTab.id}
                       onClick={() => setAdminSubTab(subTab.id)}
-                      className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-all ${
+                      className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ${
                         adminSubTab === subTab.id
                           ? "n3uralia-button-gold"
                           : "text-white/70 hover:text-white hover:bg-white/5"
@@ -1815,599 +2120,52 @@ const AIImageEnhancementPortal = () => {
                     </button>
                   ))}
                 </div>
-              </div>
-            </div>
 
-            {/* Admin Content */}
-            {adminSubTab === "config" && (
-              <div className="space-y-8">
-                {/* Configuration Test */}
-                <div className="n3uralia-card rounded-2xl p-8">
-                  <div className="flex items-center justify-between mb-6">
-                    <div>
-                      <h3 className="text-xl font-semibold text-white mb-2">API Configuration</h3>
-                      <p className="n3uralia-text-muted">Test API connectivity and verify model access permissions</p>
-                    </div>
+                {adminSubTab === "config" && (
+                  <div className="n3uralia-card rounded-xl p-6">
+                    <h3 className="text-lg font-bold text-white mb-4">Configuration</h3>
+                    <p className="n3uralia-text-muted">Admin configuration options.</p>
+                  </div>
+                )}
+                {adminSubTab === "users" && <UserManagement />}
+                {adminSubTab === "roles" && <RoleManagement />}
+                {adminSubTab === "discovery" && (
+                  <div className="n3uralia-card rounded-xl p-6">
+                    <h3 className="text-lg font-bold text-white mb-4">Replicate Discovery</h3>
+                    <button
+                      onClick={runReplicateDiscovery}
+                      disabled={isDiscovering}
+                      className="n3uralia-button-gold px-4 py-2 rounded-lg transition-all flex items-center space-x-2 disabled:opacity-50"
+                    >
+                      {isDiscovering ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                      <span>Run Discovery</span>
+                    </button>
+                    {discoveryResults && (
+                      <pre className="mt-4 p-4 rounded-lg bg-white/5 border border-white/15 text-xs text-white/70 overflow-auto">
+                        {JSON.stringify(discoveryResults, null, 2)}
+                      </pre>
+                    )}
+                  </div>
+                )}
+                {adminSubTab === "test" && (
+                  <div className="n3uralia-card rounded-xl p-6">
+                    <h3 className="text-lg font-bold text-white mb-4">Test Replicate Configuration</h3>
                     <button
                       onClick={testReplicateConfig}
                       disabled={isTesting}
-                      className="n3uralia-button-gold px-6 py-3 rounded-lg transition-all flex items-center space-x-2 disabled:opacity-50"
+                      className="n3uralia-button-gold px-4 py-2 rounded-lg transition-all flex items-center space-x-2 disabled:opacity-50"
                     >
-                      {isTesting ? (
-                        <>
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                          <span>Testing...</span>
-                        </>
-                      ) : (
-                        <>
-                          <TestTube className="w-5 h-5" />
-                          <span>Test Configuration</span>
-                        </>
-                      )}
+                      {isTesting ? <Loader2 className="w-4 h-4 animate-spin" /> : <TestTube className="w-4 h-4" />}
+                      <span>Test Configuration</span>
                     </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {adminSubTab === "discovery" && (
-              <div className="space-y-8">
-                <div className="n3uralia-card rounded-2xl p-8">
-                  <div className="flex items-center justify-between mb-6">
-                    <div>
-                      <h3 className="text-xl font-semibold text-white mb-2">Model Discovery</h3>
-                      <p className="n3uralia-text-muted">Test available AI models for image enhancement</p>
-                    </div>
-                    <button
-                      onClick={runReplicateDiscovery}
-                      disabled={isDiscovering || !configResults?.summary?.replicateConfigured}
-                      className="n3uralia-button-gold px-6 py-3 rounded-lg transition-all flex items-center space-x-2 disabled:opacity-50"
-                    >
-                      {isDiscovering ? (
-                        <>
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                          <span>Discovering...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Search className="w-5 h-5" />
-                          <span>Discover Models</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {adminSubTab === "users" && <UserManagement currentUser={user} />}
-            {adminSubTab === "roles" && <RoleManagement />}
-          </div>
-        )}
-
-        {activeTab === "enhance" && (
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Upload Area */}
-            <div className="lg:col-span-2">
-              <div className="n3uralia-card rounded-2xl p-8">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h2 className="text-xl font-semibold text-white">AI Enhancement</h2>
-                    <p className="n3uralia-text-muted">Upload images for professional AI enhancement</p>
-                  </div>
-                  <div className="flex items-center space-x-2 text-sm">
-                    <div
-                      className="w-2 h-2 rounded-full n3uralia-pulse-gold"
-                      style={{ backgroundColor: "rgba(218, 165, 32, 1)" }}
-                    ></div>
-                    <span className="text-white">AI Ready</span>
-                  </div>
-                </div>
-
-                <div
-                  onDrop={handleDrop}
-                  onDragOver={handleDragOver}
-                  className="border-2 border-dashed n3uralia-border-gold rounded-xl p-12 text-center hover:border-gold/60 transition-colors cursor-pointer group"
-                  onClick={() => {
-                    if (!user) {
-                      setShowAuth(true)
-                      return
-                    }
-                    fileInputRef.current?.click()
-                  }}
-                >
-                  <div className="group-hover:scale-110 transition-transform">
-                    <ImageIcon className="w-12 h-12 n3uralia-gold-accent mx-auto mb-4" />
-                  </div>
-                  <h3 className="text-lg font-medium text-white mb-2">
-                    {user ? "Drop images here or click to browse" : "Sign in to upload images"}
-                  </h3>
-                  <p className="n3uralia-text-muted mb-4">Supports: JPG, PNG, WebP, HEIC, TIFF up to 15MB</p>
-                  <p className="text-sm n3uralia-gold-glow">Enhanced with n3uralia AI Technology</p>
-                  {!user && (
-                    <button
-                      onClick={() => setShowAuth(true)}
-                      className="mt-4 n3uralia-button-gold px-6 py-2 rounded-lg transition-colors inline-flex items-center space-x-2"
-                    >
-                      <LogIn className="w-4 h-4" />
-                      <span>Access Platform</span>
-                    </button>
-                  )}
-                </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={(e) => e.target.files && handleFileSelect(e.target.files)}
-                  className="hidden"
-                />
-
-                {/* File List */}
-                {selectedFiles.length > 0 && (
-                  <div className="mt-8">
-                    <h3 className="text-lg font-medium text-white mb-4">Selected Files ({selectedFiles.length})</h3>
-                    <div className="space-y-3">
-                      {selectedFiles.map((file) => (
-                        <div
-                          key={file.id}
-                          className="flex items-center justify-between bg-white/5 rounded-lg p-4 border n3uralia-border-gold"
-                        >
-                          <div className="flex items-center space-x-4">
-                            <img
-                              src={file.preview || "/placeholder.svg?height=96&width=96&query=file-preview"}
-                              alt=""
-                              className="w-12 h-12 object-cover rounded-lg"
-                            />
-                            <div>
-                              <p className="text-white font-medium">{file.name}</p>
-                              <p className="text-sm n3uralia-text-muted">{formatFileSize(file.size)}</p>
-                              {file.status === "failed" && (
-                                <div className="mt-1">
-                                  <div className="flex items-center space-x-2">
-                                    <AlertCircle className="w-4 h-4 text-white/70" />
-                                    <p className="text-sm text-white/70">Error: {file.error}</p>
-                                  </div>
-                                  {file.details && (
-                                    <p className="text-xs text-white/50 mt-1">
-                                      {"Details: "}
-                                      {typeof file.details === "string"
-                                        ? file.details
-                                        : JSON.stringify(file.details, null, 2)}
-                                    </p>
-                                  )}
-                                  {file.step && <p className="text-xs text-white/50 mt-1">Failed at: {file.step}</p>}
-                                </div>
-                              )}
-                              {file.warning && (
-                                <div className="mt-1">
-                                  <div className="flex items-center space-x-2">
-                                    <AlertTriangle className="w-4 h-4 n3uralia-gold-glow" />
-                                    <p className="text-sm n3uralia-gold-glow">{file.warning}</p>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            {file.status === "ready" && (
-                              <button
-                                onClick={() => startProcessing(file.id)}
-                                className="n3uralia-button-gold px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
-                              >
-                                <Play className="w-4 h-4" />
-                                <span>Enhance</span>
-                              </button>
-                            )}
-                            {file.status === "failed" && (
-                              <button
-                                onClick={() => startProcessing(file.id)}
-                                className="bg-white/10 border n3uralia-border-gold hover:bg-white/20 text-white/80 px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
-                              >
-                                <RefreshCw className="w-4 h-4" />
-                                <span>Retry</span>
-                              </button>
-                            )}
-                            <button
-                              onClick={() => setSelectedFiles((prev) => prev.filter((f) => f.id !== file.id))}
-                              className="text-white/50 hover:text-white/70 transition-colors"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                    {configResults && (
+                      <pre className="mt-4 p-4 rounded-lg bg-white/5 border border-white/15 text-xs text-white/70 overflow-auto">
+                        {JSON.stringify(configResults, null, 2)}
+                      </pre>
+                    )}
                   </div>
                 )}
-              </div>
-            </div>
-
-            {/* Settings Panel */}
-            <div className="space-y-6">
-              <div className="n3uralia-card-premium rounded-2xl p-6">
-                <h3 className="text-lg font-semibold text-white mb-6">Enhancement Settings</h3>
-
-                <div className="space-y-6">
-                  {/* AI Parameter Optimization */}
-                  <div className="bg-white/5 rounded-lg p-4 border n3uralia-border-gold">
-                    <h4 className="text-white font-medium mb-3 flex items-center gap-2">
-                      <Brain className="w-4 h-4 n3uralia-gold-accent" />
-                      AI Optimization
-                    </h4>
-                    <p className="text-sm n3uralia-text-muted mb-3">
-                      Intelligent parameter selection with face preservation
-                    </p>
-                    <div className="flex flex-wrap gap-3">
-                      <button
-                        onClick={async () => {
-                          if (selectedFiles.length > 0) {
-                            const optimized = await optimizeParametersWithAI(selectedFiles[0].file)
-                            setEnhancementSettings((prev) => ({
-                              ...prev,
-                              ...optimized,
-                            }))
-                          }
-                        }}
-                        disabled={selectedFiles.length === 0}
-                        className="n3uralia-button-secondary px-4 py-2 rounded-md disabled:opacity-50 text-sm flex items-center gap-2"
-                      >
-                        <Brain className="w-4 h-4" />
-                        AI Optimize
-                      </button>
-                      <button
-                        onClick={() => {
-                          // Dome-optimized settings with face preservation
-                          setDomePreset((d) => ({ ...d, enabled: true, size: 8192, bleedPercent: 3, overlay: true }))
-                          setEnhancementSettings((prev) => ({
-                            ...prev,
-                            model: "clarity-upscaler-face-preserve",
-                            targetUse: "dome",
-                            upscaleFactor: Math.min(prev.upscaleFactor, getMaxUpscale()),
-                            pre: { deblock: "off", denoise: "off", whiteBalance: "off" },
-                            post: { localContrast: "off", sharpen: "off", grain: "off" },
-                            format: "PNG",
-                            quality: 95,
-                          }))
-                        }}
-                        className="n3uralia-button-secondary px-4 py-2 rounded-md text-sm"
-                      >
-                        Dome 8K
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* ASEAN Face Preservation Presets */}
-                  <div className="bg-white/5 rounded-lg p-4 border n3uralia-border-gold">
-                    <h4 className="text-white font-medium mb-3 flex items-center gap-2">🇮🇩🇲🇾🇹🇭🇵🇭 ASEAN Presets</h4>
-                    <p className="text-sm n3uralia-text-muted mb-4">Specialized presets for Southeast Asian features</p>
-
-                    <div className="grid grid-cols-1 gap-2 mb-4">
-                      {ASEAN_FACE_PRESETS.slice(0, 3).map((preset) => (
-                        <button
-                          key={preset.id}
-                          onClick={() => {
-                            setEnhancementSettings((prev) => ({
-                              ...prev,
-                              ...preset.settings,
-                            }))
-                            setDomePreset((prev) => ({
-                              ...prev,
-                              ...preset.domeSettings,
-                            }))
-                          }}
-                          className="flex items-start gap-3 p-3 rounded-md bg-white/5 hover:bg-white/10 border n3uralia-border-gold hover:border-gold/40 transition-all text-left"
-                        >
-                          <span className="text-lg flex-shrink-0 mt-0.5">{preset.icon}</span>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-white mb-1">{preset.name}</div>
-                            <div className="text-xs n3uralia-text-muted leading-relaxed">{preset.description}</div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className="bg-white/5 border n3uralia-border-gold rounded p-3">
-                      <div className="flex items-start space-x-2">
-                        <CheckCircle className="w-4 h-4 n3uralia-gold-accent mt-0.5 flex-shrink-0" />
-                        <div className="text-xs text-white/70">
-                          <strong>Face Preservation Guarantee:</strong> Maintains authentic ASEAN facial features
-                          without Western bias.
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* AI Model Selection */}
-                  <div>
-                    <label className="block text-sm font-medium text-white mb-3">Enhancement Model</label>
-                    <select
-                      value={enhancementSettings.model}
-                      onChange={(e) => {
-                        const newModel = e.target.value
-                        const selectedModel = getModelById(newModel)
-                        const maxUpscale = selectedModel?.maxUpscale || 4
-                        setEnhancementSettings((prev) => ({
-                          ...prev,
-                          model: newModel,
-                          upscaleFactor: Math.min(prev.upscaleFactor, maxUpscale),
-                        }))
-                      }}
-                      className="w-full n3uralia-select rounded-lg px-3 py-2"
-                    >
-                      {ENHANCEMENT_MODELS.filter((m) => m.status === "working").map((model) => (
-                        <option key={model.id} value={model.id}>
-                          {model.name} {model.recommended && "⭐"}
-                          {model.preserveFaces && " 🛡️"}
-                        </option>
-                      ))}
-                    </select>
-                    <p className="text-xs n3uralia-text-muted mt-1">
-                      {getCurrentModel()?.description || "Model description not available"}
-                    </p>
-                  </div>
-
-                  {/* Upscale Factor */}
-                  <div>
-                    <label className="block text-sm font-medium text-white mb-3">
-                      Upscale Factor: {enhancementSettings.upscaleFactor}x
-                    </label>
-                    <input
-                      type="range"
-                      min={2}
-                      max={getMaxUpscale()}
-                      step={1}
-                      value={enhancementSettings.upscaleFactor}
-                      onChange={(e) =>
-                        setEnhancementSettings((prev) => ({ ...prev, upscaleFactor: Number.parseInt(e.target.value) }))
-                      }
-                      className="w-full n3uralia-range"
-                    />
-                    <div className="flex justify-between text-xs n3uralia-text-muted mt-1">
-                      <span>2x</span>
-                      <span>Target: {getTargetResolution()}</span>
-                      <span>{getMaxUpscale()}x</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Processing Info */}
-              <div className="n3uralia-card rounded-2xl p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Processing Status</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between n3uralia-text-muted">
-                    <span>Images queued:</span>
-                    <span>{selectedFiles.length}</span>
-                  </div>
-                  <div className="flex justify-between n3uralia-text-muted">
-                    <span>Selected model:</span>
-                    <span className="text-right">{getCurrentModel()?.name || "Unknown Model"}</span>
-                  </div>
-                  <div className="flex justify-between text-white font-medium">
-                    <span>Target:</span>
-                    <span>{getTargetResolution()}</span>
-                  </div>
-                  <div className="flex justify-between n3uralia-text-muted">
-                    <span>Face enhancement:</span>
-                    <span className={getCurrentModel()?.preserveFaces ? "n3uralia-gold-glow" : "text-white/80"}>
-                      {getCurrentModel()?.preserveFaces ? "🛡️ Preserved" : "⚠️ Enhanced"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "processing" && (
-          <div className="n3uralia-card rounded-2xl p-8">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-xl font-semibold text-white">Processing Queue</h2>
-                <p className="n3uralia-text-muted">Monitor your AI enhancement progress</p>
-              </div>
-              <div className="flex items-center space-x-2 text-sm">
-                <Cpu className="w-4 h-4 n3uralia-gold-accent" />
-                <span className="text-white">AI Processing</span>
-              </div>
-            </div>
-            {processingQueue.length === 0 ? (
-              <div className="text-center py-12">
-                <Settings className="w-12 h-12 text-white/30 mx-auto mb-4" />
-                <p className="text-white/70">No images currently processing</p>
-                <p className="text-sm n3uralia-text-muted mt-2">Start processing from the Enhancement tab</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {processingQueue.map((job) => (
-                  <div key={job.id} className="bg-white/5 rounded-lg p-6 border n3uralia-border-gold">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center space-x-4">
-                        <img
-                          src={job.file?.preview || "/placeholder.svg?height=96&width=96&query=queue-preview"}
-                          alt=""
-                          className="w-12 h-12 object-cover rounded-lg"
-                        />
-                        <div>
-                          <p className="text-white font-medium">{job.file?.name || "Unknown file"}</p>
-                          <p className="text-sm n3uralia-text-muted">
-                            {safeGetModelProperty(job.settings?.model, "name", "Unknown Model")} •{" "}
-                            {job.settings?.upscaleFactor || 2}x
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Loader2 className="w-5 h-5 n3uralia-gold-accent animate-spin" />
-                        <span className="text-sm n3uralia-text-muted">{job.progress || "Processing..."}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === "gallery" && (
-          <div className="n3uralia-card rounded-2xl p-8">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-xl font-semibold text-white">Enhanced Gallery</h2>
-                <p className="n3uralia-text-muted">Your AI-enhanced image collection</p>
-              </div>
-              <div className="flex items-center space-x-2 text-sm">
-                <Award className="w-4 h-4 n3uralia-gold-accent" />
-                <span className="text-white">{completedJobs.length} Enhanced</span>
-              </div>
-            </div>
-
-            {/* ASEAN Face Preservation Results Header */}
-            {completedJobs.some((job) => job.model === "clarity-upscaler-face-preserve") && (
-              <div className="mb-6 bg-white/5 rounded-lg p-4 border n3uralia-border-gold">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center n3uralia-glow-gold">
-                    🛡️
-                  </div>
-                  <div>
-                    <h3 className="text-white font-medium">ASEAN Face Preservation Active</h3>
-                    <p className="text-sm n3uralia-text-muted">
-                      {completedJobs.filter((job) => job.model === "clarity-upscaler-face-preserve").length} images
-                      processed with 100% face preservation
-                    </p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-                  <div className="bg-white/5 rounded p-2 text-center border n3uralia-border-gold">
-                    <div className="text-white font-medium">✅ Skin Tone</div>
-                    <div className="n3uralia-text-muted">Preserved</div>
-                  </div>
-                  <div className="bg-white/5 rounded p-2 text-center border n3uralia-border-gold">
-                    <div className="text-white font-medium">✅ Eye Shape</div>
-                    <div className="n3uralia-text-muted">Unchanged</div>
-                  </div>
-                  <div className="bg-white/5 rounded p-2 text-center border n3uralia-border-gold">
-                    <div className="text-white font-medium">✅ Facial Structure</div>
-                    <div className="n3uralia-text-muted">Maintained</div>
-                  </div>
-                  <div className="bg-white/5 rounded p-2 text-center border n3uralia-border-gold">
-                    <div className="text-white font-medium">✅ Cultural Authenticity</div>
-                    <div className="n3uralia-text-muted">Respected</div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {completedJobs.length === 0 ? (
-              <div className="text-center py-12">
-                <ImageIcon className="w-12 h-12 text-white/30 mx-auto mb-4" />
-                <p className="text-white/70">No enhanced images yet</p>
-                <p className="text-sm n3uralia-text-muted mt-2">Completed enhancements will appear here</p>
-                <button
-                  onClick={() => setActiveTab("enhance")}
-                  className="mt-4 n3uralia-button-gold px-6 py-3 rounded-lg transition-all flex items-center space-x-2 mx-auto"
-                >
-                  <Brain className="w-5 h-5" />
-                  <span>Start Enhancing</span>
-                </button>
-              </div>
-            ) : (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {completedJobs.map((job) => (
-                  <div key={job.id} className="n3uralia-card n3uralia-card-hover rounded-lg overflow-hidden group">
-                    <div className="aspect-video bg-white/5 flex items-center justify-center relative">
-                      <img
-                        src={job.downloadUrl || "/placeholder.svg?height=400&width=700&query=enhanced-image"}
-                        alt={`Enhanced ${job.originalFileName || "image"}`}
-                        className="w-full h-full object-contain group-hover:scale-105 transition-transform"
-                        crossOrigin="anonymous"
-                      />
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <Maximize className="w-8 h-8 text-white" />
-                      </div>
-                    </div>
-
-                    <div className="p-4">
-                      <p className="text-white font-medium mb-2 truncate">{job.originalFileName || "Unknown file"}</p>
-                      <div className="flex items-center space-x-2 mb-3">
-                        <CheckCircle className="w-4 h-4 n3uralia-gold-accent" />
-                        <span className="text-sm n3uralia-gold-glow">Enhanced with n3uralia AI</span>
-                      </div>
-
-                      {/* Face Preservation Status */}
-                      {job.model === "clarity-upscaler-face-preserve" && (
-                        <div className="bg-white/5 border n3uralia-border-gold rounded p-2 mb-2">
-                          <div className="flex items-center gap-2 mb-1">
-                            <CheckCircle className="w-4 h-4 n3uralia-gold-accent" />
-                            <span className="text-xs text-white font-medium">ASEAN Face Preserved</span>
-                          </div>
-                          <div className="text-xs n3uralia-text-muted">
-                            Original facial features maintained • No Western bias applied
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Processing Method Badge */}
-                      <div className="flex items-center gap-1 mb-2">
-                        {job.preserveAsianFeatures && (
-                          <span className="bg-white/10 text-white px-2 py-0.5 rounded text-xs border n3uralia-border-gold">
-                            🇮🇩🇲🇾🇹🇭🇵🇭 ASEAN Safe
-                          </span>
-                        )}
-                        {job.model.includes("face-preserve") && (
-                          <span className="bg-white/10 text-white px-2 py-0.5 rounded text-xs border n3uralia-border-gold">
-                            🛡️ Face Protected
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="space-y-2 text-sm n3uralia-text-muted mb-4">
-                        <div className="flex justify-between">
-                          <span>Model:</span>
-                          <span className="text-white font-mono text-xs">{job.modelName || "Unknown Model"}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Upscale:</span>
-                          <span className="text-white">{job.upscaleFactor || 2}x</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Processing:</span>
-                          <span className="text-white/70">{job.processingTime || "Unknown"}</span>
-                        </div>
-                      </div>
-
-                      {/* Download and Domemaster export buttons */}
-                      <div className="flex flex-col gap-2">
-                        <button
-                          onClick={() => window.open(job.downloadUrl, "_blank")}
-                          className="w-full n3uralia-button-gold py-2 rounded-lg transition-colors flex items-center justify-center space-x-2"
-                        >
-                          <Download className="w-4 h-4" />
-                          <span>Download Enhanced</span>
-                        </button>
-
-                        <button
-                          onClick={() => exportDomemasterForJob(job)}
-                          disabled={!domePreset.enabled}
-                          className="w-full n3uralia-button-secondary py-2 rounded-lg transition-colors flex items-center justify-center space-x-2 disabled:opacity-50"
-                          title={
-                            domePreset.enabled
-                              ? `Export domemaster ${(domePreset.size / 1024).toFixed(0)}K`
-                              : "Enable Dome preset in settings"
-                          }
-                        >
-                          <Sparkles className="w-4 h-4" />
-                          <span>
-                            {domePreset.enabled
-                              ? `Export Domemaster ${(domePreset.size / 1024).toFixed(0)}K`
-                              : "Enable Dome Export"}
-                          </span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              </section>
             )}
           </div>
         )}
@@ -2416,7 +2174,7 @@ const AIImageEnhancementPortal = () => {
       {/* Footer */}
       <Footer />
 
-      {/* Profile Dialog */}
+      {/* Profile Dialog from updates */}
       {user && (
         <ProfileDialog
           user={user}

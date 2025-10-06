@@ -15,7 +15,7 @@ import {
   CheckCircle,
 } from "lucide-react"
 
-const Footer = () => {
+export default function Footer() {
   return (
     <footer className="n3uralia-gradient border-t n3uralia-border mt-20">
       <div className="max-w-7xl mx-auto px-6 py-16">
@@ -200,5 +200,3 @@ const Footer = () => {
     </footer>
   )
 }
-
-export default Footer
