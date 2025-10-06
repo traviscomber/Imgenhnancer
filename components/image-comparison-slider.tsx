@@ -8,6 +8,7 @@ interface ImageComparisonSliderProps {
   afterImage: string
   beforeLabel?: string
   afterLabel?: string
+  priority?: boolean
 }
 
 export function ImageComparisonSlider({
@@ -15,48 +16,43 @@ export function ImageComparisonSlider({
   afterImage,
   beforeLabel = "Before",
   afterLabel = "After",
+  priority = false,
 }: ImageComparisonSliderProps) {
   const [sliderPosition, setSliderPosition] = useState(50)
   const [isDragging, setIsDragging] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const updateSliderPosition = useCallback((clientX: number) => {
+  const handleMove = useCallback((clientX: number) => {
     if (!containerRef.current) return
 
     const rect = containerRef.current.getBoundingClientRect()
     const x = clientX - rect.left
-    const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100))
+    const percentage = (x / rect.width) * 100
+    const clampedPercentage = Math.max(0, Math.min(100, percentage))
 
     requestAnimationFrame(() => {
-      setSliderPosition(percentage)
+      setSliderPosition(clampedPercentage)
     })
   }, [])
 
-  const handleMouseDown = useCallback(() => {
+  const handleMouseDown = () => {
     setIsDragging(true)
-  }, [])
+  }
 
-  const handleMouseUp = useCallback(() => {
+  const handleMouseUp = () => {
     setIsDragging(false)
-  }, [])
+  }
 
-  const handleMouseMove = useCallback(
-    (e: MouseEvent) => {
-      if (isDragging) {
-        updateSliderPosition(e.clientX)
-      }
-    },
-    [isDragging, updateSliderPosition],
-  )
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isDragging) return
+    handleMove(e.clientX)
+  }
 
-  const handleTouchMove = useCallback(
-    (e: TouchEvent) => {
-      if (isDragging && e.touches[0]) {
-        updateSliderPosition(e.touches[0].clientX)
-      }
-    },
-    [isDragging, updateSliderPosition],
-  )
+  const handleTouchMove = (e: TouchEvent) => {
+    if (!isDragging) return
+    e.preventDefault()
+    handleMove(e.touches[0].clientX)
+  }
 
   useEffect(() => {
     if (isDragging) {
@@ -72,12 +68,12 @@ export function ImageComparisonSlider({
       document.removeEventListener("touchmove", handleTouchMove)
       document.removeEventListener("touchend", handleMouseUp)
     }
-  }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove])
+  }, [isDragging])
 
   return (
     <div
       ref={containerRef}
-      className="relative w-full max-w-2xl mx-auto overflow-hidden rounded-lg shadow-2xl cursor-col-resize select-none touch-none"
+      className="relative w-full max-w-2xl mx-auto overflow-hidden rounded-xl shadow-2xl cursor-col-resize touch-none select-none"
       onMouseDown={handleMouseDown}
       onTouchStart={handleMouseDown}
     >
@@ -88,17 +84,14 @@ export function ImageComparisonSlider({
           alt={afterLabel}
           width={800}
           height={600}
-          className="w-full h-auto"
+          className="w-full h-auto object-contain"
+          priority={priority}
           quality={95}
-          priority
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 672px"
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 800px"
         />
-        <div className="absolute top-4 right-4 bg-black/70 text-white px-3 py-1.5 rounded-full text-xs md:text-sm font-medium backdrop-blur-sm">
-          {afterLabel}
-        </div>
       </div>
 
-      {/* Before Image (Clipped) */}
+      {/* Before Image (Overlay with clip) */}
       <div
         className="absolute top-0 left-0 w-full h-full overflow-hidden"
         style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
@@ -108,37 +101,38 @@ export function ImageComparisonSlider({
           alt={beforeLabel}
           width={800}
           height={600}
-          className="w-full h-auto"
+          className="w-full h-auto object-contain"
+          priority={priority}
           quality={95}
-          priority
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 672px"
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 800px"
         />
-        <div className="absolute top-4 left-4 bg-black/70 text-white px-3 py-1.5 rounded-full text-xs md:text-sm font-medium backdrop-blur-sm">
-          {beforeLabel}
-        </div>
       </div>
 
-      {/* Slider Line and Handle */}
+      {/* Slider Line */}
       <div
-        className="absolute top-0 bottom-0 w-1 bg-white shadow-lg pointer-events-none"
+        className="absolute top-0 bottom-0 w-1 bg-white shadow-lg pointer-events-none z-10"
         style={{ left: `${sliderPosition}%` }}
       >
+        {/* Slider Handle */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 bg-white rounded-full shadow-xl flex items-center justify-center pointer-events-auto cursor-col-resize">
-          <div className="flex items-center gap-1">
-            <svg className="w-3 h-3 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            <svg className="w-3 h-3 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
+          <div className="flex gap-1">
+            <div className="w-0.5 h-4 bg-gray-400 rounded-full" />
+            <div className="w-0.5 h-4 bg-gray-400 rounded-full" />
           </div>
         </div>
       </div>
 
-      {/* Instruction Text */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 text-white px-3 py-1.5 rounded-full text-xs md:text-sm font-medium backdrop-blur-sm pointer-events-none">
-        <span className="hidden md:inline">Drag to compare</span>
-        <span className="md:hidden">Swipe to compare</span>
+      {/* Labels */}
+      <div className="absolute top-4 left-4 px-3 py-1.5 bg-black/60 backdrop-blur-sm text-white text-xs md:text-sm rounded-full font-medium">
+        {beforeLabel}
+      </div>
+      <div className="absolute top-4 right-4 px-3 py-1.5 bg-black/60 backdrop-blur-sm text-white text-xs md:text-sm rounded-full font-medium">
+        {afterLabel}
+      </div>
+
+      {/* Mobile Instruction */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-black/60 backdrop-blur-sm text-white text-xs rounded-full md:hidden">
+        Swipe to compare
       </div>
     </div>
   )

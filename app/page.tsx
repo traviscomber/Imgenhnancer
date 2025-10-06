@@ -17,7 +17,6 @@ import {
   ArrowRight,
   Upload,
   Download,
-  Palette,
   Camera,
   Building2,
   Church,
@@ -92,18 +91,23 @@ export default function Home() {
               </div>
 
               <div className="space-y-6 md:space-y-8">
+                {/* Javanese Wedding */}
                 <ImageComparisonSlider
                   beforeImage="/images/javanese-wedding-faded.png"
                   afterImage="/images/javanese-wedding-restored.png"
                   beforeLabel="Original"
                   afterLabel="Enhanced"
                 />
+
+                {/* Thai Family Portrait */}
                 <ImageComparisonSlider
                   beforeImage="/images/thai-family-faded.png"
                   afterImage="/images/thai-family-restored.png"
                   beforeLabel="Faded"
                   afterLabel="Restored"
                 />
+
+                {/* Real Estate */}
                 <ImageComparisonSlider
                   beforeImage="/images/real-estate-before.png"
                   afterImage="/images/real-estate-after.png"
@@ -270,20 +274,6 @@ export default function Home() {
                   afterLabel="Bright & Inviting"
                 />
               </div>
-
-              {/* Digital Art */}
-              <div className="space-y-4 md:space-y-6">
-                <div className="flex items-center gap-2 md:gap-3">
-                  <Palette className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
-                  <h3 className="text-xl md:text-2xl font-bold text-white">Digital Art Enhancement</h3>
-                </div>
-                <ImageComparisonSlider
-                  beforeImage="/images/abstract-art-low.png"
-                  afterImage="/images/abstract-art-enhanced.png"
-                  beforeLabel="Low Quality"
-                  afterLabel="HD Quality"
-                />
-              </div>
             </div>
           </TabsContent>
 
@@ -385,17 +375,17 @@ export default function Home() {
                 </CardContent>
               </Card>
 
-              {/* Digital Art */}
+              {/* Professional Photography */}
               <Card className="bg-gray-800/50 border-green-500/30 hover:border-amber-500 hover:shadow-lg hover:shadow-amber-500/20 transition-all group">
                 <CardContent className="p-6 md:p-8 space-y-4 md:space-y-6">
                   <div className="w-12 h-12 md:w-16 md:h-16 bg-green-500/10 group-hover:bg-amber-500/10 rounded-lg flex items-center justify-center transition-colors">
-                    <Palette className="w-6 h-6 md:w-8 md:h-8 text-green-400 group-hover:text-amber-400 transition-colors" />
+                    <ImageIcon className="w-6 h-6 md:w-8 md:h-8 text-green-400 group-hover:text-amber-400 transition-colors" />
                   </div>
                   <div className="space-y-2 md:space-y-3">
-                    <h3 className="text-xl md:text-2xl font-bold text-white">Digital Art & Creative</h3>
+                    <h3 className="text-xl md:text-2xl font-bold text-white">Professional Photography</h3>
                     <p className="text-xs md:text-sm text-gray-400 leading-relaxed">
-                      Digital artists and designers upscale their work for print and large-format displays, maintaining
-                      creative vision at any resolution.
+                      Professional photographers enhance their portfolio work, delivering stunning results for
+                      commercial clients and personal projects.
                     </p>
                   </div>
                   <ul className="space-y-2 md:space-y-3">
@@ -405,7 +395,7 @@ export default function Home() {
                     </li>
                     <li className="flex items-start gap-2 text-xs md:text-sm text-gray-300">
                       <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-amber-400 shrink-0 mt-0.5" />
-                      <span>Print-ready output</span>
+                      <span>Print-ready output up to 4K</span>
                     </li>
                     <li className="flex items-start gap-2 text-xs md:text-sm text-gray-300">
                       <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-amber-400 shrink-0 mt-0.5" />
