@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useCallback, type MouseEvent, type TouchEvent } from "react"
+import { useState, useRef, useCallback, useEffect, type MouseEvent, type TouchEvent } from "react"
 
 interface ImageComparisonSliderProps {
   beforeImage: string
@@ -20,6 +20,8 @@ export function ImageComparisonSlider({
   const [sliderPosition, setSliderPosition] = useState(50)
   const [isDragging, setIsDragging] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const beforeImgRef = useRef<HTMLImageElement>(null)
+  const afterImgRef = useRef<HTMLImageElement>(null)
 
   const updateSliderPosition = useCallback((clientX: number) => {
     if (!containerRef.current) return
@@ -67,6 +69,40 @@ export function ImageComparisonSlider({
     [isDragging, updateSliderPosition],
   )
 
+  // Sync the before image size/position with the after image when both are loaded
+  useEffect(() => {
+    const syncImages = () => {
+      if (!beforeImgRef.current || !afterImgRef.current) return
+
+      // Get the computed position and size of the after image
+      const afterRect = afterImgRef.current.getBoundingClientRect()
+      const containerRect = containerRef.current?.getBoundingClientRect()
+
+      if (!containerRect) return
+
+      // Calculate the offset and size relative to container
+      const leftOffset = afterRect.left - containerRect.left
+      const topOffset = afterRect.top - containerRect.top
+
+      // Apply the same positioning to before image
+      beforeImgRef.current.style.position = "absolute"
+      beforeImgRef.current.style.left = `${leftOffset}px`
+      beforeImgRef.current.style.top = `${topOffset}px`
+      beforeImgRef.current.style.width = `${afterRect.width}px`
+      beforeImgRef.current.style.height = `${afterRect.height}px`
+      beforeImgRef.current.style.objectFit = "cover"
+    }
+
+    // Run sync after images load and on resize
+    const timer = setTimeout(syncImages, 100)
+    window.addEventListener("resize", syncImages)
+
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener("resize", syncImages)
+    }
+  }, [beforeImage, afterImage])
+
   return (
     <div
       ref={containerRef}
@@ -80,38 +116,42 @@ export function ImageComparisonSlider({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* After Image (Enhanced) - Full Width */}
+      {/* After Image (Enhanced) - Full Width - This is the reference */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <img
+          ref={afterImgRef}
           src={afterImage || "/placeholder.svg"}
           alt={afterLabel}
-          className="w-full h-full object-contain"
+          className="max-w-full max-h-full w-auto h-auto object-contain"
           draggable="false"
         />
-        <div className="absolute top-4 right-4 pointer-events-none n3uralia-badge-gold px-3 py-1.5 rounded-full text-sm font-medium backdrop-blur-sm shadow-gold-md">
+        <div className="absolute top-4 right-4 pointer-events-none n3uralia-badge-gold px-3 py-1.5 rounded-full text-sm font-medium backdrop-blur-sm shadow-gold-md z-10">
           {afterLabel}
         </div>
       </div>
 
-      {/* Before Image (Original) - Clipped by Slider */}
+      {/* Before Image (Original) - Clipped by Slider - Matches after image exactly */}
       <div
-        className="absolute inset-0 overflow-hidden transition-none flex items-center justify-center pointer-events-none"
+        className="absolute inset-0 overflow-hidden transition-none pointer-events-none"
         style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
       >
-        <img
-          src={beforeImage || "/placeholder.svg"}
-          alt={beforeLabel}
-          className="w-full h-full object-contain"
-          draggable="false"
-        />
-        <div className="absolute top-4 left-4 pointer-events-none bg-black/70 text-white px-3 py-1.5 rounded-full text-sm font-medium backdrop-blur-sm">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <img
+            ref={beforeImgRef}
+            src={beforeImage || "/placeholder.svg"}
+            alt={beforeLabel}
+            className="max-w-full max-h-full w-auto h-auto object-contain"
+            draggable="false"
+          />
+        </div>
+        <div className="absolute top-4 left-4 pointer-events-none bg-black/70 text-white px-3 py-1.5 rounded-full text-sm font-medium backdrop-blur-sm z-10">
           {beforeLabel}
         </div>
       </div>
 
       {/* Gold Slider Bar with Elegant Design */}
       <div
-        className="absolute top-0 bottom-0 w-1 pointer-events-none"
+        className="absolute top-0 bottom-0 w-1 pointer-events-none z-20"
         style={{
           left: `${sliderPosition}%`,
           transform: "translateX(-50%)",
@@ -172,7 +212,7 @@ export function ImageComparisonSlider({
 
       {/* Instruction Overlay - Only show when not dragging */}
       {!isDragging && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-none">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-none z-10">
           <div className="bg-gradient-to-r from-gold-300/90 via-gold-400/90 to-gold-500/90 text-black px-4 py-2 rounded-full text-sm font-medium backdrop-blur-sm shadow-gold-lg animate-gold-pulse">
             Drag to compare
           </div>
