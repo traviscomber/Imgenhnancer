@@ -8,8 +8,27 @@ import { Toaster } from "@/components/ui/toaster"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "n3uralia AI Image Enhancer",
-  description: "Transform your images with AI-powered enhancement",
+  title: "clar1ty - AI Image Enhancer by n3uralia group",
+  description:
+    "Transform your images with AI-powered enhancement and restoration. Professional-grade image upscaling optimized for ASEAN heritage. Built by n3uralia group.",
+  keywords: [
+    "AI image enhancement",
+    "photo restoration",
+    "image upscaling",
+    "face preservation",
+    "ASEAN photography",
+    "n3uralia",
+    "cultural heritage restoration",
+  ],
+  authors: [{ name: "n3uralia group", url: "https://n3uralia.group" }],
+  creator: "n3uralia group",
+  publisher: "n3uralia group",
+  openGraph: {
+    title: "clar1ty - AI Image Enhancement Platform",
+    description: "Professional AI-powered image enhancement by n3uralia group",
+    type: "website",
+    locale: "en_US",
+  },
     generator: 'v0.app'
 }
 
@@ -24,6 +43,8 @@ export default function RootLayout({
         {/* Preconnect to image hosting domains for faster loading */}
         <link rel="preconnect" href="https://blob.v0.app" />
         <link rel="dns-prefetch" href="https://blob.v0.app" />
+        <meta name="author" content="n3uralia group" />
+        <meta name="creator" content="n3uralia group" />
       </head>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>

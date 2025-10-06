@@ -36,7 +36,7 @@ export function ImageComparisonSlider({
           }
         })
       },
-      { rootMargin: "100px" }, // Start loading 100px before visible
+      { rootMargin: "100px" },
     )
 
     observerRef.current.observe(containerRef.current)
@@ -104,7 +104,7 @@ export function ImageComparisonSlider({
     <div
       ref={containerRef}
       className={`relative w-full overflow-hidden rounded-xl select-none touch-none bg-black ${className}`}
-      style={{ aspectRatio: "4/3" }}
+      style={{ aspectRatio: "16/9" }}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}

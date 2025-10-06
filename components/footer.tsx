@@ -1,202 +1,253 @@
-import {
-  Brain,
-  Mail,
-  Globe,
-  Github,
-  Twitter,
-  Linkedin,
-  Shield,
-  Zap,
-  Eye,
-  Cpu,
-  Award,
-  Users,
-  ArrowRight,
-  CheckCircle,
-} from "lucide-react"
+import Link from "next/link"
+import { Facebook, Twitter, Instagram, Linkedin, Mail, Globe } from "lucide-react"
 
 export default function Footer() {
   return (
-    <footer className="n3uralia-gradient border-t n3uralia-border mt-20">
-      <div className="max-w-7xl mx-auto px-6 py-16">
-        {/* Main Footer Content */}
-        <div className="grid lg:grid-cols-4 md:grid-cols-2 gap-12 mb-12">
-          {/* Company Info */}
-          <div className="lg:col-span-1">
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center n3uralia-glow-gold">
-                <Brain className="w-6 h-6 n3uralia-gold-accent" />
+    <footer className="bg-gray-950 border-t border-gray-800 mt-20">
+      {/* Main Footer Content */}
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {/* Brand Column */}
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-gradient-to-r from-gold-500 to-gold-600 rounded-lg flex items-center justify-center">
+                <span className="text-black font-bold text-lg">C</span>
               </div>
-              <div>
-                <h3 className="text-xl font-bold text-white n3uralia-gold-accent">n3uralia</h3>
-                <p className="text-sm n3uralia-text-muted">AI Image Enhancement</p>
+              <span className="text-2xl font-bold text-gradient-gold">clar1ty</span>
+            </div>
+            <p className="text-gray-400 text-sm leading-relaxed">
+              Professional AI-powered image enhancement for heritage preservation, photography, and creative projects.
+            </p>
+            <div className="flex items-center gap-2 text-sm">
+              <div className="px-3 py-1 bg-gradient-to-r from-gold-500/20 to-gold-600/20 border border-gold-500/30 rounded-full text-gold-400">
+                Powered by n3uralia group
               </div>
             </div>
-            <p className="n3uralia-text-muted leading-relaxed mb-6">
-              Professional AI image enhancement platform with cultural sensitivity. Preserving authenticity while
-              delivering exceptional quality for Southeast Asian communities.
-            </p>
-            <div className="flex space-x-4">
-              <a href="#" className="text-white/60 hover:text-white transition-colors">
-                <Github className="w-5 h-5" />
-              </a>
-              <a href="#" className="text-white/60 hover:text-white transition-colors">
+          </div>
+
+          {/* Product Column */}
+          <div className="space-y-4">
+            <h3 className="text-white font-semibold text-lg">Product</h3>
+            <ul className="space-y-3">
+              <li>
+                <Link href="/enhance" className="text-gray-400 hover:text-gold-400 transition-colors text-sm">
+                  AI Enhancer
+                </Link>
+              </li>
+              <li>
+                <Link href="/#features" className="text-gray-400 hover:text-gold-400 transition-colors text-sm">
+                  Features
+                </Link>
+              </li>
+              <li>
+                <Link href="/#examples" className="text-gray-400 hover:text-gold-400 transition-colors text-sm">
+                  Examples
+                </Link>
+              </li>
+              <li>
+                <Link href="/#professional" className="text-gray-400 hover:text-gold-400 transition-colors text-sm">
+                  Professional Use
+                </Link>
+              </li>
+              <li>
+                <Link href="/pricing" className="text-gray-400 hover:text-gold-400 transition-colors text-sm">
+                  Pricing
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Resources Column */}
+          <div className="space-y-4">
+            <h3 className="text-white font-semibold text-lg">Resources</h3>
+            <ul className="space-y-3">
+              <li>
+                <Link href="/docs" className="text-gray-400 hover:text-gold-400 transition-colors text-sm">
+                  Documentation
+                </Link>
+              </li>
+              <li>
+                <Link href="/api" className="text-gray-400 hover:text-gold-400 transition-colors text-sm">
+                  API Reference
+                </Link>
+              </li>
+              <li>
+                <Link href="/blog" className="text-gray-400 hover:text-gold-400 transition-colors text-sm">
+                  Blog
+                </Link>
+              </li>
+              <li>
+                <Link href="/support" className="text-gray-400 hover:text-gold-400 transition-colors text-sm">
+                  Support
+                </Link>
+              </li>
+              <li>
+                <Link href="/changelog" className="text-gray-400 hover:text-gold-400 transition-colors text-sm">
+                  Changelog
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Company Column */}
+          <div className="space-y-4">
+            <h3 className="text-white font-semibold text-lg">Company</h3>
+            <ul className="space-y-3">
+              <li>
+                <Link href="/about" className="text-gray-400 hover:text-gold-400 transition-colors text-sm">
+                  About Us
+                </Link>
+              </li>
+              <li>
+                <a
+                  href="https://www.n3uralia.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-400 hover:text-gold-400 transition-colors text-sm flex items-center gap-1"
+                >
+                  <Globe className="w-3 h-3" />
+                  n3uralia.com
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.n3uralia.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-400 hover:text-gold-400 transition-colors text-sm flex items-center gap-1"
+                >
+                  <Globe className="w-3 h-3" />
+                  n3uralia ecosystem
+                </a>
+              </li>
+              <li>
+                <Link href="/contact" className="text-gray-400 hover:text-gold-400 transition-colors text-sm">
+                  Contact
+                </Link>
+              </li>
+              <li>
+                <Link href="/careers" className="text-gray-400 hover:text-gold-400 transition-colors text-sm">
+                  Careers
+                </Link>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Social Media Links */}
+        <div className="mt-12 pt-8 border-t border-gray-800">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-4">
+              <a
+                href="https://twitter.com/n3uralia"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-full bg-gray-800 hover:bg-gold-500/20 flex items-center justify-center text-gray-400 hover:text-gold-400 transition-all"
+                aria-label="Twitter"
+              >
                 <Twitter className="w-5 h-5" />
               </a>
-              <a href="#" className="text-white/60 hover:text-white transition-colors">
+              <a
+                href="https://facebook.com/n3uralia"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-full bg-gray-800 hover:bg-gold-500/20 flex items-center justify-center text-gray-400 hover:text-gold-400 transition-all"
+                aria-label="Facebook"
+              >
+                <Facebook className="w-5 h-5" />
+              </a>
+              <a
+                href="https://instagram.com/n3uralia"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-full bg-gray-800 hover:bg-gold-500/20 flex items-center justify-center text-gray-400 hover:text-gold-400 transition-all"
+                aria-label="Instagram"
+              >
+                <Instagram className="w-5 h-5" />
+              </a>
+              <a
+                href="https://linkedin.com/company/n3uralia"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-full bg-gray-800 hover:bg-gold-500/20 flex items-center justify-center text-gray-400 hover:text-gold-400 transition-all"
+                aria-label="LinkedIn"
+              >
                 <Linkedin className="w-5 h-5" />
               </a>
-            </div>
-          </div>
-
-          {/* Platform Capabilities */}
-          <div>
-            <h4 className="text-lg font-semibold text-white mb-6">Platform Capabilities</h4>
-            <ul className="space-y-4">
-              {[
-                { icon: Shield, text: "Face Preservation Technology", desc: "100% authentic feature protection" },
-                { icon: Zap, text: "AI-Powered Enhancement", desc: "4x upscaling with neural networks" },
-                { icon: Eye, text: "Cultural Sensitivity", desc: "ASEAN-focused algorithms" },
-                { icon: Cpu, text: "Advanced Processing", desc: "Multi-stage enhancement pipeline" },
-              ].map((item, index) => (
-                <li key={index} className="flex items-start space-x-3 group">
-                  <div className="w-8 h-8 bg-white/5 rounded-lg flex items-center justify-center mt-0.5 group-hover:n3uralia-glow-gold transition-all">
-                    <item.icon className="w-4 h-4 n3uralia-gold-accent" />
-                  </div>
-                  <div>
-                    <p className="text-white font-medium text-sm">{item.text}</p>
-                    <p className="n3uralia-text-muted text-xs">{item.desc}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Use Cases */}
-          <div>
-            <h4 className="text-lg font-semibold text-white mb-6">Professional Applications</h4>
-            <ul className="space-y-3">
-              {[
-                "Wedding Photography",
-                "Family Portraits",
-                "Official Documents",
-                "Cultural Heritage",
-                "Social Media Content",
-                "Commercial Projects",
-              ].map((item, index) => (
-                <li key={index} className="flex items-center space-x-3 group cursor-pointer">
-                  <div className="w-1.5 h-1.5 rounded-full bg-gold-500 group-hover:bg-gold-400 transition-colors"></div>
-                  <span className="text-white/70 group-hover:text-white transition-colors text-sm">{item}</span>
-                  <ArrowRight className="w-3 h-3 text-white/30 group-hover:text-gold-500 group-hover:translate-x-1 transition-all" />
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Contact & Newsletter */}
-          <div>
-            <h4 className="text-lg font-semibold text-white mb-6">Stay Connected</h4>
-
-            {/* Contact Info */}
-            <div className="space-y-4 mb-6">
-              <div className="flex items-center space-x-3">
-                <Mail className="w-4 h-4 n3uralia-gold-accent" />
-                <span className="text-white/70 text-sm">hello@n3uralia.ai</span>
-              </div>
-              <div className="flex items-center space-x-3">
-                <Globe className="w-4 h-4 n3uralia-gold-accent" />
-                <span className="text-white/70 text-sm">Southeast Asia</span>
-              </div>
+              <a
+                href="mailto:hello@n3uralia.com"
+                className="w-10 h-10 rounded-full bg-gray-800 hover:bg-gold-500/20 flex items-center justify-center text-gray-400 hover:text-gold-400 transition-all"
+                aria-label="Email"
+              >
+                <Mail className="w-5 h-5" />
+              </a>
             </div>
 
-            {/* Newsletter Signup */}
-            <div className="n3uralia-card rounded-lg p-4 border n3uralia-border-gold">
-              <h5 className="text-white font-medium mb-3 text-sm">Newsletter</h5>
-              <p className="text-xs n3uralia-text-muted mb-4">Get updates on new features and AI advancements</p>
-              <div className="flex space-x-2">
-                <input
-                  type="email"
-                  placeholder="Enter email"
-                  className="flex-1 n3uralia-input text-xs px-3 py-2 rounded-md"
-                />
-                <button className="n3uralia-button-gold px-3 py-2 rounded-md text-xs font-medium">Subscribe</button>
-              </div>
+            <div className="flex items-center gap-4 text-sm text-gray-400">
+              <Link href="/privacy" className="hover:text-gold-400 transition-colors">
+                Privacy Policy
+              </Link>
+              <span className="text-gray-600">|</span>
+              <Link href="/terms" className="hover:text-gold-400 transition-colors">
+                Terms of Service
+              </Link>
+              <span className="text-gray-600">|</span>
+              <Link href="/cookies" className="hover:text-gold-400 transition-colors">
+                Cookie Policy
+              </Link>
             </div>
-          </div>
-        </div>
-
-        {/* Stats Section */}
-        <div className="n3uralia-card rounded-2xl p-8 mb-12 border n3uralia-border-gold">
-          <div className="grid md:grid-cols-4 gap-8 text-center">
-            {[
-              { icon: Users, number: "10K+", label: "Active Users", desc: "Trusted by professionals" },
-              { icon: Award, number: "500K+", label: "Images Enhanced", desc: "With face preservation" },
-              { icon: Shield, number: "99.9%", label: "Accuracy Rate", desc: "In feature preservation" },
-              { icon: Globe, number: "6", label: "ASEAN Countries", desc: "Specialized support" },
-            ].map((stat, index) => (
-              <div key={index} className="group">
-                <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:n3uralia-glow-gold transition-all">
-                  <stat.icon className="w-6 h-6 n3uralia-gold-accent" />
-                </div>
-                <div className="text-2xl font-bold text-white mb-2 n3uralia-gold-accent">{stat.number}</div>
-                <div className="text-white font-medium mb-1">{stat.label}</div>
-                <div className="text-xs n3uralia-text-muted">{stat.desc}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ASEAN Focus Banner */}
-        <div className="n3uralia-card-premium rounded-2xl p-8 mb-12 text-center border n3uralia-border-gold">
-          <div className="text-4xl mb-4">🇮🇩🇲🇾🇹🇭🇵🇭🇸🇬🇻🇳</div>
-          <h4 className="text-xl font-bold text-white mb-3">Built for Southeast Asia</h4>
-          <p className="n3uralia-text-muted max-w-2xl mx-auto mb-6">
-            The first AI enhancement platform specifically designed to respect and preserve the unique facial
-            characteristics and cultural heritage of ASEAN communities.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            {["🛡️ Face Preservation", "🎨 Cultural Respect", "⚡ Advanced AI", "🌏 Regional Focus"].map(
-              (feature, index) => (
-                <div key={index} className="bg-white/5 px-4 py-2 rounded-full border n3uralia-border-gold">
-                  <span className="text-sm text-white">{feature}</span>
-                </div>
-              ),
-            )}
           </div>
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t n3uralia-border pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <div className="flex items-center space-x-6 text-sm n3uralia-text-muted">
-              <span>© 2025 n3uralia. All rights reserved.</span>
-              <a href="#" className="hover:text-white transition-colors">
-                Privacy Policy
+        <div className="mt-8 pt-8 border-t border-gray-800">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-400">
+            <p>
+              © {new Date().getFullYear()} clar1ty. All rights reserved. Built with ❤️ by{" "}
+              <a
+                href="https://www.n3uralia.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gold-400 hover:text-gold-300 transition-colors"
+              >
+                n3uralia group
               </a>
-              <a href="#" className="hover:text-white transition-colors">
-                Terms of Service
-              </a>
-              <a href="#" className="hover:text-white transition-colors">
-                ASEAN Guidelines
-              </a>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <CheckCircle className="w-4 h-4 n3uralia-gold-accent" />
-                <span className="text-sm text-white">Face Preservation Certified</span>
-              </div>
-              <div className="w-px h-4 bg-white/20"></div>
-              <div className="flex items-center space-x-2">
-                <div
-                  className="w-2 h-2 rounded-full n3uralia-pulse-gold"
-                  style={{ backgroundColor: "rgba(218, 165, 32, 1)" }}
-                ></div>
-                <span className="text-sm text-white">AI Online</span>
-              </div>
-            </div>
+            </p>
+            <p className="text-gray-500">Part of the n3uralia ecosystem of AI products</p>
           </div>
         </div>
       </div>
+
+      {/* Structured Data for SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: "clar1ty",
+            description: "Professional AI-powered image enhancement",
+            url: "https://clar1ty.vercel.app",
+            logo: "https://clar1ty.vercel.app/logo.png",
+            sameAs: [
+              "https://twitter.com/n3uralia",
+              "https://facebook.com/n3uralia",
+              "https://instagram.com/n3uralia",
+              "https://linkedin.com/company/n3uralia",
+            ],
+            contactPoint: {
+              "@type": "ContactPoint",
+              email: "hello@n3uralia.com",
+              contactType: "Customer Support",
+            },
+            author: {
+              "@type": "Organization",
+              name: "n3uralia group",
+              url: "https://www.n3uralia.com",
+            },
+          }),
+        }}
+      />
     </footer>
   )
 }

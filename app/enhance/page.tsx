@@ -2,299 +2,388 @@
 
 import type React from "react"
 
-import { useState } from "react"
-import { Upload, Sparkles, Download, AlertCircle, Loader2 } from "lucide-react"
+import { useState, useRef } from "react"
+import Image from "next/image"
+import Link from "next/link"
+import { Upload, Sparkles, Download, Loader2, ArrowLeft, Zap, Shield, Wand2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { compressImage } from "@/utils/image-processing"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
+import { Slider } from "@/components/ui/slider"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useToast } from "@/hooks/use-toast"
 
-interface EnhancedImage {
+type EnhancedImage = {
   id: string
-  original: string
-  enhanced: string | null
-  status: "pending" | "processing" | "complete" | "error"
-  error?: string
-  downloadUrl?: string
+  url: string
+  originalUrl: string
 }
 
 export default function EnhancePage() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
+  const [previews, setPreviews] = useState<string[]>([])
   const [enhancedImages, setEnhancedImages] = useState<EnhancedImage[]>([])
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [upscaleFactor, setUpscaleFactor] = useState(2)
+  const [isEnhancing, setIsEnhancing] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const [upscaleFactor, setUpscaleFactor] = useState(4)
+  const [provider, setProvider] = useState<"fal" | "replicate">("fal")
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const { toast } = useToast()
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || [])
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    if (files.length === 0) return
+
     setSelectedFiles(files)
+
+    // Create preview URLs
+    const newPreviews = files.map((file) => URL.createObjectURL(file))
+    setPreviews(newPreviews)
+
+    toast({
+      title: "Images Selected",
+      description: `${files.length} image${files.length > 1 ? "s" : ""} ready to enhance`,
+    })
   }
 
   const handleEnhance = async () => {
-    if (selectedFiles.length === 0) return
+    if (selectedFiles.length === 0) {
+      toast({
+        title: "No Images Selected",
+        description: "Please select at least one image to enhance",
+        variant: "destructive",
+      })
+      return
+    }
 
-    setIsProcessing(true)
+    setIsEnhancing(true)
+    setProgress(0)
+    const newEnhancedImages: EnhancedImage[] = []
 
-    // Create initial image records
-    const newImages: EnhancedImage[] = selectedFiles.map((file, index) => ({
-      id: `img-${Date.now()}-${index}`,
-      original: URL.createObjectURL(file),
-      enhanced: null,
-      status: "pending",
-    }))
-
-    setEnhancedImages(newImages)
-
-    // Process each image
-    for (let i = 0; i < selectedFiles.length; i++) {
-      const file = selectedFiles[i]
-      const imageId = newImages[i].id
-
-      // Update status to processing
-      setEnhancedImages((prev) => prev.map((img) => (img.id === imageId ? { ...img, status: "processing" } : img)))
-
-      try {
-        // Compress image before upload
-        console.log(`🔄 Compressing image: ${file.name}`)
-        const compressedBlob = await compressImage(file, 800) // Max 800KB
-        const compressedFile = new File([compressedBlob], file.name, { type: "image/jpeg" })
-
-        console.log(`📤 Uploading ${file.name} (${Math.round(compressedFile.size / 1024)}KB)`)
+    try {
+      for (let i = 0; i < selectedFiles.length; i++) {
+        const file = selectedFiles[i]
+        setProgress(Math.round(((i + 1) / selectedFiles.length) * 100))
 
         const formData = new FormData()
-        formData.append("file", compressedFile)
-        formData.append(
-          "settings",
-          JSON.stringify({
-            upscaleFactor,
-            model: "clarity-upscaler-face-preserve",
-            faceEnhance: false,
-          }),
-        )
+        formData.append("image", file)
+        formData.append("scale", upscaleFactor.toString())
 
-        const response = await fetch("/api/enhance-replicate", {
+        const endpoint = provider === "fal" ? "/api/enhance-fal" : "/api/enhance-replicate"
+
+        const response = await fetch(endpoint, {
           method: "POST",
           body: formData,
         })
 
-        const result = await response.json()
-
-        if (result.success && result.downloadUrl) {
-          setEnhancedImages((prev) =>
-            prev.map((img) =>
-              img.id === imageId
-                ? {
-                    ...img,
-                    status: "complete",
-                    enhanced: result.downloadUrl,
-                    downloadUrl: result.downloadUrl,
-                  }
-                : img,
-            ),
-          )
-        } else {
-          throw new Error(result.error || "Enhancement failed")
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || `Failed to enhance image ${i + 1}`)
         }
-      } catch (error: any) {
-        console.error("Enhancement error:", error)
-        setEnhancedImages((prev) =>
-          prev.map((img) =>
-            img.id === imageId
-              ? {
-                  ...img,
-                  status: "error",
-                  error: error.message || "Failed to enhance image",
-                }
-              : img,
-          ),
-        )
-      }
-    }
 
-    setIsProcessing(false)
+        const data = await response.json()
+
+        newEnhancedImages.push({
+          id: `enhanced-${Date.now()}-${i}`,
+          url: data.output,
+          originalUrl: previews[i],
+        })
+      }
+
+      setEnhancedImages(newEnhancedImages)
+      toast({
+        title: "Enhancement Complete!",
+        description: `Successfully enhanced ${selectedFiles.length} image${selectedFiles.length > 1 ? "s" : ""}`,
+      })
+    } catch (error) {
+      console.error("Enhancement error:", error)
+      toast({
+        title: "Enhancement Failed",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        variant: "destructive",
+      })
+    } finally {
+      setIsEnhancing(false)
+      setProgress(0)
+    }
   }
 
-  const handleDownload = async (url: string, filename: string) => {
+  const handleDownload = async (url: string, index: number) => {
     try {
       const response = await fetch(url)
       const blob = await response.blob()
-      const downloadUrl = URL.createObjectURL(blob)
-      const link = document.createElement("a")
-      link.href = downloadUrl
-      link.download = filename
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(downloadUrl)
+      const downloadUrl = window.URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = downloadUrl
+      a.download = `enhanced-image-${index + 1}.png`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(downloadUrl)
+      document.body.removeChild(a)
+
+      toast({
+        title: "Download Started",
+        description: "Your enhanced image is downloading",
+      })
     } catch (error) {
-      console.error("Download failed:", error)
+      toast({
+        title: "Download Failed",
+        description: "Could not download the image",
+        variant: "destructive",
+      })
     }
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-black to-gray-900">
+      {/* Navigation */}
+      <nav className="border-b border-white/10 bg-black/20 backdrop-blur-sm sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <Link href="/" className="flex items-center space-x-2 group">
+              <Sparkles className="w-8 h-8 text-amber-400 transition-all duration-300 group-hover:scale-110 group-hover:rotate-12 group-hover:text-amber-300" />
+              <span className="text-2xl font-bold text-white transition-all duration-300 group-hover:text-amber-400">
+                clar1ty
+              </span>
+            </Link>
+            <Link href="/">
+              <Button
+                variant="ghost"
+                className="text-white hover:text-amber-400 hover:bg-amber-500/10 transition-all duration-300"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Home
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </nav>
+
       <div className="container mx-auto px-4 py-12">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">AI Image Enhancer</h1>
-          <p className="text-xl text-gray-300">Transform your images with advanced AI technology</p>
+          <Badge className="mb-4 bg-amber-500/20 text-amber-400 border-amber-500/30">AI Image Enhancer</Badge>
+          <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 bg-clip-text text-transparent">
+            Enhance Your Images
+          </h1>
+          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+            Upload your images and let AI enhance them with professional quality
+          </p>
         </div>
 
-        <Tabs defaultValue="upload" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-8">
-            <TabsTrigger value="upload">Upload & Enhance</TabsTrigger>
-            <TabsTrigger value="results">Enhanced Images</TabsTrigger>
+        <Tabs defaultValue="upload" className="w-full max-w-6xl mx-auto">
+          <TabsList className="grid w-full grid-cols-2 mb-8 bg-black/40 border border-white/10">
+            <TabsTrigger
+              value="upload"
+              className="data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-400"
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Upload & Enhance
+            </TabsTrigger>
+            <TabsTrigger
+              value="enhanced"
+              className="data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-400"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              Enhanced Images ({enhancedImages.length})
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="upload">
+          <TabsContent value="upload" className="space-y-8">
+            {/* Settings Card */}
+            <Card className="bg-black/40 border-white/10">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center">
+                  <Wand2 className="w-5 h-5 mr-2 text-amber-400" />
+                  Enhancement Settings
+                </CardTitle>
+                <CardDescription className="text-gray-400">Configure your image enhancement parameters</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Provider Selection */}
+                  <div className="space-y-2">
+                    <Label className="text-white">AI Provider</Label>
+                    <Select value={provider} onValueChange={(value: "fal" | "replicate") => setProvider(value)}>
+                      <SelectTrigger className="bg-black/40 border-white/10 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-gray-900 border-white/10">
+                        <SelectItem value="fal" className="text-white">
+                          <div className="flex items-center">
+                            <Zap className="w-4 h-4 mr-2 text-amber-400" />
+                            Fal AI (Fast)
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="replicate" className="text-white">
+                          <div className="flex items-center">
+                            <Shield className="w-4 h-4 mr-2 text-amber-400" />
+                            Replicate (Quality)
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Upscale Factor */}
+                  <div className="space-y-2">
+                    <Label className="text-white">Upscale Factor: {upscaleFactor}x</Label>
+                    <Slider
+                      value={[upscaleFactor]}
+                      onValueChange={(value) => setUpscaleFactor(value[0])}
+                      min={2}
+                      max={4}
+                      step={1}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+
+                <Alert className="bg-amber-500/10 border-amber-500/30">
+                  <Sparkles className="w-4 h-4 text-amber-400" />
+                  <AlertDescription className="text-gray-300">
+                    {provider === "fal"
+                      ? "Fal AI provides fast enhancement with great quality, ideal for most use cases."
+                      : "Replicate offers maximum quality with face preservation, perfect for portraits."}
+                  </AlertDescription>
+                </Alert>
+              </CardContent>
+            </Card>
+
+            {/* Upload Area */}
             <Card className="bg-black/40 border-white/10">
               <CardHeader>
                 <CardTitle className="text-white">Upload Images</CardTitle>
-                <CardDescription className="text-gray-400">
-                  Select images to enhance with AI (max 15MB each)
-                </CardDescription>
+                <CardDescription className="text-gray-400">Select one or more images to enhance</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                {/* File Upload */}
-                <div className="border-2 border-dashed border-white/20 rounded-lg p-8 text-center hover:border-white/40 transition-colors">
+              <CardContent>
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="border-2 border-dashed border-white/20 rounded-lg p-12 text-center hover:border-amber-500/50 transition-all duration-300 cursor-pointer bg-black/20 hover:bg-black/30"
+                >
+                  <Upload className="w-12 h-12 text-amber-400 mx-auto mb-4 transition-transform duration-300 hover:scale-110" />
+                  <p className="text-white mb-2">Click to upload or drag and drop</p>
+                  <p className="text-gray-400 text-sm">PNG, JPG, WEBP (Max 10MB per image)</p>
                   <input
+                    ref={fileInputRef}
                     type="file"
                     accept="image/*"
                     multiple
                     onChange={handleFileSelect}
                     className="hidden"
-                    id="file-upload"
                   />
-                  <label htmlFor="file-upload" className="cursor-pointer">
-                    <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                    <p className="text-white mb-2">Click to upload images</p>
-                    <p className="text-sm text-gray-400">PNG, JPG, JPEG up to 15MB</p>
-                  </label>
                 </div>
 
-                {/* Selected Files */}
-                {selectedFiles.length > 0 && (
-                  <div className="space-y-2">
-                    <h3 className="text-white font-medium">Selected Files:</h3>
-                    {selectedFiles.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
-                        <span className="text-gray-300">{file.name}</span>
-                        <span className="text-gray-400 text-sm">{Math.round(file.size / 1024)}KB</span>
+                {/* Preview Grid */}
+                {previews.length > 0 && (
+                  <div className="mt-6 grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {previews.map((preview, index) => (
+                      <div
+                        key={index}
+                        className="relative aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-amber-500/30 transition-all duration-300 hover:scale-105"
+                      >
+                        <Image
+                          src={preview || "/placeholder.svg"}
+                          alt={`Preview ${index + 1}`}
+                          fill
+                          className="object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-2">
+                          <span className="text-white text-sm">Image {index + 1}</span>
+                        </div>
                       </div>
                     ))}
                   </div>
                 )}
 
-                {/* Upscale Factor */}
-                <div className="space-y-2">
-                  <label className="text-white font-medium">Upscale Factor</label>
-                  <select
-                    value={upscaleFactor}
-                    onChange={(e) => setUpscaleFactor(Number(e.target.value))}
-                    className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white"
-                  >
-                    <option value={2}>2x Enhancement</option>
-                    <option value={4}>4x Enhancement</option>
-                  </select>
-                </div>
-
                 {/* Enhance Button */}
-                <Button
-                  onClick={handleEnhance}
-                  disabled={selectedFiles.length === 0 || isProcessing}
-                  className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700"
-                  size="lg"
-                >
-                  {isProcessing ? (
-                    <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-5 h-5 mr-2" />
-                      Enhance Images
-                    </>
-                  )}
-                </Button>
-
-                {/* Info Alert */}
-                <Alert className="border-blue-500/20 bg-blue-900/20">
-                  <AlertCircle className="h-4 w-4 text-blue-400" />
-                  <AlertDescription className="text-blue-200">
-                    <strong>Face Preservation Mode:</strong> This mode preserves natural facial features and works well
-                    with ASEAN/Indonesian faces.
-                  </AlertDescription>
-                </Alert>
+                {previews.length > 0 && (
+                  <div className="mt-6">
+                    <Button
+                      onClick={handleEnhance}
+                      disabled={isEnhancing}
+                      className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white py-6 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-amber-500/50"
+                    >
+                      {isEnhancing ? (
+                        <>
+                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                          Enhancing... {progress}%
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-5 h-5 mr-2" />
+                          Enhance {selectedFiles.length} Image{selectedFiles.length > 1 ? "s" : ""}
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="results">
-            <Card className="bg-black/40 border-white/10">
-              <CardHeader>
-                <CardTitle className="text-white">Enhanced Images</CardTitle>
-                <CardDescription className="text-gray-400">View and download your enhanced images</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {enhancedImages.length === 0 ? (
-                  <div className="text-center py-12">
-                    <p className="text-gray-400">No enhanced images yet</p>
-                    <p className="text-gray-500 text-sm mt-2">Upload and enhance images to see results here</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {enhancedImages.map((image) => (
-                      <div key={image.id} className="space-y-4">
-                        {/* Original */}
-                        <div>
-                          <p className="text-gray-400 text-sm mb-2">Original</p>
-                          <img
-                            src={image.original || "/placeholder.svg"}
-                            alt="Original"
-                            className="w-full rounded-lg"
-                          />
+          <TabsContent value="enhanced" className="space-y-6">
+            {enhancedImages.length === 0 ? (
+              <Card className="bg-black/40 border-white/10">
+                <CardContent className="p-12 text-center">
+                  <Sparkles className="w-16 h-16 text-amber-400 mx-auto mb-4 opacity-50" />
+                  <p className="text-white text-lg mb-2">No Enhanced Images Yet</p>
+                  <p className="text-gray-400">Upload and enhance images to see them here</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid md:grid-cols-2 gap-6">
+                {enhancedImages.map((enhanced, index) => (
+                  <Card
+                    key={enhanced.id}
+                    className="bg-black/40 border-white/10 overflow-hidden hover:border-amber-500/30 transition-all duration-300"
+                  >
+                    <CardHeader>
+                      <CardTitle className="text-white text-lg">Enhanced Image {index + 1}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {/* Before/After Comparison */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-2">
+                          <p className="text-gray-400 text-sm">Original</p>
+                          <div className="relative aspect-square rounded-lg overflow-hidden border border-white/10">
+                            <Image
+                              src={enhanced.originalUrl || "/placeholder.svg"}
+                              alt="Original"
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
                         </div>
-
-                        {/* Enhanced */}
-                        <div>
-                          <p className="text-gray-400 text-sm mb-2">Enhanced</p>
-                          {image.status === "processing" && (
-                            <div className="flex items-center justify-center h-48 bg-white/5 rounded-lg">
-                              <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
-                            </div>
-                          )}
-                          {image.status === "complete" && image.enhanced && (
-                            <div className="space-y-2">
-                              <img
-                                src={image.enhanced || "/placeholder.svg"}
-                                alt="Enhanced"
-                                className="w-full rounded-lg"
-                              />
-                              <Button
-                                onClick={() => handleDownload(image.downloadUrl!, `enhanced-${Date.now()}.jpg`)}
-                                className="w-full"
-                              >
-                                <Download className="w-4 h-4 mr-2" />
-                                Download
-                              </Button>
-                            </div>
-                          )}
-                          {image.status === "error" && (
-                            <Alert className="border-red-500/20 bg-red-900/20">
-                              <AlertCircle className="h-4 w-4 text-red-400" />
-                              <AlertDescription className="text-red-200">
-                                {image.error || "Enhancement failed"}
-                              </AlertDescription>
-                            </Alert>
-                          )}
+                        <div className="space-y-2">
+                          <p className="text-amber-400 text-sm">Enhanced</p>
+                          <div className="relative aspect-square rounded-lg overflow-hidden border border-amber-500/30">
+                            <Image
+                              src={enhanced.url || "/placeholder.svg"}
+                              alt="Enhanced"
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+
+                      {/* Download Button */}
+                      <Button
+                        onClick={() => handleDownload(enhanced.url, index)}
+                        className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-amber-500/50"
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Download Enhanced
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>

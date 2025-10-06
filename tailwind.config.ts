@@ -3,28 +3,24 @@ import type { Config } from "tailwindcss"
 const config: Config = {
   darkMode: ["class"],
   content: [
-    "./pages/**/*.{ts,tsx}",
-    "./components/**/*.{ts,tsx}",
-    "./app/**/*.{ts,tsx}",
-    "./src/**/*.{ts,tsx}",
+    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "*.{js,ts,jsx,tsx,mdx}",
   ],
-  prefix: "",
   theme: {
-    container: {
-      center: true,
-      padding: "2rem",
-      screens: {
-        "2xl": "1400px",
-      },
-    },
     extend: {
       colors: {
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
@@ -32,10 +28,6 @@ const config: Config = {
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
-        },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",
@@ -45,30 +37,32 @@ const config: Config = {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
         },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
         },
-        card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        chart: {
+          "1": "hsl(var(--chart-1))",
+          "2": "hsl(var(--chart-2))",
+          "3": "hsl(var(--chart-3))",
+          "4": "hsl(var(--chart-4))",
+          "5": "hsl(var(--chart-5))",
         },
-        // True Gold Color System
         gold: {
-          50: "#FFFBF0",
-          100: "#FFF8DC", // Cornsilk
-          200: "#F5DEB3", // Wheat
-          300: "#DAA520", // Goldenrod (Primary)
-          400: "#FFD700", // Gold (Bright)
-          500: "#B8860B", // Dark Goldenrod
-          600: "#CD853F", // Peru
-          700: "#8B7355", // Dark Khaki
-          800: "#6B5B73", // Dim Gray
-          900: "#2F2F2F", // Very Dark Gray
-          DEFAULT: "#DAA520", // Goldenrod as default
-          bright: "#FFD700", // Pure Gold
-          dark: "#B8860B", // Dark Goldenrod
-          muted: "#CD853F", // Peru
+          "50": "#fefce8",
+          "100": "#fef9c3",
+          "200": "#fef08a",
+          "300": "#fde047",
+          "400": "#facc15",
+          "500": "#eab308",
+          "600": "#ca8a04",
+          "700": "#a16207",
+          "800": "#854d0e",
+          "900": "#713f12",
+          "950": "#422006",
         },
       },
       borderRadius: {
@@ -78,57 +72,65 @@ const config: Config = {
       },
       keyframes: {
         "accordion-down": {
-          from: { height: "0" },
-          to: { height: "var(--radix-accordion-content-height)" },
+          from: {
+            height: "0",
+          },
+          to: {
+            height: "var(--radix-accordion-content-height)",
+          },
         },
         "accordion-up": {
-          from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: "0" },
+          from: {
+            height: "var(--radix-accordion-content-height)",
+          },
+          to: {
+            height: "0",
+          },
         },
-        "gold-pulse": {
+        gradient: {
+          "0%, 100%": {
+            "background-position": "0% 50%",
+          },
+          "50%": {
+            "background-position": "100% 50%",
+          },
+        },
+        shimmer: {
+          "0%": {
+            transform: "translateX(-100%)",
+          },
+          "100%": {
+            transform: "translateX(100%)",
+          },
+        },
+        glow: {
           "0%, 100%": {
             opacity: "1",
-            transform: "scale(1)",
-            boxShadow: "0 0 10px rgba(218, 165, 32, 0.3)",
           },
           "50%": {
-            opacity: "0.8",
-            transform: "scale(1.05)",
-            boxShadow: "0 0 20px rgba(218, 165, 32, 0.5)",
-          },
-        },
-        "gold-shimmer": {
-          "0%": { transform: "translateX(-100%)" },
-          "100%": { transform: "translateX(100%)" },
-        },
-        "gold-glow": {
-          "0%, 100%": {
-            boxShadow: "0 0 20px rgba(218, 165, 32, 0.15)",
-          },
-          "50%": {
-            boxShadow: "0 0 30px rgba(218, 165, 32, 0.4)",
+            opacity: "0.5",
           },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "gold-pulse": "gold-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-        "gold-shimmer": "gold-shimmer 2s infinite",
-        "gold-glow": "gold-glow 3s ease-in-out infinite",
+        gradient: "gradient 8s ease infinite",
+        shimmer: "shimmer 2s ease-in-out infinite",
+        glow: "glow 2s ease-in-out infinite",
       },
       boxShadow: {
-        "gold-sm": "0 1px 2px 0 rgba(218, 165, 32, 0.05)",
-        gold: "0 1px 3px 0 rgba(218, 165, 32, 0.1), 0 1px 2px 0 rgba(218, 165, 32, 0.06)",
-        "gold-md": "0 4px 6px -1px rgba(218, 165, 32, 0.1), 0 2px 4px -1px rgba(218, 165, 32, 0.06)",
-        "gold-lg": "0 10px 15px -3px rgba(218, 165, 32, 0.1), 0 4px 6px -2px rgba(218, 165, 32, 0.05)",
-        "gold-xl": "0 20px 25px -5px rgba(218, 165, 32, 0.1), 0 10px 10px -5px rgba(218, 165, 32, 0.04)",
-        "gold-2xl": "0 25px 50px -12px rgba(218, 165, 32, 0.25)",
-        "gold-inner": "inset 0 2px 4px 0 rgba(218, 165, 32, 0.06)",
+        "gold-sm": "0 1px 2px 0 rgba(234, 179, 8, 0.05)",
+        gold: "0 1px 3px 0 rgba(234, 179, 8, 0.1), 0 1px 2px -1px rgba(234, 179, 8, 0.1)",
+        "gold-md": "0 4px 6px -1px rgba(234, 179, 8, 0.1), 0 2px 4px -2px rgba(234, 179, 8, 0.1)",
+        "gold-lg": "0 10px 15px -3px rgba(234, 179, 8, 0.3), 0 4px 6px -4px rgba(234, 179, 8, 0.2)",
+        "gold-xl": "0 20px 25px -5px rgba(234, 179, 8, 0.3), 0 8px 10px -6px rgba(234, 179, 8, 0.2)",
+        "gold-2xl": "0 25px 50px -12px rgba(234, 179, 8, 0.4)",
+        "gold-inner": "inset 0 2px 4px 0 rgba(234, 179, 8, 0.1)",
       },
     },
   },
   plugins: [require("tailwindcss-animate")],
-} satisfies Config
+}
 
 export default config
