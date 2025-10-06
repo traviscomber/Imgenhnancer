@@ -490,7 +490,7 @@ const AIImageEnhancementPortal = () => {
         const fileId = Date.now() + Math.random()
 
         // Get actual image dimensions
-        const img = new Image()
+        const img = new window.Image()
         img.onload = () => {
           // Update the file with actual dimensions
           setSelectedFiles((prev) =>
@@ -953,7 +953,7 @@ const AIImageEnhancementPortal = () => {
   const optimizeParametersWithAI = async (file: File) => {
     try {
       // Analyze image characteristics
-      const img = new Image()
+      const img = new window.Image()
       const canvas = document.createElement("canvas")
       const ctx = canvas.getContext("2d")
 
@@ -1241,15 +1241,26 @@ const AIImageEnhancementPortal = () => {
                 </div>
 
                 <div className="relative">
-                  {/* Updated Hero Image */}
-                  <img
-                    src="/placeholder.svg?height=600&width=800"
-                    alt="AI Enhancement Preview"
-                    className="rounded-lg w-full"
-                  />
-                  <div className="absolute top-4 right-4 n3uralia-badge-gold px-4 py-2 rounded-full flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4" />
-                    <span className="text-sm font-medium">4x Enhanced</span>
+                  <div className="n3uralia-card rounded-2xl overflow-hidden border n3uralia-border-gold">
+                    <img
+                      src="/images/hero-asean-bride.jpg"
+                      alt="Indonesian bride in traditional white kebaya and hijab - AI Enhanced 4x"
+                      className="w-full h-auto"
+                      onLoad={() => console.log("✅ Hero image loaded successfully!")}
+                      onError={(e) => {
+                        console.error("❌ Hero image failed to load:", e)
+                        console.log("Attempted path:", "/images/hero-asean-bride.jpg")
+                      }}
+                    />
+                    <div className="absolute top-4 right-4 n3uralia-badge-gold px-4 py-2 rounded-full flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4" />
+                      <span className="text-sm font-medium">4x Enhanced</span>
+                    </div>
+                  </div>
+
+                  {/* Debug information */}
+                  <div className="mt-2 text-xs n3uralia-text-muted text-center">
+                    Image path: /images/hero-asean-bride.jpg
                   </div>
                 </div>
               </div>
@@ -1269,26 +1280,26 @@ const AIImageEnhancementPortal = () => {
                 {[
                   {
                     title: "ASEAN Portrait - Wedding Photo",
-                    original: "/placeholder.svg?height=500&width=500",
-                    enhanced: "/placeholder.svg?height=500&width=500",
+                    original: "/images/wedding-original.jpg",
+                    enhanced: "/images/wedding-enhanced.jpg",
                     stats: "4x Upscale • 🇮🇩 Face Preserved • Cultural Authenticity",
                   },
                   {
                     title: "Abstract Art - Digital Painting",
-                    original: "/placeholder.svg?height=500&width=500",
-                    enhanced: "/placeholder.svg?height=500&width=500",
+                    original: "/images/abstract-original.jpg",
+                    enhanced: "/images/abstract-enhanced.jpg",
                     stats: "4x Upscale • Texture Preserved • Artistic Integrity",
                   },
                   {
                     title: "ASEAN Portrait - Family Photo",
-                    original: "/placeholder.svg?height=500&width=500",
-                    enhanced: "/placeholder.svg?height=500&width=500",
+                    original: "/images/family-original.jpg",
+                    enhanced: "/images/family-enhanced.jpg",
                     stats: "3x Upscale • 🇲🇾 Multi-Face • Natural Tones",
                   },
                   {
                     title: "Abstract Art - Mixed Media",
-                    original: "/placeholder.svg?height=500&width=500",
-                    enhanced: "/placeholder.svg?height=500&width=500",
+                    original: "/images/mixed-media-original.jpg",
+                    enhanced: "/images/mixed-media-enhanced.jpg",
                     stats: "4x Upscale • Brushstroke Detail • Color Accuracy",
                   },
                 ].map((example, index) => (
