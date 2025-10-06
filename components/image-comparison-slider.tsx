@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useCallback, type MouseEvent, type TouchEvent } from "react"
+import { useState, useRef, useCallback, useEffect, type MouseEvent, type TouchEvent } from "react"
 
 interface ImageComparisonSliderProps {
   beforeImage: string
@@ -19,7 +19,38 @@ export function ImageComparisonSlider({
 }: ImageComparisonSliderProps) {
   const [sliderPosition, setSliderPosition] = useState(50)
   const [isDragging, setIsDragging] = useState(false)
+  const [isLoaded, setIsLoaded] = useState(false)
+  const [imagesLoaded, setImagesLoaded] = useState({ before: false, after: false })
   const containerRef = useRef<HTMLDivElement>(null)
+  const observerRef = useRef<IntersectionObserver | null>(null)
+
+  // Lazy loading with Intersection Observer
+  useEffect(() => {
+    if (!containerRef.current) return
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !isLoaded) {
+            setIsLoaded(true)
+          }
+        })
+      },
+      { rootMargin: "100px" }, // Start loading 100px before visible
+    )
+
+    observerRef.current.observe(containerRef.current)
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect()
+      }
+    }
+  }, [isLoaded])
+
+  const handleImageLoad = useCallback((type: "before" | "after") => {
+    setImagesLoaded((prev) => ({ ...prev, [type]: true }))
+  }, [])
 
   const updateSliderPosition = useCallback((clientX: number) => {
     if (!containerRef.current) return
@@ -67,6 +98,8 @@ export function ImageComparisonSlider({
     [isDragging, updateSliderPosition],
   )
 
+  const bothImagesLoaded = imagesLoaded.before && imagesLoaded.after
+
   return (
     <div
       ref={containerRef}
@@ -80,14 +113,32 @@ export function ImageComparisonSlider({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
+      {/* Loading Skeleton */}
+      {!bothImagesLoaded && (
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900 animate-pulse">
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-muted-foreground flex flex-col items-center gap-3">
+              <div className="w-12 h-12 rounded-full border-4 border-gold-500 border-t-transparent animate-spin"></div>
+              <p className="text-sm">Loading comparison...</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* After Image (Enhanced/HD) - Base layer */}
-      <div className="absolute inset-0 pointer-events-none">
-        <img
-          src={afterImage || "/placeholder.svg"}
-          alt={afterLabel}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-w-full max-h-full object-contain"
-          draggable="false"
-        />
+      <div
+        className={`absolute inset-0 pointer-events-none transition-opacity duration-300 ${bothImagesLoaded ? "opacity-100" : "opacity-0"}`}
+      >
+        {isLoaded && (
+          <img
+            src={afterImage || "/placeholder.svg"}
+            alt={afterLabel}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-w-full max-h-full object-contain"
+            draggable="false"
+            loading="lazy"
+            onLoad={() => handleImageLoad("after")}
+          />
+        )}
         <div className="absolute top-4 right-4 pointer-events-none n3uralia-badge-gold px-3 py-1.5 rounded-full text-sm font-medium backdrop-blur-sm shadow-gold-md z-10">
           {afterLabel}
         </div>
@@ -95,83 +146,89 @@ export function ImageComparisonSlider({
 
       {/* Before Image (Original/Blur) - Clipped layer on top */}
       <div
-        className="absolute inset-0 pointer-events-none"
+        className={`absolute inset-0 pointer-events-none transition-opacity duration-300 ${bothImagesLoaded ? "opacity-100" : "opacity-0"}`}
         style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
       >
-        <img
-          src={beforeImage || "/placeholder.svg"}
-          alt={beforeLabel}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-w-full max-h-full object-contain"
-          draggable="false"
-        />
+        {isLoaded && (
+          <img
+            src={beforeImage || "/placeholder.svg"}
+            alt={beforeLabel}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-w-full max-h-full object-contain"
+            draggable="false"
+            loading="lazy"
+            onLoad={() => handleImageLoad("before")}
+          />
+        )}
         <div className="absolute top-4 left-4 pointer-events-none bg-black/70 text-white px-3 py-1.5 rounded-full text-sm font-medium backdrop-blur-sm z-10">
           {beforeLabel}
         </div>
       </div>
 
       {/* Gold Slider Bar with Elegant Design */}
-      <div
-        className="absolute top-0 bottom-0 w-1 pointer-events-none z-20"
-        style={{
-          left: `${sliderPosition}%`,
-          transform: "translateX(-50%)",
-        }}
-      >
-        {/* Gold gradient bar with glow */}
+      {bothImagesLoaded && (
         <div
-          className={`absolute inset-0 bg-gradient-to-b from-gold-300 via-gold-400 to-gold-500 transition-shadow ${
-            isDragging ? "shadow-[0_0_30px_rgba(255,215,0,0.8)]" : "shadow-[0_0_15px_rgba(255,215,0,0.5)]"
-          }`}
+          className="absolute top-0 bottom-0 w-1 pointer-events-none z-20"
+          style={{
+            left: `${sliderPosition}%`,
+            transform: "translateX(-50%)",
+          }}
         >
-          {/* Top accent dot */}
-          <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-gradient-to-br from-gold-200 to-gold-400 shadow-gold-md"></div>
-          {/* Bottom accent dot */}
-          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-gradient-to-br from-gold-200 to-gold-400 shadow-gold-md"></div>
-        </div>
-
-        {/* Premium Gold Handle */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+          {/* Gold gradient bar with glow */}
           <div
-            className={`w-5 h-5 rounded-full bg-gradient-to-br from-gold-300 via-gold-400 to-gold-500 flex items-center justify-center transition-all ${
-              isDragging
-                ? "scale-110 shadow-[0_0_60px_rgba(255,215,0,0.9)]"
-                : "scale-100 shadow-[0_0_30px_rgba(255,215,0,0.6)] hover:scale-105 hover:shadow-[0_0_40px_rgba(255,215,0,0.7)]"
+            className={`absolute inset-0 bg-gradient-to-b from-gold-300 via-gold-400 to-gold-500 transition-shadow ${
+              isDragging ? "shadow-[0_0_30px_rgba(255,215,0,0.8)]" : "shadow-[0_0_15px_rgba(255,215,0,0.5)]"
             }`}
-            style={{
-              backdropFilter: "blur(10px)",
-              border: "2px solid rgba(255, 255, 255, 0.3)",
-            }}
           >
-            {/* Glass morphism overlay */}
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/20 to-transparent"></div>
+            {/* Top accent dot */}
+            <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-gradient-to-br from-gold-200 to-gold-400 shadow-gold-md"></div>
+            {/* Bottom accent dot */}
+            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-gradient-to-br from-gold-200 to-gold-400 shadow-gold-md"></div>
+          </div>
 
-            {/* Chevron Icons */}
-            <div className="relative flex items-center justify-center gap-0.5 z-10">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-black/80">
-                <path
-                  d="M7 3L4 6L7 9"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-black/80">
-                <path
-                  d="M5 3L8 6L5 9"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+          {/* Premium Gold Handle */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+            <div
+              className={`w-5 h-5 rounded-full bg-gradient-to-br from-gold-300 via-gold-400 to-gold-500 flex items-center justify-center transition-all ${
+                isDragging
+                  ? "scale-110 shadow-[0_0_60px_rgba(255,215,0,0.9)]"
+                  : "scale-100 shadow-[0_0_30px_rgba(255,215,0,0.6)] hover:scale-105 hover:shadow-[0_0_40px_rgba(255,215,0,0.7)]"
+              }`}
+              style={{
+                backdropFilter: "blur(10px)",
+                border: "2px solid rgba(255, 255, 255, 0.3)",
+              }}
+            >
+              {/* Glass morphism overlay */}
+              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/20 to-transparent"></div>
+
+              {/* Chevron Icons */}
+              <div className="relative flex items-center justify-center gap-0.5 z-10">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-black/80">
+                  <path
+                    d="M7 3L4 6L7 9"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-black/80">
+                  <path
+                    d="M5 3L8 6L5 9"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Instruction Overlay - Only show when not dragging */}
-      {!isDragging && (
+      {/* Instruction Overlay - Only show when not dragging and images are loaded */}
+      {!isDragging && bothImagesLoaded && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-none z-10">
           <div className="bg-gradient-to-r from-gold-300/90 via-gold-400/90 to-gold-500/90 text-black px-4 py-2 rounded-full text-sm font-medium backdrop-blur-sm shadow-gold-lg animate-gold-pulse">
             Drag to compare

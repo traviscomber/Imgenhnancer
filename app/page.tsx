@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ImageComparisonSlider } from "@/components/image-comparison-slider"
-import { Sparkles, Upload, Zap, Shield, Globe, Heart, Camera, Palette, Building } from "lucide-react"
+import { Sparkles, Upload, Zap, Shield, Globe, Heart, Camera, Palette, Building, MapPin, ImageIcon } from "lucide-react"
 import Footer from "@/components/footer"
 
 export default function LandingPage() {
@@ -90,7 +90,6 @@ export default function LandingPage() {
                 <h3 className="text-3xl font-bold">🇮🇩 Modern Indonesian Wedding</h3>
                 <p className="text-muted-foreground">4x Enhancement • Face Preserved • Traditional Attire</p>
               </div>
-              {/* FIRST COMPARISON SET: Using the new images provided by user */}
               <ImageComparisonSlider
                 beforeImage="/images/wedding-set1-before.png"
                 afterImage="/images/wedding-set1-after.png"
@@ -110,7 +109,6 @@ export default function LandingPage() {
                 <h3 className="text-3xl font-bold">🏛️ Vintage ASEAN Wedding Heritage</h3>
                 <p className="text-muted-foreground">Restoration • Cultural Preservation • Authentic Details</p>
               </div>
-              {/* SECOND COMPARISON SET: vintage-wedding-blur.png vs vintage-wedding-clear.jpg */}
               <ImageComparisonSlider
                 beforeImage="/images/vintage-wedding-blur.png"
                 afterImage="/images/vintage-wedding-clear.jpg"
@@ -189,6 +187,56 @@ export default function LandingPage() {
               </div>
             </section>
 
+            {/* More Showcase Examples */}
+            <section className="space-y-8">
+              <div className="text-center space-y-2">
+                <Badge className="n3uralia-badge-gold mx-auto">
+                  <ImageIcon className="w-3 h-3 mr-1" />
+                  More Examples
+                </Badge>
+                <h3 className="text-3xl font-bold">See The Difference</h3>
+                <p className="text-muted-foreground">Real results from our AI enhancement platform</p>
+              </div>
+
+              {/* Street Photography Example */}
+              <div className="space-y-4">
+                <div className="text-center space-y-1">
+                  <h4 className="text-xl font-semibold flex items-center justify-center gap-2">
+                    <MapPin className="w-5 h-5 text-gold-500" />
+                    ASEAN Street Photography
+                  </h4>
+                  <p className="text-sm text-muted-foreground">Low-res to 4K • Enhanced Details • Vibrant Colors</p>
+                </div>
+                <ImageComparisonSlider
+                  beforeImage="/images/street-before.jpg"
+                  afterImage="/images/street-after.jpg"
+                  beforeLabel="Low Resolution"
+                  afterLabel="4K Enhanced"
+                  className="max-w-4xl mx-auto"
+                />
+              </div>
+
+              {/* Portrait Example */}
+              <div className="space-y-4">
+                <div className="text-center space-y-1">
+                  <h4 className="text-xl font-semibold flex items-center justify-center gap-2">
+                    <Camera className="w-5 h-5 text-gold-500" />
+                    Portrait Enhancement
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    Face Preserved • Professional Quality • Natural Details
+                  </p>
+                </div>
+                <ImageComparisonSlider
+                  beforeImage="/images/portrait-before.jpg"
+                  afterImage="/images/portrait-after.jpg"
+                  beforeLabel="Grainy"
+                  afterLabel="Enhanced"
+                  className="max-w-4xl mx-auto"
+                />
+              </div>
+            </section>
+
             {/* CTA Section */}
             <section className="text-center space-y-6 py-12 n3uralia-card rounded-2xl n3uralia-border">
               <h3 className="text-3xl font-bold">Ready to Transform Your Images?</h3>
@@ -222,26 +270,124 @@ export default function LandingPage() {
 
           {/* Examples Tab */}
           <TabsContent value="examples">
-            <div className="space-y-8">
+            <div className="space-y-12">
               <div className="text-center space-y-2">
-                <h3 className="text-3xl font-bold">Enhancement Examples</h3>
-                <p className="text-muted-foreground">See the power of AI image enhancement</p>
+                <h3 className="text-3xl font-bold">Enhancement Gallery</h3>
+                <p className="text-muted-foreground">Explore the full range of AI enhancement capabilities</p>
               </div>
-              <div className="grid gap-8">
-                {/* Example 1: Modern Indonesian Wedding - Using new images */}
-                <ImageComparisonSlider
-                  beforeImage="/images/wedding-set1-before.png"
-                  afterImage="/images/wedding-set1-after.png"
-                  beforeLabel="Original"
-                  afterLabel="Enhanced"
-                />
-                {/* Example 2: Vintage ASEAN Wedding Heritage */}
-                <ImageComparisonSlider
-                  beforeImage="/images/vintage-wedding-blur.png"
-                  afterImage="/images/vintage-wedding-clear.jpg"
-                  beforeLabel="Before"
-                  afterLabel="After"
-                />
+
+              {/* Wedding & Portraits */}
+              <div className="space-y-8">
+                <div className="text-left">
+                  <h4 className="text-2xl font-bold mb-2 flex items-center gap-2">
+                    <Heart className="w-6 h-6 text-gold-500" />
+                    Wedding & Portrait Photography
+                  </h4>
+                  <p className="text-muted-foreground">Professional enhancement for life's special moments</p>
+                </div>
+
+                <div className="space-y-6">
+                  <ImageComparisonSlider
+                    beforeImage="/images/wedding-set1-before.png"
+                    afterImage="/images/wedding-set1-after.png"
+                    beforeLabel="Original"
+                    afterLabel="Enhanced"
+                  />
+                  <ImageComparisonSlider
+                    beforeImage="/images/portrait-before.jpg"
+                    afterImage="/images/portrait-after.jpg"
+                    beforeLabel="Before"
+                    afterLabel="After"
+                  />
+                </div>
+              </div>
+
+              {/* Heritage & Restoration */}
+              <div className="space-y-8">
+                <div className="text-left">
+                  <h4 className="text-2xl font-bold mb-2 flex items-center gap-2">
+                    <Globe className="w-6 h-6 text-gold-500" />
+                    Cultural Heritage & Restoration
+                  </h4>
+                  <p className="text-muted-foreground">Preserve history with AI-powered restoration</p>
+                </div>
+
+                <div className="space-y-6">
+                  <ImageComparisonSlider
+                    beforeImage="/images/vintage-wedding-blur.png"
+                    afterImage="/images/vintage-wedding-clear.jpg"
+                    beforeLabel="Damaged"
+                    afterLabel="Restored"
+                  />
+                  <ImageComparisonSlider
+                    beforeImage="/images/family-before.jpg"
+                    afterImage="/images/family-after.jpg"
+                    beforeLabel="1960s Original"
+                    afterLabel="Restored & Colorized"
+                  />
+                  <ImageComparisonSlider
+                    beforeImage="/images/artifact-before.jpg"
+                    afterImage="/images/artifact-after.jpg"
+                    beforeLabel="Faded"
+                    afterLabel="Restored"
+                  />
+                </div>
+              </div>
+
+              {/* Architecture & Landscapes */}
+              <div className="space-y-8">
+                <div className="text-left">
+                  <h4 className="text-2xl font-bold mb-2 flex items-center gap-2">
+                    <Building className="w-6 h-6 text-gold-500" />
+                    Architecture & Landscapes
+                  </h4>
+                  <p className="text-muted-foreground">Enhance architectural details and natural beauty</p>
+                </div>
+
+                <div className="space-y-6">
+                  <ImageComparisonSlider
+                    beforeImage="/images/temple-before.jpg"
+                    afterImage="/images/temple-after.jpg"
+                    beforeLabel="Faded"
+                    afterLabel="Vibrant"
+                  />
+                  <ImageComparisonSlider
+                    beforeImage="/images/landscape-before.jpg"
+                    afterImage="/images/landscape-after.jpg"
+                    beforeLabel="Low-Res"
+                    afterLabel="4K"
+                  />
+                </div>
+              </div>
+
+              {/* Street Photography */}
+              <div className="space-y-8">
+                <div className="text-left">
+                  <h4 className="text-2xl font-bold mb-2 flex items-center gap-2">
+                    <MapPin className="w-6 h-6 text-gold-500" />
+                    Street Photography
+                  </h4>
+                  <p className="text-muted-foreground">Capture the vibrancy of ASEAN urban life</p>
+                </div>
+
+                <div className="space-y-6">
+                  <ImageComparisonSlider
+                    beforeImage="/images/street-before.jpg"
+                    afterImage="/images/street-after.jpg"
+                    beforeLabel="Blurry"
+                    afterLabel="Sharp"
+                  />
+                </div>
+              </div>
+
+              {/* CTA in Examples */}
+              <div className="text-center space-y-6 py-12 n3uralia-card rounded-2xl n3uralia-border">
+                <h3 className="text-2xl font-bold">Want Results Like These?</h3>
+                <p className="text-muted-foreground">Start enhancing your own images with our AI platform</p>
+                <Button size="lg" className="n3uralia-button-gold" onClick={() => setActiveTab("enhance")}>
+                  <Upload className="w-4 h-4 mr-2" />
+                  Try It Now
+                </Button>
               </div>
             </div>
           </TabsContent>
