@@ -87,18 +87,18 @@ export default function LandingPage() {
                 />
               </div>
 
-              {/* Vintage ASEAN Wedding Heritage */}
+              {/* Vintage Javanese Wedding Heritage - UPDATED WITH NEW IMAGES */}
               <div className="space-y-4">
                 <div className="flex items-center space-x-3">
                   <span className="text-3xl">🏛️</span>
-                  <h3 className="text-2xl font-bold text-white">Vintage ASEAN Wedding Heritage</h3>
+                  <h3 className="text-2xl font-bold text-white">Vintage Javanese Wedding Heritage</h3>
                 </div>
-                <p className="text-gray-400">Blurred vintage photo vs HD restoration</p>
+                <p className="text-gray-400">Faded 1920s photo restored to pristine condition</p>
                 <ImageComparisonSlider
-                  beforeImage="/images/vintage-wedding-blur.png"
-                  afterImage="/images/vintage-wedding-clear.jpg"
-                  beforeLabel="Heritage Photo"
-                  afterLabel="Restored"
+                  beforeImage="/images/javanese-wedding-faded.png"
+                  afterImage="/images/javanese-wedding-restored.png"
+                  beforeLabel="Faded Original"
+                  afterLabel="AI Restored"
                 />
               </div>
             </div>
@@ -232,12 +232,12 @@ export default function LandingPage() {
 
               <div className="space-y-8">
                 <div>
-                  <h4 className="text-xl text-gray-300 mb-3">Vintage Wedding Heritage</h4>
+                  <h4 className="text-xl text-gray-300 mb-3">Vintage Javanese Wedding Heritage (1920s)</h4>
                   <ImageComparisonSlider
-                    beforeImage="/images/vintage-wedding-blur.png"
-                    afterImage="/images/vintage-wedding-clear.jpg"
-                    beforeLabel="Blurred"
-                    afterLabel="HD Restored"
+                    beforeImage="/images/javanese-wedding-faded.png"
+                    afterImage="/images/javanese-wedding-restored.png"
+                    beforeLabel="Faded Original"
+                    afterLabel="AI Restored"
                   />
                 </div>
               </div>
