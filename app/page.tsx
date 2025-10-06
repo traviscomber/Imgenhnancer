@@ -38,7 +38,7 @@ export default function LandingPage() {
         </h1>
         <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
           Professional-grade image enhancement powered by advanced AI. Perfect for ASEAN heritage, portraits, and
-          cultural photography.
+          creative artwork.
         </p>
         <Link href="/enhance">
           <Button
@@ -102,7 +102,7 @@ export default function LandingPage() {
                 />
               </div>
 
-              {/* Set 3: Thai Family Portrait - NEW */}
+              {/* Set 3: Thai Family Portrait */}
               <div className="space-y-4">
                 <div className="flex items-center space-x-3">
                   <span className="text-3xl">🇹🇭</span>
@@ -114,6 +114,21 @@ export default function LandingPage() {
                   afterImage="/images/thai-family-restored.png"
                   beforeLabel="Damaged Original"
                   afterLabel="Fully Restored"
+                />
+              </div>
+
+              {/* Set 4: Abstract Digital Art - NEW */}
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <span className="text-3xl">🎨</span>
+                  <h3 className="text-2xl font-bold text-white">Abstract Digital Art</h3>
+                </div>
+                <p className="text-gray-400">Low-quality artwork enhanced with vibrant colors and sharp details</p>
+                <ImageComparisonSlider
+                  beforeImage="/images/abstract-art-low.png"
+                  afterImage="/images/abstract-art-enhanced.png"
+                  beforeLabel="Low Quality"
+                  afterLabel="AI Enhanced"
                 />
               </div>
             </div>
@@ -263,6 +278,26 @@ export default function LandingPage() {
                     afterImage="/images/thai-family-restored.png"
                     beforeLabel="Damaged Original"
                     afterLabel="Fully Restored"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Digital Art & Creative Works - NEW */}
+            <div className="space-y-6">
+              <div className="flex items-center space-x-3">
+                <span className="text-3xl">🎨</span>
+                <h3 className="text-3xl font-bold text-white">Digital Art & Creative Works</h3>
+              </div>
+
+              <div className="space-y-8">
+                <div>
+                  <h4 className="text-xl text-gray-300 mb-3">Abstract Digital Art</h4>
+                  <ImageComparisonSlider
+                    beforeImage="/images/abstract-art-low.png"
+                    afterImage="/images/abstract-art-enhanced.png"
+                    beforeLabel="Low Quality"
+                    afterLabel="AI Enhanced"
                   />
                 </div>
               </div>
