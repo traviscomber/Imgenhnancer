@@ -1,7 +1,9 @@
+"use client"
+
 import Link from "next/link"
 import { Facebook, Twitter, Instagram, Linkedin, Mail, Globe } from "lucide-react"
 
-export default function Footer() {
+export function Footer() {
   return (
     <footer className="bg-gray-950 border-t border-gray-800 mt-20">
       {/* Main Footer Content */}
@@ -10,16 +12,18 @@ export default function Footer() {
           {/* Brand Column */}
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-gold-500 to-gold-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-r from-amber-500 to-amber-600 rounded-lg flex items-center justify-center">
                 <span className="text-black font-bold text-lg">C</span>
               </div>
-              <span className="text-2xl font-bold text-gradient-gold">clar1ty</span>
+              <span className="text-2xl font-bold bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
+                clar1ty
+              </span>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed">
               Professional AI-powered image enhancement for heritage preservation, photography, and creative projects.
             </p>
             <div className="flex items-center gap-2 text-sm">
-              <div className="px-3 py-1 bg-gradient-to-r from-gold-500/20 to-gold-600/20 border border-gold-500/30 rounded-full text-gold-400">
+              <div className="px-3 py-1 bg-gradient-to-r from-amber-500/20 to-amber-600/20 border border-amber-500/30 rounded-full text-amber-400">
                 Powered by n3uralia group
               </div>
             </div>
@@ -30,27 +34,27 @@ export default function Footer() {
             <h3 className="text-white font-semibold text-lg">Product</h3>
             <ul className="space-y-3">
               <li>
-                <Link href="/enhance" className="text-gray-400 hover:text-gold-400 transition-colors text-sm">
+                <Link href="/enhance" className="text-gray-400 hover:text-amber-400 transition-colors text-sm">
                   AI Enhancer
                 </Link>
               </li>
               <li>
-                <Link href="/#features" className="text-gray-400 hover:text-gold-400 transition-colors text-sm">
+                <Link href="/#features" className="text-gray-400 hover:text-amber-400 transition-colors text-sm">
                   Features
                 </Link>
               </li>
               <li>
-                <Link href="/#examples" className="text-gray-400 hover:text-gold-400 transition-colors text-sm">
+                <Link href="/#examples" className="text-gray-400 hover:text-amber-400 transition-colors text-sm">
                   Examples
                 </Link>
               </li>
               <li>
-                <Link href="/#professional" className="text-gray-400 hover:text-gold-400 transition-colors text-sm">
+                <Link href="/#professional" className="text-gray-400 hover:text-amber-400 transition-colors text-sm">
                   Professional Use
                 </Link>
               </li>
               <li>
-                <Link href="/pricing" className="text-gray-400 hover:text-gold-400 transition-colors text-sm">
+                <Link href="/pricing" className="text-gray-400 hover:text-amber-400 transition-colors text-sm">
                   Pricing
                 </Link>
               </li>
@@ -62,27 +66,27 @@ export default function Footer() {
             <h3 className="text-white font-semibold text-lg">Resources</h3>
             <ul className="space-y-3">
               <li>
-                <Link href="/docs" className="text-gray-400 hover:text-gold-400 transition-colors text-sm">
+                <Link href="/docs" className="text-gray-400 hover:text-amber-400 transition-colors text-sm">
                   Documentation
                 </Link>
               </li>
               <li>
-                <Link href="/api" className="text-gray-400 hover:text-gold-400 transition-colors text-sm">
+                <Link href="/api" className="text-gray-400 hover:text-amber-400 transition-colors text-sm">
                   API Reference
                 </Link>
               </li>
               <li>
-                <Link href="/blog" className="text-gray-400 hover:text-gold-400 transition-colors text-sm">
+                <Link href="/blog" className="text-gray-400 hover:text-amber-400 transition-colors text-sm">
                   Blog
                 </Link>
               </li>
               <li>
-                <Link href="/support" className="text-gray-400 hover:text-gold-400 transition-colors text-sm">
+                <Link href="/support" className="text-gray-400 hover:text-amber-400 transition-colors text-sm">
                   Support
                 </Link>
               </li>
               <li>
-                <Link href="/changelog" className="text-gray-400 hover:text-gold-400 transition-colors text-sm">
+                <Link href="/changelog" className="text-gray-400 hover:text-amber-400 transition-colors text-sm">
                   Changelog
                 </Link>
               </li>
@@ -94,7 +98,7 @@ export default function Footer() {
             <h3 className="text-white font-semibold text-lg">Company</h3>
             <ul className="space-y-3">
               <li>
-                <Link href="/about" className="text-gray-400 hover:text-gold-400 transition-colors text-sm">
+                <Link href="/about" className="text-gray-400 hover:text-amber-400 transition-colors text-sm">
                   About Us
                 </Link>
               </li>
@@ -103,7 +107,7 @@ export default function Footer() {
                   href="https://www.n3uralia.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-gold-400 transition-colors text-sm flex items-center gap-1"
+                  className="text-gray-400 hover:text-amber-400 transition-colors text-sm flex items-center gap-1"
                 >
                   <Globe className="w-3 h-3" />
                   n3uralia.com
@@ -114,19 +118,19 @@ export default function Footer() {
                   href="https://www.n3uralia.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-gold-400 transition-colors text-sm flex items-center gap-1"
+                  className="text-gray-400 hover:text-amber-400 transition-colors text-sm flex items-center gap-1"
                 >
                   <Globe className="w-3 h-3" />
                   n3uralia ecosystem
                 </a>
               </li>
               <li>
-                <Link href="/contact" className="text-gray-400 hover:text-gold-400 transition-colors text-sm">
+                <Link href="/contact" className="text-gray-400 hover:text-amber-400 transition-colors text-sm">
                   Contact
                 </Link>
               </li>
               <li>
-                <Link href="/careers" className="text-gray-400 hover:text-gold-400 transition-colors text-sm">
+                <Link href="/careers" className="text-gray-400 hover:text-amber-400 transition-colors text-sm">
                   Careers
                 </Link>
               </li>
@@ -142,7 +146,7 @@ export default function Footer() {
                 href="https://twitter.com/n3uralia"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 rounded-full bg-gray-800 hover:bg-gold-500/20 flex items-center justify-center text-gray-400 hover:text-gold-400 transition-all"
+                className="w-10 h-10 rounded-full bg-gray-800 hover:bg-amber-500/20 flex items-center justify-center text-gray-400 hover:text-amber-400 transition-all"
                 aria-label="Twitter"
               >
                 <Twitter className="w-5 h-5" />
@@ -151,7 +155,7 @@ export default function Footer() {
                 href="https://facebook.com/n3uralia"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 rounded-full bg-gray-800 hover:bg-gold-500/20 flex items-center justify-center text-gray-400 hover:text-gold-400 transition-all"
+                className="w-10 h-10 rounded-full bg-gray-800 hover:bg-amber-500/20 flex items-center justify-center text-gray-400 hover:text-amber-400 transition-all"
                 aria-label="Facebook"
               >
                 <Facebook className="w-5 h-5" />
@@ -160,7 +164,7 @@ export default function Footer() {
                 href="https://instagram.com/n3uralia"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 rounded-full bg-gray-800 hover:bg-gold-500/20 flex items-center justify-center text-gray-400 hover:text-gold-400 transition-all"
+                className="w-10 h-10 rounded-full bg-gray-800 hover:bg-amber-500/20 flex items-center justify-center text-gray-400 hover:text-amber-400 transition-all"
                 aria-label="Instagram"
               >
                 <Instagram className="w-5 h-5" />
@@ -169,14 +173,14 @@ export default function Footer() {
                 href="https://linkedin.com/company/n3uralia"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 rounded-full bg-gray-800 hover:bg-gold-500/20 flex items-center justify-center text-gray-400 hover:text-gold-400 transition-all"
+                className="w-10 h-10 rounded-full bg-gray-800 hover:bg-amber-500/20 flex items-center justify-center text-gray-400 hover:text-amber-400 transition-all"
                 aria-label="LinkedIn"
               >
                 <Linkedin className="w-5 h-5" />
               </a>
               <a
                 href="mailto:hello@n3uralia.com"
-                className="w-10 h-10 rounded-full bg-gray-800 hover:bg-gold-500/20 flex items-center justify-center text-gray-400 hover:text-gold-400 transition-all"
+                className="w-10 h-10 rounded-full bg-gray-800 hover:bg-amber-500/20 flex items-center justify-center text-gray-400 hover:text-amber-400 transition-all"
                 aria-label="Email"
               >
                 <Mail className="w-5 h-5" />
@@ -184,15 +188,15 @@ export default function Footer() {
             </div>
 
             <div className="flex items-center gap-4 text-sm text-gray-400">
-              <Link href="/privacy" className="hover:text-gold-400 transition-colors">
+              <Link href="/privacy" className="hover:text-amber-400 transition-colors">
                 Privacy Policy
               </Link>
               <span className="text-gray-600">|</span>
-              <Link href="/terms" className="hover:text-gold-400 transition-colors">
+              <Link href="/terms" className="hover:text-amber-400 transition-colors">
                 Terms of Service
               </Link>
               <span className="text-gray-600">|</span>
-              <Link href="/cookies" className="hover:text-gold-400 transition-colors">
+              <Link href="/cookies" className="hover:text-amber-400 transition-colors">
                 Cookie Policy
               </Link>
             </div>
@@ -208,7 +212,7 @@ export default function Footer() {
                 href="https://www.n3uralia.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gold-400 hover:text-gold-300 transition-colors"
+                className="text-amber-400 hover:text-amber-300 transition-colors"
               >
                 n3uralia group
               </a>
