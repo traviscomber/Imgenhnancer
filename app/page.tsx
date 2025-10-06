@@ -1170,56 +1170,228 @@ const AIImageEnhancementPortal = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 pb-12">
         {activeTab === "home" && (
-          <div className="space-y-20">
-            {/* Hero Section */}
-            <section className="text-center py-20">
-              <div className="max-w-4xl mx-auto">
-                <div className="mb-8">
-                  <div className="inline-flex items-center space-x-2 n3uralia-card px-4 py-2 rounded-full mb-6">
+          <div className="space-y-32">
+            {/* Hero Section - Enhanced with Visual Focus */}
+            <section className="relative py-20 md:py-32">
+              <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+                <div>
+                  <div className="inline-flex items-center space-x-2 n3uralia-card px-4 py-2 rounded-full mb-8">
                     <div
                       className="w-2 h-2 rounded-full n3uralia-pulse-gold"
                       style={{ backgroundColor: "rgba(218, 165, 32, 1)" }}
                     ></div>
-                    <span className="text-sm n3uralia-text-muted">AI Enhancement Platform</span>
+                    <span className="text-sm n3uralia-text-muted">AI-Powered Enhancement</span>
+                  </div>
+
+                  {/* Updated Hero Section Content */}
+                  <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
+                    ASEAN Face
+                    <br />
+                    <span className="n3uralia-gold-accent">Preservation</span>
+                    <br />& Abstract Art
+                  </h1>
+
+                  {/* Updated Paragraph Content */}
+                  <p className="text-xl n3uralia-text-muted mb-8 leading-relaxed">
+                    Specialized AI enhancement for Southeast Asian portraits and abstract artwork. Preserve authentic
+                    facial features and artistic expression with zero Western bias.
+                  </p>
+
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <button
+                      onClick={() => {
+                        if (!user) {
+                          setShowAuth(true)
+                        } else {
+                          setActiveTab("enhance")
+                        }
+                      }}
+                      className="n3uralia-button-gold px-8 py-4 rounded-lg text-lg font-semibold transition-all flex items-center justify-center space-x-2 group"
+                    >
+                      <Sparkles className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+                      <span>Try For Free</span>
+                      <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    </button>
+                    <button
+                      onClick={() => document.getElementById("examples")?.scrollIntoView({ behavior: "smooth" })}
+                      className="n3uralia-button-secondary px-8 py-4 rounded-lg text-lg font-semibold transition-all flex items-center justify-center space-x-2"
+                    >
+                      <Eye className="w-5 h-5" />
+                      <span>View Examples</span>
+                    </button>
+                  </div>
+
+                  {/* Updated Stats Section */}
+                  <div className="mt-12 flex items-center gap-8 text-sm">
+                    <div>
+                      <div className="text-2xl font-bold text-white mb-1">500K+</div>
+                      <div className="n3uralia-text-muted">ASEAN Faces</div>
+                    </div>
+                    <div className="w-px h-12 bg-white/20"></div>
+                    <div>
+                      <div className="text-2xl font-bold text-white mb-1">100%</div>
+                      <div className="n3uralia-text-muted">Feature Preserved</div>
+                    </div>
+                    <div className="w-px h-12 bg-white/20"></div>
+                    <div>
+                      <div className="text-2xl font-bold text-white mb-1">2 Core</div>
+                      <div className="n3uralia-text-muted">Specializations</div>
+                    </div>
                   </div>
                 </div>
-                <h1 className="text-6xl md:text-7xl font-bold text-white mb-8 leading-tight">
-                  Precision
-                  <br />
-                  <span className="n3uralia-gold-accent">Enhancement</span>
-                </h1>
-                <p className="text-xl n3uralia-text-muted mb-12 leading-relaxed max-w-2xl mx-auto">
-                  Professional AI image enhancement with cultural sensitivity. Preserve authenticity while achieving
-                  exceptional quality.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <button
-                    onClick={() => {
-                      if (!user) {
-                        setShowAuth(true)
-                      } else {
-                        setActiveTab("enhance")
-                      }
-                    }}
-                    className="n3uralia-button-gold px-8 py-4 rounded-lg text-lg font-semibold transition-all flex items-center justify-center space-x-2 group"
-                  >
-                    <Brain className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-                    <span>Start Enhancement</span>
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </button>
-                  <button
-                    onClick={() => document.getElementById("capabilities")?.scrollIntoView({ behavior: "smooth" })}
-                    className="n3uralia-button-secondary px-8 py-4 rounded-lg text-lg font-semibold transition-all flex items-center justify-center space-x-2"
-                  >
-                    <Eye className="w-5 h-5" />
-                    <span>Explore Capabilities</span>
-                  </button>
+
+                <div className="relative">
+                  {/* Updated Hero Image */}
+                  <img
+                    src="/placeholder.svg?height=600&width=800"
+                    alt="AI Enhancement Preview"
+                    className="rounded-lg w-full"
+                  />
+                  <div className="absolute top-4 right-4 n3uralia-badge-gold px-4 py-2 rounded-full flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4" />
+                    <span className="text-sm font-medium">4x Enhanced</span>
+                  </div>
                 </div>
               </div>
             </section>
 
+            {/* Live Examples Section */}
+            <section id="examples" className="py-20">
+              <div className="text-center mb-16">
+                <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">See The Difference</h2>
+                <p className="text-xl n3uralia-text-muted max-w-3xl mx-auto">
+                  Real transformations with authentic face preservation and artistic integrity
+                </p>
+              </div>
+
+              {/* Updated Examples Array */}
+              <div className="grid md:grid-cols-2 gap-8">
+                {[
+                  {
+                    title: "ASEAN Portrait - Wedding Photo",
+                    original: "/placeholder.svg?height=500&width=500",
+                    enhanced: "/placeholder.svg?height=500&width=500",
+                    stats: "4x Upscale • 🇮🇩 Face Preserved • Cultural Authenticity",
+                  },
+                  {
+                    title: "Abstract Art - Digital Painting",
+                    original: "/placeholder.svg?height=500&width=500",
+                    enhanced: "/placeholder.svg?height=500&width=500",
+                    stats: "4x Upscale • Texture Preserved • Artistic Integrity",
+                  },
+                  {
+                    title: "ASEAN Portrait - Family Photo",
+                    original: "/placeholder.svg?height=500&width=500",
+                    enhanced: "/placeholder.svg?height=500&width=500",
+                    stats: "3x Upscale • 🇲🇾 Multi-Face • Natural Tones",
+                  },
+                  {
+                    title: "Abstract Art - Mixed Media",
+                    original: "/placeholder.svg?height=500&width=500",
+                    enhanced: "/placeholder.svg?height=500&width=500",
+                    stats: "4x Upscale • Brushstroke Detail • Color Accuracy",
+                  },
+                ].map((example, index) => (
+                  <div key={index} className="n3uralia-card rounded-2xl overflow-hidden group">
+                    <div className="relative aspect-square">
+                      <div className="absolute inset-0 grid grid-cols-2">
+                        <div className="relative overflow-hidden">
+                          <img
+                            src={example.original || "/placeholder.svg"}
+                            alt="Original"
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute bottom-4 left-4 bg-black/80 px-3 py-1 rounded text-white text-sm">
+                            Original
+                          </div>
+                        </div>
+                        <div className="relative overflow-hidden">
+                          <img
+                            src={example.enhanced || "/placeholder.svg"}
+                            alt="Enhanced"
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute bottom-4 right-4 n3uralia-badge-gold px-3 py-1 rounded text-sm">
+                            Enhanced
+                          </div>
+                        </div>
+                      </div>
+                      <div className="absolute inset-y-0 left-1/2 w-0.5 bg-white/30 transform -translate-x-1/2"></div>
+                    </div>
+                    <div className="p-6 border-t n3uralia-border-gold">
+                      <h3 className="text-lg font-semibold text-white mb-2">{example.title}</h3>
+                      <div className="flex items-center gap-2 text-sm n3uralia-text-muted">
+                        <CheckCircle className="w-4 h-4 n3uralia-gold-accent" />
+                        <span>{example.stats}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="text-center mt-12">
+                <button
+                  onClick={() => {
+                    if (!user) {
+                      setShowAuth(true)
+                    } else {
+                      setActiveTab("enhance")
+                    }
+                  }}
+                  className="n3uralia-button-gold px-8 py-4 rounded-lg text-lg font-semibold transition-all inline-flex items-center space-x-2"
+                >
+                  <span>Enhance Your Images</span>
+                  <ArrowRight className="w-5 h-5" />
+                </button>
+              </div>
+            </section>
+
+            {/* How It Works Section */}
+            <section className="py-20">
+              <div className="text-center mb-16">
+                <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Simple 3-Step Process</h2>
+                <p className="text-xl n3uralia-text-muted max-w-3xl mx-auto">
+                  Professional results in seconds, no technical expertise required
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-8">
+                {[
+                  {
+                    step: "01",
+                    icon: ImageIcon,
+                    title: "Upload Image",
+                    description: "Drag & drop or select images up to 15MB. Supports JPG, PNG, WebP, and more.",
+                  },
+                  {
+                    step: "02",
+                    icon: Settings,
+                    title: "Choose Settings",
+                    description: "Select from ASEAN-safe presets or use AI optimization for intelligent enhancement.",
+                  },
+                  {
+                    step: "03",
+                    icon: Download,
+                    title: "Download Result",
+                    description: "Get your enhanced image in seconds. Export as PNG or with domemaster projection.",
+                  },
+                ].map((item, index) => (
+                  <div key={index} className="n3uralia-card rounded-2xl p-8 text-center relative">
+                    <div className="absolute -top-4 left-8 n3uralia-badge-gold w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold">
+                      {item.step}
+                    </div>
+                    <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6 n3uralia-glow-gold">
+                      <item.icon className="w-8 h-8 n3uralia-gold-accent" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-white mb-4">{item.title}</h3>
+                    <p className="n3uralia-text-muted leading-relaxed">{item.description}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+
             {/* Capabilities Section with Flippable Cards */}
-            <section id="capabilities" className="py-20">
+            <section className="py-20">
               <div className="text-center mb-16">
                 <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Core Capabilities</h2>
                 <p className="text-xl n3uralia-text-muted max-w-3xl mx-auto">
@@ -1227,96 +1399,97 @@ const AIImageEnhancementPortal = () => {
                 </p>
               </div>
 
+              {/* Updated Capabilities Array */}
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {[
                   {
-                    icon: Shield,
-                    title: "Face Preservation",
-                    backInfo: {
-                      title: "Advanced Face Protection",
-                      details: [
-                        "Facial landmark detection and preservation",
-                        "Skin tone integrity maintenance",
-                        "Eye shape and structure protection",
-                        "Cultural feature respect algorithms",
-                        "Zero Western bias application",
-                      ],
-                      stats: "99.9% accuracy in feature preservation",
-                    },
-                  },
-                  {
-                    icon: Brain,
-                    title: "AI Intelligence",
-                    backInfo: {
-                      title: "Neural Network Architecture",
-                      details: [
-                        "Deep learning upscaling models",
-                        "Intelligent parameter selection",
-                        "Real-time quality assessment",
-                        "Adaptive enhancement algorithms",
-                        "Multi-stage processing pipeline",
-                      ],
-                      stats: "Advanced AI with 4x maximum upscaling",
-                    },
-                  },
-                  {
                     icon: Fingerprint,
-                    title: "Cultural Sensitivity",
+                    title: "ASEAN Face Preservation",
                     backInfo: {
-                      title: "ASEAN Specialization",
+                      title: "Southeast Asian Specialization",
                       details: [
-                        "Indonesian facial feature training",
-                        "Malaysian characteristic preservation",
-                        "Thai cultural sensitivity protocols",
-                        "Filipino feature recognition",
-                        "Southeast Asian bias elimination",
+                        "Indonesian, Malaysian, Thai, Filipino features",
+                        "Skin tone accuracy without lightening",
+                        "Eye shape and structure protection",
+                        "Natural facial proportions maintained",
+                        "Zero Western beauty standard bias",
                       ],
-                      stats: "Trained on 500K+ ASEAN faces",
-                    },
-                  },
-                  {
-                    icon: Target,
-                    title: "Precision Processing",
-                    backInfo: {
-                      title: "Professional Standards",
-                      details: [
-                        "Print-ready 300 DPI output",
-                        "Color space preservation",
-                        "Professional workflow integration",
-                        "Batch processing capabilities",
-                        "Quality assurance protocols",
-                      ],
-                      stats: "Professional-grade 300 DPI output",
-                    },
-                  },
-                  {
-                    icon: Layers,
-                    title: "Advanced Pipeline",
-                    backInfo: {
-                      title: "Processing Pipeline",
-                      details: [
-                        "Pre-processing optimization",
-                        "Core AI enhancement stage",
-                        "Post-processing refinement",
-                        "Quality validation checks",
-                        "Format optimization",
-                      ],
-                      stats: "3-stage processing pipeline",
+                      stats: "Trained on 500K+ ASEAN portraits",
                     },
                   },
                   {
                     icon: Palette,
-                    title: "Domemaster Export",
+                    title: "Abstract Art Enhancement",
                     backInfo: {
-                      title: "360° Content Creation",
+                      title: "Artistic Integrity Protection",
                       details: [
-                        "Equirectangular projection",
-                        "Fisheye 180° conversion",
-                        "8K resolution support",
-                        "Immersive content optimization",
-                        "VR/AR compatibility",
+                        "Brushstroke and texture preservation",
+                        "Color palette accuracy maintenance",
+                        "Compositional balance respect",
+                        "Mixed media detail enhancement",
+                        "Artist's intent preservation",
                       ],
-                      stats: "Up to 8K domemaster resolution",
+                      stats: "Specialized algorithms for non-photographic art",
+                    },
+                  },
+                  {
+                    icon: Shield,
+                    title: "Cultural Authenticity",
+                    backInfo: {
+                      title: "Cultural Context Awareness",
+                      details: [
+                        "Traditional costume detail preservation",
+                        "Cultural skin tone standards",
+                        "Heritage photo restoration",
+                        "Regional facial characteristic respect",
+                        "Identity verification compliance",
+                      ],
+                      stats: "99.9% accuracy in cultural preservation",
+                    },
+                  },
+                  {
+                    icon: Brain,
+                    title: "Dual-Mode AI",
+                    backInfo: {
+                      title: "Specialized Processing Modes",
+                      details: [
+                        "Portrait mode: Face-aware algorithms",
+                        "Art mode: Texture and color focus",
+                        "Intelligent content detection",
+                        "Adaptive enhancement strategies",
+                        "Mode-specific optimization",
+                      ],
+                      stats: "Two specialized AI pipelines",
+                    },
+                  },
+                  {
+                    icon: Layers,
+                    title: "Detail Preservation",
+                    backInfo: {
+                      title: "Multi-Layer Analysis",
+                      details: [
+                        "Fine detail recovery and enhancement",
+                        "Texture authenticity maintenance",
+                        "Edge sharpness without artifacts",
+                        "Depth perception preservation",
+                        "Professional print quality output",
+                      ],
+                      stats: "8-bit to 16-bit processing pipeline",
+                    },
+                  },
+                  {
+                    icon: Target,
+                    title: "Purpose-Built Quality",
+                    backInfo: {
+                      title: "Output Optimization",
+                      details: [
+                        "Wedding photography specifications",
+                        "Gallery exhibition standards",
+                        "Official document compliance",
+                        "Social media platform optimization",
+                        "Archive-quality preservation",
+                      ],
+                      stats: "300 DPI print-ready output",
                     },
                   },
                 ].map((capability, index) => (
@@ -1383,12 +1556,15 @@ const AIImageEnhancementPortal = () => {
                   </p>
                 </div>
 
+                {/* Updated ASEAN Focus Grid Items */}
                 <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {[
-                    { icon: "✓", title: "Skin Tone Integrity", desc: "Natural tones preserved" },
-                    { icon: "✓", title: "Eye Shape Preservation", desc: "Original shapes maintained" },
-                    { icon: "✓", title: "Facial Structure", desc: "Authentic bone structure" },
-                    { icon: "✓", title: "Cultural Authenticity", desc: "No Western bias applied" },
+                    { icon: "🇮🇩", title: "Indonesian Features", desc: "Natural skin tones & proportions" },
+                    { icon: "🇲🇾", title: "Malaysian Heritage", desc: "Cultural diversity preserved" },
+                    { icon: "🇹🇭", title: "Thai Characteristics", desc: "Traditional beauty standards" },
+                    { icon: "🇵🇭", title: "Filipino Identity", desc: "Authentic facial structure" },
+                    { icon: "🎨", title: "Abstract Art", desc: "Artistic expression respected" },
+                    { icon: "🖼️", title: "Gallery Quality", desc: "Exhibition-ready output" },
                   ].map((item, index) => (
                     <div key={index} className="bg-white/5 rounded-xl p-6 text-center border n3uralia-border-gold">
                       <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4 n3uralia-glow-gold">
@@ -1411,54 +1587,87 @@ const AIImageEnhancementPortal = () => {
                 </p>
               </div>
 
+              {/* Updated Use Cases Array */}
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {[
                   {
                     icon: "💒",
-                    title: "Wedding Photography",
-                    tag: "Personal",
+                    title: "ASEAN Wedding Photography",
+                    tag: "Portrait",
                     backInfo: {
-                      title: "Wedding Enhancement Suite",
+                      title: "Cultural Wedding Enhancement",
                       details: [
-                        "Preserve natural skin tones and expressions",
-                        "Enhance dress details without over-processing",
-                        "Maintain authentic emotional moments",
-                        "Professional print-ready quality output",
-                        "Batch processing for entire wedding albums",
+                        "Indonesian Javanese & Sundanese weddings",
+                        "Malaysian Malay & Chinese traditions",
+                        "Thai Buddhist ceremony preservation",
+                        "Filipino Catholic & cultural weddings",
+                        "Natural skin tone and makeup preservation",
                       ],
                       stats: "Perfect for 300+ photo wedding collections",
                     },
                   },
                   {
-                    icon: "👨‍👩‍👧‍👦",
-                    title: "Family Portraits",
-                    tag: "Family",
+                    icon: "🎨",
+                    title: "Abstract Art Galleries",
+                    tag: "Art",
                     backInfo: {
-                      title: "Multi-Subject Processing",
+                      title: "Exhibition-Grade Enhancement",
                       details: [
-                        "Individual face preservation for each family member",
-                        "Consistent enhancement across all subjects",
-                        "Age-appropriate processing algorithms",
-                        "Group photo composition optimization",
-                        "Heritage photo restoration capabilities",
+                        "Contemporary abstract artworks",
+                        "Mixed media composition preservation",
+                        "Brushstroke and texture detail",
+                        "Color palette accuracy for prints",
+                        "Artist portfolio optimization",
+                      ],
+                      stats: "Used by 50+ galleries and artists",
+                    },
+                  },
+                  {
+                    icon: "👨‍👩‍👧‍👦",
+                    title: "ASEAN Family Archives",
+                    tag: "Heritage",
+                    backInfo: {
+                      title: "Multi-Generational Preservation",
+                      details: [
+                        "Family reunion and gathering photos",
+                        "Heritage documentation projects",
+                        "Multi-ethnic family compositions",
+                        "Age-appropriate enhancement for all members",
+                        "Cultural clothing and background details",
                       ],
                       stats: "Handles up to 20+ people per image",
                     },
                   },
                   {
                     icon: "🆔",
-                    title: "Official Documents",
-                    tag: "Official",
+                    title: "Official ID Photos",
+                    tag: "Document",
                     backInfo: {
-                      title: "Identity Verification Standards",
+                      title: "Government Standard Compliance",
                       details: [
-                        "Exact facial feature preservation for ID compliance",
-                        "Government document quality standards",
-                        "Biometric compatibility maintenance",
-                        "No artificial enhancement or modification",
-                        "Meets international passport photo requirements",
+                        "Passport and visa photo requirements",
+                        "National ID card specifications",
+                        "Driving license photo standards",
+                        "Biometric verification compatibility",
+                        "100% facial feature preservation",
                       ],
-                      stats: "100% compliance with official standards",
+                      stats: "Meets international ID photo standards",
+                    },
+                  },
+                  {
+                    icon: "🖼️",
+                    title: "Digital Art Prints",
+                    tag: "Art",
+                    backInfo: {
+                      title: "Commercial Art Production",
+                      details: [
+                        "Giclee print preparation",
+                        "Canvas reproduction optimization",
+                        "Limited edition print quality",
+                        "Color-managed workflow",
+                        "Gallery wrap and framing ready",
+                      ],
+                      stats: "300 DPI gallery-grade output",
                     },
                   },
                   {
@@ -1466,47 +1675,15 @@ const AIImageEnhancementPortal = () => {
                     title: "Cultural Heritage",
                     tag: "Heritage",
                     backInfo: {
-                      title: "Historical Preservation",
+                      title: "Museum-Quality Preservation",
                       details: [
-                        "Traditional costume and artifact enhancement",
-                        "Cultural context-aware processing",
-                        "Historical accuracy preservation",
-                        "Archive-quality restoration techniques",
-                        "Museum-standard documentation support",
+                        "Traditional Southeast Asian portraits",
+                        "Historical cultural documentation",
+                        "Batik and traditional costume details",
+                        "Temple and ceremonial photography",
+                        "Archive-standard restoration",
                       ],
-                      stats: "Trusted by 50+ cultural institutions",
-                    },
-                  },
-                  {
-                    icon: "🤳",
-                    title: "Social Media",
-                    tag: "Social",
-                    backInfo: {
-                      title: "Social Platform Optimization",
-                      details: [
-                        "Platform-specific aspect ratio optimization",
-                        "Natural enhancement for authentic appearance",
-                        "Mobile-first processing pipeline",
-                        "Quick turnaround for social sharing",
-                        "Influencer-grade quality enhancement",
-                      ],
-                      stats: "Optimized for 10+ social platforms",
-                    },
-                  },
-                  {
-                    icon: "🎨",
-                    title: "Commercial Work",
-                    tag: "Commercial",
-                    backInfo: {
-                      title: "Professional Workflow",
-                      details: [
-                        "Brand guideline compliance processing",
-                        "High-resolution commercial print quality",
-                        "Batch processing for product catalogs",
-                        "Marketing material optimization",
-                        "Professional photographer workflow integration",
-                      ],
-                      stats: "Enterprise-grade processing capabilities",
+                      stats: "Trusted by cultural institutions",
                     },
                   },
                 ].map((useCase, index) => (
@@ -1566,9 +1743,11 @@ const AIImageEnhancementPortal = () => {
             {/* CTA Section */}
             <section className="py-20">
               <div className="n3uralia-card-premium rounded-3xl p-12 md:p-16 text-center border n3uralia-border-gold">
-                <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Ready to Begin?</h2>
+                {/* Updated CTA Section Text */}
+                <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Ready to Preserve Authenticity?</h2>
                 <p className="text-xl n3uralia-text-muted mb-12 max-w-2xl mx-auto">
-                  Join professionals who trust n3uralia for culturally-sensitive AI image enhancement.
+                  Join ASEAN photographers and abstract artists who trust n3uralia for culturally-aware and
+                  artistically-sensitive AI enhancement.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <button
