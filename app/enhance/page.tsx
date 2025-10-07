@@ -11,7 +11,18 @@ import { Slider } from "@/components/ui/slider"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
-import { Upload, Download, Sparkles, Zap, ImageIcon, Trash2, AlertCircle, CheckCircle2, Loader2 } from "lucide-react"
+import {
+  Upload,
+  Download,
+  Sparkles,
+  Zap,
+  ImageIcon,
+  Trash2,
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+  Info,
+} from "lucide-react"
 import Image from "next/image"
 import { compressImageForUpload } from "@/utils/image-processing"
 
@@ -22,7 +33,46 @@ interface EnhancedImage {
   originalPreview: string
   processingTime?: string
   model?: string
-  upscaleFactor?: number
+  settings?: EnhancementSettings
+}
+
+interface EnhancementSettings {
+  model: string
+  upscaleFactor: number
+  creativity: number
+  resemblance: number
+  hdr: number
+  prompt?: string
+}
+
+// Optimal presets that generated our best images
+const OPTIMAL_PRESETS = {
+  "indonesian-wedding": {
+    name: "🤵👰 Indonesian Wedding",
+    description: "Perfect for Javanese, Sundanese, Minang traditional weddings",
+    settings: {
+      model: "philz1337x/clarity-upscaler",
+      upscaleFactor: 2,
+      creativity: 0.35,
+      resemblance: 0.75,
+      hdr: 0,
+      prompt: "professional photo, Indonesian wedding, traditional attire, cultural preservation",
+    },
+    features: ["Kebaya Detail", "Batik Preservation", "Face Protection", "Rich Colors"],
+  },
+  "modern-portrait": {
+    name: "📸 Modern Portrait",
+    description: "Contemporary portraits with natural ASEAN skin tones",
+    settings: {
+      model: "philz1337x/clarity-upscaler",
+      upscaleFactor: 2,
+      creativity: 0.35,
+      resemblance: 0.8,
+      hdr: 0,
+      prompt: "professional portrait photo, natural lighting, Asian features",
+    },
+    features: ["Natural Skin", "Sharp Details", "Face Safe", "Studio Quality"],
+  },
 }
 
 export default function EnhancePage() {
@@ -32,8 +82,9 @@ export default function EnhancePage() {
   const [progress, setProgress] = useState(0)
   const [currentTab, setCurrentTab] = useState("upload")
   const [error, setError] = useState<string | null>(null)
-  const [selectedModel, setSelectedModel] = useState("clarity-upscaler-face-preserve")
-  const [upscaleFactor, setUpscaleFactor] = useState(2)
+  const [selectedPreset, setSelectedPreset] = useState<keyof typeof OPTIMAL_PRESETS>("indonesian-wedding")
+  const [settings, setSettings] = useState<EnhancementSettings>(OPTIMAL_PRESETS["indonesian-wedding"].settings)
+  const [showAdvanced, setShowAdvanced] = useState(false)
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setUploadedFiles((prev) => [...prev, ...acceptedFiles])
@@ -56,6 +107,12 @@ export default function EnhancePage() {
     setEnhancedImages((prev) => prev.filter((img) => img.id !== id))
   }
 
+  const applyPreset = (presetKey: keyof typeof OPTIMAL_PRESETS) => {
+    setSelectedPreset(presetKey)
+    setSettings(OPTIMAL_PRESETS[presetKey].settings)
+    setShowAdvanced(false)
+  }
+
   const handleEnhance = async () => {
     if (uploadedFiles.length === 0) {
       setError("Please upload at least one image")
@@ -68,7 +125,6 @@ export default function EnhancePage() {
     setCurrentTab("enhanced")
 
     const totalFiles = uploadedFiles.length
-    const newEnhancedImages: EnhancedImage[] = []
 
     for (let i = 0; i < totalFiles; i++) {
       const file = uploadedFiles[i]
@@ -76,8 +132,9 @@ export default function EnhancePage() {
       try {
         console.log(`🔄 Processing file ${i + 1}/${totalFiles}: ${file.name}`)
         console.log(`📦 Original size: ${Math.round(file.size / 1024)}KB`)
+        console.log(`⚙️ Settings:`, settings)
 
-        // Compress image if needed (for mobile photos)
+        // Compress image if needed
         let processedFile = file
         if (file.size > 1024 * 1024) {
           console.log("🔄 Compressing image...")
@@ -85,22 +142,26 @@ export default function EnhancePage() {
           console.log(`✅ Compressed to: ${Math.round(processedFile.size / 1024)}KB`)
         }
 
-        // Create FormData with the file
+        // Create FormData
         const formData = new FormData()
-        formData.append("file", processedFile) // ✅ Correct key name
-
-        // Add settings as JSON string
-        const settings = {
-          model: selectedModel,
-          upscaleFactor: upscaleFactor,
+        formData.append("image", processedFile)
+        formData.append("model", settings.model)
+        formData.append("scale_factor", settings.upscaleFactor.toString())
+        formData.append("dynamic", settings.creativity.toString())
+        formData.append("creativity", settings.creativity.toString())
+        formData.append("resemblance", settings.resemblance.toString())
+        formData.append("hdr", settings.hdr.toString())
+        if (settings.prompt) {
+          formData.append("prompt", settings.prompt)
         }
-        formData.append("settings", JSON.stringify(settings))
 
-        console.log("📤 Sending to API:", {
-          fileName: processedFile.name,
-          fileSize: `${Math.round(processedFile.size / 1024)}KB`,
-          model: selectedModel,
-          upscaleFactor: upscaleFactor,
+        console.log("📤 Sending to API with settings:", {
+          model: settings.model,
+          upscaleFactor: settings.upscaleFactor,
+          creativity: settings.creativity,
+          resemblance: settings.resemblance,
+          hdr: settings.hdr,
+          prompt: settings.prompt,
         })
 
         // Send to API
@@ -116,15 +177,8 @@ export default function EnhancePage() {
           throw new Error(data.error || `API error: ${response.status}`)
         }
 
-        if (!data.success) {
+        if (!data.success || !data.output) {
           throw new Error(data.error || "Enhancement failed")
-        }
-
-        // ✅ Correct property name from API
-        const enhancedUrl = data.downloadUrl
-
-        if (!enhancedUrl) {
-          throw new Error("No enhanced image URL received")
         }
 
         // Create preview URL for original
@@ -134,14 +188,13 @@ export default function EnhancePage() {
         const enhancedImage: EnhancedImage = {
           id: `${Date.now()}-${i}`,
           original: file,
-          enhanced: enhancedUrl,
+          enhanced: data.output,
           originalPreview,
           processingTime: data.processingTime,
-          model: data.model,
-          upscaleFactor: data.upscaleFactor,
+          model: settings.model,
+          settings: { ...settings },
         }
 
-        newEnhancedImages.push(enhancedImage)
         setEnhancedImages((prev) => [...prev, enhancedImage])
 
         console.log(`✅ Enhanced successfully: ${file.name}`)
@@ -155,11 +208,7 @@ export default function EnhancePage() {
     }
 
     setIsProcessing(false)
-
-    if (newEnhancedImages.length > 0) {
-      console.log(`✅ Successfully enhanced ${newEnhancedImages.length}/${totalFiles} images`)
-      setUploadedFiles([]) // Clear uploaded files after processing
-    }
+    setUploadedFiles([]) // Clear uploaded files after processing
   }
 
   const downloadImage = async (url: string, filename: string) => {
@@ -191,61 +240,194 @@ export default function EnhancePage() {
         <div className="text-center space-y-4 mb-8 md:mb-12">
           <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20">
             <Sparkles className="w-4 h-4 mr-2 inline" />
-            AI-Powered Enhancement
+            ASEAN-Optimized AI Enhancement
           </Badge>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white">Enhance Your Images</h1>
           <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto">
-            Upload your images and let our AI restore them to pristine quality with advanced face preservation
+            Professional-grade enhancement with Southeast Asian facial feature preservation
           </p>
         </div>
 
-        {/* Settings Panel */}
-        <Card className="mb-8 bg-gray-900/50 border-gray-800">
+        {/* Presets - Prominent Display */}
+        <Card className="mb-8 bg-gradient-to-br from-amber-500/5 to-rose-500/5 border-amber-500/20">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
-              <Zap className="w-5 h-5 text-amber-400" />
-              Enhancement Settings
+              <Sparkles className="w-5 h-5 text-amber-400" />
+              Enhancement Presets
             </CardTitle>
+            <p className="text-sm text-gray-400">Choose the preset that created our best results</p>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {Object.entries(OPTIMAL_PRESETS).map(([key, preset]) => (
+                <button
+                  key={key}
+                  onClick={() => applyPreset(key as keyof typeof OPTIMAL_PRESETS)}
+                  className={`p-6 rounded-xl border-2 transition-all text-left ${
+                    selectedPreset === key
+                      ? "border-amber-500 bg-amber-500/10 shadow-lg shadow-amber-500/20"
+                      : "border-gray-700 bg-gray-800/50 hover:border-amber-500/50"
+                  }`}
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xl font-bold text-white">{preset.name}</h3>
+                      {selectedPreset === key && <CheckCircle2 className="w-6 h-6 text-amber-400" />}
+                    </div>
+                    <p className="text-sm text-gray-300">{preset.description}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {preset.features.map((feature, idx) => (
+                        <Badge key={idx} variant="secondary" className="bg-amber-500/20 text-amber-300 text-xs">
+                          {feature}
+                        </Badge>
+                      ))}
+                    </div>
+                    {selectedPreset === key && (
+                      <div className="mt-3 pt-3 border-t border-amber-500/20">
+                        <div className="text-xs text-amber-400 space-y-1">
+                          <div>Creativity: {preset.settings.creativity}</div>
+                          <div>Resemblance: {preset.settings.resemblance}</div>
+                          <div>Upscale: {preset.settings.upscaleFactor}x</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <Button
+              variant="outline"
+              className="w-full mt-4 bg-transparent border-gray-700 hover:border-amber-500/50"
+              onClick={() => setShowAdvanced(!showAdvanced)}
+            >
+              {showAdvanced ? "Hide" : "Show"} Advanced Settings
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Advanced Settings */}
+        {showAdvanced && (
+          <Card className="mb-8 bg-gray-900/50 border-gray-800">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <Zap className="w-5 h-5 text-amber-400" />
+                Advanced Settings
+              </CardTitle>
+              <p className="text-sm text-gray-400">Fine-tune the enhancement parameters</p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Upscale Factor */}
+                <div className="space-y-3">
+                  <label className="text-sm font-medium text-gray-300 flex items-center justify-between">
+                    <span>Upscale Factor</span>
+                    <span className="text-amber-400">{settings.upscaleFactor}x</span>
+                  </label>
+                  <Slider
+                    value={[settings.upscaleFactor]}
+                    onValueChange={(value) => setSettings((prev) => ({ ...prev, upscaleFactor: value[0] }))}
+                    min={2}
+                    max={4}
+                    step={1}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-gray-500">Higher = larger output (slower)</p>
+                </div>
+
+                {/* Creativity */}
+                <div className="space-y-3">
+                  <label className="text-sm font-medium text-gray-300 flex items-center justify-between">
+                    <span>Creativity</span>
+                    <span className="text-amber-400">{settings.creativity.toFixed(2)}</span>
+                  </label>
+                  <Slider
+                    value={[settings.creativity]}
+                    onValueChange={(value) => setSettings((prev) => ({ ...prev, creativity: value[0] }))}
+                    min={0}
+                    max={1}
+                    step={0.05}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-gray-500">0.35 optimal for faces</p>
+                </div>
+
+                {/* Resemblance */}
+                <div className="space-y-3">
+                  <label className="text-sm font-medium text-gray-300 flex items-center justify-between">
+                    <span>Resemblance</span>
+                    <span className="text-amber-400">{settings.resemblance.toFixed(2)}</span>
+                  </label>
+                  <Slider
+                    value={[settings.resemblance]}
+                    onValueChange={(value) => setSettings((prev) => ({ ...prev, resemblance: value[0] }))}
+                    min={0}
+                    max={1}
+                    step={0.05}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-gray-500">0.75-0.8 preserves ASEAN features</p>
+                </div>
+
+                {/* HDR */}
+                <div className="space-y-3">
+                  <label className="text-sm font-medium text-gray-300 flex items-center justify-between">
+                    <span>HDR Strength</span>
+                    <span className="text-amber-400">{settings.hdr}</span>
+                  </label>
+                  <Slider
+                    value={[settings.hdr]}
+                    onValueChange={(value) => setSettings((prev) => ({ ...prev, hdr: value[0] }))}
+                    min={0}
+                    max={1}
+                    step={0.1}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-gray-500">0 recommended for portraits</p>
+                </div>
+              </div>
+
               {/* Model Selection */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-300">AI Model</label>
-                <Select value={selectedModel} onValueChange={setSelectedModel}>
+                <Select
+                  value={settings.model}
+                  onValueChange={(value) => setSettings((prev) => ({ ...prev, model: value }))}
+                >
                   <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-800 border-gray-700">
-                    <SelectItem value="clarity-upscaler-face-preserve">
-                      Clarity Upscaler (Face Preserve) - ASEAN Optimized
-                    </SelectItem>
-                    <SelectItem value="clarity-upscaler">Clarity Upscaler (Standard)</SelectItem>
-                    <SelectItem value="clarity-upscaler-no-face">Clarity Upscaler (No Face Enhancement)</SelectItem>
-                    <SelectItem value="real-esrgan-2x">Real-ESRGAN 2x</SelectItem>
-                    <SelectItem value="real-esrgan-4x">Real-ESRGAN 4x</SelectItem>
+                    <SelectItem value="philz1337x/clarity-upscaler">Clarity Upscaler (Best for ASEAN)</SelectItem>
                   </SelectContent>
                 </Select>
-                {selectedModel === "clarity-upscaler-face-preserve" && (
-                  <p className="text-xs text-amber-400">
-                    ✓ ASEAN-optimized face preservation • No facial modifications
-                  </p>
-                )}
               </div>
 
-              {/* Upscale Factor */}
+              {/* Prompt */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-300">Upscale Factor: {upscaleFactor}x</label>
-                <Slider
-                  value={[upscaleFactor]}
-                  onValueChange={(value) => setUpscaleFactor(value[0])}
-                  min={2}
-                  max={4}
-                  step={1}
-                  className="w-full"
+                <label className="text-sm font-medium text-gray-300">Enhancement Prompt (Optional)</label>
+                <textarea
+                  value={settings.prompt || ""}
+                  onChange={(e) => setSettings((prev) => ({ ...prev, prompt: e.target.value }))}
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm resize-none focus:border-amber-500 focus:outline-none"
+                  rows={2}
+                  placeholder="e.g., professional photo, cultural attire, natural lighting"
                 />
-                <p className="text-xs text-gray-400">Higher values = larger output images</p>
               </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Info Box */}
+        <Card className="mb-8 bg-blue-500/5 border-blue-500/20">
+          <CardContent className="p-4 flex items-start gap-3">
+            <Info className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-blue-300">
+              <p className="font-medium mb-1">ASEAN Face Preservation Active</p>
+              <p className="text-blue-400/80">
+                These settings (Creativity: 0.35, Resemblance: 0.75-0.8) have been optimized to preserve Indonesian,
+                Malaysian, Thai, Filipino, and other Southeast Asian facial features without modification.
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -358,12 +540,12 @@ export default function EnhancePage() {
               <Card className="bg-gray-900/50 border-gray-800">
                 <CardContent className="p-6 space-y-4">
                   <div className="flex items-center justify-between">
-                    <p className="text-white font-medium">Processing Images...</p>
+                    <p className="text-white font-medium">Processing with ASEAN preservation...</p>
                     <p className="text-amber-400">{Math.round(progress)}%</p>
                   </div>
                   <Progress value={progress} className="h-2" />
                   <p className="text-sm text-gray-400">
-                    This may take a few minutes depending on image size and complexity
+                    This may take a few minutes. Preserving facial features and cultural details...
                   </p>
                 </CardContent>
               </Card>
@@ -412,22 +594,19 @@ export default function EnhancePage() {
                       </div>
 
                       {/* Metadata */}
-                      <div className="flex items-center gap-2 text-xs text-gray-400">
-                        <CheckCircle2 className="w-4 h-4 text-green-400" />
-                        <span>{img.original.name}</span>
-                        {img.processingTime && (
-                          <Badge variant="outline" className="ml-auto">
-                            {img.processingTime}
-                          </Badge>
+                      <div className="space-y-2 text-xs text-gray-400">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-green-400" />
+                          <span>{img.original.name}</span>
+                        </div>
+                        {img.settings && (
+                          <div className="bg-gray-800/50 rounded p-2 space-y-1">
+                            <div>Creativity: {img.settings.creativity}</div>
+                            <div>Resemblance: {img.settings.resemblance}</div>
+                            <div>Upscale: {img.settings.upscaleFactor}x</div>
+                          </div>
                         )}
                       </div>
-
-                      {/* Model Info */}
-                      {img.model && (
-                        <div className="text-xs text-gray-500">
-                          Model: {img.model} • {img.upscaleFactor}x upscale
-                        </div>
-                      )}
 
                       {/* Actions */}
                       <div className="flex gap-2">
@@ -464,7 +643,7 @@ export default function EnhancePage() {
               </div>
               <h3 className="text-lg font-semibold text-white">ASEAN Optimized</h3>
               <p className="text-sm text-gray-400">
-                Specialized face preservation for Southeast Asian features and skin tones
+                Creativity 0.35 + Resemblance 0.75-0.8 = Perfect Southeast Asian feature preservation
               </p>
             </CardContent>
           </Card>
@@ -474,8 +653,8 @@ export default function EnhancePage() {
               <div className="w-12 h-12 mx-auto bg-amber-500/10 rounded-full flex items-center justify-center">
                 <Zap className="w-6 h-6 text-amber-400" />
               </div>
-              <h3 className="text-lg font-semibold text-white">Lightning Fast</h3>
-              <p className="text-sm text-gray-400">Process multiple images in seconds with our optimized AI pipeline</p>
+              <h3 className="text-lg font-semibold text-white">Proven Results</h3>
+              <p className="text-sm text-gray-400">These exact settings created all our showcase images</p>
             </CardContent>
           </Card>
 
@@ -484,8 +663,8 @@ export default function EnhancePage() {
               <div className="w-12 h-12 mx-auto bg-amber-500/10 rounded-full flex items-center justify-center">
                 <ImageIcon className="w-6 h-6 text-amber-400" />
               </div>
-              <h3 className="text-lg font-semibold text-white">High Quality</h3>
-              <p className="text-sm text-gray-400">Up to 4x resolution increase with museum-quality restoration</p>
+              <h3 className="text-lg font-semibold text-white">Professional Quality</h3>
+              <p className="text-sm text-gray-400">2-4x upscale with museum-quality cultural preservation</p>
             </CardContent>
           </Card>
         </div>
