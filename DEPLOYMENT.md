@@ -64,6 +64,57 @@ git push origin main
 
 ## ☁️ Step 3: Deploy to Vercel
 
+### Quick Start
+
+### Step 1: Get Replicate API Key
+
+1. Go to https://replicate.com/account/api-tokens
+2. Sign up or log in
+3. Click "Create token"
+4. Copy your API token (starts with `r8_...`)
+
+### Step 2: Deploy to Vercel
+
+#### Option A: Deploy Button (Easiest)
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/yourusername/ai-image-enhancer)
+
+1. Click the button above
+2. Import your repository
+3. Add environment variable:
+   - **Name**: `REPLICATE_API_TOKEN`
+   - **Value**: Your Replicate API token from Step 1
+4. Click "Deploy"
+
+#### Option B: Vercel Dashboard
+
+1. Push your code to GitHub
+2. Go to https://vercel.com/new
+3. Import your repository
+4. **Before deploying**, add environment variable:
+   - Go to "Environment Variables" section
+   - Add: `REPLICATE_API_TOKEN` = `your_token_here`
+5. Click "Deploy"
+
+#### Option C: Vercel CLI
+
+\`\`\`bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Login to Vercel
+vercel login
+
+# Deploy (will prompt for env vars)
+vercel
+
+# Add environment variable
+vercel env add REPLICATE_API_TOKEN
+
+# Production deployment
+vercel --prod
+\`\`\`
+
 ### Method 1: Vercel Dashboard (Recommended)
 
 1. **Go to [vercel.com/new](https://vercel.com/new)**
@@ -338,26 +389,25 @@ Already implemented:
 
 ## 💰 Cost Estimation
 
-### Vercel (Free Tier)
-- **Price:** Free
-- **Bandwidth:** 100 GB/month
-- **Function Executions:** Unlimited (10 second timeout)
-- **Deployments:** Unlimited
+### Typical Usage
 
-### Vercel (Pro Plan) - $20/month
-- **Function Timeout:** 300 seconds
-- **Priority support**
-- **Team collaboration**
+| Volume | Monthly Cost (Replicate) |
+|--------|-------------------------|
+| 100 images | $10-30 |
+| 500 images | $50-150 |
+| 1000 images | $100-300 |
 
-### Replicate (Pay-as-you-go)
-- **Clarity Upscaler:** ~$0.02 per image
-- **Real-ESRGAN:** ~$0.01 per image
-- **Free tier:** $10 credit for new accounts
+### Vercel Costs
 
-### Estimated Monthly Cost
-- **100 enhancements/month:** ~$2-5
-- **1,000 enhancements/month:** ~$20-50
-- **10,000 enhancements/month:** ~$200-500
+- **Hobby Plan**: Free
+  - 100 GB bandwidth
+  - 100 hours function execution
+  - Good for personal projects
+  
+- **Pro Plan**: $20/month
+  - 1 TB bandwidth
+  - 1000 hours function execution
+  - Good for small businesses
 
 ---
 
@@ -382,17 +432,15 @@ Your AI Image Enhancer is now live!
 
 ## 📞 Support
 
-**Issues with deployment?**
-- Check Vercel docs: [vercel.com/docs](https://vercel.com/docs)
-- Check Replicate docs: [replicate.com/docs](https://replicate.com/docs)
-- View logs in Vercel Dashboard
-- Check GitHub repository for issues
+### Need Help?
 
-**Need help?**
-Open an issue on your GitHub repository with:
-- Error message
-- Deployment logs
-- Steps to reproduce
-\`\`\`
+1. **Check logs**: `vercel logs`
+2. **Check Replicate status**: https://status.replicate.com
+3. **Vercel support**: https://vercel.com/help
+4. **GitHub Issues**: [Your repo]/issues
 
-Now create a quick deployment script:
+### Common Solutions
+
+- **Slow performance**: Check your Vercel region matches users
+- **High costs**: Enable caching, optimize image sizes
+- **API errors**: Check token validity, account credits

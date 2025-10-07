@@ -4,26 +4,32 @@ import { Buffer } from "buffer"
 interface EnhancementSettings {
   model: string
   upscaleFactor: number
-  colorize: boolean
-  removeScratches: boolean
-  denoise: boolean
-  sharpen: number
-  preset?: string
-  faceEnhancement: boolean
-  backgroundEnhancement: boolean
-  exportFormat: string
-  exportQuality: number
+  creativity: number
+  resemblance: number
+  fractality: number
+  colorBoost: number
+  enablePreProcessing: boolean
+  enablePostProcessing: boolean
+  outputFormat: "png" | "jpg" | "webp"
+  outputQuality: number
 }
 
 export async function POST(request: NextRequest) {
-  console.log("🚀 Starting Replicate enhancement with advanced settings...")
+  console.log("🚀 Starting Replicate enhancement...")
 
   try {
-    // Check API token
-    if (!process.env.REPLICATE_API_TOKEN) {
-      console.error("❌ REPLICATE_API_TOKEN not configured")
+    // Check for API token
+    const apiToken = process.env.REPLICATE_API_TOKEN || process.env.REPLICATE_API_KEY
+
+    if (!apiToken) {
+      console.error("❌ No Replicate API token found")
       return NextResponse.json(
-        { success: false, error: "REPLICATE_API_TOKEN not configured", step: "config_check" },
+        {
+          success: false,
+          error:
+            "Replicate API token not found. Please add REPLICATE_API_TOKEN to your environment variables and redeploy.",
+          step: "config_check",
+        },
         { status: 500 },
       )
     }
@@ -34,38 +40,40 @@ export async function POST(request: NextRequest) {
     let formData: FormData
     try {
       formData = await request.formData()
-      console.log("✅ FormData parsed successfully")
-
-      const keys = Array.from(formData.keys())
-      console.log("📦 FormData keys:", keys)
+      console.log("✅ FormData parsed")
+      console.log("📦 FormData keys:", Array.from(formData.keys()))
     } catch (error: any) {
       console.error("❌ Failed to parse FormData:", error)
       return NextResponse.json(
-        { success: false, error: "Failed to parse form data", step: "formdata_parse", details: error.message },
+        { success: false, error: "Failed to parse form data", step: "formdata_parse" },
         { status: 400 },
       )
     }
 
-    // Extract file
-    const file = formData.get("file") as File
+    // Extract file - try both possible keys
+    const file = (formData.get("image") || formData.get("file")) as File
+
     if (!file) {
       console.error("❌ No file provided in FormData")
       console.log("Available keys:", Array.from(formData.keys()))
-      return NextResponse.json({ success: false, error: "No file provided", step: "file_extraction" }, { status: 400 })
-    }
-
-    console.log(`✅ File extracted: ${file.name} (${file.size} bytes, ${file.type})`)
-
-    // File size validation
-    const maxSize = 15 * 1024 * 1024 // 15MB
-    if (file.size > maxSize) {
-      console.error(`❌ File too large: ${file.size} bytes (max: ${maxSize})`)
       return NextResponse.json(
         {
           success: false,
-          error: `File too large. Maximum size is ${Math.round(maxSize / 1024 / 1024)}MB.`,
-          step: "file_validation",
+          error: "No image file provided. Please select an image to enhance.",
+          step: "file_extraction",
         },
+        { status: 400 },
+      )
+    }
+
+    console.log(`✅ File received: ${file.name} (${Math.round(file.size / 1024)}KB, ${file.type})`)
+
+    // File size validation
+    const maxSize = 10 * 1024 * 1024 // 10MB
+    if (file.size > maxSize) {
+      console.error(`❌ File too large: ${file.size} bytes`)
+      return NextResponse.json(
+        { success: false, error: "File too large. Maximum size is 10MB.", step: "file_validation" },
         { status: 413 },
       )
     }
@@ -74,143 +82,76 @@ export async function POST(request: NextRequest) {
     if (!file.type.startsWith("image/")) {
       console.error("❌ Invalid file type:", file.type)
       return NextResponse.json(
-        { success: false, error: "File must be an image", step: "file_validation" },
+        { success: false, error: "File must be an image (JPG, PNG, WebP)", step: "file_validation" },
         { status: 400 },
       )
     }
 
     // Extract and parse settings
-    let settings: EnhancementSettings
+    const settings: Partial<EnhancementSettings> = {}
     try {
-      const settingsStr = formData.get("settings") as string
-      if (settingsStr) {
-        settings = JSON.parse(settingsStr)
-        console.log("✅ Advanced settings parsed:", settings)
-      } else {
-        // Default settings
-        settings = {
-          model: "clarity-upscaler-face-preserve",
-          upscaleFactor: 2,
-          colorize: false,
-          removeScratches: false,
-          denoise: true,
-          sharpen: 0.5,
-          faceEnhancement: false,
-          backgroundEnhancement: true,
-          exportFormat: "png",
-          exportQuality: 95,
-        }
-        console.log("⚠️ No settings provided, using defaults")
-      }
-    } catch (error: any) {
-      console.warn("⚠️ Failed to parse settings, using defaults:", error.message)
-      settings = {
-        model: "clarity-upscaler-face-preserve",
-        upscaleFactor: 2,
-        colorize: false,
-        removeScratches: false,
-        denoise: true,
-        sharpen: 0.5,
-        faceEnhancement: false,
-        backgroundEnhancement: true,
-        exportFormat: "png",
-        exportQuality: 95,
-      }
+      const modelStr = formData.get("model") as string
+      const upscaleStr = formData.get("upscale_factor") as string
+      const creativityStr = formData.get("creativity") as string
+      const resemblanceStr = formData.get("resemblance") as string
+      const formatStr = formData.get("output_format") as string
+
+      if (modelStr) settings.model = modelStr
+      if (upscaleStr) settings.upscaleFactor = Number.parseFloat(upscaleStr)
+      if (creativityStr) settings.creativity = Number.parseFloat(creativityStr)
+      if (resemblanceStr) settings.resemblance = Number.parseFloat(resemblanceStr)
+      if (formatStr) settings.outputFormat = formatStr as "png" | "jpg" | "webp"
+
+      console.log("✅ Settings extracted:", settings)
+    } catch (error) {
+      console.warn("⚠️ Failed to parse some settings, using defaults")
     }
 
-    // Convert file to base64
+    // Apply defaults
+    const finalSettings = {
+      model: settings.model || "clarity-upscaler",
+      upscaleFactor: settings.upscaleFactor || 2,
+      creativity: settings.creativity || 0.35,
+      resemblance: settings.resemblance || 0.75,
+      outputFormat: settings.outputFormat || "png",
+    }
+
+    console.log("📋 Final settings:", finalSettings)
+
+    // Convert image to base64
+    console.log("🔄 Converting image to base64...")
     let imageDataUrl: string
     try {
-      console.log("🔄 Converting image to base64...")
       const arrayBuffer = await file.arrayBuffer()
       const buffer = Buffer.from(arrayBuffer)
-
-      const estimatedBase64Size = (buffer.length * 4) / 3
-      const maxBase64Size = 1.2 * 1024 * 1024
-
-      if (estimatedBase64Size > maxBase64Size) {
-        console.error(`❌ Image too large for API: ${Math.round(estimatedBase64Size / 1024 / 1024)}MB estimated base64`)
-        return NextResponse.json(
-          {
-            success: false,
-            error: `Image is too large. Please use an image under 800KB.`,
-            step: "size_check",
-          },
-          { status: 413 },
-        )
-      }
-
       const base64 = buffer.toString("base64")
       imageDataUrl = `data:${file.type};base64,${base64}`
 
-      const sizeKB = Math.round(base64.length / 1024)
-      console.log(`✅ Image converted: ${sizeKB}KB base64`)
+      const base64SizeKB = Math.round(base64.length / 1024)
+      console.log(`✅ Image converted: ${base64SizeKB}KB base64`)
     } catch (error: any) {
       console.error("❌ Failed to convert image:", error)
       return NextResponse.json(
-        {
-          success: false,
-          error: "Failed to process image",
-          step: "image_conversion",
-          details: error.message,
-        },
+        { success: false, error: "Failed to process image", step: "image_conversion" },
         { status: 500 },
       )
     }
 
-    // Build model configuration with advanced settings
-    const modelId = settings.model || "clarity-upscaler-face-preserve"
-
-    // Base configurations for each model
+    // Model configurations
     const modelConfigs: Record<string, any> = {
       "clarity-upscaler": {
         version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
         input: {
           image: imageDataUrl,
-          scale_factor: settings.upscaleFactor,
+          scale_factor: finalSettings.upscaleFactor,
           dynamic: 6,
-          creativity: 0.35 + settings.sharpen * 0.3, // Adjust creativity based on sharpness
-          resemblance: 0.6,
+          creativity: finalSettings.creativity,
+          resemblance: finalSettings.resemblance,
           tiling: false,
           sd_model: "juggernaut_reborn.safetensors [338b85bc4f]",
-          face_enhance: settings.faceEnhancement,
-          codeformer_fidelity: settings.faceEnhancement ? 0.7 : 0.0,
-          background_enhance: settings.backgroundEnhancement,
-        },
-      },
-      "clarity-upscaler-face-preserve": {
-        version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
-        input: {
-          image: imageDataUrl,
-          scale_factor: settings.upscaleFactor,
-          dynamic: 6,
-          creativity: 0.35 + settings.sharpen * 0.3,
-          resemblance: 0.6,
-          tiling: false,
-          sd_model: "juggernaut_reborn.safetensors [338b85bc4f]",
-          // ASEAN face preservation - NO face modification
-          face_enhance: false,
+          face_enhance: false, // ASEAN face preservation
           codeformer_fidelity: 0.0,
-          background_enhance: settings.backgroundEnhancement,
-          only_center_face: false,
-          gfpgan_visibility: 0.0,
-          restoreformer_weight: 0.0,
-        },
-      },
-      "clarity-upscaler-no-face": {
-        version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
-        input: {
-          image: imageDataUrl,
-          scale_factor: settings.upscaleFactor,
-          dynamic: 6,
-          creativity: 0.35 + settings.sharpen * 0.3,
-          resemblance: 0.6,
-          tiling: false,
-          sd_model: "juggernaut_reborn.safetensors [338b85bc4f]",
-          face_enhance: false,
-          codeformer_fidelity: 0.0,
-          background_enhance: settings.backgroundEnhancement,
-          only_center_face: false,
+          background_enhance: true,
         },
       },
       "real-esrgan-4x": {
@@ -218,238 +159,126 @@ export async function POST(request: NextRequest) {
         input: {
           image: imageDataUrl,
           scale: 4,
-          face_enhance: settings.faceEnhancement,
-        },
-      },
-      "real-esrgan-2x": {
-        version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
-        input: {
-          image: imageDataUrl,
-          scale: 2,
-          face_enhance: settings.faceEnhancement,
+          face_enhance: false,
         },
       },
     }
 
-    const config = modelConfigs[modelId]
-    if (!config) {
-      console.error("❌ Unknown model:", modelId)
-      return NextResponse.json(
-        { success: false, error: `Unknown model: ${modelId}`, step: "model_config" },
-        { status: 400 },
-      )
-    }
-
-    console.log(`✅ Using model: ${modelId}`)
-    console.log("📋 Applied settings:", {
-      upscaleFactor: settings.upscaleFactor,
-      colorize: settings.colorize,
-      removeScratches: settings.removeScratches,
-      denoise: settings.denoise,
-      sharpen: settings.sharpen,
-      faceEnhancement: settings.faceEnhancement,
-      backgroundEnhancement: settings.backgroundEnhancement,
-      preset: settings.preset,
-    })
+    const config = modelConfigs[finalSettings.model] || modelConfigs["clarity-upscaler"]
+    console.log(`✅ Using model: ${finalSettings.model}`)
 
     // Create prediction
-    let prediction: any
-    try {
-      console.log("🔄 Creating prediction via Replicate API...")
+    console.log("🔄 Creating Replicate prediction...")
+    const createResponse = await fetch("https://api.replicate.com/v1/predictions", {
+      method: "POST",
+      headers: {
+        Authorization: `Token ${apiToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        version: config.version,
+        input: config.input,
+      }),
+    })
 
-      const response = await fetch("https://api.replicate.com/v1/predictions", {
-        method: "POST",
-        headers: {
-          Authorization: `Token ${process.env.REPLICATE_API_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          version: config.version,
-          input: config.input,
-        }),
-      })
+    if (!createResponse.ok) {
+      const errorText = await createResponse.text()
+      console.error(`❌ API request failed: ${createResponse.status}`)
+      console.error("Response:", errorText)
 
-      console.log(`📥 Response status: ${response.status}`)
-
-      if (!response.ok) {
-        const responseText = await response.text()
-        console.error(`❌ API request failed: ${response.status}`)
-        console.error("Response:", responseText)
-
-        let errorMessage = "Failed to create prediction"
-        if (response.status === 413) {
-          errorMessage = "Image too large for AI service"
-        } else if (response.status === 401) {
-          errorMessage = "Authentication failed"
-        } else if (response.status === 429) {
-          errorMessage = "Rate limit exceeded. Please try again later."
-        }
-
-        return NextResponse.json(
-          {
-            success: false,
-            error: errorMessage,
-            step: "create_prediction",
-            httpStatus: response.status,
-          },
-          { status: response.status },
-        )
-      }
-
-      prediction = await response.json()
-
-      if (!prediction?.id) {
-        console.error("❌ No prediction ID in response")
-        return NextResponse.json(
-          {
-            success: false,
-            error: "No prediction ID returned",
-            step: "prediction_id",
-          },
-          { status: 500 },
-        )
-      }
-
-      console.log(`✅ Prediction created: ${prediction.id}`)
-    } catch (error: any) {
-      console.error("❌ Failed to create prediction:", error)
       return NextResponse.json(
         {
           success: false,
-          error: "Network error while contacting AI service",
+          error: `Replicate API error: ${createResponse.status}`,
+          details: errorText,
           step: "create_prediction",
-          details: error.message,
         },
-        { status: 500 },
+        { status: createResponse.status },
       )
     }
 
-    // Wait for completion
+    const prediction = await createResponse.json()
+    console.log(`✅ Prediction created: ${prediction.id}`)
+
+    // Poll for completion
+    console.log("⏳ Waiting for processing...")
     const startTime = Date.now()
-    const timeout = 10 * 60 * 1000
+    const timeout = 5 * 60 * 1000 // 5 minutes
     let finalPrediction: any
 
-    try {
-      console.log("⏳ Waiting for prediction to complete...")
-
-      while (true) {
-        if (Date.now() - startTime > timeout) {
-          throw new Error("Prediction timed out after 10 minutes")
-        }
-
-        const statusResponse = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
-          headers: {
-            Authorization: `Token ${process.env.REPLICATE_API_TOKEN}`,
-          },
-        })
-
-        if (!statusResponse.ok) {
-          throw new Error(`Failed to get prediction status: ${statusResponse.status}`)
-        }
-
-        finalPrediction = await statusResponse.json()
-        console.log(`🔄 Status: ${finalPrediction.status}`)
-
-        if (finalPrediction.status === "succeeded") {
-          console.log("✅ Prediction completed successfully")
-          break
-        }
-
-        if (finalPrediction.status === "failed") {
-          const errorMsg = finalPrediction.error || "Prediction failed"
-          console.error("❌ Prediction failed:", errorMsg)
-          throw new Error(`AI processing failed: ${errorMsg}`)
-        }
-
-        if (finalPrediction.status === "canceled") {
-          throw new Error("Prediction was canceled")
-        }
-
-        await new Promise((resolve) => setTimeout(resolve, 3000))
+    while (true) {
+      if (Date.now() - startTime > timeout) {
+        throw new Error("Processing timeout (5 minutes)")
       }
-    } catch (error: any) {
-      console.error("❌ Prediction processing failed:", error)
-      return NextResponse.json(
-        { success: false, error: error.message, step: "prediction_wait", predictionId: prediction.id },
-        { status: 500 },
-      )
+
+      const statusResponse = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
+        headers: {
+          Authorization: `Token ${apiToken}`,
+        },
+      })
+
+      if (!statusResponse.ok) {
+        throw new Error(`Status check failed: ${statusResponse.status}`)
+      }
+
+      finalPrediction = await statusResponse.json()
+      console.log(`🔄 Status: ${finalPrediction.status}`)
+
+      if (finalPrediction.status === "succeeded") {
+        console.log("✅ Processing complete!")
+        break
+      }
+
+      if (finalPrediction.status === "failed") {
+        const errorMsg = finalPrediction.error || "Processing failed"
+        console.error("❌ Processing failed:", errorMsg)
+        throw new Error(errorMsg)
+      }
+
+      if (finalPrediction.status === "canceled") {
+        throw new Error("Processing was canceled")
+      }
+
+      // Wait 2 seconds before next check
+      await new Promise((resolve) => setTimeout(resolve, 2000))
     }
 
-    // Extract result
+    // Extract output URL
     const output = finalPrediction.output
-    if (!output) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "No output from AI processing",
-          step: "output_extraction",
-          predictionId: prediction.id,
-        },
-        { status: 500 },
-      )
-    }
+    let outputUrl: string
 
-    let downloadUrl: string
     if (Array.isArray(output)) {
-      downloadUrl = output[0]
+      outputUrl = output[0]
     } else if (typeof output === "string") {
-      downloadUrl = output
+      outputUrl = output
     } else {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Unexpected output format from AI service",
-          step: "output_format",
-          predictionId: prediction.id,
-        },
-        { status: 500 },
-      )
+      throw new Error("Unexpected output format from Replicate")
     }
 
-    if (!downloadUrl || !downloadUrl.startsWith("http")) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Invalid download URL from AI service",
-          step: "url_validation",
-          predictionId: prediction.id,
-        },
-        { status: 500 },
-      )
+    if (!outputUrl || !outputUrl.startsWith("http")) {
+      throw new Error("Invalid output URL")
     }
 
-    const processingTime = `${Math.round((Date.now() - startTime) / 1000)}s`
-    console.log(`✅ Enhancement completed in ${processingTime}`)
-    console.log(`📊 Applied features:`, {
-      colorization: settings.colorize ? "✓" : "✗",
-      scratchRemoval: settings.removeScratches ? "✓" : "✗",
-      denoising: settings.denoise ? "✓" : "✗",
-      facePreservation: !settings.faceEnhancement ? "✓ ASEAN" : "✗",
-    })
+    const processingTime = Math.round((Date.now() - startTime) / 1000)
+    console.log(`✅ Enhancement complete in ${processingTime}s`)
+    console.log(`📊 Output URL: ${outputUrl}`)
 
     return NextResponse.json({
       success: true,
-      downloadUrl,
-      model: modelId,
-      method: "replicate",
-      processingTime,
+      output: outputUrl,
+      model: finalSettings.model,
+      processingTime: `${processingTime}s`,
       predictionId: prediction.id,
-      upscaleFactor: settings.upscaleFactor,
-      originalSize: `${Math.round(file.size / 1024)}KB`,
-      appliedSettings: {
-        colorize: settings.colorize,
-        removeScratches: settings.removeScratches,
-        denoise: settings.denoise,
-        sharpen: settings.sharpen,
-        facePreservation: modelId.includes("face-preserve"),
-        backgroundEnhancement: settings.backgroundEnhancement,
-        preset: settings.preset,
-      },
+      settings: finalSettings,
     })
   } catch (error: any) {
     console.error("❌ Unexpected error:", error)
     return NextResponse.json(
-      { success: false, error: error.message || "Unexpected error occurred", step: "unexpected_error" },
+      {
+        success: false,
+        error: error.message || "An unexpected error occurred",
+        step: "unexpected_error",
+      },
       { status: 500 },
     )
   }
