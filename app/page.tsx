@@ -77,13 +77,13 @@ export default function Home() {
               Examples
             </TabsTrigger>
             <TabsTrigger value="professional" className="text-xs md:text-sm">
-              Professional Use
+              Professional
             </TabsTrigger>
           </TabsList>
 
-          {/* Home Tab */}
+          {/* Home Tab - Best Showcases */}
           <TabsContent value="home" className="space-y-12 md:space-y-16">
-            {/* Comparison Sliders */}
+            {/* Hero Comparison Sliders */}
             <div className="space-y-8 md:space-y-12">
               <div className="text-center space-y-2 md:space-y-3">
                 <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white">See the Difference</h2>
@@ -91,28 +91,29 @@ export default function Home() {
               </div>
 
               <div className="space-y-6 md:space-y-8">
-                {/* Javanese Wedding */}
+                {/* Main Wedding Showcase */}
+                <ImageComparisonSlider
+                  beforeImage="/images/wedding-before.png"
+                  afterImage="/images/wedding-after.png"
+                  beforeLabel="Original"
+                  afterLabel="AI Enhanced"
+                  priority={true}
+                />
+
+                {/* Indonesian Heritage */}
                 <ImageComparisonSlider
                   beforeImage="/images/javanese-wedding-faded.png"
                   afterImage="/images/javanese-wedding-restored.png"
-                  beforeLabel="Original"
-                  afterLabel="Enhanced"
+                  beforeLabel="Faded Photo"
+                  afterLabel="Restored Heritage"
                 />
 
-                {/* Thai Family Portrait */}
+                {/* Vintage Wedding Clarity */}
                 <ImageComparisonSlider
-                  beforeImage="/images/thai-family-faded.png"
-                  afterImage="/images/thai-family-restored.png"
-                  beforeLabel="Faded"
-                  afterLabel="Restored"
-                />
-
-                {/* Real Estate */}
-                <ImageComparisonSlider
-                  beforeImage="/images/real-estate-before.png"
-                  afterImage="/images/real-estate-after.png"
-                  beforeLabel="Before"
-                  afterLabel="After"
+                  beforeImage="/images/vintage-wedding-blur.png"
+                  afterImage="/images/vintage-wedding-clear.jpg"
+                  beforeLabel="Blurred"
+                  afterLabel="Crystal Clear"
                 />
               </div>
             </div>
@@ -207,7 +208,7 @@ export default function Home() {
             </div>
           </TabsContent>
 
-          {/* Examples Tab */}
+          {/* Examples Tab - Categorized by Use Case */}
           <TabsContent value="examples" className="space-y-8 md:space-y-12" id="examples">
             <div className="text-center space-y-2 md:space-y-3">
               <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white">Real Examples</h2>
@@ -217,7 +218,35 @@ export default function Home() {
             </div>
 
             <div className="space-y-8 md:space-y-12">
-              {/* Cultural Heritage */}
+              {/* Wedding Photography */}
+              <div className="space-y-4 md:space-y-6">
+                <div className="flex items-center gap-2 md:gap-3">
+                  <Camera className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
+                  <h3 className="text-xl md:text-2xl font-bold text-white">Wedding Photography</h3>
+                </div>
+                <div className="space-y-4 md:space-y-6">
+                  <ImageComparisonSlider
+                    beforeImage="/images/wedding-before.png"
+                    afterImage="/images/wedding-after.png"
+                    beforeLabel="Original"
+                    afterLabel="Enhanced"
+                  />
+                  <ImageComparisonSlider
+                    beforeImage="/images/wedding-set1-before.png"
+                    afterImage="/images/wedding-set1-after.png"
+                    beforeLabel="Before"
+                    afterLabel="After"
+                  />
+                  <ImageComparisonSlider
+                    beforeImage="/images/vintage-wedding-blur.png"
+                    afterImage="/images/vintage-wedding-clear.jpg"
+                    beforeLabel="Blurred"
+                    afterLabel="Crystal Clear"
+                  />
+                </div>
+              </div>
+
+              {/* Cultural Heritage Restoration */}
               <div className="space-y-4 md:space-y-6">
                 <div className="flex items-center gap-2 md:gap-3">
                   <Church className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
@@ -239,29 +268,7 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Wedding Photography */}
-              <div className="space-y-4 md:space-y-6">
-                <div className="flex items-center gap-2 md:gap-3">
-                  <Camera className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
-                  <h3 className="text-xl md:text-2xl font-bold text-white">Wedding Photography</h3>
-                </div>
-                <div className="space-y-4 md:space-y-6">
-                  <ImageComparisonSlider
-                    beforeImage="/images/wedding-set1-before.png"
-                    afterImage="/images/wedding-set1-after.png"
-                    beforeLabel="Before"
-                    afterLabel="After"
-                  />
-                  <ImageComparisonSlider
-                    beforeImage="/images/vintage-wedding-blur.png"
-                    afterImage="/images/vintage-wedding-clear.jpg"
-                    beforeLabel="Blurred"
-                    afterLabel="Crystal Clear"
-                  />
-                </div>
-              </div>
-
-              {/* Real Estate */}
+              {/* Real Estate Marketing */}
               <div className="space-y-4 md:space-y-6">
                 <div className="flex items-center gap-2 md:gap-3">
                   <Building2 className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
@@ -285,36 +292,6 @@ export default function Home() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-              {/* Cultural Heritage */}
-              <Card className="bg-gray-800/50 border-purple-500/30 hover:border-amber-500 hover:shadow-lg hover:shadow-amber-500/20 transition-all group">
-                <CardContent className="p-6 md:p-8 space-y-4 md:space-y-6">
-                  <div className="w-12 h-12 md:w-16 md:h-16 bg-purple-500/10 group-hover:bg-amber-500/10 rounded-lg flex items-center justify-center transition-colors">
-                    <Church className="w-6 h-6 md:w-8 md:h-8 text-purple-400 group-hover:text-amber-400 transition-colors" />
-                  </div>
-                  <div className="space-y-2 md:space-y-3">
-                    <h3 className="text-xl md:text-2xl font-bold text-white">Cultural Heritage Preservation</h3>
-                    <p className="text-xs md:text-sm text-gray-400 leading-relaxed">
-                      Museums and archivists use our AI to restore and preserve historical photographs, maintaining
-                      cultural authenticity while removing age-related damage.
-                    </p>
-                  </div>
-                  <ul className="space-y-2 md:space-y-3">
-                    <li className="flex items-start gap-2 text-xs md:text-sm text-gray-300">
-                      <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-amber-400 shrink-0 mt-0.5" />
-                      <span>ASEAN-optimized face preservation</span>
-                    </li>
-                    <li className="flex items-start gap-2 text-xs md:text-sm text-gray-300">
-                      <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-amber-400 shrink-0 mt-0.5" />
-                      <span>Damage repair and color restoration</span>
-                    </li>
-                    <li className="flex items-start gap-2 text-xs md:text-sm text-gray-300">
-                      <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-amber-400 shrink-0 mt-0.5" />
-                      <span>Museum-quality output</span>
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
-
               {/* Wedding Photography */}
               <Card className="bg-gray-800/50 border-pink-500/30 hover:border-amber-500 hover:shadow-lg hover:shadow-amber-500/20 transition-all group">
                 <CardContent className="p-6 md:p-8 space-y-4 md:space-y-6">
@@ -340,6 +317,36 @@ export default function Home() {
                     <li className="flex items-start gap-2 text-xs md:text-sm text-gray-300">
                       <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-amber-400 shrink-0 mt-0.5" />
                       <span>Low-light photo recovery</span>
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+
+              {/* Cultural Heritage */}
+              <Card className="bg-gray-800/50 border-purple-500/30 hover:border-amber-500 hover:shadow-lg hover:shadow-amber-500/20 transition-all group">
+                <CardContent className="p-6 md:p-8 space-y-4 md:space-y-6">
+                  <div className="w-12 h-12 md:w-16 md:h-16 bg-purple-500/10 group-hover:bg-amber-500/10 rounded-lg flex items-center justify-center transition-colors">
+                    <Church className="w-6 h-6 md:w-8 md:h-8 text-purple-400 group-hover:text-amber-400 transition-colors" />
+                  </div>
+                  <div className="space-y-2 md:space-y-3">
+                    <h3 className="text-xl md:text-2xl font-bold text-white">Cultural Heritage Preservation</h3>
+                    <p className="text-xs md:text-sm text-gray-400 leading-relaxed">
+                      Museums and archivists use our AI to restore and preserve historical photographs, maintaining
+                      cultural authenticity while removing age-related damage.
+                    </p>
+                  </div>
+                  <ul className="space-y-2 md:space-y-3">
+                    <li className="flex items-start gap-2 text-xs md:text-sm text-gray-300">
+                      <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-amber-400 shrink-0 mt-0.5" />
+                      <span>ASEAN-optimized face preservation</span>
+                    </li>
+                    <li className="flex items-start gap-2 text-xs md:text-sm text-gray-300">
+                      <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-amber-400 shrink-0 mt-0.5" />
+                      <span>Damage repair and color restoration</span>
+                    </li>
+                    <li className="flex items-start gap-2 text-xs md:text-sm text-gray-300">
+                      <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-amber-400 shrink-0 mt-0.5" />
+                      <span>Museum-quality output</span>
                     </li>
                   </ul>
                 </CardContent>
