@@ -4,64 +4,105 @@
 export async function compressImageForUpload(file: File | Blob, maxSizeMB: number): Promise<File> {
   return new Promise((resolve, reject) => {
     const img = new Image()
-    const canvas = document.createElement("canvas")
-    const ctx = canvas.getContext("2d")
+    let objectUrl: string | null = null
 
-    if (!ctx) {
-      reject(new Error("Canvas context not available"))
-      return
+    const cleanup = () => {
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl)
+        objectUrl = null
+      }
     }
 
     img.onload = () => {
-      // Calculate new dimensions to reduce file size
-      let { width, height } = img
-      const maxDimension = 2048 // Max dimension for API compatibility
+      try {
+        // Create canvas
+        const canvas = document.createElement("canvas")
+        const ctx = canvas.getContext("2d")
 
-      if (width > maxDimension || height > maxDimension) {
-        const ratio = Math.min(maxDimension / width, maxDimension / height)
-        width = Math.round(width * ratio)
-        height = Math.round(height * ratio)
+        if (!ctx) {
+          cleanup()
+          reject(new Error("Failed to get canvas context"))
+          return
+        }
+
+        // Calculate new dimensions (max 2048px)
+        let width = img.width
+        let height = img.height
+        const maxDimension = 2048
+
+        if (width > maxDimension || height > maxDimension) {
+          if (width > height) {
+            height = (height * maxDimension) / width
+            width = maxDimension
+          } else {
+            width = (width * maxDimension) / height
+            height = maxDimension
+          }
+        }
+
+        canvas.width = width
+        canvas.height = height
+
+        // Draw image
+        ctx.drawImage(img, 0, 0, width, height)
+
+        // Convert to blob with quality adjustment
+        const quality = 0.9
+        const targetSize = maxSizeMB * 1024 * 1024
+
+        const attemptCompression = (currentQuality: number) => {
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                cleanup()
+                reject(new Error("Failed to create blob"))
+                return
+              }
+
+              // If size is acceptable or quality is too low, resolve
+              if (blob.size <= targetSize || currentQuality <= 0.5) {
+                const compressedFile = new File([blob], file instanceof File ? file.name : "compressed.jpg", {
+                  type: "image/jpeg",
+                  lastModified: Date.now(),
+                })
+
+                console.log(
+                  `✅ Compression complete: ${Math.round(file.size / 1024)}KB → ${Math.round(compressedFile.size / 1024)}KB`,
+                )
+
+                cleanup()
+                resolve(compressedFile)
+              } else {
+                // Try again with lower quality
+                attemptCompression(currentQuality - 0.1)
+              }
+            },
+            file instanceof File ? file.type || "image/jpeg" : "image/jpeg",
+            currentQuality,
+          )
+        }
+
+        attemptCompression(quality)
+      } catch (error: any) {
+        cleanup()
+        reject(new Error(`Failed to compress image: ${error.message}`))
       }
-
-      canvas.width = width
-      canvas.height = height
-      ctx.drawImage(img, 0, 0, width, height)
-
-      // Start with high quality and reduce if needed
-      let quality = 0.8
-      const maxSizeBytes = maxSizeMB * 1024 * 1024
-
-      const tryCompress = () => {
-        canvas.toBlob(
-          (blob) => {
-            if (!blob) {
-              reject(new Error("Failed to compress image"))
-              return
-            }
-
-            if (blob.size <= maxSizeBytes || quality <= 0.1) {
-              // Success or minimum quality reached
-              const compressedFile = new File([blob], file.name, {
-                type: "image/jpeg",
-                lastModified: Date.now(),
-              })
-              resolve(compressedFile)
-            } else {
-              // Try with lower quality
-              quality -= 0.1
-              tryCompress()
-            }
-          },
-          "image/jpeg",
-          quality,
-        )
-      }
-
-      tryCompress()
     }
 
-    img.onerror = () => reject(new Error("Failed to load image for compression"))
-    img.src = URL.createObjectURL(file)
+    img.onerror = () => {
+      cleanup()
+      reject(new Error("Failed to load image for compression"))
+    }
+
+    // Create object URL and load image
+    try {
+      objectUrl = URL.createObjectURL(file)
+      img.crossOrigin = "anonymous"
+      img.src = objectUrl
+    } catch (error: any) {
+      cleanup()
+      reject(new Error(`Failed to create object URL: ${error.message}`))
+    }
   })
 }
 
@@ -115,6 +156,8 @@ export async function compressImage(file: File | Blob, maxSizeKB = 1024): Promis
       return
     }
 
+    const objectUrl = URL.createObjectURL(file)
+
     img.onload = () => {
       try {
         // Calculate new dimensions to keep under size limit
@@ -136,6 +179,7 @@ export async function compressImage(file: File | Blob, maxSizeKB = 1024): Promis
           canvas.toBlob(
             (blob) => {
               if (!blob) {
+                URL.revokeObjectURL(objectUrl)
                 reject(new Error("Failed to compress image"))
                 return
               }
@@ -145,12 +189,12 @@ export async function compressImage(file: File | Blob, maxSizeKB = 1024): Promis
 
               if (sizeKB <= maxSizeKB || quality <= 0.3) {
                 console.log(`✅ Final compressed size: ${Math.round(sizeKB)}KB`)
+                URL.revokeObjectURL(objectUrl)
                 resolve(blob)
               } else {
                 // Try lower quality
                 tryCompress(quality - 0.1)
               }
-              URL.revokeObjectURL(img.src)
             },
             "image/jpeg",
             quality,
@@ -160,17 +204,18 @@ export async function compressImage(file: File | Blob, maxSizeKB = 1024): Promis
         // Start with high quality and reduce if needed
         tryCompress(0.9)
       } catch (error) {
+        URL.revokeObjectURL(objectUrl)
         reject(new Error(`Image compression failed: ${error instanceof Error ? error.message : "Unknown error"}`))
-        URL.revokeObjectURL(img.src)
       }
     }
 
     img.onerror = () => {
+      URL.revokeObjectURL(objectUrl)
       reject(new Error("Failed to load image for compression"))
-      URL.revokeObjectURL(img.src)
     }
 
-    img.src = URL.createObjectURL(file)
+    img.crossOrigin = "anonymous"
+    img.src = objectUrl
   })
 }
 
@@ -188,48 +233,61 @@ export async function preProcessImage(file: File | Blob, settings: EnhancementTo
       return
     }
 
+    const objectUrl = URL.createObjectURL(file)
+
     img.onload = () => {
-      canvas.width = img.width
-      canvas.height = img.height
-      ctx.drawImage(img, 0, 0)
+      try {
+        canvas.width = img.width
+        canvas.height = img.height
+        ctx.drawImage(img, 0, 0)
 
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-      const data = imageData.data
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+        const data = imageData.data
 
-      // Apply deblocking (JPEG artifact reduction)
-      if (settings.deblock !== "off") {
-        const strength = settings.deblock === "low" ? 0.3 : 0.6
-        applyDeblock(data, canvas.width, canvas.height, strength)
+        // Apply deblocking (JPEG artifact reduction)
+        if (settings.deblock !== "off") {
+          const strength = settings.deblock === "low" ? 0.3 : 0.6
+          applyDeblock(data, canvas.width, canvas.height, strength)
+        }
+
+        // Apply denoising
+        if (settings.denoise !== "off") {
+          const strength = settings.denoise === "low" ? 0.2 : 0.4
+          applyDenoise(data, canvas.width, canvas.height, strength)
+        }
+
+        // Apply white balance correction
+        if (settings.whiteBalance === "auto") {
+          applyAutoWhiteBalance(data)
+        }
+
+        ctx.putImageData(imageData, 0, 0)
+
+        canvas.toBlob(
+          (blob) => {
+            URL.revokeObjectURL(objectUrl)
+            if (blob) {
+              resolve(blob)
+            } else {
+              reject(new Error("Failed to create blob from canvas"))
+            }
+          },
+          "image/jpeg",
+          0.95,
+        )
+      } catch (error) {
+        URL.revokeObjectURL(objectUrl)
+        reject(error)
       }
-
-      // Apply denoising
-      if (settings.denoise !== "off") {
-        const strength = settings.denoise === "low" ? 0.2 : 0.4
-        applyDenoise(data, canvas.width, canvas.height, strength)
-      }
-
-      // Apply white balance correction
-      if (settings.whiteBalance === "auto") {
-        applyAutoWhiteBalance(data)
-      }
-
-      ctx.putImageData(imageData, 0, 0)
-
-      canvas.toBlob(
-        (blob) => {
-          if (blob) {
-            resolve(blob)
-          } else {
-            reject(new Error("Failed to create blob from canvas"))
-          }
-        },
-        "image/jpeg",
-        0.95,
-      )
     }
 
-    img.onerror = () => reject(new Error("Failed to load image"))
-    img.src = URL.createObjectURL(file)
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl)
+      reject(new Error("Failed to load image"))
+    }
+
+    img.crossOrigin = "anonymous"
+    img.src = objectUrl
   })
 }
 
@@ -247,49 +305,62 @@ export async function postProcessImage(blob: Blob, settings: EnhancementToggles[
       return
     }
 
+    const objectUrl = URL.createObjectURL(blob)
+
     img.onload = () => {
-      canvas.width = img.width
-      canvas.height = img.height
-      ctx.drawImage(img, 0, 0)
+      try {
+        canvas.width = img.width
+        canvas.height = img.height
+        ctx.drawImage(img, 0, 0)
 
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-      const data = imageData.data
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+        const data = imageData.data
 
-      // Apply local contrast enhancement
-      if (settings.localContrast !== "off") {
-        const strength = settings.localContrast === "low" ? 0.3 : 0.6
-        applyLocalContrast(data, canvas.width, canvas.height, strength)
+        // Apply local contrast enhancement
+        if (settings.localContrast !== "off") {
+          const strength = settings.localContrast === "low" ? 0.3 : 0.6
+          applyLocalContrast(data, canvas.width, canvas.height, strength)
+        }
+
+        // Apply sharpening
+        if (settings.sharpen !== "off") {
+          const strength = settings.sharpen === "low" ? 0.5 : 1.0
+          applySharpen(data, canvas.width, canvas.height, strength)
+        }
+
+        // Add film grain
+        if (settings.grain !== "off") {
+          const strength = settings.grain === "very-low" ? 0.1 : 0.2
+          applyGrain(data, strength)
+        }
+
+        ctx.putImageData(imageData, 0, 0)
+
+        canvas.toBlob(
+          (blob) => {
+            URL.revokeObjectURL(objectUrl)
+            if (blob) {
+              resolve(blob)
+            } else {
+              reject(new Error("Failed to create blob from canvas"))
+            }
+          },
+          "image/jpeg",
+          0.95,
+        )
+      } catch (error) {
+        URL.revokeObjectURL(objectUrl)
+        reject(error)
       }
-
-      // Apply sharpening
-      if (settings.sharpen !== "off") {
-        const strength = settings.sharpen === "low" ? 0.5 : 1.0
-        applySharpen(data, canvas.width, canvas.height, strength)
-      }
-
-      // Add film grain
-      if (settings.grain !== "off") {
-        const strength = settings.grain === "very-low" ? 0.1 : 0.2
-        applyGrain(data, strength)
-      }
-
-      ctx.putImageData(imageData, 0, 0)
-
-      canvas.toBlob(
-        (blob) => {
-          if (blob) {
-            resolve(blob)
-          } else {
-            reject(new Error("Failed to create blob from canvas"))
-          }
-        },
-        "image/jpeg",
-        0.95,
-      )
     }
 
-    img.onerror = () => reject(new Error("Failed to load image"))
-    img.src = URL.createObjectURL(blob)
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl)
+      reject(new Error("Failed to load image"))
+    }
+
+    img.crossOrigin = "anonymous"
+    img.src = objectUrl
   })
 }
 
@@ -534,7 +605,7 @@ function applyCanvasDenoise(canvas: HTMLCanvasElement, strength: number): void {
 
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
   const data = imageData.data
-  const threshold = strength === "low" ? 15 : 25
+  const threshold = strength === 10 ? 15 : 25
 
   // Bilateral-like filter for noise reduction
   for (let y = 1; y < imageData.height - 1; y++) {
@@ -582,7 +653,7 @@ function applyBrightness(data: Uint8ClampedArray, amount: number): ImageData {
     data[i + 2] = Math.max(0, Math.min(255, data[i + 2] + adjustment)) // B
   }
 
-  return new ImageData(data, data.length / 4 / 3)
+  return new ImageData(data, Math.sqrt(data.length / 4), Math.sqrt(data.length / 4))
 }
 
 /**
@@ -597,7 +668,7 @@ function applyContrast(data: Uint8ClampedArray, amount: number): ImageData {
     data[i + 2] = Math.max(0, Math.min(255, factor * (data[i + 2] - 128) + 128)) // B
   }
 
-  return new ImageData(data, data.length / 4 / 3)
+  return new ImageData(data, Math.sqrt(data.length / 4), Math.sqrt(data.length / 4))
 }
 
 /**
@@ -618,7 +689,7 @@ function applySaturation(data: Uint8ClampedArray, amount: number): ImageData {
     data[i + 2] = Math.max(0, Math.min(255, gray + factor * (b - gray)))
   }
 
-  return new ImageData(data, data.length / 4 / 3)
+  return new ImageData(data, Math.sqrt(data.length / 4), Math.sqrt(data.length / 4))
 }
 
 /**
@@ -692,7 +763,7 @@ function applyAutoLevels(data: Uint8ClampedArray): ImageData {
     }
   }
 
-  return new ImageData(data, data.length / 4 / 3)
+  return new ImageData(data, Math.sqrt(data.length / 4), Math.sqrt(data.length / 4))
 }
 
 // Helper functions for image processing
@@ -743,7 +814,7 @@ function applyDenoise(data: Uint8ClampedArray, width: number, height: number, st
   }
 }
 
-function applyAutoWhiteBalance(data: Uint8ClampedArray) {
+function applyAutoWhiteBalance(data: Uint8ClampedArray): ImageData {
   // Gray world assumption for white balance
   let rSum = 0,
     gSum = 0,
@@ -771,6 +842,8 @@ function applyAutoWhiteBalance(data: Uint8ClampedArray) {
     data[i + 1] = Math.min(255, Math.round(data[i + 1] * gGain))
     data[i + 2] = Math.min(255, Math.round(data[i + 2] * bGain))
   }
+
+  return new ImageData(data, Math.sqrt(data.length / 4), Math.sqrt(data.length / 4))
 }
 
 function applyLocalContrast(data: Uint8ClampedArray, width: number, height: number, strength: number) {
@@ -821,7 +894,7 @@ function applySharpen(data: Uint8ClampedArray, width: number, height: number, st
   }
 }
 
-function applyGrain(data: Uint8ClampedArray, strength: number) {
+function applyGrain(data: Uint8ClampedArray, strength: number): ImageData {
   // Add subtle film grain
   for (let i = 0; i < data.length; i += 4) {
     const grain = (Math.random() - 0.5) * strength * 20
@@ -829,4 +902,30 @@ function applyGrain(data: Uint8ClampedArray, strength: number) {
     data[i + 1] = Math.max(0, Math.min(255, Math.round(data[i + 1] + grain)))
     data[i + 2] = Math.max(0, Math.min(255, Math.round(data[i + 2] + grain)))
   }
+  return new ImageData(data, Math.sqrt(data.length / 4), Math.sqrt(data.length / 4))
+}
+
+/**
+ * Convert a file to base64 data URL
+ * @param file - The file to convert
+ * @returns Base64 data URL string
+ */
+export async function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        resolve(reader.result)
+      } else {
+        reject(new Error("Failed to read file as string"))
+      }
+    }
+
+    reader.onerror = () => {
+      reject(new Error("Failed to read file"))
+    }
+
+    reader.readAsDataURL(file)
+  })
 }
