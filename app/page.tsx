@@ -22,9 +22,17 @@ import {
   Church,
 } from "lucide-react"
 import Link from "next/link"
+import { trackCTAClick, trackExampleView } from "@/lib/analytics"
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("home")
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab)
+    if (tab === "examples" || tab === "professional") {
+      trackExampleView(tab, tab)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black">
@@ -49,6 +57,7 @@ export default function Home() {
               <Button
                 size="lg"
                 className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold px-6 md:px-8 text-sm md:text-base w-full sm:w-auto"
+                onClick={() => trackCTAClick("hero", "Try Enhancer")}
               >
                 Try Enhancer
                 <ArrowRight className="ml-2 w-4 h-4 md:w-5 md:h-5" />
@@ -60,6 +69,7 @@ export default function Home() {
               className="border-amber-500/50 text-amber-400 hover:bg-amber-500/10 text-sm md:text-base w-full sm:w-auto bg-transparent"
               onClick={() => {
                 document.getElementById("examples")?.scrollIntoView({ behavior: "smooth" })
+                trackCTAClick("hero", "View Examples")
               }}
             >
               View Examples
@@ -68,7 +78,7 @@ export default function Home() {
         </div>
 
         {/* Main Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full max-w-md mx-auto grid-cols-3 mb-8 md:mb-12 bg-gray-800/50">
             <TabsTrigger value="home" className="text-xs md:text-sm">
               Home
@@ -425,6 +435,7 @@ export default function Home() {
             <Button
               size="lg"
               className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold px-6 md:px-8 text-sm md:text-base"
+              onClick={() => trackCTAClick("bottom_cta", "Get Started Free")}
             >
               Get Started Free
               <ArrowRight className="ml-2 w-4 h-4 md:w-5 md:h-5" />

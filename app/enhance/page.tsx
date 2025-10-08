@@ -26,6 +26,16 @@ import {
 import Image from "next/image"
 import { compressImageForUpload } from "@/utils/image-processing"
 import { ALL_PRESETS, getPresetsByCategory, type PresetCategory } from "@/lib/presets"
+import {
+  trackImageUpload,
+  trackPresetSelection,
+  trackCategorySwitch,
+  trackEnhancementStart,
+  trackEnhancementComplete,
+  trackEnhancementFailure,
+  trackImageDownload,
+  trackAdvancedSettings,
+} from "@/lib/analytics"
 
 interface EnhancedImage {
   id: string
@@ -61,6 +71,8 @@ export default function EnhancePage() {
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setUploadedFiles((prev) => [...prev, ...acceptedFiles])
     setError(null)
+    const totalSize = acceptedFiles.reduce((sum, file) => sum + file.size, 0)
+    trackImageUpload(acceptedFiles.length, totalSize)
   }, [])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -86,10 +98,12 @@ export default function EnhancePage() {
       setSelectedCategory(preset.category)
       setSettings(preset.settings)
       setShowAdvanced(false)
+      trackPresetSelection(presetId, preset.category)
     }
   }
 
   const switchCategory = (category: PresetCategory) => {
+    trackCategorySwitch(selectedCategory, category)
     setSelectedCategory(category)
     const presetsInCategory = getPresetsByCategory(category)
     if (presetsInCategory.length > 0) {
@@ -109,6 +123,16 @@ export default function EnhancePage() {
     setCurrentTab("enhanced")
 
     const totalFiles = uploadedFiles.length
+    const startTime = Date.now()
+
+    trackEnhancementStart({
+      model: settings.model,
+      upscaleFactor: settings.upscaleFactor,
+      creativity: settings.creativity,
+      resemblance: settings.resemblance,
+      category: selectedCategory,
+      presetId: selectedPresetId,
+    })
 
     for (let i = 0; i < totalFiles; i++) {
       const file = uploadedFiles[i]
@@ -195,11 +219,24 @@ export default function EnhancePage() {
       } catch (error: any) {
         console.error(`❌ Error processing ${file.name}:`, error)
         setError(`Failed to enhance ${file.name}: ${error.message}`)
+        trackEnhancementFailure(error.message, {
+          model: settings.model,
+          category: selectedCategory,
+          presetId: selectedPresetId,
+        })
       }
 
       // Update progress
       setProgress(((i + 1) / totalFiles) * 100)
     }
+
+    const endTime = Date.now()
+    const processingTime = ((endTime - startTime) / 1000).toFixed(2)
+    trackEnhancementComplete(processingTime, totalFiles, {
+      model: settings.model,
+      upscaleFactor: settings.upscaleFactor,
+      category: selectedCategory,
+    })
 
     setIsProcessing(false)
     setUploadedFiles([]) // Clear uploaded files after processing
@@ -219,6 +256,12 @@ export default function EnhancePage() {
       document.body.removeChild(link)
 
       URL.revokeObjectURL(blobUrl)
+
+      trackImageDownload(filename, {
+        model: settings.model,
+        category: selectedCategory,
+        presetId: selectedPresetId,
+      })
     } catch (error) {
       console.error("Download failed:", error)
       setError("Failed to download image")
@@ -355,7 +398,10 @@ export default function EnhancePage() {
             <Button
               variant="outline"
               className="w-full mt-4 bg-transparent border-gray-700 hover:border-amber-500/50"
-              onClick={() => setShowAdvanced(!showAdvanced)}
+              onClick={() => {
+                setShowAdvanced(!showAdvanced)
+                trackAdvancedSettings(!showAdvanced)
+              }}
             >
               {showAdvanced ? "Hide" : "Show"} Advanced Settings
             </Button>
