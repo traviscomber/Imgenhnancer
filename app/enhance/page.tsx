@@ -153,7 +153,18 @@ export default function EnhancePage() {
           body: formData,
         })
 
-        const data = await response.json()
+        const contentType = response.headers.get("content-type")
+        let data: any
+
+        if (contentType?.includes("application/json")) {
+          data = await response.json()
+        } else {
+          // Handle plain text error responses
+          const text = await response.text()
+          console.error("❌ Non-JSON response:", text)
+          throw new Error(text || `Server error: ${response.status}`)
+        }
+
         console.log("📥 API Response:", data)
 
         if (!response.ok) {

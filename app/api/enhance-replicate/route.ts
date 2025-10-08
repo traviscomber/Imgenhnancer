@@ -88,9 +88,24 @@ export async function POST(req: NextRequest) {
     })
 
     if (!createResponse.ok) {
-      const errorText = await createResponse.text()
-      console.error("❌ Failed to create prediction:", createResponse.status, errorText)
-      throw new Error(`Failed to create prediction: ${createResponse.status}`)
+      const contentType = createResponse.headers.get("content-type")
+      let errorMessage = `Failed to create prediction: ${createResponse.status}`
+
+      try {
+        if (contentType?.includes("application/json")) {
+          const errorData = await createResponse.json()
+          errorMessage = errorData.detail || errorData.error || errorMessage
+          console.error("❌ API error (JSON):", errorData)
+        } else {
+          const errorText = await createResponse.text()
+          errorMessage = errorText || errorMessage
+          console.error("❌ API error (text):", errorText)
+        }
+      } catch (parseError) {
+        console.error("❌ Could not parse error response:", parseError)
+      }
+
+      throw new Error(errorMessage)
     }
 
     const prediction = await createResponse.json()
@@ -115,7 +130,22 @@ export async function POST(req: NextRequest) {
       })
 
       if (!statusResponse.ok) {
-        throw new Error(`Failed to get prediction status: ${statusResponse.status}`)
+        const contentType = statusResponse.headers.get("content-type")
+        let errorMessage = `Failed to get prediction status: ${statusResponse.status}`
+
+        try {
+          if (contentType?.includes("application/json")) {
+            const errorData = await statusResponse.json()
+            errorMessage = errorData.detail || errorData.error || errorMessage
+          } else {
+            const errorText = await statusResponse.text()
+            errorMessage = errorText || errorMessage
+          }
+        } catch (parseError) {
+          console.error("❌ Could not parse status error:", parseError)
+        }
+
+        throw new Error(errorMessage)
       }
 
       finalPrediction = await statusResponse.json()
