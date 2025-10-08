@@ -25,6 +25,7 @@ import {
 } from "lucide-react"
 import Image from "next/image"
 import { compressImageForUpload } from "@/utils/image-processing"
+import { ALL_PRESETS, getPresetsByCategory, type PresetCategory } from "@/lib/presets"
 
 interface EnhancedImage {
   id: string
@@ -45,36 +46,6 @@ interface EnhancementSettings {
   prompt?: string
 }
 
-// Optimal presets that generated our best images
-const OPTIMAL_PRESETS = {
-  "indonesian-wedding": {
-    name: "🤵👰 Indonesian Wedding",
-    description: "Perfect for Javanese, Sundanese, Minang traditional weddings",
-    settings: {
-      model: "philz1337x/clarity-upscaler",
-      upscaleFactor: 2,
-      creativity: 0.35,
-      resemblance: 0.75,
-      hdr: 0,
-      prompt: "professional photo, Indonesian wedding, traditional attire, cultural preservation",
-    },
-    features: ["Kebaya Detail", "Batik Preservation", "Face Protection", "Rich Colors"],
-  },
-  "modern-portrait": {
-    name: "📸 Modern Portrait",
-    description: "Contemporary portraits with natural ASEAN skin tones",
-    settings: {
-      model: "philz1337x/clarity-upscaler",
-      upscaleFactor: 2,
-      creativity: 0.35,
-      resemblance: 0.8,
-      hdr: 0,
-      prompt: "professional portrait photo, natural lighting, Asian features",
-    },
-    features: ["Natural Skin", "Sharp Details", "Face Safe", "Studio Quality"],
-  },
-}
-
 export default function EnhancePage() {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
   const [enhancedImages, setEnhancedImages] = useState<EnhancedImage[]>([])
@@ -82,8 +53,9 @@ export default function EnhancePage() {
   const [progress, setProgress] = useState(0)
   const [currentTab, setCurrentTab] = useState("upload")
   const [error, setError] = useState<string | null>(null)
-  const [selectedPreset, setSelectedPreset] = useState<keyof typeof OPTIMAL_PRESETS>("indonesian-wedding")
-  const [settings, setSettings] = useState<EnhancementSettings>(OPTIMAL_PRESETS["indonesian-wedding"].settings)
+  const [selectedCategory, setSelectedCategory] = useState<PresetCategory>("faces")
+  const [selectedPresetId, setSelectedPresetId] = useState<string>("indonesian-wedding")
+  const [settings, setSettings] = useState<EnhancementSettings>(ALL_PRESETS["indonesian-wedding"].settings)
   const [showAdvanced, setShowAdvanced] = useState(false)
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -107,10 +79,22 @@ export default function EnhancePage() {
     setEnhancedImages((prev) => prev.filter((img) => img.id !== id))
   }
 
-  const applyPreset = (presetKey: keyof typeof OPTIMAL_PRESETS) => {
-    setSelectedPreset(presetKey)
-    setSettings(OPTIMAL_PRESETS[presetKey].settings)
-    setShowAdvanced(false)
+  const applyPreset = (presetId: string) => {
+    const preset = ALL_PRESETS[presetId]
+    if (preset) {
+      setSelectedPresetId(presetId)
+      setSelectedCategory(preset.category)
+      setSettings(preset.settings)
+      setShowAdvanced(false)
+    }
+  }
+
+  const switchCategory = (category: PresetCategory) => {
+    setSelectedCategory(category)
+    const presetsInCategory = getPresetsByCategory(category)
+    if (presetsInCategory.length > 0) {
+      applyPreset(presetsInCategory[0].id)
+    }
   }
 
   const handleEnhance = async () => {
@@ -147,7 +131,6 @@ export default function EnhancePage() {
         formData.append("image", processedFile)
         formData.append("model", settings.model)
         formData.append("scale_factor", settings.upscaleFactor.toString())
-        formData.append("dynamic", settings.creativity.toString())
         formData.append("creativity", settings.creativity.toString())
         formData.append("resemblance", settings.resemblance.toString())
         formData.append("hdr", settings.hdr.toString())
@@ -231,6 +214,8 @@ export default function EnhancePage() {
     }
   }
 
+  const currentPresets = getPresetsByCategory(selectedCategory)
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black">
       <Navbar />
@@ -240,54 +225,114 @@ export default function EnhancePage() {
         <div className="text-center space-y-4 mb-8 md:mb-12">
           <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20">
             <Sparkles className="w-4 h-4 mr-2 inline" />
-            ASEAN-Optimized AI Enhancement
+            AI-Powered Enhancement
           </Badge>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white">Enhance Your Images</h1>
           <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto">
-            Professional-grade enhancement with Southeast Asian facial feature preservation
+            Choose between face-preserving or creative enhancement modes
           </p>
         </div>
 
-        {/* Presets - Prominent Display */}
-        <Card className="mb-8 bg-gradient-to-br from-amber-500/5 to-rose-500/5 border-amber-500/20">
+        <Card className="mb-6 bg-gray-900/50 border-gray-800">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-center gap-4">
+              <Button
+                onClick={() => switchCategory("faces")}
+                variant={selectedCategory === "faces" ? "default" : "outline"}
+                className={
+                  selectedCategory === "faces"
+                    ? "bg-gradient-to-r from-amber-500 to-amber-600 text-black"
+                    : "bg-transparent border-gray-700 text-gray-300 hover:border-amber-500/50"
+                }
+              >
+                👤 Face Enhancement
+              </Button>
+              <Button
+                onClick={() => switchCategory("abstract")}
+                variant={selectedCategory === "abstract" ? "default" : "outline"}
+                className={
+                  selectedCategory === "abstract"
+                    ? "bg-gradient-to-r from-purple-500 to-pink-600 text-white"
+                    : "bg-transparent border-gray-700 text-gray-300 hover:border-purple-500/50"
+                }
+              >
+                🎨 Creative Enhancement
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card
+          className={`mb-8 ${
+            selectedCategory === "faces"
+              ? "bg-gradient-to-br from-amber-500/5 to-rose-500/5 border-amber-500/20"
+              : "bg-gradient-to-br from-purple-500/5 to-pink-500/5 border-purple-500/20"
+          }`}
+        >
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-amber-400" />
-              Enhancement Presets
+              <Sparkles className={`w-5 h-5 ${selectedCategory === "faces" ? "text-amber-400" : "text-purple-400"}`} />
+              {selectedCategory === "faces" ? "Face Enhancement Presets" : "Creative Enhancement Presets"}
             </CardTitle>
-            <p className="text-sm text-gray-400">Choose the preset that created our best results</p>
+            <p className="text-sm text-gray-400">
+              {selectedCategory === "faces"
+                ? "Optimized for portraits, weddings, and people photos"
+                : "Optimized for landscapes, products, and artistic images"}
+            </p>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {Object.entries(OPTIMAL_PRESETS).map(([key, preset]) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {currentPresets.map((preset) => (
                 <button
-                  key={key}
-                  onClick={() => applyPreset(key as keyof typeof OPTIMAL_PRESETS)}
+                  key={preset.id}
+                  onClick={() => applyPreset(preset.id)}
                   className={`p-6 rounded-xl border-2 transition-all text-left ${
-                    selectedPreset === key
-                      ? "border-amber-500 bg-amber-500/10 shadow-lg shadow-amber-500/20"
-                      : "border-gray-700 bg-gray-800/50 hover:border-amber-500/50"
+                    selectedPresetId === preset.id
+                      ? selectedCategory === "faces"
+                        ? "border-amber-500 bg-amber-500/10 shadow-lg shadow-amber-500/20"
+                        : "border-purple-500 bg-purple-500/10 shadow-lg shadow-purple-500/20"
+                      : "border-gray-700 bg-gray-800/50 hover:border-gray-600"
                   }`}
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-xl font-bold text-white">{preset.name}</h3>
-                      {selectedPreset === key && <CheckCircle2 className="w-6 h-6 text-amber-400" />}
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl">{preset.icon}</span>
+                        <h3 className="text-lg font-bold text-white">{preset.name}</h3>
+                      </div>
+                      {selectedPresetId === preset.id && (
+                        <CheckCircle2
+                          className={`w-6 h-6 ${selectedCategory === "faces" ? "text-amber-400" : "text-purple-400"}`}
+                        />
+                      )}
                     </div>
                     <p className="text-sm text-gray-300">{preset.description}</p>
                     <div className="flex flex-wrap gap-2">
                       {preset.features.map((feature, idx) => (
-                        <Badge key={idx} variant="secondary" className="bg-amber-500/20 text-amber-300 text-xs">
+                        <Badge
+                          key={idx}
+                          variant="secondary"
+                          className={
+                            selectedCategory === "faces"
+                              ? "bg-amber-500/20 text-amber-300 text-xs"
+                              : "bg-purple-500/20 text-purple-300 text-xs"
+                          }
+                        >
                           {feature}
                         </Badge>
                       ))}
                     </div>
-                    {selectedPreset === key && (
-                      <div className="mt-3 pt-3 border-t border-amber-500/20">
-                        <div className="text-xs text-amber-400 space-y-1">
+                    {selectedPresetId === preset.id && (
+                      <div
+                        className={`mt-3 pt-3 border-t ${selectedCategory === "faces" ? "border-amber-500/20" : "border-purple-500/20"}`}
+                      >
+                        <div
+                          className={`text-xs space-y-1 ${selectedCategory === "faces" ? "text-amber-400" : "text-purple-400"}`}
+                        >
                           <div>Creativity: {preset.settings.creativity}</div>
                           <div>Resemblance: {preset.settings.resemblance}</div>
                           <div>Upscale: {preset.settings.upscaleFactor}x</div>
+                          {preset.settings.hdr > 0 && <div>HDR: {preset.settings.hdr}</div>}
                         </div>
                       </div>
                     )}
@@ -349,7 +394,9 @@ export default function EnhancePage() {
                     step={0.05}
                     className="w-full"
                   />
-                  <p className="text-xs text-gray-500">0.35 optimal for faces</p>
+                  <p className="text-xs text-gray-500">
+                    {selectedCategory === "faces" ? "0.25-0.4 for faces" : "0.5-0.85 for creative"}
+                  </p>
                 </div>
 
                 {/* Resemblance */}
@@ -366,14 +413,16 @@ export default function EnhancePage() {
                     step={0.05}
                     className="w-full"
                   />
-                  <p className="text-xs text-gray-500">0.75-0.8 preserves ASEAN features</p>
+                  <p className="text-xs text-gray-500">
+                    {selectedCategory === "faces" ? "0.75-0.85 preserves features" : "0.4-0.7 for creativity"}
+                  </p>
                 </div>
 
                 {/* HDR */}
                 <div className="space-y-3">
                   <label className="text-sm font-medium text-gray-300 flex items-center justify-between">
                     <span>HDR Strength</span>
-                    <span className="text-amber-400">{settings.hdr}</span>
+                    <span className="text-amber-400">{settings.hdr.toFixed(1)}</span>
                   </label>
                   <Slider
                     value={[settings.hdr]}
@@ -383,7 +432,9 @@ export default function EnhancePage() {
                     step={0.1}
                     className="w-full"
                   />
-                  <p className="text-xs text-gray-500">0 recommended for portraits</p>
+                  <p className="text-xs text-gray-500">
+                    {selectedCategory === "faces" ? "0-0.1 for portraits" : "0.3-0.5 for landscapes"}
+                  </p>
                 </div>
               </div>
 
@@ -398,7 +449,7 @@ export default function EnhancePage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-800 border-gray-700">
-                    <SelectItem value="philz1337x/clarity-upscaler">Clarity Upscaler (Best for ASEAN)</SelectItem>
+                    <SelectItem value="philz1337x/clarity-upscaler">Clarity Upscaler</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -419,15 +470,39 @@ export default function EnhancePage() {
         )}
 
         {/* Info Box */}
-        <Card className="mb-8 bg-blue-500/5 border-blue-500/20">
+        <Card
+          className={
+            selectedCategory === "faces"
+              ? "mb-8 bg-blue-500/5 border-blue-500/20"
+              : "mb-8 bg-purple-500/5 border-purple-500/20"
+          }
+        >
           <CardContent className="p-4 flex items-start gap-3">
-            <Info className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-blue-300">
-              <p className="font-medium mb-1">ASEAN Face Preservation Active</p>
-              <p className="text-blue-400/80">
-                These settings (Creativity: 0.35, Resemblance: 0.75-0.8) have been optimized to preserve Indonesian,
-                Malaysian, Thai, Filipino, and other Southeast Asian facial features without modification.
-              </p>
+            <Info
+              className={`w-5 h-5 flex-shrink-0 mt-0.5 ${selectedCategory === "faces" ? "text-blue-400" : "text-purple-400"}`}
+            />
+            <div className="text-sm">
+              {selectedCategory === "faces" ? (
+                <>
+                  <p
+                    className={`font-medium mb-1 ${selectedCategory === "faces" ? "text-blue-300" : "text-purple-300"}`}
+                  >
+                    Face Preservation Active
+                  </p>
+                  <p className={selectedCategory === "faces" ? "text-blue-400/80" : "text-purple-400/80"}>
+                    These settings preserve facial features, skin tones, and cultural details without modification.
+                    Perfect for portraits, weddings, and family photos.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="font-medium mb-1 text-purple-300">Creative Enhancement Mode</p>
+                  <p className="text-purple-400/80">
+                    Higher creativity settings allow for artistic interpretation and dramatic improvements. Perfect for
+                    landscapes, products, and abstract images.
+                  </p>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -540,12 +615,18 @@ export default function EnhancePage() {
               <Card className="bg-gray-900/50 border-gray-800">
                 <CardContent className="p-6 space-y-4">
                   <div className="flex items-center justify-between">
-                    <p className="text-white font-medium">Processing with ASEAN preservation...</p>
+                    <p className="text-white font-medium">
+                      {selectedCategory === "faces"
+                        ? "Processing with face preservation..."
+                        : "Processing creatively..."}
+                    </p>
                     <p className="text-amber-400">{Math.round(progress)}%</p>
                   </div>
                   <Progress value={progress} className="h-2" />
                   <p className="text-sm text-gray-400">
-                    This may take a few minutes. Preserving facial features and cultural details...
+                    {selectedCategory === "faces"
+                      ? "Preserving facial features and cultural details..."
+                      : "Applying creative enhancements..."}
                   </p>
                 </CardContent>
               </Card>
@@ -604,6 +685,7 @@ export default function EnhancePage() {
                             <div>Creativity: {img.settings.creativity}</div>
                             <div>Resemblance: {img.settings.resemblance}</div>
                             <div>Upscale: {img.settings.upscaleFactor}x</div>
+                            {img.settings.hdr > 0 && <div>HDR: {img.settings.hdr}</div>}
                           </div>
                         )}
                       </div>
@@ -634,16 +716,15 @@ export default function EnhancePage() {
           </TabsContent>
         </Tabs>
 
-        {/* Features Info */}
         <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="bg-gray-900/50 border-gray-800">
             <CardContent className="p-6 text-center space-y-3">
               <div className="w-12 h-12 mx-auto bg-amber-500/10 rounded-full flex items-center justify-center">
                 <Sparkles className="w-6 h-6 text-amber-400" />
               </div>
-              <h3 className="text-lg font-semibold text-white">ASEAN Optimized</h3>
+              <h3 className="text-lg font-semibold text-white">10 Specialized Presets</h3>
               <p className="text-sm text-gray-400">
-                Creativity 0.35 + Resemblance 0.75-0.8 = Perfect Southeast Asian feature preservation
+                5 for faces, 5 for creative work - each optimized for specific use cases
               </p>
             </CardContent>
           </Card>
@@ -653,8 +734,10 @@ export default function EnhancePage() {
               <div className="w-12 h-12 mx-auto bg-amber-500/10 rounded-full flex items-center justify-center">
                 <Zap className="w-6 h-6 text-amber-400" />
               </div>
-              <h3 className="text-lg font-semibold text-white">Proven Results</h3>
-              <p className="text-sm text-gray-400">These exact settings created all our showcase images</p>
+              <h3 className="text-lg font-semibold text-white">Smart Enhancement</h3>
+              <p className="text-sm text-gray-400">
+                Face mode preserves features, Creative mode allows artistic freedom
+              </p>
             </CardContent>
           </Card>
 
@@ -664,7 +747,7 @@ export default function EnhancePage() {
                 <ImageIcon className="w-6 h-6 text-amber-400" />
               </div>
               <h3 className="text-lg font-semibold text-white">Professional Quality</h3>
-              <p className="text-sm text-gray-400">2-4x upscale with museum-quality cultural preservation</p>
+              <p className="text-sm text-gray-400">2-4x upscale with AI-powered detail enhancement</p>
             </CardContent>
           </Card>
         </div>
