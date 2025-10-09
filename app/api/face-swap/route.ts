@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import Replicate from "replicate"
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,6 +10,10 @@ export async function POST(request: NextRequest) {
       console.error("[v0] [FACE-SWAP] REPLICATE_API_TOKEN not configured")
       return NextResponse.json({ success: false, error: "REPLICATE_API_TOKEN not configured" }, { status: 500 })
     }
+
+    const replicate = new Replicate({
+      auth: process.env.REPLICATE_API_TOKEN,
+    })
 
     const formData = await request.formData()
     const sourceImage = formData.get("source") as File // User's face
@@ -23,68 +28,18 @@ export async function POST(request: NextRequest) {
     const sourceBuffer = await sourceImage.arrayBuffer()
     const sourceBase64 = `data:${sourceImage.type};base64,${Buffer.from(sourceBuffer).toString("base64")}`
 
-    console.log("[v0] [FACE-SWAP] Creating Replicate prediction...")
-    const createResponse = await fetch("https://api.replicate.com/v1/predictions", {
-      method: "POST",
-      headers: {
-        Authorization: `Token ${process.env.REPLICATE_API_TOKEN}`,
-        "Content-Type": "application/json",
+    console.log("[v0] [FACE-SWAP] Running easel/advanced-face-swap model...")
+    const output = await replicate.run("easel/advanced-face-swap", {
+      input: {
+        source_image: sourceBase64, // User's face to swap
+        target_image: targetImageUrl, // Generated avatar to swap face onto
       },
-      body: JSON.stringify({
-        version: "c2d783366e8d32e6e82c40682fab6b4c23b9c6eff2692c0cf7585fc16c238cfe", // yan-ops/face_swap model
-        input: {
-          swap_image: sourceBase64, // User's face
-          target_image: targetImageUrl, // Generated avatar
-        },
-      }),
     })
 
-    if (!createResponse.ok) {
-      const errorText = await createResponse.text()
-      console.error("[v0] [FACE-SWAP] Failed to create prediction:", errorText)
-      throw new Error(`Failed to create face-swap prediction: ${createResponse.status}`)
-    }
+    console.log("[v0] [FACE-SWAP] Output type:", typeof output)
+    console.log("[v0] [FACE-SWAP] Output value:", JSON.stringify(output))
 
-    const prediction = await createResponse.json()
-    console.log("[v0] [FACE-SWAP] Prediction created:", prediction.id)
-
-    // Poll for completion
-    let finalPrediction = prediction
-    const maxAttempts = 60 // 5 minutes max
-    let attempts = 0
-
-    while (finalPrediction.status !== "succeeded" && finalPrediction.status !== "failed") {
-      if (attempts >= maxAttempts) {
-        throw new Error("Face swap timed out after 5 minutes")
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, 5000)) // Wait 5 seconds
-
-      const statusResponse = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
-        headers: {
-          Authorization: `Token ${process.env.REPLICATE_API_TOKEN}`,
-        },
-      })
-
-      if (!statusResponse.ok) {
-        throw new Error(`Failed to get prediction status: ${statusResponse.status}`)
-      }
-
-      finalPrediction = await statusResponse.json()
-      console.log(`[v0] [FACE-SWAP] Status: ${finalPrediction.status} (attempt ${attempts + 1}/${maxAttempts})`)
-      attempts++
-    }
-
-    if (finalPrediction.status === "failed") {
-      console.error("[v0] [FACE-SWAP] Prediction failed:", finalPrediction.error)
-      throw new Error(finalPrediction.error || "Face swap failed")
-    }
-
-    console.log("[v0] [FACE-SWAP] Output type:", typeof finalPrediction.output)
-    console.log("[v0] [FACE-SWAP] Output value:", JSON.stringify(finalPrediction.output))
-    console.log("[v0] [FACE-SWAP] Full prediction:", JSON.stringify(finalPrediction, null, 2))
-
-    if (!finalPrediction.output || finalPrediction.output === null) {
+    if (!output || output === null) {
       console.warn("[v0] [FACE-SWAP] Model returned null output, using original target image as fallback")
       return NextResponse.json({
         success: true,
@@ -96,23 +51,22 @@ export async function POST(request: NextRequest) {
 
     // Handle output - support multiple formats
     let outputUrl: string
-    if (Array.isArray(finalPrediction.output)) {
-      // Output is an array of URLs
-      outputUrl = finalPrediction.output[0]
-    } else if (typeof finalPrediction.output === "string") {
-      // Output is a direct URL string
-      outputUrl = finalPrediction.output
-    } else if (typeof finalPrediction.output === "object") {
-      if (finalPrediction.output.url) {
-        outputUrl = finalPrediction.output.url
-      } else if (finalPrediction.output.image) {
-        outputUrl = finalPrediction.output.image
-      } else if (finalPrediction.output.output) {
-        outputUrl = finalPrediction.output.output
+    if (Array.isArray(output)) {
+      outputUrl = output[0]
+    } else if (typeof output === "string") {
+      outputUrl = output
+    } else if (typeof output === "object") {
+      // Try common property names
+      const obj = output as any
+      if (obj.url) {
+        outputUrl = obj.url
+      } else if (obj.image) {
+        outputUrl = obj.image
+      } else if (obj.output) {
+        outputUrl = obj.output
       } else {
-        // If it's an object but we can't find a URL, use original as fallback
         console.warn("[v0] [FACE-SWAP] Unknown object structure, using original target image")
-        console.error("[v0] [FACE-SWAP] Object keys:", Object.keys(finalPrediction.output).join(", "))
+        console.error("[v0] [FACE-SWAP] Object keys:", Object.keys(obj).join(", "))
         return NextResponse.json({
           success: true,
           output: targetImageUrl,
@@ -126,11 +80,11 @@ export async function POST(request: NextRequest) {
         success: true,
         output: targetImageUrl,
         fallback: true,
-        message: `Unexpected output type: ${typeof finalPrediction.output}`,
+        message: `Unexpected output type: ${typeof output}`,
       })
     }
 
-    console.log("[v0] [FACE-SWAP] Face swap complete!")
+    console.log("[v0] [FACE-SWAP] Face swap complete! Output URL:", outputUrl)
 
     return NextResponse.json({
       success: true,
@@ -138,12 +92,24 @@ export async function POST(request: NextRequest) {
     })
   } catch (error: any) {
     console.error("[v0] [FACE-SWAP] Error:", error)
-    return NextResponse.json(
-      {
-        success: false,
+    // Return original target image as fallback on error
+    try {
+      const formData = await request.formData()
+      const targetImageUrl = formData.get("target") as string
+      return NextResponse.json({
+        success: true,
+        output: targetImageUrl || "",
+        fallback: true,
         error: error.message || "Face swap failed",
-      },
-      { status: 500 },
-    )
+      })
+    } catch {
+      return NextResponse.json(
+        {
+          success: false,
+          error: error.message || "Face swap failed",
+        },
+        { status: 500 },
+      )
+    }
   }
 }
