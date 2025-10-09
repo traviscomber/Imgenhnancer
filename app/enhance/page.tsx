@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useRef } from "react"
+import { useState, useCallback, useRef, useEffect } from "react"
 import { useDropzone } from "react-dropzone"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -41,6 +41,7 @@ import {
   trackImageDownload,
   trackAdvancedSettings,
 } from "@/lib/analytics"
+import { FacialAnalysisCard } from "@/components/facial-analysis-card"
 
 interface EnhancedImage {
   id: string
@@ -69,6 +70,22 @@ interface EnhancementSettings {
   prompt?: string
 }
 
+// Added for facial analysis
+interface FacialAnalysis {
+  hasFace: boolean
+  gender: string
+  ageRange: string
+  expression: string
+  quality: string
+  features: string[]
+}
+
+interface UploadedFileWithAnalysis {
+  file: File
+  analysis: FacialAnalysis | null
+  isAnalyzing: boolean
+}
+
 export default function EnhancePage() {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
   const [selectedFiles, setSelectedFiles] = useState<Set<number>>(new Set())
@@ -88,6 +105,100 @@ export default function EnhancePage() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
+  // Added for facial analysis
+  const [uploadedFilesWithAnalysis, setUploadedFilesWithAnalysis] = useState<UploadedFileWithAnalysis[]>([])
+
+  useEffect(() => {
+    if (isCameraActive && cameraStream && videoRef.current) {
+      const video = videoRef.current
+      console.log("[v0] Setting up video element with stream")
+
+      // Attach event listener first
+      video.onloadedmetadata = () => {
+        console.log("[v0] Video metadata loaded")
+        console.log("[v0] Video dimensions:", video.videoWidth, "x", video.videoHeight)
+        video
+          .play()
+          .then(() => console.log("[v0] Video playing successfully"))
+          .catch((err) => {
+            console.error("[v0] Video play error:", err)
+            setError("Failed to start video playback")
+          })
+      }
+
+      // Set the stream
+      video.srcObject = cameraStream
+      console.log("[v0] Stream assigned to video element")
+
+      // Fallback: try to play immediately in case metadata is already loaded
+      setTimeout(() => {
+        if (video.readyState >= 2) {
+          console.log("[v0] Video ready, attempting fallback play")
+          video.play().catch((err) => console.log("[v0] Fallback play not needed:", err.message))
+        }
+      }, 100)
+    }
+  }, [isCameraActive, cameraStream])
+
+  // Added for facial analysis
+  const analyzeImage = async (file: File, index: number) => {
+    try {
+      console.log("[v0] Starting analysis for:", file.name)
+
+      setUploadedFilesWithAnalysis((prev) => {
+        const newFiles = [...prev]
+        newFiles[index] = { ...newFiles[index], isAnalyzing: true }
+        return newFiles
+      })
+
+      const formData = new FormData()
+      formData.append("image", file)
+
+      console.log("[v0] Sending analysis request...")
+      const response = await fetch("/api/analyze-face", {
+        method: "POST",
+        body: formData,
+      })
+
+      console.log("[v0] Analysis response status:", response.status)
+      console.log("[v0] Analysis response headers:", Object.fromEntries(response.headers.entries()))
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error("[v0] Analysis error response:", errorText)
+        throw new Error(`Analysis failed: ${response.status} - ${errorText}`)
+      }
+
+      const data = await response.json()
+      console.log("[v0] Analysis data received:", data)
+
+      if (!data.success || !data.analysis) {
+        throw new Error("Invalid analysis response")
+      }
+
+      setUploadedFilesWithAnalysis((prev) => {
+        const newFiles = [...prev]
+        newFiles[index] = {
+          ...newFiles[index],
+          analysis: data.analysis,
+          isAnalyzing: false,
+        }
+        return newFiles
+      })
+
+      console.log("[v0] Analysis complete for:", file.name)
+    } catch (error: any) {
+      console.error("[v0] Analysis error for", file.name, ":", error)
+      console.error("[v0] Error stack:", error.stack)
+      setUploadedFilesWithAnalysis((prev) => {
+        const newFiles = [...prev]
+        newFiles[index] = { ...newFiles[index], isAnalyzing: false }
+        return newFiles
+      })
+      setError(`Analysis failed: ${error.message}`)
+    }
+  }
+
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setUploadedFiles((prev) => {
       const newFiles = [...prev, ...acceptedFiles]
@@ -100,6 +211,24 @@ export default function EnhancePage() {
       })
       return newFiles
     })
+
+    setUploadedFilesWithAnalysis((prev) => {
+      const newFilesWithAnalysis = acceptedFiles.map((file) => ({
+        file,
+        analysis: null,
+        isAnalyzing: false,
+      }))
+      const combined = [...prev, ...newFilesWithAnalysis]
+
+      // Start analysis for new files
+      acceptedFiles.forEach((file, idx) => {
+        const actualIndex = prev.length + idx
+        analyzeImage(file, actualIndex)
+      })
+
+      return combined
+    })
+
     setError(null)
     const totalSize = acceptedFiles.reduce((sum, file) => sum + file.size, 0)
     trackImageUpload(acceptedFiles.length, totalSize)
@@ -135,6 +264,7 @@ export default function EnhancePage() {
 
   const removeFile = (index: number) => {
     setUploadedFiles((prev) => prev.filter((_, i) => i !== index))
+    setUploadedFilesWithAnalysis((prev) => prev.filter((_, i) => i !== index))
     setSelectedFiles((prev) => {
       const newSelected = new Set<number>()
       prev.forEach((selectedIndex) => {
@@ -185,23 +315,14 @@ export default function EnhancePage() {
         audio: false,
       })
       console.log("[v0] Camera access granted")
+      console.log(
+        "[v0] Stream tracks:",
+        stream.getTracks().map((t) => ({ kind: t.kind, enabled: t.enabled, readyState: t.readyState })),
+      )
 
       setCameraStream(stream)
       setIsCameraActive(true)
       setError(null)
-
-      // Wait for video element to be ready
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream
-        // Ensure video plays
-        videoRef.current.onloadedmetadata = () => {
-          console.log("[v0] Video metadata loaded, playing...")
-          videoRef.current?.play().catch((err) => {
-            console.error("[v0] Video play error:", err)
-            setError("Failed to start video playback")
-          })
-        }
-      }
     } catch (error: any) {
       console.error("[v0] Camera access error:", error)
       if (error.name === "NotAllowedError") {
@@ -244,6 +365,21 @@ export default function EnhancePage() {
                 newSelected.add(prev.length)
                 return newSelected
               })
+
+              setUploadedFilesWithAnalysis((prevAnalysis) => {
+                const newAnalysis = [
+                  ...prevAnalysis,
+                  {
+                    file,
+                    analysis: null,
+                    isAnalyzing: false,
+                  },
+                ]
+                // Start analysis
+                analyzeImage(file, prevAnalysis.length)
+                return newAnalysis
+              })
+
               return newFiles
             })
             stopCamera()
@@ -1252,7 +1388,14 @@ export default function EnhancePage() {
                     ) : (
                       <>
                         <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
-                          <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+                          <video
+                            ref={videoRef}
+                            autoPlay
+                            playsInline
+                            muted
+                            className="w-full h-full object-cover"
+                            style={{ display: "block" }}
+                          />
                         </div>
                         <div className="flex gap-2">
                           <Button
@@ -1296,52 +1439,70 @@ export default function EnhancePage() {
                 </p>
               </div>
 
-              {/* Uploaded Files */}
+              {/* Uploaded Files with Analysis */}
               {uploadedFiles.map((file, index) => (
-                <Card
-                  key={index}
-                  className={`bg-gray-800/50 transition-all ${
-                    selectedFiles.has(index) ? "border-amber-500 ring-2 ring-amber-500/20" : "border-gray-700"
-                  }`}
-                >
-                  <CardContent className="p-3">
-                    <div className="flex items-start gap-2 mb-2">
-                      <Checkbox
-                        checked={selectedFiles.has(index)}
-                        onCheckedChange={() => toggleFileSelection(index)}
-                        className="mt-1"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-white truncate">{file.name}</p>
-                        <p className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeFile(index)}
-                        className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-6 w-6 p-0"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </div>
-                    <div
-                      className="aspect-video relative bg-gray-900 rounded overflow-hidden cursor-pointer"
-                      onClick={() => toggleFileSelection(index)}
-                    >
-                      <Image
-                        src={URL.createObjectURL(file) || "/placeholder.svg"}
-                        alt={file.name}
-                        fill
-                        className="object-cover"
-                      />
-                      {selectedFiles.has(index) && (
-                        <div className="absolute inset-0 bg-amber-500/20 flex items-center justify-center">
-                          <CheckCircle2 className="w-8 h-8 text-amber-400" />
+                <div key={index} className="space-y-2">
+                  <Card
+                    className={`bg-gray-800/50 transition-all ${
+                      selectedFiles.has(index) ? "border-amber-500 ring-2 ring-amber-500/20" : "border-gray-700"
+                    }`}
+                  >
+                    <CardContent className="p-3">
+                      <div className="flex items-start gap-2 mb-2">
+                        <Checkbox
+                          checked={selectedFiles.has(index)}
+                          onCheckedChange={() => toggleFileSelection(index)}
+                          className="mt-1"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-white truncate">{file.name}</p>
+                          <p className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                         </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeFile(index)}
+                          className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-6 w-6 p-0"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+                      <div
+                        className="aspect-video relative bg-gray-900 rounded overflow-hidden cursor-pointer"
+                        onClick={() => toggleFileSelection(index)}
+                      >
+                        <Image
+                          src={URL.createObjectURL(file) || "/placeholder.svg"}
+                          alt={file.name}
+                          fill
+                          className="object-cover"
+                        />
+                        {selectedFiles.has(index) && (
+                          <div className="absolute inset-0 bg-amber-500/20 flex items-center justify-center">
+                            <CheckCircle2 className="w-8 h-8 text-amber-400" />
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {uploadedFilesWithAnalysis[index]?.isAnalyzing && (
+                    <Card className="bg-purple-500/10 border-purple-500/30">
+                      <CardContent className="p-3 flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 text-purple-400 animate-spin" />
+                        <span className="text-sm text-purple-300">Analyzing facial features...</span>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {uploadedFilesWithAnalysis[index]?.analysis && (
+                    <FacialAnalysisCard
+                      analysis={uploadedFilesWithAnalysis[index].analysis!}
+                      selectedCategory={selectedCategory}
+                      selectedPreset={ALL_PRESETS[selectedPresetId]?.name || ""}
+                    />
+                  )}
+                </div>
               ))}
             </CardContent>
           </Card>

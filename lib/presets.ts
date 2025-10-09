@@ -331,13 +331,13 @@ export const AVATAR_PRESETS: Record<string, Preset> = {
     settings: {
       model: "philz1337x/clarity-upscaler",
       upscaleFactor: 3,
-      creativity: 0.7,
-      resemblance: 0.75,
+      creativity: 0.25,
+      resemblance: 0.95,
       hdr: 0.6,
       prompt:
-        "hyper realistic digital human, photorealistic avatar, ultra detailed skin texture, professional photography lighting, 8k quality portrait",
+        "hyper realistic enhancement, preserve original person, photorealistic quality, ultra detailed skin texture, professional photography lighting, 8k quality portrait, maintain facial features",
     },
-    features: ["Photorealistic", "Ultra Detail", "Pro Lighting", "8K Quality"],
+    features: ["Photorealistic", "Ultra Detail", "Pro Lighting", "Identity Preserved"],
     icon: "👤",
   },
   "anime-avatar": {
@@ -348,13 +348,13 @@ export const AVATAR_PRESETS: Record<string, Preset> = {
     settings: {
       model: "philz1337x/clarity-upscaler",
       upscaleFactor: 2,
-      creativity: 0.9,
-      resemblance: 0.5,
+      creativity: 0.8,
+      resemblance: 0.7,
       hdr: 0.4,
       prompt:
-        "anime style avatar, Japanese animation, expressive large eyes, stylized features, manga art, vibrant anime colors, cel shaded",
+        "anime style avatar based on original person, Japanese animation, expressive large eyes, stylized features, manga art, vibrant anime colors, cel shaded, preserve face structure",
     },
-    features: ["Anime Style", "Expressive Eyes", "Vibrant", "Manga Art"],
+    features: ["Anime Style", "Expressive Eyes", "Vibrant", "Face Preserved"],
     icon: "🎌",
   },
   "metaverse-avatar": {
@@ -365,13 +365,13 @@ export const AVATAR_PRESETS: Record<string, Preset> = {
     settings: {
       model: "philz1337x/clarity-upscaler",
       upscaleFactor: 2,
-      creativity: 0.85,
-      resemblance: 0.6,
+      creativity: 0.7,
+      resemblance: 0.75,
       hdr: 0.5,
       prompt:
-        "metaverse avatar, virtual world character, NFT profile picture, 3D digital identity, web3 aesthetic, futuristic avatar design",
+        "metaverse avatar based on original person, virtual world character, NFT profile picture, 3D digital identity, web3 aesthetic, futuristic avatar design, preserve facial features",
     },
-    features: ["Web3 Ready", "NFT Style", "Virtual World", "Digital ID"],
+    features: ["Web3 Ready", "NFT Style", "Virtual World", "Identity Safe"],
     icon: "🌐",
   },
   "cartoon-avatar": {
@@ -382,12 +382,13 @@ export const AVATAR_PRESETS: Record<string, Preset> = {
     settings: {
       model: "philz1337x/clarity-upscaler",
       upscaleFactor: 2,
-      creativity: 0.85,
-      resemblance: 0.6,
+      creativity: 0.75,
+      resemblance: 0.75,
       hdr: 0.3,
-      prompt: "cartoon avatar, animated character, vibrant colors, expressive features, stylized portrait, digital art",
+      prompt:
+        "cartoon avatar of original person, animated character, vibrant colors, expressive features, stylized portrait, digital art, maintain face structure",
     },
-    features: ["Animated Style", "Vibrant Colors", "Expressive", "Fun Look"],
+    features: ["Animated Style", "Vibrant Colors", "Expressive", "Identity Kept"],
     icon: "🎭",
   },
   "professional-illustration": {
@@ -398,13 +399,13 @@ export const AVATAR_PRESETS: Record<string, Preset> = {
     settings: {
       model: "philz1337x/clarity-upscaler",
       upscaleFactor: 2,
-      creativity: 0.75,
-      resemblance: 0.65,
+      creativity: 0.6,
+      resemblance: 0.8,
       hdr: 0.2,
       prompt:
-        "professional illustrated portrait, elegant digital art, business avatar, clean lines, sophisticated style",
+        "professional illustrated portrait of original person, elegant digital art, business avatar, clean lines, sophisticated style, preserve facial features",
     },
-    features: ["Business Ready", "Elegant", "Clean Style", "Professional"],
+    features: ["Business Ready", "Elegant", "Clean Style", "Identity Safe"],
     icon: "👔",
   },
   "artistic-portrait": {
@@ -415,13 +416,13 @@ export const AVATAR_PRESETS: Record<string, Preset> = {
     settings: {
       model: "philz1337x/clarity-upscaler",
       upscaleFactor: 2,
-      creativity: 0.8,
-      resemblance: 0.55,
+      creativity: 0.7,
+      resemblance: 0.7,
       hdr: 0.4,
       prompt:
-        "artistic portrait painting, oil painting style, expressive brushstrokes, artistic interpretation, fine art",
+        "artistic portrait painting of original person, oil painting style, expressive brushstrokes, artistic interpretation, fine art, preserve face structure",
     },
-    features: ["Painterly", "Artistic", "Expressive", "Unique"],
+    features: ["Painterly", "Artistic", "Expressive", "Identity Kept"],
     icon: "🎨",
   },
   "pixel-art": {
@@ -432,12 +433,13 @@ export const AVATAR_PRESETS: Record<string, Preset> = {
     settings: {
       model: "philz1337x/clarity-upscaler",
       upscaleFactor: 2,
-      creativity: 0.9,
-      resemblance: 0.5,
+      creativity: 0.8,
+      resemblance: 0.65,
       hdr: 0.1,
-      prompt: "pixel art avatar, retro gaming style, 8-bit character, pixelated portrait, nostalgic aesthetic",
+      prompt:
+        "pixel art avatar of original person, retro gaming style, 8-bit character, pixelated portrait, nostalgic aesthetic, maintain face structure",
     },
-    features: ["Retro Style", "Gaming", "Pixelated", "Nostalgic"],
+    features: ["Retro Style", "Gaming", "Pixelated", "Identity Safe"],
     icon: "🎮",
   },
   "3d-render": {
@@ -448,12 +450,13 @@ export const AVATAR_PRESETS: Record<string, Preset> = {
     settings: {
       model: "philz1337x/clarity-upscaler",
       upscaleFactor: 2,
-      creativity: 0.85,
-      resemblance: 0.6,
+      creativity: 0.7,
+      resemblance: 0.75,
       hdr: 0.5,
-      prompt: "3D rendered avatar, CGI character, modern 3D art, smooth rendering, professional 3D portrait",
+      prompt:
+        "3D rendered avatar of original person, CGI character, modern 3D art, smooth rendering, professional 3D portrait, preserve facial features",
     },
-    features: ["3D Style", "Modern", "Smooth", "CGI Quality"],
+    features: ["3D Style", "Modern", "Smooth", "Identity Safe"],
     icon: "🎬",
   },
   "comic-book": {
@@ -464,13 +467,13 @@ export const AVATAR_PRESETS: Record<string, Preset> = {
     settings: {
       model: "philz1337x/clarity-upscaler",
       upscaleFactor: 2,
-      creativity: 0.88,
-      resemblance: 0.55,
+      creativity: 0.75,
+      resemblance: 0.7,
       hdr: 0.6,
       prompt:
-        "comic book style avatar, superhero portrait, bold lines, dramatic shading, pop art colors, graphic novel",
+        "comic book style avatar of original person, superhero portrait, bold lines, dramatic shading, pop art colors, graphic novel, preserve face structure",
     },
-    features: ["Bold Lines", "Superhero", "Dramatic", "Pop Art"],
+    features: ["Bold Lines", "Superhero", "Dramatic", "Identity Kept"],
     icon: "💥",
   },
   "minimalist-line": {
@@ -481,13 +484,13 @@ export const AVATAR_PRESETS: Record<string, Preset> = {
     settings: {
       model: "philz1337x/clarity-upscaler",
       upscaleFactor: 2,
-      creativity: 0.7,
-      resemblance: 0.7,
+      creativity: 0.5,
+      resemblance: 0.85,
       hdr: 0,
       prompt:
-        "minimalist line art portrait, simple clean lines, elegant sketch, modern minimalism, line drawing avatar",
+        "minimalist line art portrait of original person, simple clean lines, elegant sketch, modern minimalism, line drawing avatar, preserve facial features",
     },
-    features: ["Minimalist", "Clean Lines", "Elegant", "Simple"],
+    features: ["Minimalist", "Clean Lines", "Elegant", "Identity Safe"],
     icon: "✏️",
   },
   "fantasy-character": {
@@ -498,13 +501,13 @@ export const AVATAR_PRESETS: Record<string, Preset> = {
     settings: {
       model: "philz1337x/clarity-upscaler",
       upscaleFactor: 2,
-      creativity: 0.95,
-      resemblance: 0.45,
+      creativity: 0.85,
+      resemblance: 0.6,
       hdr: 0.5,
       prompt:
-        "fantasy character portrait, RPG avatar, epic fantasy art, magical character, detailed fantasy illustration",
+        "fantasy character portrait based on original person, RPG avatar, epic fantasy art, magical character, detailed fantasy illustration, maintain face structure",
     },
-    features: ["Fantasy", "Epic", "Magical", "RPG Style"],
+    features: ["Fantasy", "Epic", "Magical", "Face Preserved"],
     icon: "⚔️",
   },
 }
