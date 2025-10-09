@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react"
 import Image from "next/image"
+import { trackSliderInteraction } from "@/lib/analytics"
 
 interface ImageComparisonSliderProps {
   beforeImage: string
@@ -21,6 +22,7 @@ export function ImageComparisonSlider({
   const [sliderPosition, setSliderPosition] = useState(50)
   const [isDragging, setIsDragging] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const hasTrackedRef = useRef(false)
 
   const handleMove = useCallback((clientX: number) => {
     if (!containerRef.current) return
@@ -37,6 +39,10 @@ export function ImageComparisonSlider({
 
   const handleMouseDown = () => {
     setIsDragging(true)
+    if (!hasTrackedRef.current) {
+      trackSliderInteraction(beforeLabel || "comparison", "homepage")
+      hasTrackedRef.current = true
+    }
   }
 
   const handleMouseUp = () => {

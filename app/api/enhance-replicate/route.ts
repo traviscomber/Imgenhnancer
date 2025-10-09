@@ -87,28 +87,36 @@ export async function POST(req: NextRequest) {
       }),
     })
 
+    const responseText = await createResponse.text()
+    console.log("📥 Response status:", createResponse.status)
+    console.log("📥 Response text (first 200 chars):", responseText.substring(0, 200))
+
     if (!createResponse.ok) {
-      const contentType = createResponse.headers.get("content-type")
       let errorMessage = `Failed to create prediction: ${createResponse.status}`
 
+      // Try to parse as JSON
       try {
-        if (contentType?.includes("application/json")) {
-          const errorData = await createResponse.json()
-          errorMessage = errorData.detail || errorData.error || errorMessage
-          console.error("❌ API error (JSON):", errorData)
-        } else {
-          const errorText = await createResponse.text()
-          errorMessage = errorText || errorMessage
-          console.error("❌ API error (text):", errorText)
-        }
-      } catch (parseError) {
-        console.error("❌ Could not parse error response:", parseError)
+        const errorData = JSON.parse(responseText)
+        errorMessage = errorData.detail || errorData.error || errorMessage
+        console.error("❌ API error (JSON):", errorData)
+      } catch {
+        // Not JSON, use the text directly
+        errorMessage = responseText || errorMessage
+        console.error("❌ API error (text):", responseText)
       }
 
       throw new Error(errorMessage)
     }
 
-    const prediction = await createResponse.json()
+    // Parse successful response as JSON
+    let prediction: any
+    try {
+      prediction = JSON.parse(responseText)
+    } catch (parseError) {
+      console.error("❌ Failed to parse successful response as JSON:", responseText)
+      throw new Error("Invalid response from Replicate API")
+    }
+
     console.log("✅ Prediction created:", prediction.id)
 
     // Poll for completion
@@ -129,26 +137,28 @@ export async function POST(req: NextRequest) {
         },
       })
 
+      const statusText = await statusResponse.text()
+
       if (!statusResponse.ok) {
-        const contentType = statusResponse.headers.get("content-type")
         let errorMessage = `Failed to get prediction status: ${statusResponse.status}`
 
         try {
-          if (contentType?.includes("application/json")) {
-            const errorData = await statusResponse.json()
-            errorMessage = errorData.detail || errorData.error || errorMessage
-          } else {
-            const errorText = await statusResponse.text()
-            errorMessage = errorText || errorMessage
-          }
-        } catch (parseError) {
-          console.error("❌ Could not parse status error:", parseError)
+          const errorData = JSON.parse(statusText)
+          errorMessage = errorData.detail || errorData.error || errorMessage
+        } catch {
+          errorMessage = statusText || errorMessage
         }
 
         throw new Error(errorMessage)
       }
 
-      finalPrediction = await statusResponse.json()
+      try {
+        finalPrediction = JSON.parse(statusText)
+      } catch (parseError) {
+        console.error("❌ Failed to parse status response as JSON:", statusText)
+        throw new Error("Invalid status response from Replicate API")
+      }
+
       console.log(`🔄 Status: ${finalPrediction.status} (attempt ${attempts + 1}/${maxAttempts})`)
 
       attempts++
