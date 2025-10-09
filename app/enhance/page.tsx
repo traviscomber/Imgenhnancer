@@ -376,7 +376,7 @@ export default function EnhancePage() {
           ]
         }
       }
-    } else {
+    } else if (selectedCategory === "abstract") {
       // Creative enhancement prompts - allow more artistic freedom
       if (creativity < 0.4) {
         prompts = [
@@ -401,6 +401,66 @@ export default function EnhancePage() {
           "creative masterpiece with enhanced textures and artistic vision",
           "stylized artwork with dramatic lighting and imaginative details",
           "bold artistic rendering with enhanced contrast and creative flair",
+        ]
+      }
+    } else {
+      // Experimental prompts - push boundaries!
+      if (selectedPresetId === "hyper-realistic") {
+        prompts = [
+          "hyper realistic photograph with microscopic detail and photorealistic perfection",
+          "ultra detailed image with extreme clarity and lifelike textures",
+          "photorealistic rendering with professional studio quality and razor sharp focus",
+          "maximum detail photograph with true-to-life accuracy and pristine clarity",
+          "hyper real image with enhanced micro-details and authentic photographic quality",
+        ]
+      } else if (selectedPresetId === "cinematic-grade") {
+        prompts = [
+          "cinematic masterpiece with film-quality color grading and dramatic lighting",
+          "movie scene aesthetic with professional cinematography and atmospheric depth",
+          "Hollywood-grade color science with rich tones and cinematic composition",
+          "film production quality with dramatic shadows and professional lighting design",
+          "cinema-quality image with blockbuster visual effects and epic atmosphere",
+        ]
+      } else if (selectedPresetId === "ai-imagination") {
+        prompts = [
+          "AI creative interpretation with bold artistic vision and imaginative enhancement",
+          "machine learning artistry with unique style and experimental transformation",
+          "neural network imagination with creative freedom and unexpected beauty",
+          "AI-powered artistic vision with innovative enhancement and bold creativity",
+          "algorithmic creativity with imaginative interpretation and unique aesthetic",
+        ]
+      } else if (selectedPresetId === "ultra-sharp") {
+        prompts = [
+          "ultra sharp technical photography with microscopic precision and extreme clarity",
+          "razor sharp focus with scientific detail and technical perfection",
+          "extreme sharpness with laboratory-grade precision and crystal clarity",
+          "technical photography with surgical precision and maximum definition",
+          "ultra-detailed image with scientific accuracy and pristine sharpness",
+        ]
+      } else if (selectedPresetId === "neon-pop") {
+        prompts = [
+          "neon cyberpunk aesthetic with electric colors and vibrant glow effects",
+          "futuristic neon enhancement with bold saturation and glowing accents",
+          "cyberpunk color palette with neon lights and electric atmosphere",
+          "vibrant neon colors with futuristic glow and bold contrast",
+          "electric neon aesthetic with cyberpunk vibes and glowing enhancement",
+        ]
+      } else if (selectedPresetId === "dream-state") {
+        prompts = [
+          "dreamlike ethereal atmosphere with soft magical realism and surreal beauty",
+          "ethereal dream state with soft focus and mystical enhancement",
+          "surreal dreamscape with magical atmosphere and gentle artistic interpretation",
+          "dreamy ethereal quality with soft surrealism and enchanting mood",
+          "mystical dream state with ethereal beauty and soft artistic vision",
+        ]
+      } else {
+        // Generic experimental prompts
+        prompts = [
+          "experimental AI enhancement with cutting-edge creative interpretation",
+          "bold artistic transformation with maximum creative freedom",
+          "innovative AI processing with unique experimental results",
+          "creative boundary-pushing enhancement with artistic innovation",
+          "experimental artistic vision with bold AI-powered transformation",
         ]
       }
     }
@@ -459,6 +519,17 @@ export default function EnhancePage() {
               >
                 🎨 Creative Enhancement
               </Button>
+              <Button
+                onClick={() => switchCategory("experimental")}
+                variant={selectedCategory === "experimental" ? "default" : "outline"}
+                className={
+                  selectedCategory === "experimental"
+                    ? "bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-600 text-white"
+                    : "bg-transparent border-gray-700 text-gray-300 hover:border-cyan-500/50"
+                }
+              >
+                🧪 Experimental
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -467,18 +538,38 @@ export default function EnhancePage() {
           className={`mb-8 ${
             selectedCategory === "faces"
               ? "bg-gradient-to-br from-amber-500/5 to-rose-500/5 border-amber-500/20"
-              : "bg-gradient-to-br from-purple-500/5 to-pink-500/5 border-purple-500/20"
+              : selectedCategory === "abstract"
+                ? "bg-gradient-to-br from-purple-500/5 to-pink-500/5 border-purple-500/20"
+                : "bg-gradient-to-br from-cyan-500/5 to-purple-500/5 border-cyan-500/20" // Added experimental styling
           }`}
         >
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
-              <Sparkles className={`w-5 h-5 ${selectedCategory === "faces" ? "text-amber-400" : "text-purple-400"}`} />
-              {selectedCategory === "faces" ? "Face Enhancement Presets" : "Creative Enhancement Presets"}
+              <Sparkles
+                className={`w-5 h-5 ${
+                  selectedCategory === "faces"
+                    ? "text-amber-400"
+                    : selectedCategory === "abstract"
+                      ? "text-purple-400"
+                      : "text-cyan-400" // Added experimental color
+                }`}
+              />
+              {
+                selectedCategory === "faces"
+                  ? "Face Enhancement Presets"
+                  : selectedCategory === "abstract"
+                    ? "Creative Enhancement Presets"
+                    : "Experimental Presets" // Added experimental title
+              }
             </CardTitle>
             <p className="text-sm text-gray-400">
-              {selectedCategory === "faces"
-                ? "Optimized for portraits, weddings, and people photos"
-                : "Optimized for landscapes, products, and artistic images"}
+              {
+                selectedCategory === "faces"
+                  ? "Optimized for portraits, weddings, and people photos"
+                  : selectedCategory === "abstract"
+                    ? "Optimized for landscapes, products, and artistic images"
+                    : "Cutting-edge presets that push creative boundaries - use with caution!" // Added experimental description
+              }
             </p>
           </CardHeader>
           <CardContent>
@@ -491,7 +582,9 @@ export default function EnhancePage() {
                     selectedPresetId === preset.id
                       ? selectedCategory === "faces"
                         ? "border-amber-500 bg-amber-500/10 shadow-lg shadow-amber-500/20"
-                        : "border-purple-500 bg-purple-500/10 shadow-lg shadow-purple-500/20"
+                        : selectedCategory === "abstract"
+                          ? "border-purple-500 bg-purple-500/10 shadow-lg shadow-purple-500/20"
+                          : "border-cyan-500 bg-cyan-500/10 shadow-lg shadow-cyan-500/20" // Added experimental styling
                       : "border-gray-700 bg-gray-800/50 hover:border-gray-600"
                   }`}
                 >
@@ -503,7 +596,13 @@ export default function EnhancePage() {
                       </div>
                       {selectedPresetId === preset.id && (
                         <CheckCircle2
-                          className={`w-6 h-6 ${selectedCategory === "faces" ? "text-amber-400" : "text-purple-400"}`}
+                          className={`w-6 h-6 ${
+                            selectedCategory === "faces"
+                              ? "text-amber-400"
+                              : selectedCategory === "abstract"
+                                ? "text-purple-400"
+                                : "text-cyan-400" // Added experimental color
+                          }`}
                         />
                       )}
                     </div>
@@ -516,7 +615,9 @@ export default function EnhancePage() {
                           className={
                             selectedCategory === "faces"
                               ? "bg-amber-500/20 text-amber-300 text-xs"
-                              : "bg-purple-500/20 text-purple-300 text-xs"
+                              : selectedCategory === "abstract"
+                                ? "bg-purple-500/20 text-purple-300 text-xs"
+                                : "bg-cyan-500/20 text-cyan-300 text-xs" // Added experimental styling
                           }
                         >
                           {feature}
@@ -525,10 +626,22 @@ export default function EnhancePage() {
                     </div>
                     {selectedPresetId === preset.id && (
                       <div
-                        className={`mt-3 pt-3 border-t ${selectedCategory === "faces" ? "border-amber-500/20" : "border-purple-500/20"}`}
+                        className={`mt-3 pt-3 border-t ${
+                          selectedCategory === "faces"
+                            ? "border-amber-500/20"
+                            : selectedCategory === "abstract"
+                              ? "border-purple-500/20"
+                              : "border-cyan-500/20" // Added experimental styling
+                        }`}
                       >
                         <div
-                          className={`text-xs space-y-1 ${selectedCategory === "faces" ? "text-amber-400" : "text-purple-400"}`}
+                          className={`text-xs space-y-1 ${
+                            selectedCategory === "faces"
+                              ? "text-amber-400"
+                              : selectedCategory === "abstract"
+                                ? "text-purple-400"
+                                : "text-cyan-400" // Added experimental color
+                          }`}
                         >
                           <div>Creativity: {preset.settings.creativity}</div>
                           <div>Resemblance: {preset.settings.resemblance}</div>
@@ -599,7 +712,11 @@ export default function EnhancePage() {
                     className="w-full"
                   />
                   <p className="text-xs text-gray-500">
-                    {selectedCategory === "faces" ? "0.25-0.4 for faces" : "0.5-0.85 for creative"}
+                    {selectedCategory === "faces"
+                      ? "0.25-0.4 for faces"
+                      : selectedCategory === "abstract"
+                        ? "0.5-0.85 for creative"
+                        : "0.7-1.0 for experimental"}
                   </p>
                 </div>
 
@@ -618,7 +735,11 @@ export default function EnhancePage() {
                     className="w-full"
                   />
                   <p className="text-xs text-gray-500">
-                    {selectedCategory === "faces" ? "0.75-0.85 preserves features" : "0.4-0.7 for creativity"}
+                    {selectedCategory === "faces"
+                      ? "0.75-0.85 preserves features"
+                      : selectedCategory === "abstract"
+                        ? "0.4-0.7 for creativity"
+                        : "0.5-0.8 for experimental"}
                   </p>
                 </div>
 
@@ -637,7 +758,11 @@ export default function EnhancePage() {
                     className="w-full"
                   />
                   <p className="text-xs text-gray-500">
-                    {selectedCategory === "faces" ? "0-0.1 for portraits" : "0.3-0.5 for landscapes"}
+                    {selectedCategory === "faces"
+                      ? "0-0.1 for portraits"
+                      : selectedCategory === "abstract"
+                        ? "0.3-0.5 for landscapes"
+                        : "0.2-0.4 for experimental"}
                   </p>
                 </div>
               </div>
@@ -692,7 +817,9 @@ export default function EnhancePage() {
                 <p className="text-xs text-gray-500">
                   {selectedCategory === "faces"
                     ? "AI will generate prompts that preserve facial features and cultural details"
-                    : "AI will generate creative prompts based on your creativity level"}
+                    : selectedCategory === "abstract"
+                      ? "AI will generate creative prompts based on your creativity level"
+                      : "AI will generate experimental prompts pushing artistic boundaries"}
                 </p>
               </div>
             </CardContent>
@@ -704,32 +831,44 @@ export default function EnhancePage() {
           className={
             selectedCategory === "faces"
               ? "mb-8 bg-blue-500/5 border-blue-500/20"
-              : "mb-8 bg-purple-500/5 border-purple-500/20"
+              : selectedCategory === "abstract"
+                ? "mb-8 bg-purple-500/5 border-purple-500/20"
+                : "mb-8 bg-cyan-500/5 border-cyan-500/20" // Added experimental styling
           }
         >
           <CardContent className="p-4 flex items-start gap-3">
             <Info
-              className={`w-5 h-5 flex-shrink-0 mt-0.5 ${selectedCategory === "faces" ? "text-blue-400" : "text-purple-400"}`}
+              className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
+                selectedCategory === "faces"
+                  ? "text-blue-400"
+                  : selectedCategory === "abstract"
+                    ? "text-purple-400"
+                    : "text-cyan-400" // Added experimental color
+              }`}
             />
             <div className="text-sm">
               {selectedCategory === "faces" ? (
                 <>
-                  <p
-                    className={`font-medium mb-1 ${selectedCategory === "faces" ? "text-blue-300" : "text-purple-300"}`}
-                  >
-                    Face Preservation Active
-                  </p>
-                  <p className={selectedCategory === "faces" ? "text-blue-400/80" : "text-purple-400/80"}>
+                  <p className="font-medium mb-1 text-blue-300">Face Preservation Active</p>
+                  <p className="text-blue-400/80">
                     These settings preserve facial features, skin tones, and cultural details without modification.
                     Perfect for portraits, weddings, and family photos.
                   </p>
                 </>
-              ) : (
+              ) : selectedCategory === "abstract" ? (
                 <>
                   <p className="font-medium mb-1 text-purple-300">Creative Enhancement Mode</p>
                   <p className="text-purple-400/80">
                     Higher creativity settings allow for artistic interpretation and dramatic improvements. Perfect for
                     landscapes, products, and abstract images.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="font-medium mb-1 text-cyan-300">⚠️ Experimental Mode Active</p>
+                  <p className="text-cyan-400/80">
+                    These cutting-edge presets push AI to its limits with extreme creativity and unique effects. Results
+                    may be unpredictable but often spectacular. Best for artistic exploration and creative projects.
                   </p>
                 </>
               )}
@@ -848,7 +987,9 @@ export default function EnhancePage() {
                     <p className="text-white font-medium">
                       {selectedCategory === "faces"
                         ? "Processing with face preservation..."
-                        : "Processing creatively..."}
+                        : selectedCategory === "abstract"
+                          ? "Processing creatively..."
+                          : "Processing with experimental settings..."}
                     </p>
                     <p className="text-amber-400">{Math.round(progress)}%</p>
                   </div>
@@ -856,7 +997,9 @@ export default function EnhancePage() {
                   <p className="text-sm text-gray-400">
                     {selectedCategory === "faces"
                       ? "Preserving facial features and cultural details..."
-                      : "Applying creative enhancements..."}
+                      : selectedCategory === "abstract"
+                        ? "Applying creative enhancements..."
+                        : "Pushing the boundaries of AI image generation..."}
                   </p>
                 </CardContent>
               </Card>
@@ -952,9 +1095,9 @@ export default function EnhancePage() {
               <div className="w-12 h-12 mx-auto bg-amber-500/10 rounded-full flex items-center justify-center">
                 <Sparkles className="w-6 h-6 text-amber-400" />
               </div>
-              <h3 className="text-lg font-semibold text-white">10 Specialized Presets</h3>
+              <h3 className="text-lg font-semibold text-white">18 Specialized Presets</h3> {/* Updated count */}
               <p className="text-sm text-gray-400">
-                5 for faces, 5 for creative work - each optimized for specific use cases
+                6 for faces, 6 for creative work, 6 experimental - each optimized for specific use cases
               </p>
             </CardContent>
           </Card>
@@ -966,7 +1109,7 @@ export default function EnhancePage() {
               </div>
               <h3 className="text-lg font-semibold text-white">Smart Enhancement</h3>
               <p className="text-sm text-gray-400">
-                Face mode preserves features, Creative mode allows artistic freedom
+                Face mode preserves features, Creative mode allows artistic freedom, Experimental pushes boundaries
               </p>
             </CardContent>
           </Card>

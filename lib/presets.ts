@@ -1,4 +1,4 @@
-export type PresetCategory = "faces" | "abstract"
+export type PresetCategory = "faces" | "abstract" | "experimental"
 
 export interface PresetSettings {
   model: string
@@ -219,10 +219,113 @@ export const ABSTRACT_PRESETS: Record<string, Preset> = {
   },
 }
 
+// 6 Experimental Presets - Push the boundaries!
+export const EXPERIMENTAL_PRESETS: Record<string, Preset> = {
+  "hyper-realistic": {
+    id: "hyper-realistic",
+    name: "Hyper-Realistic",
+    category: "experimental",
+    description: "Maximum detail and photorealism with aggressive enhancement",
+    settings: {
+      model: "philz1337x/clarity-upscaler",
+      upscaleFactor: 4,
+      creativity: 0.65,
+      resemblance: 0.55,
+      hdr: 0.6,
+      prompt: "hyper realistic photo, extreme detail, photorealistic rendering, ultra sharp, professional photography",
+    },
+    features: ["4x Upscale", "Extreme Detail", "HDR Boost", "Photorealistic"],
+    icon: "🔬",
+  },
+  "cinematic-grade": {
+    id: "cinematic-grade",
+    name: "Cinematic Grade",
+    category: "experimental",
+    description: "Film-quality color grading with dramatic lighting",
+    settings: {
+      model: "philz1337x/clarity-upscaler",
+      upscaleFactor: 3,
+      creativity: 0.75,
+      resemblance: 0.45,
+      hdr: 0.7,
+      prompt: "cinematic color grading, film quality, dramatic lighting, movie scene, professional cinematography",
+    },
+    features: ["Film Quality", "Dramatic HDR", "Color Science", "Cinematic Look"],
+    icon: "🎬",
+  },
+  "ai-imagination": {
+    id: "ai-imagination",
+    name: "AI Imagination",
+    category: "experimental",
+    description: "Let AI reimagine your image with maximum creative freedom",
+    settings: {
+      model: "philz1337x/clarity-upscaler",
+      upscaleFactor: 2,
+      creativity: 0.95,
+      resemblance: 0.3,
+      hdr: 0.5,
+      prompt: "creative AI interpretation, imaginative enhancement, artistic vision, bold transformation, unique style",
+    },
+    features: ["Max Creativity", "AI Freedom", "Unique Results", "Experimental"],
+    icon: "🧠",
+  },
+  "ultra-sharp": {
+    id: "ultra-sharp",
+    name: "Ultra Sharp",
+    category: "experimental",
+    description: "Extreme sharpness and clarity for technical photography",
+    settings: {
+      model: "philz1337x/clarity-upscaler",
+      upscaleFactor: 4,
+      creativity: 0.3,
+      resemblance: 0.85,
+      hdr: 0.2,
+      prompt: "ultra sharp, extreme clarity, technical photography, microscopic detail, precision focus",
+    },
+    features: ["4x Upscale", "Razor Sharp", "Technical Grade", "Micro Detail"],
+    icon: "🔍",
+  },
+  "neon-pop": {
+    id: "neon-pop",
+    name: "Neon Pop",
+    category: "experimental",
+    description: "Vibrant neon colors with cyberpunk aesthetic",
+    settings: {
+      model: "philz1337x/clarity-upscaler",
+      upscaleFactor: 2,
+      creativity: 0.8,
+      resemblance: 0.4,
+      hdr: 0.8,
+      prompt:
+        "neon colors, cyberpunk aesthetic, vibrant glow, electric colors, futuristic enhancement, bold saturation",
+    },
+    features: ["Neon Glow", "Cyberpunk", "Vibrant Colors", "Futuristic"],
+    icon: "⚡",
+  },
+  "dream-state": {
+    id: "dream-state",
+    name: "Dream State",
+    category: "experimental",
+    description: "Ethereal, dreamlike quality with soft artistic interpretation",
+    settings: {
+      model: "philz1337x/clarity-upscaler",
+      upscaleFactor: 3,
+      creativity: 0.85,
+      resemblance: 0.35,
+      hdr: 0.4,
+      prompt:
+        "dreamlike atmosphere, ethereal quality, soft artistic interpretation, surreal enhancement, magical realism",
+    },
+    features: ["Ethereal", "Dreamlike", "Soft Focus", "Surreal"],
+    icon: "✨",
+  },
+}
+
 // Combined presets
 export const ALL_PRESETS = {
   ...FACE_PRESETS,
   ...ABSTRACT_PRESETS,
+  ...EXPERIMENTAL_PRESETS,
 }
 
 // Helper functions
