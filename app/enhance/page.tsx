@@ -428,6 +428,8 @@ export default function EnhancePage() {
     setUploadedFiles((prev) => prev.filter((_, index) => !selectedFiles.has(index)))
     setSelectedFiles(new Set())
 
+    const isAvatarMode = selectedCategory === "avatar"
+
     // Process each image
     for (let i = 0; i < filesToProcess.length; i++) {
       const file = filesToProcess[i]
@@ -440,11 +442,15 @@ export default function EnhancePage() {
         )
 
         console.log(`[v0] Original file size: ${Math.round(file.size / 1024)}KB`)
-        const processedFile = await compressImageForUpload(file, 0.8) // Reduced from 1MB to 0.8MB
+        const processedFile = await compressImageForUpload(file, 0.8)
         console.log(`[v0] Compressed file size: ${Math.round(processedFile.size / 1024)}KB`)
 
         setProcessingImages((prev) =>
-          prev.map((img) => (img.id === processingId ? { ...img, progress: 30, status: "Uploading..." } : img)),
+          prev.map((img) =>
+            img.id === processingId
+              ? { ...img, progress: 30, status: isAvatarMode ? "Generating avatar body..." : "Uploading..." }
+              : img,
+          ),
         )
 
         // Create FormData
@@ -452,15 +458,26 @@ export default function EnhancePage() {
         formData.append("image", processedFile)
         formData.append("model", settings.model)
         formData.append("scale_factor", settings.upscaleFactor.toString())
-        formData.append("creativity", settings.creativity.toString())
-        formData.append("resemblance", settings.resemblance.toString())
+
+        if (isAvatarMode) {
+          formData.append("creativity", "0.95") // High creativity for body generation
+          formData.append("resemblance", "0.3") // Low resemblance - we'll swap face later
+        } else {
+          formData.append("creativity", settings.creativity.toString())
+          formData.append("resemblance", settings.resemblance.toString())
+        }
+
         formData.append("hdr", settings.hdr.toString())
         if (settings.prompt) {
           formData.append("prompt", settings.prompt)
         }
 
         setProcessingImages((prev) =>
-          prev.map((img) => (img.id === processingId ? { ...img, progress: 50, status: "Enhancing..." } : img)),
+          prev.map((img) =>
+            img.id === processingId
+              ? { ...img, progress: 50, status: isAvatarMode ? "Creating avatar..." : "Enhancing..." }
+              : img,
+          ),
         )
 
         // Send to API
@@ -487,6 +504,36 @@ export default function EnhancePage() {
           throw new Error(data.error || "Enhancement failed")
         }
 
+        let finalOutput = data.output
+
+        if (isAvatarMode) {
+          setProcessingImages((prev) =>
+            prev.map((img) =>
+              img.id === processingId ? { ...img, progress: 70, status: "Swapping your face..." } : img,
+            ),
+          )
+
+          console.log("[v0] Starting face swap...")
+          const faceSwapFormData = new FormData()
+          faceSwapFormData.append("source", file) // Original user photo
+          faceSwapFormData.append("target", data.output) // Generated avatar body
+
+          const faceSwapResponse = await fetch("/api/face-swap", {
+            method: "POST",
+            body: faceSwapFormData,
+          })
+
+          const faceSwapData = await faceSwapResponse.json()
+
+          if (!faceSwapResponse.ok || !faceSwapData.success) {
+            console.error("[v0] Face swap failed, using original generation")
+            // Fallback to original generation if face swap fails
+          } else {
+            finalOutput = faceSwapData.output
+            console.log("[v0] Face swap successful!")
+          }
+        }
+
         setProcessingImages((prev) =>
           prev.map((img) => (img.id === processingId ? { ...img, progress: 90, status: "Finalizing..." } : img)),
         )
@@ -495,7 +542,7 @@ export default function EnhancePage() {
         const enhancedImage: EnhancedImage = {
           id: `enhanced-${Date.now()}-${i}`,
           original: file,
-          enhanced: data.output,
+          enhanced: finalOutput,
           originalPreview: URL.createObjectURL(file),
           processingTime: data.processingTime,
           model: settings.model,
@@ -567,6 +614,27 @@ export default function EnhancePage() {
 
     const creativity = settings.creativity
     let prompts: string[] = []
+
+    const selectedAnalysis = Array.from(selectedFiles)
+      .map((index) => uploadedFilesWithAnalysis[index]?.analysis)
+      .filter((analysis) => analysis && analysis.hasFace)
+
+    // Build context from facial analysis
+    let faceContext = ""
+    if (selectedAnalysis.length > 0) {
+      const analysis = selectedAnalysis[0] // Use first selected image's analysis
+      const features: string[] = []
+
+      if (analysis.gender) features.push(analysis.gender)
+      if (analysis.ageRange) features.push(analysis.ageRange)
+      if (analysis.features && analysis.features.length > 0) {
+        features.push(...analysis.features)
+      }
+
+      if (features.length > 0) {
+        faceContext = ` with ${features.join(", ")}`
+      }
+    }
 
     if (selectedCategory === "faces") {
       if (selectedPresetId === "indonesian-wedding") {
@@ -771,13 +839,12 @@ export default function EnhancePage() {
         ]
       } else if (selectedPresetId === "comic-book") {
         prompts = [
-          "bold comic book style with dramatic shading and superhero aesthetic",
-          "graphic novel portrait with bold lines and pop art colors",
-          "superhero style avatar with comic book aesthetic and dramatic shading",
-          "comic book character with bold lines and pop art styling",
-          "graphic novel style with dramatic comic book shading and bold colors",
-          "superhero portrait with comic book aesthetic and bold graphic style",
-          "pop art avatar with comic book lines and dramatic superhero styling",
+          `full body comic book superhero${faceContext}, preserve exact facial features and identity, exaggerated muscular superhero physique, dynamic action pose, vibrant costume with cape, bold comic book art style with dramatic shading and halftone dots, powerful hero stance`,
+          `comic book character full body${faceContext}, maintain original face perfectly, crazy exaggerated muscular body, superhero costume with bold colors, graphic novel art style with strong outlines and dramatic shadows`,
+          `superhero comic book style full body portrait${faceContext}, keep face identical to original, over-the-top muscular physique, epic superhero costume, action-packed pose, bold comic art with vibrant colors and dramatic lighting`,
+          `full body comic book hero${faceContext}, preserve all facial features exactly, exaggerated athletic superhero body, dynamic costume design, powerful stance, pop art comic style with bold lines and vivid colors`,
+          `comic book superhero transformation${faceContext}, maintain facial identity perfectly, crazy muscular hero physique, vibrant superhero outfit, dramatic action pose, graphic novel aesthetic with strong contrast and bold colors`,
+          `full body superhero comic art${faceContext}, exact face preservation, exaggerated heroic muscular build, dynamic superhero costume, powerful hero pose, bold comic book style with dramatic shading and vibrant palette`,
         ]
       } else if (selectedPresetId === "minimalist-line") {
         prompts = [
@@ -1377,6 +1444,33 @@ export default function EnhancePage() {
               {selectedCategory === "avatar" && (
                 <Card className="bg-gradient-to-br from-pink-500/10 to-orange-500/10 border-pink-500/30">
                   <CardContent className="p-4 space-y-3">
+                    {error && error.includes("Camera") && (
+                      <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 space-y-2">
+                        <div className="flex items-start gap-2">
+                          <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                          <div className="flex-1 space-y-1">
+                            <p className="text-sm text-red-400 font-medium">{error}</p>
+                            <p className="text-xs text-red-400/80">
+                              To enable camera access:
+                              <br />
+                              1. Click the camera icon in your browser's address bar
+                              <br />
+                              2. Select "Allow" for camera permissions
+                              <br />
+                              3. Refresh the page and try again
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          onClick={() => setError(null)}
+                          size="sm"
+                          variant="outline"
+                          className="w-full bg-transparent border-red-500/30 text-red-400 hover:bg-red-500/10 text-xs"
+                        >
+                          Dismiss
+                        </Button>
+                      </div>
+                    )}
                     {!isCameraActive ? (
                       <Button
                         onClick={startCamera}

@@ -2,6 +2,19 @@
  * Client-side image compression for mobile photos before upload
  */
 export async function compressImageForUpload(file: File | Blob, maxSizeMB: number): Promise<File> {
+  const fileSizeKB = file.size / 1024
+  console.log(`[v0] File size: ${Math.round(fileSizeKB)}KB`)
+
+  // If file is already under 3MB, return as-is
+  if (fileSizeKB < 3072) {
+    console.log(`[v0] File is already small enough, skipping compression`)
+    if (file instanceof File) {
+      return file
+    } else {
+      return new File([file], "image.jpg", { type: "image/jpeg" })
+    }
+  }
+
   return new Promise((resolve, reject) => {
     const img = new Image()
     let objectUrl: string | null = null
@@ -15,19 +28,25 @@ export async function compressImageForUpload(file: File | Blob, maxSizeMB: numbe
 
     img.onload = () => {
       try {
-        // Create canvas
+        console.log(`[v0] Image loaded successfully: ${img.width}x${img.height}`)
+
         const canvas = document.createElement("canvas")
         const ctx = canvas.getContext("2d")
 
         if (!ctx) {
           cleanup()
-          reject(new Error("Failed to get canvas context"))
+          // Return original file as fallback
+          if (file instanceof File) {
+            resolve(file)
+          } else {
+            reject(new Error("Failed to get canvas context"))
+          }
           return
         }
 
         let width = img.width
         let height = img.height
-        const maxDimension = 1536 // Reduced from 2048 to ensure smaller file sizes
+        const maxDimension = 1536
 
         if (width > maxDimension || height > maxDimension) {
           if (width > height) {
@@ -41,67 +60,73 @@ export async function compressImageForUpload(file: File | Blob, maxSizeMB: numbe
 
         canvas.width = width
         canvas.height = height
-
-        // Draw image
         ctx.drawImage(img, 0, 0, width, height)
 
-        const targetSize = maxSizeMB * 1024 * 1024
-        const currentQuality = 0.85 // Start lower than before (was 0.9)
+        canvas.toBlob(
+          (blob) => {
+            cleanup()
 
-        const attemptCompression = (quality: number) => {
-          canvas.toBlob(
-            (blob) => {
-              if (!blob) {
-                cleanup()
-                reject(new Error("Failed to create blob"))
-                return
-              }
-
-              console.log(
-                `[v0] Compression attempt: ${Math.round(blob.size / 1024)}KB at quality ${quality.toFixed(2)}`,
-              )
-
-              if (blob.size <= targetSize || quality <= 0.3) {
-                const compressedFile = new File([blob], file instanceof File ? file.name : "compressed.jpg", {
-                  type: "image/jpeg",
-                  lastModified: Date.now(),
-                })
-
-                console.log(
-                  `✅ Compression complete: ${Math.round(file.size / 1024)}KB → ${Math.round(compressedFile.size / 1024)}KB (${quality.toFixed(2)} quality)`,
-                )
-
-                cleanup()
-                resolve(compressedFile)
+            if (!blob) {
+              // Return original file as fallback
+              if (file instanceof File) {
+                resolve(file)
               } else {
-                attemptCompression(quality - 0.15)
+                reject(new Error("Failed to create blob"))
               }
-            },
-            "image/jpeg", // Always use JPEG for better compression
-            quality,
-          )
-        }
+              return
+            }
 
-        attemptCompression(currentQuality)
+            const compressedFile = new File([blob], file instanceof File ? file.name : "compressed.jpg", {
+              type: "image/jpeg",
+              lastModified: Date.now(),
+            })
+
+            console.log(
+              `✅ Compression complete: ${Math.round(file.size / 1024)}KB → ${Math.round(compressedFile.size / 1024)}KB`,
+            )
+
+            resolve(compressedFile)
+          },
+          "image/jpeg",
+          0.85,
+        )
       } catch (error: any) {
         cleanup()
-        reject(new Error(`Failed to compress image: ${error.message}`))
+        console.error("[v0] Compression error:", error)
+        // Return original file as fallback
+        if (file instanceof File) {
+          resolve(file)
+        } else {
+          reject(error)
+        }
       }
     }
 
-    img.onerror = () => {
+    img.onerror = (event) => {
       cleanup()
-      reject(new Error("Failed to load image for compression"))
+      console.error("[v0] Image load error:", event)
+      // Return original file as fallback
+      if (file instanceof File) {
+        console.log("[v0] Returning original file as fallback")
+        resolve(file)
+      } else {
+        reject(new Error("Failed to load image for compression"))
+      }
     }
 
-    // Create object URL and load image
     try {
       objectUrl = URL.createObjectURL(file)
-      img.crossOrigin = "anonymous"
+      console.log(`[v0] Created object URL for file: ${file instanceof File ? file.name : "blob"}`)
       img.src = objectUrl
     } catch (error: any) {
       cleanup()
-      reject(new Error(`Failed to create object URL: ${error.message}`))
+      console.error("[v0] Failed to create object URL:", error)
+      // Return original file as fallback
+      if (file instanceof File) {
+        resolve(file)
+      } else {
+        reject(error)
+      }
     }
   })
 }
@@ -850,7 +875,6 @@ function applyLocalContrast(data: Uint8ClampedArray, width: number, height: numb
   // Unsharp mask for local contrast
   const temp = new Uint8ClampedArray(data)
 
-  // Apply Gaussian blur
   for (let y = 2; y < height - 2; y++) {
     for (let x = 2; x < width - 2; x++) {
       for (let c = 0; c < 3; c++) {
