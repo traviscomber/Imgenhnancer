@@ -281,31 +281,100 @@ export default function EnhancePage() {
     let prompts: string[] = []
 
     if (selectedCategory === "faces") {
-      // Face enhancement prompts - focus on preservation and quality
-      if (creativity < 0.3) {
+      // Preset-specific prompts for more targeted suggestions
+      if (selectedPresetId === "indonesian-wedding") {
         prompts = [
-          "professional portrait with natural skin tones and sharp details",
-          "high-quality photo with preserved facial features and authentic colors",
-          "clear portrait with enhanced clarity and natural lighting",
-          "professional headshot with crisp details and true-to-life appearance",
-          "refined portrait maintaining original character and features",
+          "traditional Indonesian wedding portrait with vibrant kebaya details and authentic cultural jewelry",
+          "elegant Javanese wedding photo with rich batik patterns and ceremonial attire",
+          "beautiful Indonesian bride and groom with enhanced traditional costume textures and gold accents",
+          "cultural wedding portrait with preserved ethnic features and vibrant traditional fabrics",
+          "authentic Indonesian wedding scene with enhanced ceremonial details and natural expressions",
+          "traditional Sundanese wedding photo with intricate cultural elements and warm lighting",
+          "elegant Indonesian wedding portrait with enhanced traditional makeup and authentic accessories",
         ]
-      } else if (creativity < 0.5) {
+      } else if (selectedPresetId === "modern-portrait") {
         prompts = [
-          "elegant portrait with enhanced details and vibrant cultural attire",
-          "professional photo with rich colors and traditional wedding elements",
-          "beautiful portrait with enhanced textures and authentic cultural details",
-          "refined image with improved clarity and preserved ethnic features",
-          "high-quality portrait with enhanced fabrics and natural expressions",
+          "contemporary professional portrait with natural skin tones and soft studio lighting",
+          "modern headshot with crisp details and authentic facial features",
+          "clean professional photo with enhanced clarity and natural color grading",
+          "stylish portrait with preserved character and improved sharpness",
+          "professional modern portrait with refined details and true-to-life appearance",
+          "contemporary photo with enhanced textures and natural depth",
+          "polished professional portrait with authentic expressions and balanced lighting",
+        ]
+      } else if (selectedPresetId === "vintage-restoration") {
+        prompts = [
+          "restored vintage portrait with preserved historical character and improved clarity",
+          "classic family photo with enhanced details while maintaining authentic period feel",
+          "antique portrait restoration with natural aging preserved and clarity improved",
+          "historical photograph with enhanced definition and authentic vintage tones",
+          "restored old photo with preserved original character and reduced damage",
+          "vintage portrait with improved sharpness while keeping authentic period atmosphere",
+          "classic photograph restoration with enhanced faces and preserved historical authenticity",
+        ]
+      } else if (selectedPresetId === "group-photo") {
+        prompts = [
+          "group portrait with all faces clearly defined and natural expressions preserved",
+          "family photo with enhanced clarity for each person and balanced lighting",
+          "team photograph with improved sharpness and authentic group dynamics",
+          "group shot with enhanced details for all subjects and natural interactions",
+          "multi-person portrait with clear facial features and preserved authentic moments",
+          "family gathering photo with improved definition and natural group composition",
+          "group portrait with enhanced clarity for distant faces and preserved candid expressions",
+        ]
+      } else if (selectedPresetId === "professional-headshot") {
+        prompts = [
+          "corporate headshot with professional polish and natural confidence",
+          "business portrait with enhanced professionalism and authentic presence",
+          "executive photo with refined details and commanding yet approachable appearance",
+          "professional headshot with crisp clarity and natural business demeanor",
+          "corporate portrait with enhanced sharpness and authentic professional character",
+          "business headshot with polished appearance and genuine expression",
+          "professional photo with enhanced details and natural executive presence",
+        ]
+      } else if (selectedPresetId === "quality-boost") {
+        prompts = [
+          "enhanced image quality with preserved original features and improved clarity",
+          "sharpened portrait with natural details and authentic appearance maintained",
+          "quality improvement with no facial alterations, only enhanced definition",
+          "refined photo with improved sharpness while preserving all original characteristics",
+          "enhanced clarity and resolution without modifying facial features",
+          "quality boost with preserved authenticity and improved technical excellence",
+          "sharpened image with natural enhancement and zero facial modifications",
         ]
       } else {
-        prompts = [
-          "artistic portrait with enhanced dramatic lighting and rich tones",
-          "creative interpretation with improved details and atmospheric mood",
-          "stylized portrait with enhanced colors and professional finish",
-          "expressive photo with improved contrast and artistic enhancement",
-          "refined portrait with creative color grading and enhanced depth",
-        ]
+        // Generic face enhancement prompts based on creativity level
+        if (creativity < 0.3) {
+          prompts = [
+            "professional portrait with natural skin tones and sharp details",
+            "high-quality photo with preserved facial features and authentic colors",
+            "clear portrait with enhanced clarity and natural lighting",
+            "professional headshot with crisp details and true-to-life appearance",
+            "refined portrait maintaining original character and features",
+            "natural photo enhancement with improved sharpness and authentic tones",
+            "professional quality portrait with preserved facial authenticity",
+          ]
+        } else if (creativity < 0.5) {
+          prompts = [
+            "elegant portrait with enhanced details and vibrant cultural attire",
+            "professional photo with rich colors and traditional wedding elements",
+            "beautiful portrait with enhanced textures and authentic cultural details",
+            "refined image with improved clarity and preserved ethnic features",
+            "high-quality portrait with enhanced fabrics and natural expressions",
+            "cultural portrait with vibrant traditional elements and authentic features",
+            "elegant photo with enhanced ceremonial details and natural beauty",
+          ]
+        } else {
+          prompts = [
+            "artistic portrait with enhanced dramatic lighting and rich tones",
+            "creative interpretation with improved details and atmospheric mood",
+            "stylized portrait with enhanced colors and professional finish",
+            "expressive photo with improved contrast and artistic enhancement",
+            "refined portrait with creative color grading and enhanced depth",
+            "dramatic portrait with artistic lighting and enhanced emotional impact",
+            "creative photo with enhanced atmosphere and professional artistic touch",
+          ]
+        }
       }
     } else {
       // Creative enhancement prompts - allow more artistic freedom
