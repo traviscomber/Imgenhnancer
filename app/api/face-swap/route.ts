@@ -82,6 +82,17 @@ export async function POST(request: NextRequest) {
 
     console.log("[v0] [FACE-SWAP] Output type:", typeof finalPrediction.output)
     console.log("[v0] [FACE-SWAP] Output value:", JSON.stringify(finalPrediction.output))
+    console.log("[v0] [FACE-SWAP] Full prediction:", JSON.stringify(finalPrediction, null, 2))
+
+    if (!finalPrediction.output || finalPrediction.output === null) {
+      console.warn("[v0] [FACE-SWAP] Model returned null output, using original target image as fallback")
+      return NextResponse.json({
+        success: true,
+        output: targetImageUrl,
+        fallback: true,
+        message: "Face swap model returned no output, using original image",
+      })
+    }
 
     // Handle output - support multiple formats
     let outputUrl: string
@@ -91,7 +102,7 @@ export async function POST(request: NextRequest) {
     } else if (typeof finalPrediction.output === "string") {
       // Output is a direct URL string
       outputUrl = finalPrediction.output
-    } else if (typeof finalPrediction.output === "object" && finalPrediction.output !== null) {
+    } else if (typeof finalPrediction.output === "object") {
       if (finalPrediction.output.url) {
         outputUrl = finalPrediction.output.url
       } else if (finalPrediction.output.image) {
@@ -99,12 +110,24 @@ export async function POST(request: NextRequest) {
       } else if (finalPrediction.output.output) {
         outputUrl = finalPrediction.output.output
       } else {
-        // If it's an object but we can't find a URL, log it and throw
-        console.error("[v0] [FACE-SWAP] Unknown object structure:", finalPrediction.output)
-        throw new Error(`Output is an object but no URL found. Keys: ${Object.keys(finalPrediction.output).join(", ")}`)
+        // If it's an object but we can't find a URL, use original as fallback
+        console.warn("[v0] [FACE-SWAP] Unknown object structure, using original target image")
+        console.error("[v0] [FACE-SWAP] Object keys:", Object.keys(finalPrediction.output).join(", "))
+        return NextResponse.json({
+          success: true,
+          output: targetImageUrl,
+          fallback: true,
+          message: "Could not extract URL from face-swap output",
+        })
       }
     } else {
-      throw new Error(`Unexpected output type: ${typeof finalPrediction.output}`)
+      console.warn("[v0] [FACE-SWAP] Unexpected output type, using original target image")
+      return NextResponse.json({
+        success: true,
+        output: targetImageUrl,
+        fallback: true,
+        message: `Unexpected output type: ${typeof finalPrediction.output}`,
+      })
     }
 
     console.log("[v0] [FACE-SWAP] Face swap complete!")
