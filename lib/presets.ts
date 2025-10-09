@@ -1,4 +1,4 @@
-export type PresetCategory = "faces" | "abstract" | "experimental"
+export type PresetCategory = "faces" | "abstract" | "experimental" | "avatar"
 
 export interface PresetSettings {
   model: string
@@ -321,11 +321,200 @@ export const EXPERIMENTAL_PRESETS: Record<string, Preset> = {
   },
 }
 
+// 11 Avatar Generation Presets (expanded from 8)
+export const AVATAR_PRESETS: Record<string, Preset> = {
+  "hyper-realistic-avatar": {
+    id: "hyper-realistic-avatar",
+    name: "Hyper-Realistic Avatar",
+    category: "avatar",
+    description: "Ultra-realistic digital human with photographic quality",
+    settings: {
+      model: "philz1337x/clarity-upscaler",
+      upscaleFactor: 3,
+      creativity: 0.7,
+      resemblance: 0.75,
+      hdr: 0.6,
+      prompt:
+        "hyper realistic digital human, photorealistic avatar, ultra detailed skin texture, professional photography lighting, 8k quality portrait",
+    },
+    features: ["Photorealistic", "Ultra Detail", "Pro Lighting", "8K Quality"],
+    icon: "👤",
+  },
+  "anime-avatar": {
+    id: "anime-avatar",
+    name: "Anime Avatar",
+    category: "avatar",
+    description: "Japanese anime style with expressive eyes and stylized features",
+    settings: {
+      model: "philz1337x/clarity-upscaler",
+      upscaleFactor: 2,
+      creativity: 0.9,
+      resemblance: 0.5,
+      hdr: 0.4,
+      prompt:
+        "anime style avatar, Japanese animation, expressive large eyes, stylized features, manga art, vibrant anime colors, cel shaded",
+    },
+    features: ["Anime Style", "Expressive Eyes", "Vibrant", "Manga Art"],
+    icon: "🎌",
+  },
+  "metaverse-avatar": {
+    id: "metaverse-avatar",
+    name: "Metaverse Avatar",
+    category: "avatar",
+    description: "3D virtual world ready avatar with NFT aesthetic",
+    settings: {
+      model: "philz1337x/clarity-upscaler",
+      upscaleFactor: 2,
+      creativity: 0.85,
+      resemblance: 0.6,
+      hdr: 0.5,
+      prompt:
+        "metaverse avatar, virtual world character, NFT profile picture, 3D digital identity, web3 aesthetic, futuristic avatar design",
+    },
+    features: ["Web3 Ready", "NFT Style", "Virtual World", "Digital ID"],
+    icon: "🌐",
+  },
+  "cartoon-avatar": {
+    id: "cartoon-avatar",
+    name: "Cartoon Avatar",
+    category: "avatar",
+    description: "Transform into a vibrant cartoon character",
+    settings: {
+      model: "philz1337x/clarity-upscaler",
+      upscaleFactor: 2,
+      creativity: 0.85,
+      resemblance: 0.6,
+      hdr: 0.3,
+      prompt: "cartoon avatar, animated character, vibrant colors, expressive features, stylized portrait, digital art",
+    },
+    features: ["Animated Style", "Vibrant Colors", "Expressive", "Fun Look"],
+    icon: "🎭",
+  },
+  "professional-illustration": {
+    id: "professional-illustration",
+    name: "Professional Illustration",
+    category: "avatar",
+    description: "Elegant illustrated portrait for business use",
+    settings: {
+      model: "philz1337x/clarity-upscaler",
+      upscaleFactor: 2,
+      creativity: 0.75,
+      resemblance: 0.65,
+      hdr: 0.2,
+      prompt:
+        "professional illustrated portrait, elegant digital art, business avatar, clean lines, sophisticated style",
+    },
+    features: ["Business Ready", "Elegant", "Clean Style", "Professional"],
+    icon: "👔",
+  },
+  "artistic-portrait": {
+    id: "artistic-portrait",
+    name: "Artistic Portrait",
+    category: "avatar",
+    description: "Painterly artistic interpretation",
+    settings: {
+      model: "philz1337x/clarity-upscaler",
+      upscaleFactor: 2,
+      creativity: 0.8,
+      resemblance: 0.55,
+      hdr: 0.4,
+      prompt:
+        "artistic portrait painting, oil painting style, expressive brushstrokes, artistic interpretation, fine art",
+    },
+    features: ["Painterly", "Artistic", "Expressive", "Unique"],
+    icon: "🎨",
+  },
+  "pixel-art": {
+    id: "pixel-art",
+    name: "Pixel Art",
+    category: "avatar",
+    description: "Retro pixel art style avatar",
+    settings: {
+      model: "philz1337x/clarity-upscaler",
+      upscaleFactor: 2,
+      creativity: 0.9,
+      resemblance: 0.5,
+      hdr: 0.1,
+      prompt: "pixel art avatar, retro gaming style, 8-bit character, pixelated portrait, nostalgic aesthetic",
+    },
+    features: ["Retro Style", "Gaming", "Pixelated", "Nostalgic"],
+    icon: "🎮",
+  },
+  "3d-render": {
+    id: "3d-render",
+    name: "3D Render",
+    category: "avatar",
+    description: "Modern 3D rendered character",
+    settings: {
+      model: "philz1337x/clarity-upscaler",
+      upscaleFactor: 2,
+      creativity: 0.85,
+      resemblance: 0.6,
+      hdr: 0.5,
+      prompt: "3D rendered avatar, CGI character, modern 3D art, smooth rendering, professional 3D portrait",
+    },
+    features: ["3D Style", "Modern", "Smooth", "CGI Quality"],
+    icon: "🎬",
+  },
+  "comic-book": {
+    id: "comic-book",
+    name: "Comic Book",
+    category: "avatar",
+    description: "Bold comic book superhero style",
+    settings: {
+      model: "philz1337x/clarity-upscaler",
+      upscaleFactor: 2,
+      creativity: 0.88,
+      resemblance: 0.55,
+      hdr: 0.6,
+      prompt:
+        "comic book style avatar, superhero portrait, bold lines, dramatic shading, pop art colors, graphic novel",
+    },
+    features: ["Bold Lines", "Superhero", "Dramatic", "Pop Art"],
+    icon: "💥",
+  },
+  "minimalist-line": {
+    id: "minimalist-line",
+    name: "Minimalist Line Art",
+    category: "avatar",
+    description: "Clean minimalist line drawing",
+    settings: {
+      model: "philz1337x/clarity-upscaler",
+      upscaleFactor: 2,
+      creativity: 0.7,
+      resemblance: 0.7,
+      hdr: 0,
+      prompt:
+        "minimalist line art portrait, simple clean lines, elegant sketch, modern minimalism, line drawing avatar",
+    },
+    features: ["Minimalist", "Clean Lines", "Elegant", "Simple"],
+    icon: "✏️",
+  },
+  "fantasy-character": {
+    id: "fantasy-character",
+    name: "Fantasy Character",
+    category: "avatar",
+    description: "Epic fantasy RPG character",
+    settings: {
+      model: "philz1337x/clarity-upscaler",
+      upscaleFactor: 2,
+      creativity: 0.95,
+      resemblance: 0.45,
+      hdr: 0.5,
+      prompt:
+        "fantasy character portrait, RPG avatar, epic fantasy art, magical character, detailed fantasy illustration",
+    },
+    features: ["Fantasy", "Epic", "Magical", "RPG Style"],
+    icon: "⚔️",
+  },
+}
+
 // Combined presets
 export const ALL_PRESETS = {
   ...FACE_PRESETS,
   ...ABSTRACT_PRESETS,
   ...EXPERIMENTAL_PRESETS,
+  ...AVATAR_PRESETS,
 }
 
 // Helper functions

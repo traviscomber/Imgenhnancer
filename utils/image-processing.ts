@@ -25,10 +25,9 @@ export async function compressImageForUpload(file: File | Blob, maxSizeMB: numbe
           return
         }
 
-        // Calculate new dimensions (max 2048px)
         let width = img.width
         let height = img.height
-        const maxDimension = 2048
+        const maxDimension = 1536 // Reduced from 2048 to ensure smaller file sizes
 
         if (width > maxDimension || height > maxDimension) {
           if (width > height) {
@@ -46,11 +45,10 @@ export async function compressImageForUpload(file: File | Blob, maxSizeMB: numbe
         // Draw image
         ctx.drawImage(img, 0, 0, width, height)
 
-        // Convert to blob with quality adjustment
-        const quality = 0.9
         const targetSize = maxSizeMB * 1024 * 1024
+        const currentQuality = 0.85 // Start lower than before (was 0.9)
 
-        const attemptCompression = (currentQuality: number) => {
+        const attemptCompression = (quality: number) => {
           canvas.toBlob(
             (blob) => {
               if (!blob) {
@@ -59,30 +57,32 @@ export async function compressImageForUpload(file: File | Blob, maxSizeMB: numbe
                 return
               }
 
-              // If size is acceptable or quality is too low, resolve
-              if (blob.size <= targetSize || currentQuality <= 0.5) {
+              console.log(
+                `[v0] Compression attempt: ${Math.round(blob.size / 1024)}KB at quality ${quality.toFixed(2)}`,
+              )
+
+              if (blob.size <= targetSize || quality <= 0.3) {
                 const compressedFile = new File([blob], file instanceof File ? file.name : "compressed.jpg", {
                   type: "image/jpeg",
                   lastModified: Date.now(),
                 })
 
                 console.log(
-                  `✅ Compression complete: ${Math.round(file.size / 1024)}KB → ${Math.round(compressedFile.size / 1024)}KB`,
+                  `✅ Compression complete: ${Math.round(file.size / 1024)}KB → ${Math.round(compressedFile.size / 1024)}KB (${quality.toFixed(2)} quality)`,
                 )
 
                 cleanup()
                 resolve(compressedFile)
               } else {
-                // Try again with lower quality
-                attemptCompression(currentQuality - 0.1)
+                attemptCompression(quality - 0.15)
               }
             },
-            file instanceof File ? file.type || "image/jpeg" : "image/jpeg",
-            currentQuality,
+            "image/jpeg", // Always use JPEG for better compression
+            quality,
           )
         }
 
-        attemptCompression(quality)
+        attemptCompression(currentQuality)
       } catch (error: any) {
         cleanup()
         reject(new Error(`Failed to compress image: ${error.message}`))

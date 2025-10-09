@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useRef } from "react"
 import { useDropzone } from "react-dropzone"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -25,6 +25,8 @@ import {
   Wand2,
   Clock,
   ArrowRight,
+  Camera,
+  VideoOff,
 } from "lucide-react"
 import Image from "next/image"
 import { compressImageForUpload } from "@/utils/image-processing"
@@ -79,6 +81,12 @@ export default function EnhancePage() {
   const [settings, setSettings] = useState<EnhancementSettings>(ALL_PRESETS["indonesian-wedding"].settings)
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false)
+
+  // Camera state
+  const [isCameraActive, setIsCameraActive] = useState(false)
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setUploadedFiles((prev) => {
@@ -168,6 +176,84 @@ export default function EnhancePage() {
     }
   }
 
+  // Camera functions
+  const startCamera = async () => {
+    try {
+      console.log("[v0] Requesting camera access...")
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false,
+      })
+      console.log("[v0] Camera access granted")
+
+      setCameraStream(stream)
+      setIsCameraActive(true)
+      setError(null)
+
+      // Wait for video element to be ready
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+        // Ensure video plays
+        videoRef.current.onloadedmetadata = () => {
+          console.log("[v0] Video metadata loaded, playing...")
+          videoRef.current?.play().catch((err) => {
+            console.error("[v0] Video play error:", err)
+            setError("Failed to start video playback")
+          })
+        }
+      }
+    } catch (error: any) {
+      console.error("[v0] Camera access error:", error)
+      if (error.name === "NotAllowedError") {
+        setError("Camera access denied. Please allow camera permissions in your browser settings.")
+      } else if (error.name === "NotFoundError") {
+        setError("No camera found. Please connect a camera and try again.")
+      } else if (error.name === "NotReadableError") {
+        setError("Camera is already in use by another application.")
+      } else {
+        setError(`Camera error: ${error.message}`)
+      }
+      setIsCameraActive(false)
+    }
+  }
+
+  const stopCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach((track) => track.stop())
+      setCameraStream(null)
+      setIsCameraActive(false)
+    }
+  }
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current
+      const canvas = canvasRef.current
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+      const ctx = canvas.getContext("2d")
+      if (ctx) {
+        ctx.drawImage(video, 0, 0)
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const file = new File([blob], `camera-capture-${Date.now()}.jpg`, { type: "image/jpeg" })
+            setUploadedFiles((prev) => {
+              const newFiles = [...prev, file]
+              setSelectedFiles((prevSelected) => {
+                const newSelected = new Set(prevSelected)
+                newSelected.add(prev.length)
+                return newSelected
+              })
+              return newFiles
+            })
+            stopCamera()
+            trackImageUpload(1, blob.size)
+          }
+        }, "image/jpeg")
+      }
+    }
+  }
+
   const handleEnhance = async () => {
     if (selectedFiles.size === 0) {
       setError("Please select at least one image to enhance")
@@ -217,11 +303,9 @@ export default function EnhancePage() {
           prev.map((img) => (img.id === processingId ? { ...img, progress: 10, status: "Compressing..." } : img)),
         )
 
-        // Compress image if needed
-        let processedFile = file
-        if (file.size > 1024 * 1024) {
-          processedFile = await compressImageForUpload(file, 1)
-        }
+        console.log(`[v0] Original file size: ${Math.round(file.size / 1024)}KB`)
+        const processedFile = await compressImageForUpload(file, 0.8) // Reduced from 1MB to 0.8MB
+        console.log(`[v0] Compressed file size: ${Math.round(processedFile.size / 1024)}KB`)
 
         setProcessingImages((prev) =>
           prev.map((img) => (img.id === processingId ? { ...img, progress: 30, status: "Uploading..." } : img)),
@@ -468,7 +552,131 @@ export default function EnhancePage() {
           "bold artistic rendering with enhanced contrast and creative flair",
         ]
       }
+    } else if (selectedCategory === "avatar") {
+      if (selectedPresetId === "hyper-realistic-avatar") {
+        prompts = [
+          "ultra realistic digital human portrait with photographic quality and lifelike skin texture",
+          "hyper detailed avatar with professional studio lighting and 8k resolution",
+          "photorealistic digital portrait with authentic facial features and natural expressions",
+          "ultra high definition avatar with realistic skin pores and professional photography quality",
+          "hyper realistic digital human with cinematic lighting and photographic perfection",
+          "8k quality digital portrait with lifelike details and professional studio setup",
+          "photorealistic avatar with authentic human features and ultra detailed textures",
+        ]
+      } else if (selectedPresetId === "anime-avatar") {
+        prompts = [
+          "anime style portrait with large expressive eyes and vibrant manga colors",
+          "Japanese animation character with stylized features and cel shaded coloring",
+          "anime avatar with expressive facial features and bold anime aesthetic",
+          "manga style portrait with dramatic eyes and vibrant Japanese animation colors",
+          "anime character design with stylized proportions and expressive anime features",
+          "Japanese anime portrait with large eyes and colorful manga art style",
+          "anime style avatar with expressive features and vibrant cel shaded colors",
+        ]
+      } else if (selectedPresetId === "metaverse-avatar") {
+        prompts = [
+          "metaverse ready avatar with NFT aesthetic and 3D virtual world design",
+          "web3 digital identity with futuristic avatar styling and virtual world compatibility",
+          "NFT profile picture with metaverse aesthetic and 3D character design",
+          "virtual world avatar with modern web3 styling and digital identity features",
+          "metaverse character with futuristic design and NFT collection aesthetic",
+          "3D virtual avatar with web3 aesthetic and digital identity presence",
+          "futuristic metaverse avatar with NFT styling and virtual world readiness",
+        ]
+      } else if (selectedPresetId === "cartoon-avatar") {
+        prompts = [
+          "vibrant cartoon character with animated style and expressive features",
+          "animated avatar with bold colors and playful cartoon aesthetic",
+          "cartoon style portrait with vibrant colors and fun animated character design",
+          "playful cartoon avatar with expressive features and bright animated colors",
+          "animated character design with cartoon styling and vibrant personality",
+          "cartoon portrait with bold expressive features and animated art style",
+          "fun cartoon avatar with vibrant colors and animated character design",
+        ]
+      } else if (selectedPresetId === "professional-illustration") {
+        prompts = [
+          "elegant illustrated portrait with professional business aesthetic and clean lines",
+          "sophisticated digital illustration with business-ready styling and refined details",
+          "professional avatar illustration with elegant design and corporate aesthetic",
+          "business-ready illustrated portrait with sophisticated styling and clean design",
+          "elegant professional illustration with refined details and business aesthetic",
+          "corporate avatar with professional illustration style and sophisticated design",
+          "business portrait illustration with elegant styling and professional finish",
+        ]
+      } else if (selectedPresetId === "artistic-portrait") {
+        prompts = [
+          "painterly portrait with expressive brushstrokes and artistic oil painting style",
+          "artistic interpretation with fine art aesthetic and expressive painting techniques",
+          "oil painting style portrait with artistic brushwork and expressive colors",
+          "fine art portrait with painterly techniques and artistic interpretation",
+          "expressive artistic portrait with oil painting aesthetic and bold brushstrokes",
+          "artistic painting style with expressive techniques and fine art quality",
+          "painterly avatar with artistic interpretation and expressive oil painting style",
+        ]
+      } else if (selectedPresetId === "pixel-art") {
+        prompts = [
+          "retro pixel art avatar with 8-bit gaming aesthetic and nostalgic style",
+          "pixelated portrait with retro gaming style and 8-bit character design",
+          "8-bit pixel art character with nostalgic gaming aesthetic",
+          "retro gaming avatar with pixel art style and 8-bit nostalgia",
+          "pixel art portrait with retro 8-bit aesthetic and gaming character design",
+          "nostalgic pixel art with retro gaming style and 8-bit character",
+          "8-bit avatar with retro pixel art aesthetic and gaming nostalgia",
+        ]
+      } else if (selectedPresetId === "3d-render") {
+        prompts = [
+          "modern 3D rendered character with smooth CGI quality and professional 3D art",
+          "CGI avatar with modern 3D rendering and smooth professional quality",
+          "3D rendered portrait with contemporary CGI aesthetic and smooth rendering",
+          "professional 3D character with modern rendering and CGI quality",
+          "smooth 3D rendered avatar with contemporary CGI styling",
+          "modern CGI character with professional 3D rendering and smooth quality",
+          "3D avatar with contemporary rendering and professional CGI aesthetic",
+        ]
+      } else if (selectedPresetId === "comic-book") {
+        prompts = [
+          "bold comic book style with dramatic shading and superhero aesthetic",
+          "graphic novel portrait with bold lines and pop art colors",
+          "superhero style avatar with comic book aesthetic and dramatic shading",
+          "comic book character with bold lines and pop art styling",
+          "graphic novel style with dramatic comic book shading and bold colors",
+          "superhero portrait with comic book aesthetic and bold graphic style",
+          "pop art avatar with comic book lines and dramatic superhero styling",
+        ]
+      } else if (selectedPresetId === "minimalist-line") {
+        prompts = [
+          "minimalist line art portrait with clean elegant lines and simple modern design",
+          "elegant line drawing with minimalist aesthetic and clean simple lines",
+          "simple line art avatar with minimalist design and elegant sketch style",
+          "clean minimalist portrait with elegant line drawing and simple design",
+          "modern minimalist line art with clean elegant lines and simple aesthetic",
+          "elegant sketch with minimalist line art and clean simple design",
+          "minimalist portrait with clean line drawing and elegant simple style",
+        ]
+      } else if (selectedPresetId === "fantasy-character") {
+        prompts = [
+          "epic fantasy character with magical RPG aesthetic and detailed fantasy illustration",
+          "fantasy RPG avatar with epic magical character design and detailed illustration",
+          "magical fantasy portrait with epic RPG styling and detailed character art",
+          "RPG character with fantasy aesthetic and epic magical illustration",
+          "detailed fantasy character with magical RPG design and epic illustration",
+          "epic fantasy avatar with magical character styling and detailed RPG art",
+          "fantasy illustration with epic RPG character and magical detailed design",
+        ]
+      } else {
+        // Generic avatar prompts
+        prompts = [
+          "stylized avatar portrait with unique artistic flair and creative character design",
+          "creative avatar with personalized styling and distinctive artistic features",
+          "unique avatar design with artistic interpretation and creative styling",
+          "personalized avatar with creative flair and unique artistic design",
+          "artistic avatar with distinctive styling and creative character features",
+          "creative character design with unique avatar styling and artistic flair",
+          "stylized avatar with creative interpretation and unique artistic features",
+        ]
+      }
     } else {
+      // experimental
       if (selectedPresetId === "hyper-realistic") {
         prompts = [
           "hyper realistic photograph with microscopic detail and photorealistic perfection",
@@ -551,14 +759,14 @@ export default function EnhancePage() {
           </Badge>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white">Enhance Your Images</h1>
           <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto">
-            Choose between face-preserving or creative enhancement modes
+            Choose between face-preserving, creative enhancement, experimental, or avatar generation modes
           </p>
         </div>
 
         {/* Category Selection */}
         <Card className="mb-6 bg-gray-900/50 border-gray-800">
           <CardContent className="p-6">
-            <div className="flex items-center justify-center gap-4">
+            <div className="flex items-center justify-center gap-4 flex-wrap">
               <Button
                 onClick={() => switchCategory("faces")}
                 variant={selectedCategory === "faces" ? "default" : "outline"}
@@ -592,6 +800,17 @@ export default function EnhancePage() {
               >
                 🧪 Experimental
               </Button>
+              <Button
+                onClick={() => switchCategory("avatar")}
+                variant={selectedCategory === "avatar" ? "default" : "outline"}
+                className={
+                  selectedCategory === "avatar"
+                    ? "bg-gradient-to-r from-pink-500 via-rose-500 to-orange-500 text-white"
+                    : "bg-transparent border-gray-700 text-gray-300 hover:border-pink-500/50"
+                }
+              >
+                🎭 Avatar Generator
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -603,7 +822,9 @@ export default function EnhancePage() {
               ? "bg-gradient-to-br from-amber-500/5 to-rose-500/5 border-amber-500/20"
               : selectedCategory === "abstract"
                 ? "bg-gradient-to-br from-purple-500/5 to-pink-500/5 border-purple-500/20"
-                : "bg-gradient-to-br from-cyan-500/5 to-purple-500/5 border-cyan-500/20"
+                : selectedCategory === "experimental"
+                  ? "bg-gradient-to-br from-cyan-500/5 to-purple-500/5 border-cyan-500/20"
+                  : "bg-gradient-to-br from-pink-500/5 to-orange-500/5 border-pink-500/20"
           }`}
         >
           <CardHeader>
@@ -614,25 +835,31 @@ export default function EnhancePage() {
                     ? "text-amber-400"
                     : selectedCategory === "abstract"
                       ? "text-purple-400"
-                      : "text-cyan-400"
+                      : selectedCategory === "experimental"
+                        ? "text-cyan-400"
+                        : "text-pink-400"
                 }`}
               />
               {selectedCategory === "faces"
                 ? "Face Enhancement Presets"
                 : selectedCategory === "abstract"
                   ? "Creative Enhancement Presets"
-                  : "Experimental Presets"}
+                  : selectedCategory === "experimental"
+                    ? "Experimental Presets"
+                    : "Avatar Generation Presets"}
             </CardTitle>
             <p className="text-sm text-gray-400">
               {selectedCategory === "faces"
                 ? "Optimized for portraits, weddings, and people photos"
                 : selectedCategory === "abstract"
                   ? "Optimized for landscapes, products, and artistic images"
-                  : "Cutting-edge presets that push creative boundaries - use with caution!"}
+                  : selectedCategory === "experimental"
+                    ? "Cutting-edge presets that push creative boundaries - use with caution!"
+                    : "Transform your photo into unique avatar styles - perfect for profile pictures and creative expression"}
             </p>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {currentPresets.map((preset) => (
                 <button
                   key={preset.id}
@@ -643,7 +870,9 @@ export default function EnhancePage() {
                         ? "border-amber-500 bg-amber-500/10 shadow-lg shadow-amber-500/20"
                         : selectedCategory === "abstract"
                           ? "border-purple-500 bg-purple-500/10 shadow-lg shadow-purple-500/20"
-                          : "border-cyan-500 bg-cyan-500/10 shadow-lg shadow-cyan-500/20"
+                          : selectedCategory === "experimental"
+                            ? "border-cyan-500 bg-cyan-500/10 shadow-lg shadow-cyan-500/20"
+                            : "border-pink-500 bg-pink-500/10 shadow-lg shadow-pink-500/20"
                       : "border-gray-700 bg-gray-800/50 hover:border-gray-600"
                   }`}
                 >
@@ -660,7 +889,9 @@ export default function EnhancePage() {
                               ? "text-amber-400"
                               : selectedCategory === "abstract"
                                 ? "text-purple-400"
-                                : "text-cyan-400"
+                                : selectedCategory === "experimental"
+                                  ? "text-cyan-400"
+                                  : "text-pink-400"
                           }`}
                         />
                       )}
@@ -676,7 +907,9 @@ export default function EnhancePage() {
                               ? "bg-amber-500/20 text-amber-300 text-xs"
                               : selectedCategory === "abstract"
                                 ? "bg-purple-500/20 text-purple-300 text-xs"
-                                : "bg-cyan-500/20 text-cyan-300 text-xs"
+                                : selectedCategory === "experimental"
+                                  ? "bg-cyan-500/20 text-cyan-300 text-xs"
+                                  : "bg-pink-500/20 text-pink-300 text-xs"
                           }
                         >
                           {feature}
@@ -690,7 +923,9 @@ export default function EnhancePage() {
                             ? "border-amber-500/20"
                             : selectedCategory === "abstract"
                               ? "border-purple-500/20"
-                              : "border-cyan-500/20"
+                              : selectedCategory === "experimental"
+                                ? "border-cyan-500/20"
+                                : "border-pink-500/20"
                         }`}
                       >
                         <div
@@ -699,7 +934,9 @@ export default function EnhancePage() {
                               ? "text-amber-400"
                               : selectedCategory === "abstract"
                                 ? "text-purple-400"
-                                : "text-cyan-400"
+                                : selectedCategory === "experimental"
+                                  ? "text-cyan-400"
+                                  : "text-pink-400"
                           }`}
                         >
                           <div>Creativity: {preset.settings.creativity}</div>
@@ -773,7 +1010,9 @@ export default function EnhancePage() {
                       ? "0.25-0.4 for faces"
                       : selectedCategory === "abstract"
                         ? "0.5-0.85 for creative"
-                        : "0.7-1.0 for experimental"}
+                        : selectedCategory === "avatar"
+                          ? "0.6-0.8 for avatars"
+                          : "0.7-1.0 for experimental"}
                   </p>
                 </div>
 
@@ -795,7 +1034,9 @@ export default function EnhancePage() {
                       ? "0.75-0.85 preserves features"
                       : selectedCategory === "abstract"
                         ? "0.4-0.7 for creativity"
-                        : "0.5-0.8 for experimental"}
+                        : selectedCategory === "avatar"
+                          ? "0.7-0.9 for avatars"
+                          : "0.5-0.8 for experimental"}
                   </p>
                 </div>
 
@@ -817,7 +1058,9 @@ export default function EnhancePage() {
                       ? "0-0.1 for portraits"
                       : selectedCategory === "abstract"
                         ? "0.3-0.5 for landscapes"
-                        : "0.2-0.4 for experimental"}
+                        : selectedCategory === "avatar"
+                          ? "0.1-0.3 for avatars"
+                          : "0.2-0.4 for experimental"}
                   </p>
                 </div>
               </div>
@@ -873,7 +1116,9 @@ export default function EnhancePage() {
                     ? "AI will generate prompts that preserve facial features and cultural details"
                     : selectedCategory === "abstract"
                       ? "AI will generate creative prompts based on your creativity level"
-                      : "AI will generate experimental prompts pushing artistic boundaries"}
+                      : selectedCategory === "avatar"
+                        ? "AI will generate prompts that enhance avatar features and artistic style"
+                        : "AI will generate experimental prompts pushing artistic boundaries"}
                 </p>
               </div>
             </CardContent>
@@ -887,7 +1132,9 @@ export default function EnhancePage() {
               ? "mb-8 bg-blue-500/5 border-blue-500/20"
               : selectedCategory === "abstract"
                 ? "mb-8 bg-purple-500/5 border-purple-500/20"
-                : "mb-8 bg-cyan-500/5 border-cyan-500/20"
+                : selectedCategory === "experimental"
+                  ? "mb-8 bg-cyan-500/5 border-cyan-500/20"
+                  : "mb-8 bg-pink-500/5 border-pink-500/20"
           }
         >
           <CardContent className="p-4 flex items-start gap-3">
@@ -897,7 +1144,9 @@ export default function EnhancePage() {
                   ? "text-blue-400"
                   : selectedCategory === "abstract"
                     ? "text-purple-400"
-                    : "text-cyan-400"
+                    : selectedCategory === "experimental"
+                      ? "text-cyan-400"
+                      : "text-pink-400"
               }`}
             />
             <div className="text-sm">
@@ -917,12 +1166,21 @@ export default function EnhancePage() {
                     landscapes, products, and abstract images.
                   </p>
                 </>
-              ) : (
+              ) : selectedCategory === "experimental" ? (
                 <>
                   <p className="font-medium mb-1 text-cyan-300">⚠️ Experimental Mode Active</p>
                   <p className="text-cyan-400/80">
                     These cutting-edge presets push AI to its limits with extreme creativity and unique effects. Results
                     may be unpredictable but often spectacular. Best for artistic exploration and creative projects.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="font-medium mb-1 text-pink-300">🎭 Avatar Generation Mode</p>
+                  <p className="text-pink-400/80">
+                    Transform your photo into unique avatar styles using facial analysis. Use camera capture or upload a
+                    photo, then choose from 8 creative avatar styles. Perfect for profile pictures, social media, and
+                    creative expression!
                   </p>
                 </>
               )}
@@ -980,6 +1238,46 @@ export default function EnhancePage() {
               )}
             </CardHeader>
             <CardContent className="space-y-4 max-h-[600px] overflow-y-auto">
+              {selectedCategory === "avatar" && (
+                <Card className="bg-gradient-to-br from-pink-500/10 to-orange-500/10 border-pink-500/30">
+                  <CardContent className="p-4 space-y-3">
+                    {!isCameraActive ? (
+                      <Button
+                        onClick={startCamera}
+                        className="w-full bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600 text-white"
+                      >
+                        <Camera className="w-4 h-4 mr-2" />
+                        Take Photo with Camera
+                      </Button>
+                    ) : (
+                      <>
+                        <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
+                          <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={capturePhoto}
+                            className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white"
+                          >
+                            <Camera className="w-4 h-4 mr-2" />
+                            Capture
+                          </Button>
+                          <Button
+                            onClick={stopCamera}
+                            variant="outline"
+                            className="bg-transparent border-red-500/50 text-red-400 hover:bg-red-500/10"
+                          >
+                            <VideoOff className="w-4 h-4 mr-2" />
+                            Cancel
+                          </Button>
+                        </div>
+                      </>
+                    )}
+                    <canvas ref={canvasRef} className="hidden" />
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Dropzone */}
               <div
                 {...getRootProps()}
@@ -989,7 +1287,13 @@ export default function EnhancePage() {
               >
                 <input {...getInputProps()} />
                 <Upload className="w-8 h-8 mx-auto text-gray-500 mb-2" />
-                <p className="text-sm text-gray-400">{isDragActive ? "Drop here..." : "Drop or click to upload"}</p>
+                <p className="text-sm text-gray-400">
+                  {isDragActive
+                    ? "Drop here..."
+                    : selectedCategory === "avatar"
+                      ? "Or upload a photo"
+                      : "Drop or click to upload"}
+                </p>
               </div>
 
               {/* Uploaded Files */}
@@ -1161,7 +1465,8 @@ export default function EnhancePage() {
               </div>
               <h3 className="text-lg font-semibold text-white">18 Specialized Presets</h3>
               <p className="text-sm text-gray-400">
-                6 for faces, 6 for creative work, 6 experimental - each optimized for specific use cases
+                6 for faces, 6 for creative work, 6 experimental, and 6 for avatars - each optimized for specific use
+                cases
               </p>
             </CardContent>
           </Card>
@@ -1173,7 +1478,8 @@ export default function EnhancePage() {
               </div>
               <h3 className="text-lg font-semibold text-white">Smart Enhancement</h3>
               <p className="text-sm text-gray-400">
-                Face mode preserves features, Creative mode allows artistic freedom, Experimental pushes boundaries
+                Face mode preserves features, Creative & Experimental modes allow artistic freedom, Avatar mode
+                transforms your photos.
               </p>
             </CardContent>
           </Card>
