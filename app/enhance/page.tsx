@@ -4,11 +4,11 @@ import { useState, useCallback } from "react"
 import { useDropzone } from "react-dropzone"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Slider } from "@/components/ui/slider"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import {
@@ -23,6 +23,8 @@ import {
   Loader2,
   Info,
   Wand2,
+  Clock,
+  ArrowRight,
 } from "lucide-react"
 import Image from "next/image"
 import { compressImageForUpload } from "@/utils/image-processing"
@@ -48,6 +50,14 @@ interface EnhancedImage {
   settings?: EnhancementSettings
 }
 
+interface ProcessingImage {
+  id: string
+  file: File
+  preview: string
+  progress: number
+  status: string
+}
+
 interface EnhancementSettings {
   model: string
   upscaleFactor: number
@@ -59,10 +69,10 @@ interface EnhancementSettings {
 
 export default function EnhancePage() {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
+  const [selectedFiles, setSelectedFiles] = useState<Set<number>>(new Set())
+  const [processingImages, setProcessingImages] = useState<ProcessingImage[]>([]) // Track processing images
   const [enhancedImages, setEnhancedImages] = useState<EnhancedImage[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
-  const [progress, setProgress] = useState(0)
-  const [currentTab, setCurrentTab] = useState("upload")
   const [error, setError] = useState<string | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<PresetCategory>("faces")
   const [selectedPresetId, setSelectedPresetId] = useState<string>("indonesian-wedding")
@@ -71,7 +81,17 @@ export default function EnhancePage() {
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false)
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    setUploadedFiles((prev) => [...prev, ...acceptedFiles])
+    setUploadedFiles((prev) => {
+      const newFiles = [...prev, ...acceptedFiles]
+      setSelectedFiles((prevSelected) => {
+        const newSelected = new Set(prevSelected)
+        for (let i = prev.length; i < newFiles.length; i++) {
+          newSelected.add(i)
+        }
+        return newSelected
+      })
+      return newFiles
+    })
     setError(null)
     const totalSize = acceptedFiles.reduce((sum, file) => sum + file.size, 0)
     trackImageUpload(acceptedFiles.length, totalSize)
@@ -85,8 +105,43 @@ export default function EnhancePage() {
     maxSize: 15 * 1024 * 1024, // 15MB
   })
 
+  const toggleFileSelection = (index: number) => {
+    setSelectedFiles((prev) => {
+      const newSelected = new Set(prev)
+      if (newSelected.has(index)) {
+        newSelected.delete(index)
+      } else {
+        newSelected.add(index)
+      }
+      return newSelected
+    })
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedFiles.size === uploadedFiles.length) {
+      setSelectedFiles(new Set())
+    } else {
+      setSelectedFiles(new Set(uploadedFiles.map((_, i) => i)))
+    }
+  }
+
   const removeFile = (index: number) => {
     setUploadedFiles((prev) => prev.filter((_, i) => i !== index))
+    setSelectedFiles((prev) => {
+      const newSelected = new Set<number>()
+      prev.forEach((selectedIndex) => {
+        if (selectedIndex < index) {
+          newSelected.add(selectedIndex)
+        } else if (selectedIndex > index) {
+          newSelected.add(selectedIndex - 1)
+        }
+      })
+      return newSelected
+    })
+  }
+
+  const removeProcessingImage = (id: string) => {
+    setProcessingImages((prev) => prev.filter((img) => img.id !== id))
   }
 
   const removeEnhancedImage = (id: string) => {
@@ -114,17 +169,17 @@ export default function EnhancePage() {
   }
 
   const handleEnhance = async () => {
-    if (uploadedFiles.length === 0) {
-      setError("Please upload at least one image")
+    if (selectedFiles.size === 0) {
+      setError("Please select at least one image to enhance")
       return
     }
 
     setIsProcessing(true)
     setError(null)
-    setProgress(0)
-    setCurrentTab("enhanced")
 
-    const totalFiles = uploadedFiles.length
+    const filesToProcess = Array.from(selectedFiles)
+      .sort((a, b) => a - b)
+      .map((index) => uploadedFiles[index])
     const startTime = Date.now()
 
     trackEnhancementStart({
@@ -136,21 +191,41 @@ export default function EnhancePage() {
       presetId: selectedPresetId,
     })
 
-    for (let i = 0; i < totalFiles; i++) {
-      const file = uploadedFiles[i]
+    // Move selected files to processing column
+    const processingBatch: ProcessingImage[] = filesToProcess.map((file, i) => ({
+      id: `processing-${Date.now()}-${i}`,
+      file,
+      preview: URL.createObjectURL(file),
+      progress: 0,
+      status: "Starting...",
+    }))
+
+    setProcessingImages(processingBatch)
+
+    // Remove processed files from uploaded
+    setUploadedFiles((prev) => prev.filter((_, index) => !selectedFiles.has(index)))
+    setSelectedFiles(new Set())
+
+    // Process each image
+    for (let i = 0; i < filesToProcess.length; i++) {
+      const file = filesToProcess[i]
+      const processingId = processingBatch[i].id
 
       try {
-        console.log(`🔄 Processing file ${i + 1}/${totalFiles}: ${file.name}`)
-        console.log(`📦 Original size: ${Math.round(file.size / 1024)}KB`)
-        console.log(`⚙️ Settings:`, settings)
+        // Update status
+        setProcessingImages((prev) =>
+          prev.map((img) => (img.id === processingId ? { ...img, progress: 10, status: "Compressing..." } : img)),
+        )
 
         // Compress image if needed
         let processedFile = file
         if (file.size > 1024 * 1024) {
-          console.log("🔄 Compressing image...")
           processedFile = await compressImageForUpload(file, 1)
-          console.log(`✅ Compressed to: ${Math.round(processedFile.size / 1024)}KB`)
         }
+
+        setProcessingImages((prev) =>
+          prev.map((img) => (img.id === processingId ? { ...img, progress: 30, status: "Uploading..." } : img)),
+        )
 
         // Create FormData
         const formData = new FormData()
@@ -164,14 +239,9 @@ export default function EnhancePage() {
           formData.append("prompt", settings.prompt)
         }
 
-        console.log("📤 Sending to API with settings:", {
-          model: settings.model,
-          upscaleFactor: settings.upscaleFactor,
-          creativity: settings.creativity,
-          resemblance: settings.resemblance,
-          hdr: settings.hdr,
-          prompt: settings.prompt,
-        })
+        setProcessingImages((prev) =>
+          prev.map((img) => (img.id === processingId ? { ...img, progress: 50, status: "Enhancing..." } : img)),
+        )
 
         // Send to API
         const response = await fetch("/api/enhance-replicate", {
@@ -185,13 +255,9 @@ export default function EnhancePage() {
         if (contentType?.includes("application/json")) {
           data = await response.json()
         } else {
-          // Handle plain text error responses
           const text = await response.text()
-          console.error("❌ Non-JSON response:", text)
           throw new Error(text || `Server error: ${response.status}`)
         }
-
-        console.log("📥 API Response:", data)
 
         if (!response.ok) {
           throw new Error(data.error || `API error: ${response.status}`)
@@ -201,47 +267,53 @@ export default function EnhancePage() {
           throw new Error(data.error || "Enhancement failed")
         }
 
-        // Create preview URL for original
-        const originalPreview = URL.createObjectURL(file)
+        setProcessingImages((prev) =>
+          prev.map((img) => (img.id === processingId ? { ...img, progress: 90, status: "Finalizing..." } : img)),
+        )
 
-        // Add to enhanced images
+        // Create enhanced image
         const enhancedImage: EnhancedImage = {
-          id: `${Date.now()}-${i}`,
+          id: `enhanced-${Date.now()}-${i}`,
           original: file,
           enhanced: data.output,
-          originalPreview,
+          originalPreview: URL.createObjectURL(file),
           processingTime: data.processingTime,
           model: settings.model,
           settings: { ...settings },
         }
 
+        // Move to enhanced column
         setEnhancedImages((prev) => [...prev, enhancedImage])
-
-        console.log(`✅ Enhanced successfully: ${file.name}`)
+        setProcessingImages((prev) => prev.filter((img) => img.id !== processingId))
       } catch (error: any) {
         console.error(`❌ Error processing ${file.name}:`, error)
-        setError(`Failed to enhance ${file.name}: ${error.message}`)
+        setProcessingImages((prev) =>
+          prev.map((img) =>
+            img.id === processingId ? { ...img, progress: 100, status: `Error: ${error.message}` } : img,
+          ),
+        )
         trackEnhancementFailure(error.message, {
           model: settings.model,
           category: selectedCategory,
           presetId: selectedPresetId,
         })
-      }
 
-      // Update progress
-      setProgress(((i + 1) / totalFiles) * 100)
+        // Remove failed image after 3 seconds
+        setTimeout(() => {
+          removeProcessingImage(processingId)
+        }, 3000)
+      }
     }
 
     const endTime = Date.now()
     const processingTime = ((endTime - startTime) / 1000).toFixed(2)
-    trackEnhancementComplete(processingTime, totalFiles, {
+    trackEnhancementComplete(processingTime, filesToProcess.length, {
       model: settings.model,
       upscaleFactor: settings.upscaleFactor,
       category: selectedCategory,
     })
 
     setIsProcessing(false)
-    setUploadedFiles([]) // Clear uploaded files after processing
   }
 
   const downloadImage = async (url: string, filename: string) => {
@@ -273,15 +345,10 @@ export default function EnhancePage() {
   const generatePrompt = () => {
     setIsGeneratingPrompt(true)
 
-    // Get current preset info
-    const currentPreset = ALL_PRESETS[selectedPresetId]
     const creativity = settings.creativity
-
-    // Generate contextual prompts based on category and creativity
     let prompts: string[] = []
 
     if (selectedCategory === "faces") {
-      // Preset-specific prompts for more targeted suggestions
       if (selectedPresetId === "indonesian-wedding") {
         prompts = [
           "traditional Indonesian wedding portrait with vibrant kebaya details and authentic cultural jewelry",
@@ -343,7 +410,6 @@ export default function EnhancePage() {
           "sharpened image with natural enhancement and zero facial modifications",
         ]
       } else {
-        // Generic face enhancement prompts based on creativity level
         if (creativity < 0.3) {
           prompts = [
             "professional portrait with natural skin tones and sharp details",
@@ -377,7 +443,6 @@ export default function EnhancePage() {
         }
       }
     } else if (selectedCategory === "abstract") {
-      // Creative enhancement prompts - allow more artistic freedom
       if (creativity < 0.4) {
         prompts = [
           "sharp landscape with enhanced natural details and true colors",
@@ -404,7 +469,6 @@ export default function EnhancePage() {
         ]
       }
     } else {
-      // Experimental prompts - push boundaries!
       if (selectedPresetId === "hyper-realistic") {
         prompts = [
           "hyper realistic photograph with microscopic detail and photorealistic perfection",
@@ -454,7 +518,6 @@ export default function EnhancePage() {
           "mystical dream state with ethereal beauty and soft artistic vision",
         ]
       } else {
-        // Generic experimental prompts
         prompts = [
           "experimental AI enhancement with cutting-edge creative interpretation",
           "bold artistic transformation with maximum creative freedom",
@@ -465,10 +528,8 @@ export default function EnhancePage() {
       }
     }
 
-    // Select a random prompt from the appropriate category
     const selectedPrompt = prompts[Math.floor(Math.random() * prompts.length)]
 
-    // Simulate brief loading for better UX
     setTimeout(() => {
       setSettings((prev) => ({ ...prev, prompt: selectedPrompt }))
       setIsGeneratingPrompt(false)
@@ -494,6 +555,7 @@ export default function EnhancePage() {
           </p>
         </div>
 
+        {/* Category Selection */}
         <Card className="mb-6 bg-gray-900/50 border-gray-800">
           <CardContent className="p-6">
             <div className="flex items-center justify-center gap-4">
@@ -534,13 +596,14 @@ export default function EnhancePage() {
           </CardContent>
         </Card>
 
+        {/* Presets */}
         <Card
           className={`mb-8 ${
             selectedCategory === "faces"
               ? "bg-gradient-to-br from-amber-500/5 to-rose-500/5 border-amber-500/20"
               : selectedCategory === "abstract"
                 ? "bg-gradient-to-br from-purple-500/5 to-pink-500/5 border-purple-500/20"
-                : "bg-gradient-to-br from-cyan-500/5 to-purple-500/5 border-cyan-500/20" // Added experimental styling
+                : "bg-gradient-to-br from-cyan-500/5 to-purple-500/5 border-cyan-500/20"
           }`}
         >
           <CardHeader>
@@ -551,25 +614,21 @@ export default function EnhancePage() {
                     ? "text-amber-400"
                     : selectedCategory === "abstract"
                       ? "text-purple-400"
-                      : "text-cyan-400" // Added experimental color
+                      : "text-cyan-400"
                 }`}
               />
-              {
-                selectedCategory === "faces"
-                  ? "Face Enhancement Presets"
-                  : selectedCategory === "abstract"
-                    ? "Creative Enhancement Presets"
-                    : "Experimental Presets" // Added experimental title
-              }
+              {selectedCategory === "faces"
+                ? "Face Enhancement Presets"
+                : selectedCategory === "abstract"
+                  ? "Creative Enhancement Presets"
+                  : "Experimental Presets"}
             </CardTitle>
             <p className="text-sm text-gray-400">
-              {
-                selectedCategory === "faces"
-                  ? "Optimized for portraits, weddings, and people photos"
-                  : selectedCategory === "abstract"
-                    ? "Optimized for landscapes, products, and artistic images"
-                    : "Cutting-edge presets that push creative boundaries - use with caution!" // Added experimental description
-              }
+              {selectedCategory === "faces"
+                ? "Optimized for portraits, weddings, and people photos"
+                : selectedCategory === "abstract"
+                  ? "Optimized for landscapes, products, and artistic images"
+                  : "Cutting-edge presets that push creative boundaries - use with caution!"}
             </p>
           </CardHeader>
           <CardContent>
@@ -584,7 +643,7 @@ export default function EnhancePage() {
                         ? "border-amber-500 bg-amber-500/10 shadow-lg shadow-amber-500/20"
                         : selectedCategory === "abstract"
                           ? "border-purple-500 bg-purple-500/10 shadow-lg shadow-purple-500/20"
-                          : "border-cyan-500 bg-cyan-500/10 shadow-lg shadow-cyan-500/20" // Added experimental styling
+                          : "border-cyan-500 bg-cyan-500/10 shadow-lg shadow-cyan-500/20"
                       : "border-gray-700 bg-gray-800/50 hover:border-gray-600"
                   }`}
                 >
@@ -601,7 +660,7 @@ export default function EnhancePage() {
                               ? "text-amber-400"
                               : selectedCategory === "abstract"
                                 ? "text-purple-400"
-                                : "text-cyan-400" // Added experimental color
+                                : "text-cyan-400"
                           }`}
                         />
                       )}
@@ -617,7 +676,7 @@ export default function EnhancePage() {
                               ? "bg-amber-500/20 text-amber-300 text-xs"
                               : selectedCategory === "abstract"
                                 ? "bg-purple-500/20 text-purple-300 text-xs"
-                                : "bg-cyan-500/20 text-cyan-300 text-xs" // Added experimental styling
+                                : "bg-cyan-500/20 text-cyan-300 text-xs"
                           }
                         >
                           {feature}
@@ -631,7 +690,7 @@ export default function EnhancePage() {
                             ? "border-amber-500/20"
                             : selectedCategory === "abstract"
                               ? "border-purple-500/20"
-                              : "border-cyan-500/20" // Added experimental styling
+                              : "border-cyan-500/20"
                         }`}
                       >
                         <div
@@ -640,7 +699,7 @@ export default function EnhancePage() {
                               ? "text-amber-400"
                               : selectedCategory === "abstract"
                                 ? "text-purple-400"
-                                : "text-cyan-400" // Added experimental color
+                                : "text-cyan-400"
                           }`}
                         >
                           <div>Creativity: {preset.settings.creativity}</div>
@@ -680,7 +739,6 @@ export default function EnhancePage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Upscale Factor */}
                 <div className="space-y-3">
                   <label className="text-sm font-medium text-gray-300 flex items-center justify-between">
                     <span>Upscale Factor</span>
@@ -697,7 +755,6 @@ export default function EnhancePage() {
                   <p className="text-xs text-gray-500">Higher = larger output (slower)</p>
                 </div>
 
-                {/* Creativity */}
                 <div className="space-y-3">
                   <label className="text-sm font-medium text-gray-300 flex items-center justify-between">
                     <span>Creativity</span>
@@ -720,7 +777,6 @@ export default function EnhancePage() {
                   </p>
                 </div>
 
-                {/* Resemblance */}
                 <div className="space-y-3">
                   <label className="text-sm font-medium text-gray-300 flex items-center justify-between">
                     <span>Resemblance</span>
@@ -743,7 +799,6 @@ export default function EnhancePage() {
                   </p>
                 </div>
 
-                {/* HDR */}
                 <div className="space-y-3">
                   <label className="text-sm font-medium text-gray-300 flex items-center justify-between">
                     <span>HDR Strength</span>
@@ -767,7 +822,6 @@ export default function EnhancePage() {
                 </div>
               </div>
 
-              {/* Model Selection */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-300">AI Model</label>
                 <Select
@@ -833,7 +887,7 @@ export default function EnhancePage() {
               ? "mb-8 bg-blue-500/5 border-blue-500/20"
               : selectedCategory === "abstract"
                 ? "mb-8 bg-purple-500/5 border-purple-500/20"
-                : "mb-8 bg-cyan-500/5 border-cyan-500/20" // Added experimental styling
+                : "mb-8 bg-cyan-500/5 border-cyan-500/20"
           }
         >
           <CardContent className="p-4 flex items-start gap-3">
@@ -843,7 +897,7 @@ export default function EnhancePage() {
                   ? "text-blue-400"
                   : selectedCategory === "abstract"
                     ? "text-purple-400"
-                    : "text-cyan-400" // Added experimental color
+                    : "text-cyan-400"
               }`}
             />
             <div className="text-sm">
@@ -876,156 +930,181 @@ export default function EnhancePage() {
           </CardContent>
         </Card>
 
-        {/* Main Content */}
-        <Tabs value={currentTab} onValueChange={setCurrentTab}>
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8 bg-gray-800/50">
-            <TabsTrigger value="upload" className="text-sm md:text-base">
-              <Upload className="w-4 h-4 mr-2" />
-              Upload ({uploadedFiles.length})
-            </TabsTrigger>
-            <TabsTrigger value="enhanced" className="text-sm md:text-base">
-              <ImageIcon className="w-4 h-4 mr-2" />
-              Enhanced ({enhancedImages.length})
-            </TabsTrigger>
-          </TabsList>
+        {/* Error Display */}
+        {error && (
+          <Card className="mb-6 bg-red-500/10 border-red-500/50">
+            <CardContent className="p-4 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+              <p className="text-red-400 text-sm">{error}</p>
+            </CardContent>
+          </Card>
+        )}
 
-          {/* Upload Tab */}
-          <TabsContent value="upload" className="space-y-6">
-            {/* Dropzone */}
-            <Card className="bg-gray-900/50 border-gray-800 border-2 border-dashed hover:border-amber-500/50 transition-colors">
-              <CardContent className="p-8 md:p-12">
-                <div
-                  {...getRootProps()}
-                  className={`text-center space-y-4 cursor-pointer ${isDragActive ? "opacity-50" : ""}`}
-                >
-                  <input {...getInputProps()} />
-                  <div className="w-16 h-16 md:w-20 md:h-20 mx-auto bg-amber-500/10 rounded-full flex items-center justify-center">
-                    <Upload className="w-8 h-8 md:w-10 md:h-10 text-amber-400" />
-                  </div>
-                  <div>
-                    <p className="text-lg md:text-xl font-semibold text-white mb-2">
-                      {isDragActive ? "Drop images here..." : "Drag & drop images here"}
-                    </p>
-                    <p className="text-sm md:text-base text-gray-400">or click to browse (PNG, JPG, WebP • Max 15MB)</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Error Display */}
-            {error && (
-              <Card className="bg-red-500/10 border-red-500/50">
-                <CardContent className="p-4 flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-                  <p className="text-red-400 text-sm">{error}</p>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Uploaded Files */}
-            {uploadedFiles.length > 0 && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-white">Uploaded Files ({uploadedFiles.length})</h3>
-                  <Button
-                    onClick={handleEnhance}
-                    disabled={isProcessing}
-                    className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black"
-                  >
-                    {isProcessing ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        Enhance All
-                      </>
-                    )}
-                  </Button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {uploadedFiles.map((file, index) => (
-                    <Card key={index} className="bg-gray-900/50 border-gray-800">
-                      <CardContent className="p-4">
-                        <div className="aspect-video relative bg-gray-800 rounded-lg overflow-hidden mb-3">
-                          <Image
-                            src={URL.createObjectURL(file) || "/placeholder.svg"}
-                            alt={file.name}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-white truncate">{file.name}</p>
-                            <p className="text-xs text-gray-400">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeFile(index)}
-                            className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          {/* Column 1: Uploaded */}
+          <Card className="bg-gray-900/50 border-gray-800">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Upload className="w-5 h-5 text-blue-400" />
+                  Uploaded
+                  <Badge className="bg-blue-500/20 text-blue-300">{uploadedFiles.length}</Badge>
+                </CardTitle>
               </div>
-            )}
+              {uploadedFiles.length > 0 && (
+                <div className="flex items-center gap-2 pt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={toggleSelectAll}
+                    className="bg-transparent border-gray-700 hover:border-amber-500/50 text-gray-300 text-xs"
+                  >
+                    <Checkbox
+                      checked={selectedFiles.size === uploadedFiles.length && uploadedFiles.length > 0}
+                      className="mr-2"
+                    />
+                    {selectedFiles.size === uploadedFiles.length ? "Deselect All" : "Select All"}
+                  </Button>
+                  {selectedFiles.size > 0 && (
+                    <Button
+                      onClick={handleEnhance}
+                      disabled={isProcessing}
+                      size="sm"
+                      className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black text-xs"
+                    >
+                      <Sparkles className="w-3 h-3 mr-1" />
+                      Enhance ({selectedFiles.size})
+                    </Button>
+                  )}
+                </div>
+              )}
+            </CardHeader>
+            <CardContent className="space-y-4 max-h-[600px] overflow-y-auto">
+              {/* Dropzone */}
+              <div
+                {...getRootProps()}
+                className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+                  isDragActive ? "border-amber-500 bg-amber-500/5" : "border-gray-700 hover:border-gray-600"
+                }`}
+              >
+                <input {...getInputProps()} />
+                <Upload className="w-8 h-8 mx-auto text-gray-500 mb-2" />
+                <p className="text-sm text-gray-400">{isDragActive ? "Drop here..." : "Drop or click to upload"}</p>
+              </div>
 
-            {/* Processing Progress */}
-            {isProcessing && (
-              <Card className="bg-gray-900/50 border-gray-800">
-                <CardContent className="p-6 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <p className="text-white font-medium">
-                      {selectedCategory === "faces"
-                        ? "Processing with face preservation..."
-                        : selectedCategory === "abstract"
-                          ? "Processing creatively..."
-                          : "Processing with experimental settings..."}
-                    </p>
-                    <p className="text-amber-400">{Math.round(progress)}%</p>
-                  </div>
-                  <Progress value={progress} className="h-2" />
-                  <p className="text-sm text-gray-400">
-                    {selectedCategory === "faces"
-                      ? "Preserving facial features and cultural details..."
-                      : selectedCategory === "abstract"
-                        ? "Applying creative enhancements..."
-                        : "Pushing the boundaries of AI image generation..."}
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
+              {/* Uploaded Files */}
+              {uploadedFiles.map((file, index) => (
+                <Card
+                  key={index}
+                  className={`bg-gray-800/50 transition-all ${
+                    selectedFiles.has(index) ? "border-amber-500 ring-2 ring-amber-500/20" : "border-gray-700"
+                  }`}
+                >
+                  <CardContent className="p-3">
+                    <div className="flex items-start gap-2 mb-2">
+                      <Checkbox
+                        checked={selectedFiles.has(index)}
+                        onCheckedChange={() => toggleFileSelection(index)}
+                        className="mt-1"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-white truncate">{file.name}</p>
+                        <p className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeFile(index)}
+                        className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-6 w-6 p-0"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                    <div
+                      className="aspect-video relative bg-gray-900 rounded overflow-hidden cursor-pointer"
+                      onClick={() => toggleFileSelection(index)}
+                    >
+                      <Image
+                        src={URL.createObjectURL(file) || "/placeholder.svg"}
+                        alt={file.name}
+                        fill
+                        className="object-cover"
+                      />
+                      {selectedFiles.has(index) && (
+                        <div className="absolute inset-0 bg-amber-500/20 flex items-center justify-center">
+                          <CheckCircle2 className="w-8 h-8 text-amber-400" />
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </CardContent>
+          </Card>
 
-          {/* Enhanced Tab */}
-          <TabsContent value="enhanced" className="space-y-6">
-            {enhancedImages.length === 0 ? (
-              <Card className="bg-gray-900/50 border-gray-800">
-                <CardContent className="p-12 text-center">
-                  <ImageIcon className="w-16 h-16 mx-auto text-gray-600 mb-4" />
-                  <p className="text-lg text-gray-400 mb-2">No enhanced images yet</p>
-                  <p className="text-sm text-gray-500">Upload and enhance images to see results here</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {enhancedImages.map((img) => (
-                  <Card key={img.id} className="bg-gray-900/50 border-gray-800">
-                    <CardContent className="p-4 space-y-4">
-                      {/* Before/After Comparison */}
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <p className="text-xs font-medium text-gray-400">Original</p>
-                          <div className="aspect-video relative bg-gray-800 rounded-lg overflow-hidden">
+          {/* Column 2: Processing */}
+          <Card className="bg-gray-900/50 border-gray-800">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-white flex items-center gap-2">
+                <Clock className="w-5 h-5 text-amber-400 animate-pulse" />
+                Processing
+                <Badge className="bg-amber-500/20 text-amber-300">{processingImages.length}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 max-h-[600px] overflow-y-auto">
+              {processingImages.length === 0 ? (
+                <div className="text-center py-12">
+                  <ArrowRight className="w-12 h-12 mx-auto text-gray-600 mb-3" />
+                  <p className="text-sm text-gray-500">Images will appear here during enhancement</p>
+                </div>
+              ) : (
+                processingImages.map((img) => (
+                  <Card key={img.id} className="bg-gray-800/50 border-amber-500/30">
+                    <CardContent className="p-3 space-y-3">
+                      <div className="aspect-video relative bg-gray-900 rounded overflow-hidden">
+                        <Image src={img.preview || "/placeholder.svg"} alt="Processing" fill className="object-cover" />
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                          <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-gray-400">{img.status}</span>
+                          <span className="text-amber-400">{img.progress}%</span>
+                        </div>
+                        <Progress value={img.progress} className="h-1" />
+                        <p className="text-xs text-gray-500 truncate">{img.file.name}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Column 3: Processed */}
+          <Card className="bg-gray-900/50 border-gray-800">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-white flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-green-400" />
+                Processed
+                <Badge className="bg-green-500/20 text-green-300">{enhancedImages.length}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 max-h-[600px] overflow-y-auto">
+              {enhancedImages.length === 0 ? (
+                <div className="text-center py-12">
+                  <CheckCircle2 className="w-12 h-12 mx-auto text-gray-600 mb-3" />
+                  <p className="text-sm text-gray-500">Enhanced images will appear here</p>
+                </div>
+              ) : (
+                enhancedImages.map((img) => (
+                  <Card key={img.id} className="bg-gray-800/50 border-green-500/30">
+                    <CardContent className="p-3 space-y-3">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <p className="text-xs text-gray-500">Original</p>
+                          <div className="aspect-square relative bg-gray-900 rounded overflow-hidden">
                             <Image
                               src={img.originalPreview || "/placeholder.svg"}
                               alt="Original"
@@ -1034,9 +1113,9 @@ export default function EnhancePage() {
                             />
                           </div>
                         </div>
-                        <div className="space-y-2">
-                          <p className="text-xs font-medium text-amber-400">Enhanced</p>
-                          <div className="aspect-video relative bg-gray-800 rounded-lg overflow-hidden">
+                        <div className="space-y-1">
+                          <p className="text-xs text-green-400">Enhanced</p>
+                          <div className="aspect-square relative bg-gray-900 rounded overflow-hidden">
                             <Image
                               src={img.enhanced || "/placeholder.svg"}
                               alt="Enhanced"
@@ -1046,56 +1125,41 @@ export default function EnhancePage() {
                           </div>
                         </div>
                       </div>
-
-                      {/* Metadata */}
-                      <div className="space-y-2 text-xs text-gray-400">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-green-400" />
-                          <span>{img.original.name}</span>
-                        </div>
-                        {img.settings && (
-                          <div className="bg-gray-800/50 rounded p-2 space-y-1">
-                            <div>Creativity: {img.settings.creativity}</div>
-                            <div>Resemblance: {img.settings.resemblance}</div>
-                            <div>Upscale: {img.settings.upscaleFactor}x</div>
-                            {img.settings.hdr > 0 && <div>HDR: {img.settings.hdr}</div>}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Actions */}
+                      <p className="text-xs text-gray-500 truncate">{img.original.name}</p>
                       <div className="flex gap-2">
                         <Button
                           onClick={() => downloadImage(img.enhanced, img.original.name)}
-                          className="flex-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                          size="sm"
+                          className="flex-1 bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/30 text-xs h-8"
                         >
-                          <Download className="w-4 h-4 mr-2" />
+                          <Download className="w-3 h-3 mr-1" />
                           Download
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => removeEnhancedImage(img.id)}
-                          className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                          className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-8 w-8 p-0"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3 h-3" />
                         </Button>
                       </div>
                     </CardContent>
                   </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+                ))
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
+        {/* Features */}
         <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="bg-gray-900/50 border-gray-800">
             <CardContent className="p-6 text-center space-y-3">
               <div className="w-12 h-12 mx-auto bg-amber-500/10 rounded-full flex items-center justify-center">
                 <Sparkles className="w-6 h-6 text-amber-400" />
               </div>
-              <h3 className="text-lg font-semibold text-white">18 Specialized Presets</h3> {/* Updated count */}
+              <h3 className="text-lg font-semibold text-white">18 Specialized Presets</h3>
               <p className="text-sm text-gray-400">
                 6 for faces, 6 for creative work, 6 experimental - each optimized for specific use cases
               </p>
