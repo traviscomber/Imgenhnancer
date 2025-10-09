@@ -22,6 +22,7 @@ import {
   CheckCircle2,
   Loader2,
   Info,
+  Wand2,
 } from "lucide-react"
 import Image from "next/image"
 import { compressImageForUpload } from "@/utils/image-processing"
@@ -67,6 +68,7 @@ export default function EnhancePage() {
   const [selectedPresetId, setSelectedPresetId] = useState<string>("indonesian-wedding")
   const [settings, setSettings] = useState<EnhancementSettings>(ALL_PRESETS["indonesian-wedding"].settings)
   const [showAdvanced, setShowAdvanced] = useState(false)
+  const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false)
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setUploadedFiles((prev) => [...prev, ...acceptedFiles])
@@ -266,6 +268,82 @@ export default function EnhancePage() {
       console.error("Download failed:", error)
       setError("Failed to download image")
     }
+  }
+
+  const generatePrompt = () => {
+    setIsGeneratingPrompt(true)
+
+    // Get current preset info
+    const currentPreset = ALL_PRESETS[selectedPresetId]
+    const creativity = settings.creativity
+
+    // Generate contextual prompts based on category and creativity
+    let prompts: string[] = []
+
+    if (selectedCategory === "faces") {
+      // Face enhancement prompts - focus on preservation and quality
+      if (creativity < 0.3) {
+        prompts = [
+          "professional portrait with natural skin tones and sharp details",
+          "high-quality photo with preserved facial features and authentic colors",
+          "clear portrait with enhanced clarity and natural lighting",
+          "professional headshot with crisp details and true-to-life appearance",
+          "refined portrait maintaining original character and features",
+        ]
+      } else if (creativity < 0.5) {
+        prompts = [
+          "elegant portrait with enhanced details and vibrant cultural attire",
+          "professional photo with rich colors and traditional wedding elements",
+          "beautiful portrait with enhanced textures and authentic cultural details",
+          "refined image with improved clarity and preserved ethnic features",
+          "high-quality portrait with enhanced fabrics and natural expressions",
+        ]
+      } else {
+        prompts = [
+          "artistic portrait with enhanced dramatic lighting and rich tones",
+          "creative interpretation with improved details and atmospheric mood",
+          "stylized portrait with enhanced colors and professional finish",
+          "expressive photo with improved contrast and artistic enhancement",
+          "refined portrait with creative color grading and enhanced depth",
+        ]
+      }
+    } else {
+      // Creative enhancement prompts - allow more artistic freedom
+      if (creativity < 0.4) {
+        prompts = [
+          "sharp landscape with enhanced natural details and true colors",
+          "clear architectural photo with improved textures and definition",
+          "high-resolution image with enhanced clarity and natural tones",
+          "detailed product photo with crisp edges and accurate colors",
+          "refined image with improved sharpness and natural enhancement",
+        ]
+      } else if (creativity < 0.7) {
+        prompts = [
+          "vibrant landscape with enhanced colors and dramatic sky details",
+          "artistic scene with improved contrast and rich atmospheric depth",
+          "creative interpretation with enhanced textures and bold colors",
+          "dynamic composition with improved lighting and vivid details",
+          "expressive image with enhanced mood and artistic color grading",
+        ]
+      } else {
+        prompts = [
+          "dramatic artistic interpretation with bold colors and creative enhancement",
+          "abstract composition with vivid details and expressive color palette",
+          "creative masterpiece with enhanced textures and artistic vision",
+          "stylized artwork with dramatic lighting and imaginative details",
+          "bold artistic rendering with enhanced contrast and creative flair",
+        ]
+      }
+    }
+
+    // Select a random prompt from the appropriate category
+    const selectedPrompt = prompts[Math.floor(Math.random() * prompts.length)]
+
+    // Simulate brief loading for better UX
+    setTimeout(() => {
+      setSettings((prev) => ({ ...prev, prompt: selectedPrompt }))
+      setIsGeneratingPrompt(false)
+    }, 500)
   }
 
   const currentPresets = getPresetsByCategory(selectedCategory)
@@ -511,16 +589,42 @@ export default function EnhancePage() {
                 </Select>
               </div>
 
-              {/* Prompt */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-300">Enhancement Prompt (Optional)</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-gray-300">Enhancement Prompt (Optional)</label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={generatePrompt}
+                    disabled={isGeneratingPrompt}
+                    className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-500/30 hover:border-purple-500/50 text-purple-300"
+                  >
+                    {isGeneratingPrompt ? (
+                      <>
+                        <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Wand2 className="w-3 h-3 mr-2" />
+                        Generate AI Prompt
+                      </>
+                    )}
+                  </Button>
+                </div>
                 <textarea
                   value={settings.prompt || ""}
                   onChange={(e) => setSettings((prev) => ({ ...prev, prompt: e.target.value }))}
                   className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm resize-none focus:border-amber-500 focus:outline-none"
-                  rows={2}
-                  placeholder="e.g., professional photo, cultural attire, natural lighting"
+                  rows={3}
+                  placeholder="Click 'Generate AI Prompt' for creative suggestions, or write your own..."
                 />
+                <p className="text-xs text-gray-500">
+                  {selectedCategory === "faces"
+                    ? "AI will generate prompts that preserve facial features and cultural details"
+                    : "AI will generate creative prompts based on your creativity level"}
+                </p>
               </div>
             </CardContent>
           </Card>
