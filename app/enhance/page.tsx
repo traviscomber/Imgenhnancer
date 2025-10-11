@@ -51,6 +51,7 @@ interface EnhancedImage {
   processingTime?: string
   model?: string
   settings?: EnhancementSettings
+  imageError?: boolean // Added to track image load errors
 }
 
 interface ProcessingImage {
@@ -547,6 +548,7 @@ export default function EnhancePage() {
           processingTime: data.processingTime,
           model: settings.model,
           settings: { ...settings },
+          imageError: false, // Initialize imageError to false
         }
 
         // Move to enhanced column
@@ -575,12 +577,17 @@ export default function EnhancePage() {
     const endTime = Date.now()
     const processingTime = ((endTime - startTime) / 1000).toFixed(2)
     trackEnhancementComplete(processingTime, filesToProcess.length, {
-      model: settings.model,
+      model: settings.upscaleFactor,
       upscaleFactor: settings.upscaleFactor,
       category: selectedCategory,
     })
 
     setIsProcessing(false)
+  }
+
+  const handleImageError = (imageId: string) => {
+    console.error("[v0] Failed to load enhanced image:", imageId)
+    setEnhancedImages((prev) => prev.map((img) => (img.id === imageId ? { ...img, imageError: true } : img)))
   }
 
   const downloadImage = async (url: string, filename: string) => {
@@ -1669,27 +1676,60 @@ export default function EnhancePage() {
                               alt="Original"
                               fill
                               className="object-cover"
+                              onError={() => console.error("[v0] Failed to load original preview")}
                             />
                           </div>
                         </div>
                         <div className="space-y-1">
                           <p className="text-xs text-green-400">Enhanced</p>
                           <div className="aspect-square relative bg-gray-900 rounded overflow-hidden">
-                            <Image
-                              src={img.enhanced || "/placeholder.svg"}
-                              alt="Enhanced"
-                              fill
-                              className="object-cover"
-                            />
+                            {img.imageError ? (
+                              <div className="absolute inset-0 flex flex-col items-center justify-center bg-red-500/10 border border-red-500/30 rounded">
+                                <AlertCircle className="w-8 h-8 text-red-400 mb-2" />
+                                <p className="text-xs text-red-400 text-center px-2">Failed to load image</p>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    console.log("[v0] Retrying image load:", img.enhanced)
+                                    setEnhancedImages((prev) =>
+                                      prev.map((i) => (i.id === img.id ? { ...i, imageError: false } : i)),
+                                    )
+                                  }}
+                                  className="mt-2 text-xs h-6 bg-transparent border-red-500/30 text-red-400 hover:bg-red-500/10"
+                                >
+                                  Retry
+                                </Button>
+                              </div>
+                            ) : (
+                              <Image
+                                src={img.enhanced || "/placeholder.svg"}
+                                alt="Enhanced"
+                                fill
+                                className="object-cover"
+                                onError={() => handleImageError(img.id)}
+                                unoptimized // Added to bypass Next.js image optimization for external URLs
+                              />
+                            )}
                           </div>
                         </div>
                       </div>
                       <p className="text-xs text-gray-500 truncate">{img.original.name}</p>
+                      {img.imageError && (
+                        <div className="bg-red-500/10 border border-red-500/30 rounded p-2 flex items-start gap-2">
+                          <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                          <p className="text-xs text-red-400">
+                            The enhanced image URL may have expired or is unavailable. Try downloading it immediately
+                            after processing.
+                          </p>
+                        </div>
+                      )}
                       <div className="flex gap-2">
                         <Button
                           onClick={() => downloadImage(img.enhanced, img.original.name)}
                           size="sm"
                           className="flex-1 bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/30 text-xs h-8"
+                          disabled={img.imageError}
                         >
                           <Download className="w-3 h-3 mr-1" />
                           Download
