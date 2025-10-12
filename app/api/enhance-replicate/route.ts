@@ -61,31 +61,42 @@ export async function POST(req: NextRequest) {
 
     console.log("📤 Creating Replicate prediction...")
 
-    const createResponse = await fetch("https://api.replicate.com/v1/predictions", {
-      method: "POST",
-      headers: {
-        Authorization: `Token ${process.env.REPLICATE_API_TOKEN}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
-        input: {
-          image: dataUrl,
-          scale_factor: scaleFactor,
-          dynamic: dynamicSteps,
-          creativity: creativity,
-          resemblance: resemblance,
-          hdr: hdr,
-          sharpen: 0,
-          sd_model: "juggernaut_reborn.safetensors [338b85bc4f]",
-          scheduler: "DPM++ 3M SDE Karras",
-          num_inference_steps: 18,
-          downscaling: false,
-          output_format: "png",
-          ...(prompt && { prompt }),
+    let createResponse: Response
+    try {
+      createResponse = await fetch("https://api.replicate.com/v1/predictions", {
+        method: "POST",
+        headers: {
+          Authorization: `Token ${process.env.REPLICATE_API_TOKEN}`,
+          "Content-Type": "application/json",
         },
-      }),
-    })
+        body: JSON.stringify({
+          version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
+          input: {
+            image: dataUrl,
+            scale_factor: scaleFactor,
+            dynamic: dynamicSteps,
+            creativity: creativity,
+            resemblance: resemblance,
+            hdr: hdr,
+            sharpen: 0,
+            sd_model: "juggernaut_reborn.safetensors [338b85bc4f]",
+            scheduler: "DPM++ 3M SDE Karras",
+            num_inference_steps: 18,
+            downscaling: false,
+            output_format: "png",
+            ...(prompt && { prompt }),
+          },
+        }),
+      })
+    } catch (fetchError: any) {
+      console.error("❌ Network error calling Replicate API:", fetchError)
+      console.error("❌ Error details:", {
+        message: fetchError.message,
+        cause: fetchError.cause,
+        stack: fetchError.stack,
+      })
+      throw new Error(`Network error: ${fetchError.message}. Please check your internet connection and try again.`)
+    }
 
     const responseText = await createResponse.text()
     console.log("📥 Response status:", createResponse.status)
