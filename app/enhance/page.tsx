@@ -28,7 +28,6 @@ import {
   Camera,
   VideoOff,
 } from "lucide-react"
-import Image from "next/image"
 import { compressImageForUpload } from "@/utils/image-processing"
 import { ALL_PRESETS, getPresetsByCategory, type PresetCategory } from "@/lib/presets"
 import {
@@ -108,6 +107,7 @@ export default function EnhancePage() {
   const [settings, setSettings] = useState<EnhancementSettings>(ALL_PRESETS["indonesian-wedding"].settings)
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false)
+  const [downloadingImages, setDownloadingImages] = useState<Set<string>>(new Set()) // Added imageId parameter and downloading state tracking
 
   // Camera state
   const [isCameraActive, setIsCameraActive] = useState(false)
@@ -651,7 +651,7 @@ export default function EnhancePage() {
     const endTime = Date.now()
     const processingTime = ((endTime - startTime) / 1000).toFixed(2)
     trackEnhancementComplete(processingTime, filesToProcess.length, {
-      model: settings.upscaleFactor,
+      model: settings.upscaleFactor, // This seems like a typo, likely should be settings.model
       upscaleFactor: settings.upscaleFactor,
       category: selectedCategory,
     })
@@ -664,8 +664,12 @@ export default function EnhancePage() {
     setEnhancedImages((prev) => prev.map((img) => (img.id === imageId ? { ...img, imageError: true } : img)))
   }
 
-  const downloadImage = async (url: string, filename: string) => {
+  const downloadImage = async (url: string, filename: string, imageId: string) => {
+    // Added imageId parameter and downloading state tracking
+    setDownloadingImages((prev) => new Set(prev).add(imageId))
+
     try {
+      console.log("[v0] Starting download for:", filename)
       const response = await fetch(url)
       const blob = await response.blob()
       const blobUrl = URL.createObjectURL(blob)
@@ -679,14 +683,24 @@ export default function EnhancePage() {
 
       URL.revokeObjectURL(blobUrl)
 
+      console.log("[v0] Download completed:", filename)
+
       trackImageDownload(filename, {
         model: settings.model,
         category: selectedCategory,
         presetId: selectedPresetId,
       })
+
+      setError(null)
     } catch (error) {
-      console.error("Download failed:", error)
-      setError("Failed to download image")
+      console.error("[v0] Download failed:", error)
+      setError(`Failed to download ${filename}. Please try again.`)
+    } finally {
+      setDownloadingImages((prev) => {
+        const next = new Set(prev)
+        next.delete(imageId)
+        return next
+      })
     }
   }
 
@@ -1781,6 +1795,13 @@ export default function EnhancePage() {
                 Processed
                 <Badge className="bg-green-500/20 text-green-300">{enhancedImages.length}</Badge>
               </CardTitle>
+              {/* You can download ready images while others are still processing */}
+              {processingImages.length > 0 && enhancedImages.length > 0 && (
+                <p className="text-xs text-green-400/80 flex items-center gap-1 mt-2">
+                  <Info className="w-3 h-3" />
+                  You can download ready images while others are still processing
+                </p>
+              )}
             </CardHeader>
             <CardContent className="space-y-4 max-h-[600px] overflow-y-auto">
               {enhancedImages.length === 0 ? (
@@ -1825,13 +1846,11 @@ export default function EnhancePage() {
                                 </Button>
                               </div>
                             ) : (
-                              <Image
+                              <img
                                 src={img.enhanced || "/placeholder.svg"}
                                 alt="Enhanced"
-                                fill
-                                className="object-cover"
+                                className="w-full h-full object-cover"
                                 onError={() => handleImageError(img.id)}
-                                unoptimized // Added to bypass Next.js image optimization for external URLs
                               />
                             )}
                           </div>
@@ -1849,13 +1868,22 @@ export default function EnhancePage() {
                       )}
                       <div className="flex gap-2">
                         <Button
-                          onClick={() => downloadImage(img.enhanced, img.original.name)}
+                          onClick={() => downloadImage(img.enhanced, img.original.name, img.id)}
                           size="sm"
                           className="flex-1 bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/30 text-xs h-8"
-                          disabled={img.imageError}
+                          disabled={img.imageError || downloadingImages.has(img.id)}
                         >
-                          <Download className="w-3 h-3 mr-1" />
-                          Download
+                          {downloadingImages.has(img.id) ? (
+                            <>
+                              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                              Downloading...
+                            </>
+                          ) : (
+                            <>
+                              <Download className="w-3 h-3 mr-1" />
+                              Download
+                            </>
+                          )}
                         </Button>
                         <Button
                           variant="ghost"
