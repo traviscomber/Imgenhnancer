@@ -121,22 +121,6 @@ export const FACE_PRESETS: Record<string, Preset> = {
 
 // 6 Abstract/Artistic Enhancement Presets
 export const ABSTRACT_PRESETS: Record<string, Preset> = {
-  "standard-enhancement": {
-    id: "standard-enhancement",
-    name: "Standard Enhancement",
-    category: "abstract",
-    description: "Balanced enhancement with default advanced settings",
-    settings: {
-      model: "philz1337x/clarity-upscaler",
-      upscaleFactor: 3,
-      creativity: 0.05,
-      resemblance: 0.9,
-      hdr: 0.8,
-      prompt: "high quality enhancement, balanced settings, natural improvement",
-    },
-    features: ["Balanced", "3x Upscale", "Safe Settings", "Natural"],
-    icon: "⚙️",
-  },
   "detail-enhancement": {
     id: "detail-enhancement",
     name: "Detail Enhancement",

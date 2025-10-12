@@ -28,6 +28,7 @@ import {
   Camera,
   VideoOff,
 } from "lucide-react"
+import Image from "next/image"
 import { compressImageForUpload } from "@/utils/image-processing"
 import { ALL_PRESETS, getPresetsByCategory, type PresetCategory } from "@/lib/presets"
 import {
@@ -86,14 +87,6 @@ interface UploadedFileWithAnalysis {
   isAnalyzing: boolean
 }
 
-interface UploadError {
-  id: string
-  fileName: string
-  reason: string
-  details: string
-  timestamp: number
-}
-
 export default function EnhancePage() {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
   const [selectedFiles, setSelectedFiles] = useState<Set<number>>(new Set())
@@ -101,13 +94,11 @@ export default function EnhancePage() {
   const [enhancedImages, setEnhancedImages] = useState<EnhancedImage[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [uploadErrors, setUploadErrors] = useState<UploadError[]>([])
   const [selectedCategory, setSelectedCategory] = useState<PresetCategory>("faces")
   const [selectedPresetId, setSelectedPresetId] = useState<string>("indonesian-wedding")
   const [settings, setSettings] = useState<EnhancementSettings>(ALL_PRESETS["indonesian-wedding"].settings)
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false)
-  const [downloadingImages, setDownloadingImages] = useState<Set<string>>(new Set()) // Added imageId parameter and downloading state tracking
 
   // Camera state
   const [isCameraActive, setIsCameraActive] = useState(false)
@@ -209,96 +200,39 @@ export default function EnhancePage() {
     }
   }
 
-  const onDrop = useCallback((acceptedFiles: File[], fileRejections: any[]) => {
-    console.log("[v0] Files dropped - accepted:", acceptedFiles.length, "rejected:", fileRejections.length)
-
-    // Handle rejected files
-    if (fileRejections.length > 0) {
-      const newErrors: UploadError[] = fileRejections.map((rejection) => {
-        const file = rejection.file
-        const errors = rejection.errors
-
-        let reason = "Upload failed"
-        let details = "Unknown error"
-
-        // Determine specific error reason
-        if (errors.some((e: any) => e.code === "file-too-large")) {
-          reason = "File too large"
-          details = `${file.name} is ${(file.size / 1024 / 1024).toFixed(2)}MB. Maximum size is 15MB.`
-        } else if (errors.some((e: any) => e.code === "file-invalid-type")) {
-          reason = "Invalid file type"
-          details = `${file.name} is not a supported image format. Please use PNG, JPG, JPEG, or WebP.`
-        } else if (errors.some((e: any) => e.code === "too-many-files")) {
-          reason = "Too many files"
-          details = "Please upload files one at a time or in smaller batches."
-        } else {
-          reason = "Upload error"
-          details = `${file.name}: ${errors.map((e: any) => e.message).join(", ")}`
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    setUploadedFiles((prev) => {
+      const newFiles = [...prev, ...acceptedFiles]
+      setSelectedFiles((prevSelected) => {
+        const newSelected = new Set(prevSelected)
+        for (let i = prev.length; i < newFiles.length; i++) {
+          newSelected.add(i)
         }
+        return newSelected
+      })
+      return newFiles
+    })
 
-        console.error("[v0] File rejected:", file.name, "Reason:", reason, "Details:", details)
+    setUploadedFilesWithAnalysis((prev) => {
+      const newFilesWithAnalysis = acceptedFiles.map((file) => ({
+        file,
+        analysis: null,
+        isAnalyzing: false,
+      }))
+      const combined = [...prev, ...newFilesWithAnalysis]
 
-        return {
-          id: `error-${Date.now()}-${Math.random()}`,
-          fileName: file.name,
-          reason,
-          details,
-          timestamp: Date.now(),
-        }
+      // Start analysis for new files
+      acceptedFiles.forEach((file, idx) => {
+        const actualIndex = prev.length + idx
+        analyzeImage(file, actualIndex)
       })
 
-      setUploadErrors((prev) => [...prev, ...newErrors])
+      return combined
+    })
 
-      // Show general error message
-      if (newErrors.length === 1) {
-        setError(newErrors[0].details)
-      } else {
-        setError(`${newErrors.length} files could not be uploaded. See details below.`)
-      }
-
-      // Auto-dismiss error after 10 seconds
-      setTimeout(() => {
-        setError(null)
-      }, 10000)
-    }
-
-    // Handle accepted files
-    if (acceptedFiles.length > 0) {
-      console.log("[v0] Processing", acceptedFiles.length, "accepted files")
-
-      setUploadedFiles((prev) => {
-        const newFiles = [...prev, ...acceptedFiles]
-        setSelectedFiles((prevSelected) => {
-          const newSelected = new Set(prevSelected)
-          for (let i = prev.length; i < newFiles.length; i++) {
-            newSelected.add(i)
-          }
-          return newSelected
-        })
-        return newFiles
-      })
-
-      setUploadedFilesWithAnalysis((prev) => {
-        const newFilesWithAnalysis = acceptedFiles.map((file) => ({
-          file,
-          analysis: null,
-          isAnalyzing: false,
-        }))
-        const combined = [...prev, ...newFilesWithAnalysis]
-
-        // Start analysis for new files
-        acceptedFiles.forEach((file, idx) => {
-          const actualIndex = prev.length + idx
-          analyzeImage(file, actualIndex)
-        })
-
-        return combined
-      })
-
-      setError(null)
-      const totalSize = acceptedFiles.reduce((sum, file) => sum + file.size, 0)
-      trackImageUpload(acceptedFiles.length, totalSize)
-    }
+    setError(null)
+    const totalSize = acceptedFiles.reduce((sum, file) => sum + file.size, 0)
+    trackImageUpload(acceptedFiles.length, totalSize)
   }, [])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -308,14 +242,6 @@ export default function EnhancePage() {
     },
     maxSize: 15 * 1024 * 1024, // 15MB
   })
-
-  const dismissUploadError = (errorId: string) => {
-    setUploadErrors((prev) => prev.filter((err) => err.id !== errorId))
-  }
-
-  const dismissAllUploadErrors = () => {
-    setUploadErrors([])
-  }
 
   const toggleFileSelection = (index: number) => {
     setSelectedFiles((prev) => {
@@ -651,7 +577,7 @@ export default function EnhancePage() {
     const endTime = Date.now()
     const processingTime = ((endTime - startTime) / 1000).toFixed(2)
     trackEnhancementComplete(processingTime, filesToProcess.length, {
-      model: settings.upscaleFactor, // This seems like a typo, likely should be settings.model
+      model: settings.upscaleFactor,
       upscaleFactor: settings.upscaleFactor,
       category: selectedCategory,
     })
@@ -664,12 +590,8 @@ export default function EnhancePage() {
     setEnhancedImages((prev) => prev.map((img) => (img.id === imageId ? { ...img, imageError: true } : img)))
   }
 
-  const downloadImage = async (url: string, filename: string, imageId: string) => {
-    // Added imageId parameter and downloading state tracking
-    setDownloadingImages((prev) => new Set(prev).add(imageId))
-
+  const downloadImage = async (url: string, filename: string) => {
     try {
-      console.log("[v0] Starting download for:", filename)
       const response = await fetch(url)
       const blob = await response.blob()
       const blobUrl = URL.createObjectURL(blob)
@@ -683,24 +605,14 @@ export default function EnhancePage() {
 
       URL.revokeObjectURL(blobUrl)
 
-      console.log("[v0] Download completed:", filename)
-
       trackImageDownload(filename, {
         model: settings.model,
         category: selectedCategory,
         presetId: selectedPresetId,
       })
-
-      setError(null)
     } catch (error) {
-      console.error("[v0] Download failed:", error)
-      setError(`Failed to download ${filename}. Please try again.`)
-    } finally {
-      setDownloadingImages((prev) => {
-        const next = new Set(prev)
-        next.delete(imageId)
-        return next
-      })
+      console.error("Download failed:", error)
+      setError("Failed to download image")
     }
   }
 
@@ -967,7 +879,7 @@ export default function EnhancePage() {
           "stylized avatar portrait with unique artistic flair and creative character design",
           "creative avatar with personalized styling and distinctive artistic features",
           "unique avatar design with artistic interpretation and creative styling",
-          "personalized avatar with creative styling and unique artistic design",
+          "personalized avatar with creative flair and unique artistic design",
           "artistic avatar with distinctive styling and creative character features",
           "creative character design with unique avatar styling and artistic flair",
           "stylized avatar with creative interpretation and unique artistic features",
@@ -1626,55 +1538,7 @@ export default function EnhancePage() {
                       ? "Or upload a photo"
                       : "Drop or click to upload"}
                 </p>
-                <p className="text-xs text-gray-500 mt-2">PNG, JPG, JPEG, WebP • Max 15MB</p>
               </div>
-
-              {uploadErrors.length > 0 && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-red-400">Upload Errors ({uploadErrors.length})</p>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={dismissAllUploadErrors}
-                      className="text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 h-6"
-                    >
-                      Dismiss All
-                    </Button>
-                  </div>
-                  {uploadErrors.map((err) => (
-                    <Card key={err.id} className="bg-red-500/10 border-red-500/30">
-                      <CardContent className="p-3">
-                        <div className="flex items-start gap-2">
-                          <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-                          <div className="flex-1 min-w-0 space-y-1">
-                            <p className="text-sm font-medium text-red-400">{err.reason}</p>
-                            <p className="text-xs text-red-400/80">{err.details}</p>
-                            {err.reason === "File too large" && (
-                              <p className="text-xs text-red-400/60 mt-1">
-                                💡 Tip: Try compressing your image before uploading, or use a smaller resolution.
-                              </p>
-                            )}
-                            {err.reason === "Invalid file type" && (
-                              <p className="text-xs text-red-400/60 mt-1">
-                                💡 Tip: Convert your file to PNG or JPG format and try again.
-                              </p>
-                            )}
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => dismissUploadError(err.id)}
-                            className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-6 w-6 p-0"
-                          >
-                            ×
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
 
               {/* Uploaded Files with Analysis */}
               {uploadedFiles.map((file, index) => (
@@ -1708,10 +1572,11 @@ export default function EnhancePage() {
                         className="aspect-video relative bg-gray-900 rounded overflow-hidden cursor-pointer"
                         onClick={() => toggleFileSelection(index)}
                       >
-                        <img
+                        <Image
                           src={URL.createObjectURL(file) || "/placeholder.svg"}
                           alt={file.name}
-                          className="w-full h-full object-cover"
+                          fill
+                          className="object-cover"
                         />
                         {selectedFiles.has(index) && (
                           <div className="absolute inset-0 bg-amber-500/20 flex items-center justify-center">
@@ -1763,11 +1628,7 @@ export default function EnhancePage() {
                   <Card key={img.id} className="bg-gray-800/50 border-amber-500/30">
                     <CardContent className="p-3 space-y-3">
                       <div className="aspect-video relative bg-gray-900 rounded overflow-hidden">
-                        <img
-                          src={img.preview || "/placeholder.svg"}
-                          alt="Processing"
-                          className="w-full h-full object-cover"
-                        />
+                        <Image src={img.preview || "/placeholder.svg"} alt="Processing" fill className="object-cover" />
                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                           <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
                         </div>
@@ -1795,13 +1656,6 @@ export default function EnhancePage() {
                 Processed
                 <Badge className="bg-green-500/20 text-green-300">{enhancedImages.length}</Badge>
               </CardTitle>
-              {/* You can download ready images while others are still processing */}
-              {processingImages.length > 0 && enhancedImages.length > 0 && (
-                <p className="text-xs text-green-400/80 flex items-center gap-1 mt-2">
-                  <Info className="w-3 h-3" />
-                  You can download ready images while others are still processing
-                </p>
-              )}
             </CardHeader>
             <CardContent className="space-y-4 max-h-[600px] overflow-y-auto">
               {enhancedImages.length === 0 ? (
@@ -1817,10 +1671,12 @@ export default function EnhancePage() {
                         <div className="space-y-1">
                           <p className="text-xs text-gray-500">Original</p>
                           <div className="aspect-square relative bg-gray-900 rounded overflow-hidden">
-                            <img
+                            <Image
                               src={img.originalPreview || "/placeholder.svg"}
                               alt="Original"
-                              className="w-full h-full object-cover"
+                              fill
+                              className="object-cover"
+                              onError={() => console.error("[v0] Failed to load original preview")}
                             />
                           </div>
                         </div>
@@ -1846,11 +1702,13 @@ export default function EnhancePage() {
                                 </Button>
                               </div>
                             ) : (
-                              <img
+                              <Image
                                 src={img.enhanced || "/placeholder.svg"}
                                 alt="Enhanced"
-                                className="w-full h-full object-cover"
+                                fill
+                                className="object-cover"
                                 onError={() => handleImageError(img.id)}
+                                unoptimized // Added to bypass Next.js image optimization for external URLs
                               />
                             )}
                           </div>
@@ -1868,22 +1726,13 @@ export default function EnhancePage() {
                       )}
                       <div className="flex gap-2">
                         <Button
-                          onClick={() => downloadImage(img.enhanced, img.original.name, img.id)}
+                          onClick={() => downloadImage(img.enhanced, img.original.name)}
                           size="sm"
                           className="flex-1 bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/30 text-xs h-8"
-                          disabled={img.imageError || downloadingImages.has(img.id)}
+                          disabled={img.imageError}
                         >
-                          {downloadingImages.has(img.id) ? (
-                            <>
-                              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                              Downloading...
-                            </>
-                          ) : (
-                            <>
-                              <Download className="w-3 h-3 mr-1" />
-                              Download
-                            </>
-                          )}
+                          <Download className="w-3 h-3 mr-1" />
+                          Download
                         </Button>
                         <Button
                           variant="ghost"
