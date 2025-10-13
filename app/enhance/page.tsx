@@ -109,13 +109,11 @@ export default function EnhancePage() {
   // Camera state
   const [isCameraActive, setIsCameraActive] = useState(false)
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null)
+  const [uploadedFilesWithAnalysis, setUploadedFilesWithAnalysis] = useState<UploadedFileWithAnalysis[]>([])
+
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
-  // Added for facial analysis
-  const [uploadedFilesWithAnalysis, setUploadedFilesWithAnalysis] = useState<UploadedFileWithAnalysis[]>([])
-
-  // Moved useEffect to the top to satisfy lint rule
   useEffect(() => {
     const checkAuth = () => {
       const authenticated = isAuthenticated()
@@ -127,172 +125,141 @@ export default function EnhancePage() {
     checkAuth()
   }, [])
 
-  const handleLoginSuccess = () => {
-    console.log("[v0] Login successful, updating state")
-    setIsAuth(true)
-  }
-
-  const handleLogout = () => {
-    logout()
-    setIsAuth(false)
-  }
-
-  if (isCheckingAuth) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Loader2 className="w-12 h-12 text-amber-400 animate-spin mx-auto" />
-          <p className="text-gray-400">Loading...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!isAuth) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black">
-        <Navbar />
-        <LoginModal onSuccess={handleLoginSuccess} />
-      </div>
-    )
-  }
-
-  // Moved useEffect to the top to satisfy lint rule
   useEffect(() => {
-    if (isCameraActive && cameraStream && videoRef.current) {
-      const video = videoRef.current
-      console.log("[v0] Setting up video element with stream")
-
-      // Attach event listener first
-      video.onloadedmetadata = () => {
-        console.log("[v0] Video metadata loaded")
-        console.log("[v0] Video dimensions:", video.videoWidth, "x", video.videoHeight)
-        video
-          .play()
-          .then(() => console.log("[v0] Video playing successfully"))
-          .catch((err) => {
-            console.error("[v0] Video play error:", err)
-            setError("Failed to start video playback")
-          })
-      }
-
-      // Set the stream
-      video.srcObject = cameraStream
-      console.log("[v0] Stream assigned to video element")
-
-      // Fallback: try to play immediately in case metadata is already loaded
-      setTimeout(() => {
-        if (video.readyState >= 2) {
-          console.log("[v0] Video ready, attempting fallback play")
-          video.play().catch((err) => console.log("[v0] Fallback play not needed:", err.message))
-        }
-      }, 100)
+    // Only run camera setup if user is authenticated and camera is active
+    if (!isAuth || !isCameraActive || !cameraStream || !videoRef.current) {
+      return
     }
-  }, [isCameraActive, cameraStream])
 
-  // Added for facial analysis
-  const analyzeImage = async (file: File, index: number) => {
-    try {
-      console.log("[v0] Starting analysis for:", file.name)
+    const video = videoRef.current
+    console.log("[v0] Setting up video element with stream")
 
-      setUploadedFilesWithAnalysis((prev) => {
-        const newFiles = [...prev]
-        newFiles[index] = { ...newFiles[index], isAnalyzing: true }
-        return newFiles
-      })
-
-      const formData = new FormData()
-      formData.append("image", file)
-
-      console.log("[v0] Sending analysis request...")
-      const response = await fetch("/api/analyze-face", {
-        method: "POST",
-        body: formData,
-      })
-
-      console.log("[v0] Analysis response status:", response.status)
-      console.log("[v0] Analysis response headers:", Object.fromEntries(response.headers.entries()))
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error("[v0] Analysis error response:", errorText)
-        throw new Error(`Analysis failed: ${response.status} - ${errorText}`)
-      }
-
-      const data = await response.json()
-      console.log("[v0] Analysis data received:", data)
-
-      if (!data.success || !data.analysis) {
-        throw new Error("Invalid analysis response")
-      }
-
-      setUploadedFilesWithAnalysis((prev) => {
-        const newFiles = [...prev]
-        newFiles[index] = {
-          ...newFiles[index],
-          analysis: data.analysis,
-          isAnalyzing: false,
-        }
-        return newFiles
-      })
-
-      console.log("[v0] Analysis complete for:", file.name)
-    } catch (error: any) {
-      console.error("[v0] Analysis error for", file.name, ":", error)
-      console.error("[v0] Error stack:", error.stack)
-      setUploadedFilesWithAnalysis((prev) => {
-        const newFiles = [...prev]
-        newFiles[index] = { ...newFiles[index], isAnalyzing: false }
-        return newFiles
-      })
-      setError(`Analysis failed: ${error.message}`)
+    // Attach event listener first
+    video.onloadedmetadata = () => {
+      console.log("[v0] Video metadata loaded")
+      console.log("[v0] Video dimensions:", video.videoWidth, "x", video.videoHeight)
+      video
+        .play()
+        .then(() => console.log("[v0] Video playing successfully"))
+        .catch((err) => {
+          console.error("[v0] Video play error:", err)
+          setError("Failed to start video playback")
+        })
     }
-  }
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    setUploadedFiles((prev) => {
-      const newFiles = [...prev, ...acceptedFiles]
-      setSelectedFiles((prevSelected) => {
-        const newSelected = new Set(prevSelected)
-        for (let i = prev.length; i < newFiles.length; i++) {
-          newSelected.add(i)
+    // Set the stream
+    video.srcObject = cameraStream
+    console.log("[v0] Stream assigned to video element")
+
+    // Fallback: try to play immediately in case metadata is already loaded
+    setTimeout(() => {
+      if (video.readyState >= 2) {
+        console.log("[v0] Video ready, attempting fallback play")
+        video.play().catch((err) => console.log("[v0] Fallback play not needed:", err.message))
+      }
+    }, 100)
+  }, [isAuth, isCameraActive, cameraStream])
+
+  const analyzeImage = useCallback(
+    async (file: File, index: number) => {
+      try {
+        console.log("[v0] Starting analysis for:", file.name)
+
+        setUploadedFilesWithAnalysis((prev) => {
+          const newFiles = [...prev]
+          newFiles[index] = { ...newFiles[index], isAnalyzing: true }
+          return newFiles
+        })
+
+        const formData = new FormData()
+        formData.append("image", file)
+
+        console.log("[v0] Sending analysis request...")
+        const response = await fetch("/api/analyze-face", {
+          method: "POST",
+          body: formData,
+        })
+
+        console.log("[v0] Analysis response status:", response.status)
+        console.log("[v0] Analysis response headers:", Object.fromEntries(response.headers.entries()))
+
+        if (!response.ok) {
+          const errorText = await response.text()
+          console.error("[v0] Analysis error response:", errorText)
+          throw new Error(`Analysis failed: ${response.status} - ${errorText}`)
         }
-        return newSelected
-      })
-      return newFiles
-    })
 
-    setUploadedFilesWithAnalysis((prev) => {
-      const newFilesWithAnalysis = acceptedFiles.map((file) => ({
-        file,
-        analysis: null,
-        isAnalyzing: false,
-      }))
-      const combined = [...prev, ...newFilesWithAnalysis]
+        const data = await response.json()
+        console.log("[v0] Analysis data received:", data)
 
-      // Start analysis for new files
-      acceptedFiles.forEach((file, idx) => {
-        const actualIndex = prev.length + idx
-        analyzeImage(file, actualIndex)
-      })
+        if (!data.success || !data.analysis) {
+          throw new Error("Invalid analysis response")
+        }
 
-      return combined
-    })
+        setUploadedFilesWithAnalysis((prev) => {
+          const newFiles = [...prev]
+          newFiles[index] = {
+            ...newFiles[index],
+            analysis: data.analysis,
+            isAnalyzing: false,
+          }
+          return newFiles
+        })
 
-    setError(null)
-    const totalSize = acceptedFiles.reduce((sum, file) => sum + file.size, 0)
-    trackImageUpload(acceptedFiles.length, totalSize)
-  }, [])
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      "image/*": [".png", ".jpg", ".jpeg", ".webp"],
+        console.log("[v0] Analysis complete for:", file.name)
+      } catch (error: any) {
+        console.error("[v0] Analysis error for", file.name, ":", error)
+        console.error("[v0] Error stack:", error.stack)
+        setUploadedFilesWithAnalysis((prev) => {
+          const newFiles = [...prev]
+          newFiles[index] = { ...newFiles[index], isAnalyzing: false }
+          return newFiles
+        })
+        setError(`Analysis failed: ${error.message}`)
+      }
     },
-    maxSize: 15 * 1024 * 1024, // 15MB
-  })
+    [setError],
+  )
 
-  const toggleFileSelection = (index: number) => {
+  const onDrop = useCallback(
+    (acceptedFiles: File[]) => {
+      setUploadedFiles((prev) => {
+        const newFiles = [...prev, ...acceptedFiles]
+        setSelectedFiles((prevSelected) => {
+          const newSelected = new Set(prevSelected)
+          for (let i = prev.length; i < newFiles.length; i++) {
+            newSelected.add(i)
+          }
+          return newSelected
+        })
+        return newFiles
+      })
+
+      setUploadedFilesWithAnalysis((prev) => {
+        const newFilesWithAnalysis = acceptedFiles.map((file) => ({
+          file,
+          analysis: null,
+          isAnalyzing: false,
+        }))
+        const combined = [...prev, ...newFilesWithAnalysis]
+
+        // Start analysis for new files
+        acceptedFiles.forEach((file, idx) => {
+          const actualIndex = prev.length + idx
+          analyzeImage(file, actualIndex)
+        })
+
+        return combined
+      })
+
+      setError(null)
+      const totalSize = acceptedFiles.reduce((sum, file) => sum + file.size, 0)
+      trackImageUpload(acceptedFiles.length, totalSize)
+    },
+    [analyzeImage],
+  )
+
+  const toggleFileSelection = useCallback((index: number) => {
     setSelectedFiles((prev) => {
       const newSelected = new Set(prev)
       if (newSelected.has(index)) {
@@ -302,17 +269,17 @@ export default function EnhancePage() {
       }
       return newSelected
     })
-  }
+  }, [])
 
-  const toggleSelectAll = () => {
+  const toggleSelectAll = useCallback(() => {
     if (selectedFiles.size === uploadedFiles.length) {
       setSelectedFiles(new Set())
     } else {
       setSelectedFiles(new Set(uploadedFiles.map((_, i) => i)))
     }
-  }
+  }, [uploadedFiles.length, selectedFiles.size])
 
-  const removeFile = (index: number) => {
+  const removeFile = useCallback((index: number) => {
     setUploadedFiles((prev) => prev.filter((_, i) => i !== index))
     setUploadedFilesWithAnalysis((prev) => prev.filter((_, i) => i !== index))
     setSelectedFiles((prev) => {
@@ -326,17 +293,17 @@ export default function EnhancePage() {
       })
       return newSelected
     })
-  }
+  }, [])
 
-  const removeProcessingImage = (id: string) => {
+  const removeProcessingImage = useCallback((id: string) => {
     setProcessingImages((prev) => prev.filter((img) => img.id !== id))
-  }
+  }, [])
 
-  const removeEnhancedImage = (id: string) => {
+  const removeEnhancedImage = useCallback((id: string) => {
     setEnhancedImages((prev) => prev.filter((img) => img.id !== id))
-  }
+  }, [])
 
-  const applyPreset = (presetId: string) => {
+  const applyPreset = useCallback((presetId: string) => {
     const preset = ALL_PRESETS[presetId]
     if (preset) {
       setSelectedPresetId(presetId)
@@ -345,19 +312,22 @@ export default function EnhancePage() {
       setShowAdvanced(false)
       trackPresetSelection(presetId, preset.category)
     }
-  }
+  }, [])
 
-  const switchCategory = (category: PresetCategory) => {
-    trackCategorySwitch(selectedCategory, category)
-    setSelectedCategory(category)
-    const presetsInCategory = getPresetsByCategory(category)
-    if (presetsInCategory.length > 0) {
-      applyPreset(presetsInCategory[0].id)
-    }
-  }
+  const switchCategory = useCallback(
+    (category: PresetCategory) => {
+      trackCategorySwitch(selectedCategory, category)
+      setSelectedCategory(category)
+      const presetsInCategory = getPresetsByCategory(category)
+      if (presetsInCategory.length > 0) {
+        applyPreset(presetsInCategory[0].id)
+      }
+    },
+    [applyPreset, selectedCategory],
+  )
 
   // Camera functions
-  const startCamera = async () => {
+  const startCamera = useCallback(async () => {
     try {
       console.log("[v0] Requesting camera access...")
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -386,17 +356,17 @@ export default function EnhancePage() {
       }
       setIsCameraActive(false)
     }
-  }
+  }, [])
 
-  const stopCamera = () => {
+  const stopCamera = useCallback(() => {
     if (cameraStream) {
       cameraStream.getTracks().forEach((track) => track.stop())
       setCameraStream(null)
       setIsCameraActive(false)
     }
-  }
+  }, [cameraStream])
 
-  const capturePhoto = () => {
+  const capturePhoto = useCallback(() => {
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current
       const canvas = canvasRef.current
@@ -438,9 +408,9 @@ export default function EnhancePage() {
         }, "image/jpeg")
       }
     }
-  }
+  }, [stopCamera, analyzeImage])
 
-  const handleEnhance = async () => {
+  const handleEnhance = useCallback(async () => {
     if (selectedFiles.size === 0) {
       setError("Please select at least one image to enhance")
       return
@@ -632,40 +602,53 @@ export default function EnhancePage() {
     })
 
     setIsProcessing(false)
-  }
+  }, [
+    selectedFiles,
+    uploadedFiles,
+    settings,
+    selectedCategory,
+    selectedPresetId,
+    removeProcessingImage,
+    trackEnhancementComplete,
+    trackEnhancementFailure,
+    trackEnhancementStart,
+  ])
 
-  const handleImageError = (imageId: string) => {
+  const handleImageError = useCallback((imageId: string) => {
     console.error("[v0] Failed to load enhanced image:", imageId)
     setEnhancedImages((prev) => prev.map((img) => (img.id === imageId ? { ...img, imageError: true } : img)))
-  }
+  }, [])
 
-  const downloadImage = async (url: string, filename: string) => {
-    try {
-      const response = await fetch(url)
-      const blob = await response.blob()
-      const blobUrl = URL.createObjectURL(blob)
+  const downloadImage = useCallback(
+    async (url: string, filename: string) => {
+      try {
+        const response = await fetch(url)
+        const blob = await response.blob()
+        const blobUrl = URL.createObjectURL(blob)
 
-      const link = document.createElement("a")
-      link.href = blobUrl
-      link.download = `enhanced-${filename}`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
+        const link = document.createElement("a")
+        link.href = blobUrl
+        link.download = `enhanced-${filename}`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
 
-      URL.revokeObjectURL(blobUrl)
+        URL.revokeObjectURL(blobUrl)
 
-      trackImageDownload(filename, {
-        model: settings.model,
-        category: selectedCategory,
-        presetId: selectedPresetId,
-      })
-    } catch (error) {
-      console.error("Download failed:", error)
-      setError("Failed to download image")
-    }
-  }
+        trackImageDownload(filename, {
+          model: settings.model,
+          category: selectedCategory,
+          presetId: selectedPresetId,
+        })
+      } catch (error) {
+        console.error("Download failed:", error)
+        setError("Failed to download image")
+      }
+    },
+    [settings.model, selectedCategory, selectedPresetId],
+  )
 
-  const generatePrompt = () => {
+  const generatePrompt = useCallback(() => {
     setIsGeneratingPrompt(true)
 
     const creativity = settings.creativity
@@ -1001,9 +984,47 @@ export default function EnhancePage() {
       setSettings((prev) => ({ ...prev, prompt: selectedPrompt }))
       setIsGeneratingPrompt(false)
     }, 500)
-  }
+  }, [settings.creativity, selectedFiles, uploadedFilesWithAnalysis, selectedCategory, selectedPresetId, setSettings])
+
+  const handleLoginSuccess = useCallback(() => {
+    console.log("[v0] Login successful, updating state")
+    setIsAuth(true)
+  }, [])
+
+  const handleLogout = useCallback(() => {
+    logout()
+    setIsAuth(false)
+  }, [])
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      "image/*": [".png", ".jpg", ".jpeg", ".webp"],
+    },
+    maxSize: 15 * 1024 * 1024, // 15MB
+  })
 
   const currentPresets = getPresetsByCategory(selectedCategory)
+
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-12 h-12 text-amber-400 animate-spin mx-auto" />
+          <p className="text-gray-400">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isAuth) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black">
+        <Navbar />
+        <LoginModal onSuccess={handleLoginSuccess} />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black">
