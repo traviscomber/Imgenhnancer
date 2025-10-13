@@ -116,6 +116,15 @@ export async function POST(request: NextRequest) {
     try {
       console.log("[v0] [ANALYZE] Step 9: Calling OpenAI GPT-4 Vision...")
 
+      const base64SizeInBytes = (base64Image.length * 3) / 4
+      const base64SizeInMB = base64SizeInBytes / (1024 * 1024)
+      console.log("[v0] [ANALYZE] Base64 image size:", base64SizeInMB.toFixed(2), "MB")
+
+      if (base64SizeInMB > 15) {
+        console.log("[v0] [ANALYZE] Image too large for OpenAI API, using fallback")
+        throw new Error("Image too large for analysis")
+      }
+
       const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -158,13 +167,23 @@ Only return the JSON, no other text.`,
 
       console.log("[v0] [ANALYZE] Step 10: OpenAI response status:", response.status)
 
+      const responseText = await response.text()
+      console.log("[v0] [ANALYZE] Response text preview:", responseText.substring(0, 200))
+
       if (!response.ok) {
-        const errorText = await response.text()
-        console.error("[v0] [ANALYZE] OpenAI API error:", errorText)
-        throw new Error(`OpenAI API error: ${response.status} - ${errorText}`)
+        console.error("[v0] [ANALYZE] OpenAI API error:", responseText)
+        throw new Error(`OpenAI API error: ${response.status} - ${responseText}`)
       }
 
-      const data = await response.json()
+      let data
+      try {
+        data = JSON.parse(responseText)
+      } catch (parseError: any) {
+        console.error("[v0] [ANALYZE] JSON parse error:", parseError.message)
+        console.error("[v0] [ANALYZE] Response was:", responseText)
+        throw new Error(`Failed to parse OpenAI response as JSON: ${parseError.message}`)
+      }
+
       console.log("[v0] [ANALYZE] Step 11: OpenAI response received")
 
       const content = data.choices[0]?.message?.content
