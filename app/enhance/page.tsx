@@ -27,6 +27,7 @@ import {
   ArrowRight,
   Camera,
   VideoOff,
+  LogOut,
 } from "lucide-react"
 import Image from "next/image"
 import { compressImageForUpload } from "@/utils/image-processing"
@@ -42,6 +43,8 @@ import {
   trackAdvancedSettings,
 } from "@/lib/analytics"
 import { FacialAnalysisCard } from "@/components/facial-analysis-card"
+import { isAuthenticated, logout } from "@/lib/auth" // Added for authentication
+import { LoginModal } from "@/components/auth/login-modal" // Added for login modal
 
 interface EnhancedImage {
   id: string
@@ -88,6 +91,9 @@ interface UploadedFileWithAnalysis {
 }
 
 export default function EnhancePage() {
+  const [isAuth, setIsAuth] = useState(false)
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
+
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
   const [selectedFiles, setSelectedFiles] = useState<Set<number>>(new Set())
   const [processingImages, setProcessingImages] = useState<ProcessingImage[]>([]) // Track processing images
@@ -109,6 +115,49 @@ export default function EnhancePage() {
   // Added for facial analysis
   const [uploadedFilesWithAnalysis, setUploadedFilesWithAnalysis] = useState<UploadedFileWithAnalysis[]>([])
 
+  // Moved useEffect to the top to satisfy lint rule
+  useEffect(() => {
+    const checkAuth = () => {
+      const authenticated = isAuthenticated()
+      console.log("[v0] Authentication check:", authenticated)
+      setIsAuth(authenticated)
+      setIsCheckingAuth(false)
+    }
+
+    checkAuth()
+  }, [])
+
+  const handleLoginSuccess = () => {
+    console.log("[v0] Login successful, updating state")
+    setIsAuth(true)
+  }
+
+  const handleLogout = () => {
+    logout()
+    setIsAuth(false)
+  }
+
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-12 h-12 text-amber-400 animate-spin mx-auto" />
+          <p className="text-gray-400">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isAuth) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black">
+        <Navbar />
+        <LoginModal onSuccess={handleLoginSuccess} />
+      </div>
+    )
+  }
+
+  // Moved useEffect to the top to satisfy lint rule
   useEffect(() => {
     if (isCameraActive && cameraStream && videoRef.current) {
       const video = videoRef.current
@@ -963,6 +1012,17 @@ export default function EnhancePage() {
       <main className="container mx-auto px-4 py-8 md:py-12">
         {/* Header */}
         <div className="text-center space-y-4 mb-8 md:mb-12">
+          <div className="flex justify-end mb-4">
+            <Button
+              onClick={handleLogout}
+              variant="outline"
+              size="sm"
+              className="bg-transparent border-gray-700 text-gray-400 hover:border-red-500/50 hover:text-red-400"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Logout
+            </Button>
+          </div>
           <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20">
             <Sparkles className="w-4 h-4 mr-2 inline" />
             AI-Powered Enhancement
@@ -1325,7 +1385,7 @@ export default function EnhancePage() {
                   {selectedCategory === "faces"
                     ? "AI will generate prompts that preserve facial features and cultural details"
                     : selectedCategory === "abstract"
-                      ? "AI will generate creative prompts based on your creativity level"
+                      ? "AI will generate prompts based on your creativity level"
                       : selectedCategory === "avatar"
                         ? "AI will generate prompts that enhance avatar features and artistic style"
                         : "AI will generate experimental prompts pushing artistic boundaries"}
