@@ -22,30 +22,45 @@ export function LoginModal({ onSuccess }: LoginModalProps) {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const [isSettingUp, setIsSettingUp] = useState(false)
 
-  const handleSetupAdmin = async () => {
-    setIsSettingUp(true)
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
     setError("")
+    setIsLoading(true)
+
+    const trimmedEmail = email.trim()
+    const trimmedPassword = password.trim()
+
+    if (!trimmedEmail || !trimmedPassword) {
+      setError("Please enter both email and password")
+      setIsLoading(false)
+      return
+    }
+
+    console.log("[v0] Attempting login with email:", trimmedEmail)
 
     try {
-      const response = await fetch("/api/setup-admin", {
-        method: "POST",
-      })
+      const { user, error: loginError } = await login(trimmedEmail, trimmedPassword)
 
-      const data = await response.json()
-
-      if (response.ok) {
-        setError("")
-        alert("Admin user created! You can now login with admin@clarity.art / N3uralia.2025")
+      if (loginError) {
+        console.error("[v0] Login error:", loginError)
+        if (loginError.includes("Invalid login credentials")) {
+          setError("Invalid credentials. First time? Click 'Setup Admin User' below to create your account.")
+        } else {
+          setError(loginError)
+        }
+        setPassword("")
+      } else if (user) {
+        console.log("[v0] Login successful:", user)
+        onSuccess()
       } else {
-        setError(data.error || "Failed to setup admin user")
+        setError("Login failed - no user returned")
       }
     } catch (err) {
-      setError("Failed to setup admin user")
-      console.error("[v0] Setup error:", err)
+      setError("An unexpected error occurred")
+      console.error("[v0] Login exception:", err)
     } finally {
-      setIsSettingUp(false)
+      setIsLoading(false)
     }
   }
 
@@ -114,47 +129,6 @@ export function LoginModal({ onSuccess }: LoginModalProps) {
     } catch (err) {
       setError("An unexpected error occurred")
       console.error("[v0] Sign up exception:", err)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    setIsLoading(true)
-
-    const trimmedEmail = email.trim()
-    const trimmedPassword = password.trim()
-
-    if (!trimmedEmail || !trimmedPassword) {
-      setError("Please enter both email and password")
-      setIsLoading(false)
-      return
-    }
-
-    console.log("[v0] Attempting login with email:", trimmedEmail)
-
-    try {
-      const { user, error: loginError } = await login(trimmedEmail, trimmedPassword)
-
-      if (loginError) {
-        console.error("[v0] Login error:", loginError)
-        if (loginError.includes("Invalid login credentials")) {
-          setError("Invalid credentials. First time? Click 'Setup Admin User' below to create your account.")
-        } else {
-          setError(loginError)
-        }
-        setPassword("")
-      } else if (user) {
-        console.log("[v0] Login successful:", user)
-        onSuccess()
-      } else {
-        setError("Login failed - no user returned")
-      }
-    } catch (err) {
-      setError("An unexpected error occurred")
-      console.error("[v0] Login exception:", err)
     } finally {
       setIsLoading(false)
     }
@@ -275,33 +249,11 @@ export function LoginModal({ onSuccess }: LoginModalProps) {
                 setPassword("")
                 setConfirmPassword("")
               }}
-              className="text-sm text-gray-400 hover:text-amber-500 transition-colors"
+              className="text-sm text-amber-500 hover:text-amber-400 transition-colors"
             >
               {mode === "signin" ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
             </button>
           </div>
-
-          {mode === "signin" && (
-            <div className="mt-6 pt-6 border-t border-gray-800 space-y-3">
-              <p className="text-center text-sm text-gray-500">Default admin: admin@clarity.art / N3uralia.2025</p>
-              <Button
-                type="button"
-                onClick={handleSetupAdmin}
-                disabled={isSettingUp}
-                variant="outline"
-                className="w-full border-amber-500/30 text-amber-500 hover:bg-amber-500/10 bg-transparent"
-              >
-                {isSettingUp ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Setting up admin...
-                  </>
-                ) : (
-                  "First time? Setup Admin User"
-                )}
-              </Button>
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>

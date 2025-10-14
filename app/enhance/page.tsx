@@ -9,7 +9,6 @@ import { Progress } from "@/components/ui/progress"
 import { Slider } from "@/components/ui/slider"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import {
   Upload,
@@ -28,6 +27,7 @@ import {
   Camera,
   VideoOff,
   LogOut,
+  Lock,
 } from "lucide-react"
 import Image from "next/image"
 import { compressImageForUpload } from "@/utils/image-processing"
@@ -135,8 +135,8 @@ export default function EnhancePage() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
-    const checkAuth = () => {
-      const authenticated = isAuthenticated()
+    const checkAuth = async () => {
+      const authenticated = await isAuthenticated()
       console.log("[v0] Authentication check:", authenticated)
       setIsAuth(authenticated)
       setIsCheckingAuth(false)
@@ -1481,6 +1481,11 @@ export default function EnhancePage() {
     setIsAuth(true)
   }, [])
 
+  // ADDED HANDLER:
+  const handleShowLogin = useCallback(() => {
+    setIsAuth(false) // This will trigger the !isAuth check and show the modal
+  }, [])
+
   const handleLogout = useCallback(() => {
     logout()
     setIsAuth(false)
@@ -1507,17 +1512,21 @@ export default function EnhancePage() {
     )
   }
 
-  if (!isAuth) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black">
-        <Navbar />
-        <LoginModal onSuccess={handleLoginSuccess} />
-      </div>
-    )
-  }
+  // REMOVED: The whole LoginModal component here, handled conditionally below
+  // if (!isAuth) {
+  //   return (
+  //     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black">
+  //       <Navbar />
+  //       <LoginModal onSuccess={handleLoginSuccess} />
+  //     </div>
+  //   )
+  // }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black text-white">
+      {/* ADDED CONDITIONAL LOGIN MODAL */}
+      {!isAuth && <LoginModal onSuccess={handleLoginSuccess} />}
+
       <div className="sticky top-0 z-50 bg-gray-950/80 backdrop-blur-lg border-b border-gray-800">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <h1 className="text-2xl font-bold bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
@@ -1525,14 +1534,26 @@ export default function EnhancePage() {
           </h1>
           <div className="flex items-center gap-4">
             {!isLoadingCredits && <CreditDisplay credits={userCredits} />}
-            <Button
-              onClick={handleLogout}
-              variant="outline"
-              size="sm"
-              className="bg-transparent border-gray-700 text-gray-300 hover:bg-gray-800"
-            >
-              Logout
-            </Button>
+            {/* CHANGED: Show Login button when not authenticated, Logout when authenticated */}
+            {isAuth ? (
+              <Button
+                onClick={handleLogout}
+                variant="outline"
+                size="sm"
+                className="bg-transparent border-gray-700 text-gray-300 hover:bg-gray-800"
+              >
+                Logout
+              </Button>
+            ) : (
+              <Button
+                onClick={handleShowLogin} // Use the new handler here
+                variant="outline"
+                size="sm"
+                className="bg-transparent border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
+              >
+                Login
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -1541,15 +1562,28 @@ export default function EnhancePage() {
         {/* Header */}
         <div className="text-center space-y-4 mb-8 md:mb-12">
           <div className="flex justify-end mb-4">
-            <Button
-              onClick={handleLogout}
-              variant="outline"
-              size="sm"
-              className="bg-transparent border-gray-700 text-gray-400 hover:border-red-500/50 hover:text-red-400"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
-            </Button>
+            {/* CHANGED: Show Login button when not authenticated, Logout when authenticated */}
+            {isAuth ? (
+              <Button
+                onClick={handleLogout}
+                variant="outline"
+                size="sm"
+                className="bg-transparent border-gray-700 text-gray-400 hover:border-red-500/50 hover:text-red-400"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </Button>
+            ) : (
+              <Button
+                onClick={handleShowLogin} // Use the new handler here
+                variant="outline"
+                size="sm"
+                className="bg-transparent border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
+              >
+                <Lock className="w-4 h-4 mr-2" /> {/* Added Lock icon */}
+                Login
+              </Button>
+            )}
           </div>
           <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20">
             <Sparkles className="w-4 h-4 mr-2 inline" />
@@ -2039,13 +2073,11 @@ export default function EnhancePage() {
           {/* Column 1: Uploaded */}
           <Card className="bg-gray-900/50 border-gray-800">
             <CardHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Upload className="w-5 h-5 text-blue-400" />
-                  Uploaded
-                  <Badge className="bg-blue-500/20 text-blue-300">{uploadedFiles.length}</Badge>
-                </CardTitle>
-              </div>
+              <CardTitle className="text-white flex items-center gap-2">
+                <Upload className="w-5 h-5 text-blue-400" />
+                Uploaded
+                <Badge className="bg-blue-500/20 text-blue-300">{uploadedFiles.length}</Badge>
+              </CardTitle>
               {uploadedFiles.length > 0 && (
                 <div className="flex items-center gap-2 pt-2">
                   <Button
