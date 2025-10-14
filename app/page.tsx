@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -21,17 +22,30 @@ import {
   Building2,
   Church,
 } from "lucide-react"
-import Link from "next/link"
 import { trackCTAClick, trackExampleView } from "@/lib/analytics"
+import { logout } from "@/lib/auth"
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("home")
+  const router = useRouter()
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab)
     if (tab === "examples" || tab === "professional") {
       trackExampleView(tab, tab)
     }
+  }
+
+  const handleTryEnhancer = async () => {
+    trackCTAClick("hero", "Try Enhancer")
+    await logout()
+    router.push("/enhance")
+  }
+
+  const handleGetStarted = async () => {
+    trackCTAClick("bottom_cta", "Get Started Free")
+    await logout()
+    router.push("/enhance")
   }
 
   return (
@@ -53,16 +67,14 @@ export default function Home() {
             memories, and elevate your creative work.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            <Link href="/enhance">
-              <Button
-                size="lg"
-                className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold px-6 md:px-8 text-sm md:text-base w-full sm:w-auto"
-                onClick={() => trackCTAClick("hero", "Try Enhancer")}
-              >
-                Try Enhancer
-                <ArrowRight className="ml-2 w-4 h-4 md:w-5 md:h-5" />
-              </Button>
-            </Link>
+            <Button
+              size="lg"
+              className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold px-6 md:px-8 text-sm md:text-base w-full sm:w-auto"
+              onClick={handleTryEnhancer}
+            >
+              Try Enhancer
+              <ArrowRight className="ml-2 w-4 h-4 md:w-5 md:h-5" />
+            </Button>
             <Button
               size="lg"
               variant="outline"
@@ -431,16 +443,14 @@ export default function Home() {
           <p className="text-sm md:text-base text-gray-400 max-w-2xl mx-auto">
             Join thousands of professionals using clar1ty to enhance their images with AI
           </p>
-          <Link href="/enhance">
-            <Button
-              size="lg"
-              className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold px-6 md:px-8 text-sm md:text-base"
-              onClick={() => trackCTAClick("bottom_cta", "Get Started Free")}
-            >
-              Get Started Free
-              <ArrowRight className="ml-2 w-4 h-4 md:w-5 md:h-5" />
-            </Button>
-          </Link>
+          <Button
+            size="lg"
+            className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold px-6 md:px-8 text-sm md:text-base"
+            onClick={handleGetStarted}
+          >
+            Get Started Free
+            <ArrowRight className="ml-2 w-4 h-4 md:w-5 md:h-5" />
+          </Button>
         </div>
       </section>
 

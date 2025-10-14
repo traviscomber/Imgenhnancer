@@ -207,7 +207,9 @@ export default function EnhancePage() {
 
         setUploadedFilesWithAnalysis((prev) => {
           const newFiles = [...prev]
-          newFiles[index] = { ...newFiles[index], isAnalyzing: true }
+          newFiles[index] = newFiles[index]
+            ? { ...newFiles[index], isAnalyzing: true }
+            : { file, analysis: null, isAnalyzing: true }
           return newFiles
         })
 
@@ -238,11 +240,13 @@ export default function EnhancePage() {
 
         setUploadedFilesWithAnalysis((prev) => {
           const newFiles = [...prev]
-          newFiles[index] = {
-            ...newFiles[index],
-            analysis: data.analysis,
-            isAnalyzing: false,
-          }
+          newFiles[index] = newFiles[index]
+            ? {
+                ...newFiles[index],
+                analysis: data.analysis,
+                isAnalyzing: false,
+              }
+            : { file, analysis: data.analysis, isAnalyzing: false }
           return newFiles
         })
 
@@ -252,7 +256,9 @@ export default function EnhancePage() {
         console.error("[v0] Error stack:", error.stack)
         setUploadedFilesWithAnalysis((prev) => {
           const newFiles = [...prev]
-          newFiles[index] = { ...newFiles[index], isAnalyzing: false }
+          newFiles[index] = newFiles[index]
+            ? { ...newFiles[index], isAnalyzing: false }
+            : { file, analysis: null, isAnalyzing: false }
           return newFiles
         })
         setError(`Analysis failed: ${error.message}`)
@@ -2162,69 +2168,73 @@ export default function EnhancePage() {
               </div>
 
               {/* Uploaded Files with Analysis */}
-              {uploadedFiles.map((file, index) => (
-                <div key={index} className="space-y-2">
-                  <Card
-                    className={`bg-gray-800/50 transition-all ${
-                      selectedFiles.has(index) ? "border-amber-500 ring-2 ring-amber-500/20" : "border-gray-700"
-                    }`}
-                  >
-                    <CardContent className="p-3">
-                      <div className="flex items-start gap-2 mb-2">
-                        <Checkbox
-                          checked={selectedFiles.has(index)}
-                          onCheckedChange={() => toggleFileSelection(index)}
-                          className="mt-1"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-white truncate">{file.name}</p>
-                          <p className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeFile(index)}
-                          className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-6 w-6 p-0"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
-                      </div>
-                      <div
-                        className={`${getAspectRatioClass(index)} relative bg-gray-900 rounded overflow-hidden cursor-pointer`}
-                        onClick={() => toggleFileSelection(index)}
-                      >
-                        <img
-                          src={URL.createObjectURL(file) || "/placeholder.svg"}
-                          alt={file.name}
-                          className={`w-full h-full ${shouldUseContain(index) ? "object-contain" : "object-cover"}`}
-                        />
-                        {selectedFiles.has(index) && (
-                          <div className="absolute inset-0 bg-amber-500/20 flex items-center justify-center">
-                            <CheckCircle2 className="w-8 h-8 text-amber-400" />
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
+              {uploadedFiles.map((file, index) => {
+                const analysisData = uploadedFilesWithAnalysis[index]
 
-                  {uploadedFilesWithAnalysis[index]?.isAnalyzing && (
-                    <Card className="bg-purple-500/10 border-purple-500/30">
-                      <CardContent className="p-3 flex items-center gap-2">
-                        <Loader2 className="w-4 h-4 text-purple-400 animate-spin" />
-                        <span className="text-sm text-purple-300">Analyzing facial features...</span>
+                return (
+                  <div key={index} className="space-y-2">
+                    <Card
+                      className={`bg-gray-800/50 transition-all ${
+                        selectedFiles.has(index) ? "border-amber-500 ring-2 ring-amber-500/20" : "border-gray-700"
+                      }`}
+                    >
+                      <CardContent className="p-3">
+                        <div className="flex items-start gap-2 mb-2">
+                          <Checkbox
+                            checked={selectedFiles.has(index)}
+                            onCheckedChange={() => toggleFileSelection(index)}
+                            className="mt-1"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-white truncate">{file.name}</p>
+                            <p className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeFile(index)}
+                            className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-6 w-6 p-0"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                        <div
+                          className={`${getAspectRatioClass(index)} relative bg-gray-900 rounded overflow-hidden cursor-pointer`}
+                          onClick={() => toggleFileSelection(index)}
+                        >
+                          <img
+                            src={URL.createObjectURL(file) || "/placeholder.svg"}
+                            alt={file.name}
+                            className={`w-full h-full ${shouldUseContain(index) ? "object-contain" : "object-cover"}`}
+                          />
+                          {selectedFiles.has(index) && (
+                            <div className="absolute inset-0 bg-amber-500/20 flex items-center justify-center">
+                              <CheckCircle2 className="w-8 h-8 text-amber-400" />
+                            </div>
+                          )}
+                        </div>
                       </CardContent>
                     </Card>
-                  )}
 
-                  {uploadedFilesWithAnalysis[index]?.analysis && (
-                    <FacialAnalysisCard
-                      analysis={uploadedFilesWithAnalysis[index].analysis!}
-                      selectedCategory={selectedCategory}
-                      selectedPreset={ALL_PRESETS[selectedPresetId]?.name || ""}
-                    />
-                  )}
-                </div>
-              ))}
+                    {analysisData?.isAnalyzing && (
+                      <Card className="bg-purple-500/10 border-purple-500/30">
+                        <CardContent className="p-3 flex items-center gap-2">
+                          <Loader2 className="w-4 h-4 text-purple-400 animate-spin" />
+                          <span className="text-sm text-purple-300">Analyzing facial features...</span>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {analysisData?.analysis && (
+                      <FacialAnalysisCard
+                        analysis={analysisData.analysis}
+                        selectedCategory={selectedCategory}
+                        selectedPreset={ALL_PRESETS[selectedPresetId]?.name || ""}
+                      />
+                    )}
+                  </div>
+                )
+              })}
             </CardContent>
           </Card>
 
