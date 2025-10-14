@@ -71,7 +71,8 @@ export async function POST(request: NextRequest) {
     if (transactionError) throw transactionError
 
     // Send WhatsApp notification to admin
-    await sendPaymentNotification(ADMIN_PHONE, {
+    console.log("[v0] Attempting to send WhatsApp notification...")
+    const notificationSent = await sendPaymentNotification(ADMIN_PHONE, {
       type: "crypto",
       amount: packageData.price_usd,
       currency: "USDT",
@@ -80,6 +81,12 @@ export async function POST(request: NextRequest) {
       userEmail,
       transactionId: transactionHash,
     })
+
+    if (!notificationSent) {
+      console.error("[v0] Failed to send WhatsApp notification, but payment was processed successfully")
+    } else {
+      console.log("[v0] WhatsApp notification sent successfully")
+    }
 
     console.log("[v0] Successfully verified crypto payment and added credits")
 
