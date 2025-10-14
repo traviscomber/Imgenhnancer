@@ -90,6 +90,14 @@ interface UploadedFileWithAnalysis {
   isAnalyzing: boolean
 }
 
+// Added UploadError interface
+interface UploadError {
+  id: string
+  fileName: string
+  error: string
+  tip: string
+}
+
 export default function EnhancePage() {
   const [isAuth, setIsAuth] = useState(false)
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
@@ -110,6 +118,11 @@ export default function EnhancePage() {
   const [isCameraActive, setIsCameraActive] = useState(false)
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null)
   const [uploadedFilesWithAnalysis, setUploadedFilesWithAnalysis] = useState<UploadedFileWithAnalysis[]>([])
+
+  // Added uploadErrors state
+  const [uploadErrors, setUploadErrors] = useState<UploadError[]>([])
+  // Added downloadingImages state
+  const [downloadingImages, setDownloadingImages] = useState<Set<string>>(new Set())
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -222,41 +235,103 @@ export default function EnhancePage() {
   )
 
   const onDrop = useCallback(
-    (acceptedFiles: File[]) => {
-      setUploadedFiles((prev) => {
-        const newFiles = [...prev, ...acceptedFiles]
-        setSelectedFiles((prevSelected) => {
-          const newSelected = new Set(prevSelected)
-          for (let i = prev.length; i < newFiles.length; i++) {
-            newSelected.add(i)
+    (acceptedFiles: File[], rejectedFiles: any[]) => {
+      console.log("[v0] Files dropped:", { accepted: acceptedFiles.length, rejected: rejectedFiles.length })
+
+      // Handle rejected files
+      if (rejectedFiles.length > 0) {
+        const newErrors: UploadError[] = rejectedFiles.map((rejection) => {
+          const file = rejection.file
+          const errors = rejection.errors
+
+          let errorMessage = "Upload failed"
+          let tip = "Please try again"
+
+          if (errors.some((e: any) => e.code === "file-too-large")) {
+            errorMessage = `File too large: ${file.name}`
+            tip = `Maximum file size is 15MB. Current size: ${(file.size / 1024 / 1024).toFixed(2)}MB. Try compressing the image first.`
+          } else if (errors.some((e: any) => e.code === "file-invalid-type")) {
+            errorMessage = `Invalid file type: ${file.name}`
+            tip = "Only PNG, JPG, JPEG, and WebP images are supported. Please convert your file to a supported format."
+          } else {
+            errorMessage = `Cannot upload: ${file.name}`
+            tip = errors.map((e: any) => e.message).join(", ")
           }
-          return newSelected
-        })
-        return newFiles
-      })
 
-      setUploadedFilesWithAnalysis((prev) => {
-        const newFilesWithAnalysis = acceptedFiles.map((file) => ({
-          file,
-          analysis: null,
-          isAnalyzing: false,
-        }))
-        const combined = [...prev, ...newFilesWithAnalysis]
-
-        // Start analysis for new files
-        acceptedFiles.forEach((file, idx) => {
-          const actualIndex = prev.length + idx
-          analyzeImage(file, actualIndex)
+          return {
+            id: `error-${Date.now()}-${Math.random()}`,
+            fileName: file.name,
+            error: errorMessage,
+            tip,
+          }
         })
 
-        return combined
-      })
+        setUploadErrors((prev) => [...prev, ...newErrors])
 
-      setError(null)
-      const totalSize = acceptedFiles.reduce((sum, file) => sum + file.size, 0)
-      trackImageUpload(acceptedFiles.length, totalSize)
+        // Auto-dismiss errors after 10 seconds
+        setTimeout(() => {
+          setUploadErrors((prev) => prev.filter((e) => !newErrors.find((ne) => ne.id === e.id)))
+        }, 10000)
+      }
+
+      // Handle accepted files
+      if (acceptedFiles.length > 0) {
+        // Check for duplicates
+        const existingNames = new Set(uploadedFiles.map((f) => f.name))
+        const newFiles = acceptedFiles.filter((file) => {
+          if (existingNames.has(file.name)) {
+            const duplicateError: UploadError = {
+              id: `error-${Date.now()}-${Math.random()}`,
+              fileName: file.name,
+              error: `Duplicate file: ${file.name}`,
+              tip: "This file is already uploaded. Please rename it if you want to upload it again.",
+            }
+            setUploadErrors((prev) => [...prev, duplicateError])
+            setTimeout(() => {
+              setUploadErrors((prev) => prev.filter((e) => e.id !== duplicateError.id))
+            }, 10000)
+            return false
+          }
+          return true
+        })
+
+        if (newFiles.length === 0) return
+
+        setUploadedFiles((prev) => {
+          const combined = [...prev, ...newFiles]
+          setSelectedFiles((prevSelected) => {
+            const newSelected = new Set(prevSelected)
+            for (let i = prev.length; i < combined.length; i++) {
+              newSelected.add(i)
+            }
+            return newSelected
+          })
+          return combined
+        })
+
+        setUploadedFilesWithAnalysis((prev) => {
+          const newFilesWithAnalysis = newFiles.map((file) => ({
+            file,
+            analysis: null,
+            isAnalyzing: false,
+          }))
+          const combined = [...prev, ...newFilesWithAnalysis]
+
+          // Start analysis for new files in parallel
+          newFiles.forEach((file, idx) => {
+            const actualIndex = prev.length + idx
+            analyzeImage(file, actualIndex)
+          })
+
+          return combined
+        })
+
+        setError(null)
+        const totalSize = newFiles.reduce((sum, file) => sum + file.size, 0)
+        trackImageUpload(newFiles.length, totalSize)
+      }
     },
-    [analyzeImage],
+    [analyzeImage, uploadedFiles],
   )
 
   const toggleFileSelection = useCallback((index: number) => {
@@ -620,9 +695,15 @@ export default function EnhancePage() {
   }, [])
 
   const downloadImage = useCallback(
-    async (url: string, filename: string) => {
+    async (url: string, filename: string, imageId: string) => {
       try {
+        setDownloadingImages((prev) => new Set(prev).add(imageId))
+
         const response = await fetch(url)
+        if (!response.ok) {
+          throw new Error(`Failed to fetch image: ${response.status}`)
+        }
+
         const blob = await response.blob()
         const blobUrl = URL.createObjectURL(blob)
 
@@ -640,12 +721,158 @@ export default function EnhancePage() {
           category: selectedCategory,
           presetId: selectedPresetId,
         })
-      } catch (error) {
-        console.error("Download failed:", error)
-        setError("Failed to download image")
+
+        // Show success message briefly
+        setTimeout(() => {
+          setDownloadingImages((prev) => {
+            const next = new Set(prev)
+            next.delete(imageId)
+            return next
+          })
+        }, 1000)
+      } catch (error: any) {
+        console.error("[v0] Download failed:", error)
+        setError(`Failed to download ${filename}: ${error.message}`)
+        setDownloadingImages((prev) => {
+          const next = new Set(prev)
+          next.delete(imageId)
+          return next
+        })
       }
     },
     [settings.model, selectedCategory, selectedPresetId],
+  )
+
+  const retryProcessing = useCallback(
+    async (processingId: string) => {
+      const processingImage = processingImages.find((img) => img.id === processingId)
+      if (!processingImage) return
+
+      console.log("[v0] Retrying processing for:", processingImage.file.name)
+
+      // Reset progress
+      setProcessingImages((prev) =>
+        prev.map((img) => (img.id === processingId ? { ...img, progress: 0, status: "Retrying..." } : img)),
+      )
+
+      // Re-run the enhancement logic for this single image
+      try {
+        const file = processingImage.file
+        const isAvatarMode = selectedCategory === "avatar"
+
+        setProcessingImages((prev) =>
+          prev.map((img) => (img.id === processingId ? { ...img, progress: 10, status: "Compressing..." } : img)),
+        )
+
+        const processedFile = await compressImageForUpload(file, 0.8)
+
+        setProcessingImages((prev) =>
+          prev.map((img) =>
+            img.id === processingId
+              ? { ...img, progress: 30, status: isAvatarMode ? "Generating avatar..." : "Uploading..." }
+              : img,
+          ),
+        )
+
+        const formData = new FormData()
+        formData.append("image", processedFile)
+        formData.append("model", settings.model)
+        formData.append("scale_factor", settings.upscaleFactor.toString())
+
+        if (isAvatarMode) {
+          formData.append("creativity", "0.95")
+          formData.append("resemblance", "0.3")
+        } else {
+          formData.append("creativity", settings.creativity.toString())
+          formData.append("resemblance", settings.resemblance.toString())
+        }
+
+        formData.append("hdr", settings.hdr.toString())
+        if (settings.prompt) {
+          formData.append("prompt", settings.prompt)
+        }
+
+        setProcessingImages((prev) =>
+          prev.map((img) =>
+            img.id === processingId
+              ? { ...img, progress: 50, status: isAvatarMode ? "Creating avatar..." : "Enhancing..." }
+              : img,
+          ),
+        )
+
+        const response = await fetch("/api/enhance-replicate", {
+          method: "POST",
+          body: formData,
+        })
+
+        const contentType = response.headers.get("content-type")
+        let data: any
+
+        if (contentType?.includes("application/json")) {
+          data = await response.json()
+        } else {
+          const text = await response.text()
+          throw new Error(text || `Server error: ${response.status}`)
+        }
+
+        if (!response.ok) {
+          throw new Error(data.error || `API error: ${response.status}`)
+        }
+
+        if (!data.success || !data.output) {
+          throw new Error(data.error || "Enhancement failed")
+        }
+
+        let finalOutput = data.output
+
+        if (isAvatarMode) {
+          setProcessingImages((prev) =>
+            prev.map((img) => (img.id === processingId ? { ...img, progress: 70, status: "Swapping face..." } : img)),
+          )
+
+          const faceSwapFormData = new FormData()
+          faceSwapFormData.append("source", file)
+          faceSwapFormData.append("target", data.output)
+
+          const faceSwapResponse = await fetch("/api/face-swap", {
+            method: "POST",
+            body: faceSwapFormData,
+          })
+
+          const faceSwapData = await faceSwapResponse.json()
+
+          if (faceSwapResponse.ok && faceSwapData.success) {
+            finalOutput = faceSwapData.output
+          }
+        }
+
+        setProcessingImages((prev) =>
+          prev.map((img) => (img.id === processingId ? { ...img, progress: 90, status: "Finalizing..." } : img)),
+        )
+
+        const enhancedImage: EnhancedImage = {
+          id: `enhanced-${Date.now()}-retry`,
+          original: file,
+          enhanced: finalOutput,
+          originalPreview: URL.createObjectURL(file),
+          processingTime: data.processingTime,
+          model: settings.model,
+          settings: { ...settings },
+          imageError: false,
+        }
+
+        setEnhancedImages((prev) => [...prev, enhancedImage])
+        setProcessingImages((prev) => prev.filter((img) => img.id !== processingId))
+      } catch (error: any) {
+        console.error("[v0] Retry failed:", error)
+        setProcessingImages((prev) =>
+          prev.map((img) =>
+            img.id === processingId ? { ...img, progress: 100, status: `Retry failed: ${error.message}` } : img,
+          ),
+        )
+      }
+    },
+    [processingImages, selectedCategory, settings, compressImageForUpload],
   )
 
   const generatePrompt = useCallback(() => {
@@ -1489,6 +1716,45 @@ export default function EnhancePage() {
           </Card>
         )}
 
+        {uploadErrors.length > 0 && (
+          <Card className="mb-6 bg-red-500/10 border-red-500/50">
+            <CardContent className="p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5 text-red-400" />
+                  <h3 className="text-sm font-medium text-red-400">Upload Errors ({uploadErrors.length})</h3>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setUploadErrors([])}
+                  className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-6 text-xs"
+                >
+                  Dismiss All
+                </Button>
+              </div>
+              {uploadErrors.map((error) => (
+                <div key={error.id} className="bg-red-500/5 border border-red-500/20 rounded-lg p-3 space-y-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 space-y-1">
+                      <p className="text-sm font-medium text-red-400">{error.error}</p>
+                      <p className="text-xs text-red-400/80">{error.tip}</p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setUploadErrors((prev) => prev.filter((e) => e.id !== error.id))}
+                      className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-6 w-6 p-0"
+                    >
+                      ×
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Column 1: Uploaded */}
           <Card className="bg-gray-900/50 border-gray-800">
@@ -1689,7 +1955,7 @@ export default function EnhancePage() {
             </CardContent>
           </Card>
 
-          {/* Column 2: Processing */}
+          {/* Column 2: Processing - with retry button */}
           <Card className="bg-gray-900/50 border-gray-800">
             <CardHeader className="pb-4">
               <CardTitle className="text-white flex items-center gap-2">
@@ -1697,6 +1963,11 @@ export default function EnhancePage() {
                 Processing
                 <Badge className="bg-amber-500/20 text-amber-300">{processingImages.length}</Badge>
               </CardTitle>
+              {processingImages.length > 0 && isProcessing && (
+                <p className="text-xs text-amber-400/80">
+                  Processing {processingImages.length} image{processingImages.length > 1 ? "s" : ""}...
+                </p>
+              )}
             </CardHeader>
             <CardContent className="space-y-4 max-h-[600px] overflow-y-auto">
               {processingImages.length === 0 ? (
@@ -1706,21 +1977,58 @@ export default function EnhancePage() {
                 </div>
               ) : (
                 processingImages.map((img) => (
-                  <Card key={img.id} className="bg-gray-800/50 border-amber-500/30">
+                  <Card
+                    key={img.id}
+                    className={`bg-gray-800/50 ${
+                      img.status.includes("Error") || img.status.includes("failed")
+                        ? "border-red-500/30"
+                        : "border-amber-500/30"
+                    }`}
+                  >
                     <CardContent className="p-3 space-y-3">
                       <div className="aspect-video relative bg-gray-900 rounded overflow-hidden">
-                        <Image src={img.preview || "/placeholder.svg"} alt="Processing" fill className="object-cover" />
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                          <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
-                        </div>
+                        <img
+                          src={img.preview || "/placeholder.svg"}
+                          alt="Processing"
+                          className="w-full h-full object-cover"
+                        />
+                        {!img.status.includes("Error") && !img.status.includes("failed") && (
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                            <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
+                          </div>
+                        )}
+                        {(img.status.includes("Error") || img.status.includes("failed")) && (
+                          <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center">
+                            <AlertCircle className="w-8 h-8 text-red-400" />
+                          </div>
+                        )}
                       </div>
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-xs">
-                          <span className="text-gray-400">{img.status}</span>
+                          <span
+                            className={
+                              img.status.includes("Error") || img.status.includes("failed")
+                                ? "text-red-400"
+                                : "text-gray-400"
+                            }
+                          >
+                            {img.status}
+                          </span>
                           <span className="text-amber-400">{img.progress}%</span>
                         </div>
                         <Progress value={img.progress} className="h-1" />
                         <p className="text-xs text-gray-500 truncate">{img.file.name}</p>
+                        {(img.status.includes("Error") || img.status.includes("failed")) && (
+                          <Button
+                            onClick={() => retryProcessing(img.id)}
+                            size="sm"
+                            variant="outline"
+                            className="w-full bg-transparent border-amber-500/30 text-amber-400 hover:bg-amber-500/10 text-xs h-7"
+                          >
+                            <Loader2 className="w-3 h-3 mr-1" />
+                            Retry
+                          </Button>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -1729,7 +2037,7 @@ export default function EnhancePage() {
             </CardContent>
           </Card>
 
-          {/* Column 3: Processed */}
+          {/* Column 3: Processed - with download state */}
           <Card className="bg-gray-900/50 border-gray-800">
             <CardHeader className="pb-4">
               <CardTitle className="text-white flex items-center gap-2">
@@ -1737,6 +2045,12 @@ export default function EnhancePage() {
                 Processed
                 <Badge className="bg-green-500/20 text-green-300">{enhancedImages.length}</Badge>
               </CardTitle>
+              {enhancedImages.length > 0 && processingImages.length > 0 && (
+                <p className="text-xs text-green-400/80 flex items-center gap-1">
+                  <Info className="w-3 h-3" />
+                  You can download ready images while others are processing
+                </p>
+              )}
             </CardHeader>
             <CardContent className="space-y-4 max-h-[600px] overflow-y-auto">
               {enhancedImages.length === 0 ? (
@@ -1752,11 +2066,10 @@ export default function EnhancePage() {
                         <div className="space-y-1">
                           <p className="text-xs text-gray-500">Original</p>
                           <div className="aspect-square relative bg-gray-900 rounded overflow-hidden">
-                            <Image
+                            <img
                               src={img.originalPreview || "/placeholder.svg"}
                               alt="Original"
-                              fill
-                              className="object-cover"
+                              className="w-full h-full object-cover"
                               onError={() => console.error("[v0] Failed to load original preview")}
                             />
                           </div>
@@ -1767,12 +2080,11 @@ export default function EnhancePage() {
                             {img.imageError ? (
                               <div className="absolute inset-0 flex flex-col items-center justify-center bg-red-500/10 border border-red-500/30 rounded">
                                 <AlertCircle className="w-8 h-8 text-red-400 mb-2" />
-                                <p className="text-xs text-red-400 text-center px-2">Failed to load image</p>
+                                <p className="text-xs text-red-400 text-center px-2">Failed to load</p>
                                 <Button
                                   size="sm"
                                   variant="outline"
                                   onClick={() => {
-                                    console.log("[v0] Retrying image load:", img.enhanced)
                                     setEnhancedImages((prev) =>
                                       prev.map((i) => (i.id === img.id ? { ...i, imageError: false } : i)),
                                     )
@@ -1783,13 +2095,11 @@ export default function EnhancePage() {
                                 </Button>
                               </div>
                             ) : (
-                              <Image
+                              <img
                                 src={img.enhanced || "/placeholder.svg"}
                                 alt="Enhanced"
-                                fill
-                                className="object-cover"
+                                className="w-full h-full object-cover"
                                 onError={() => handleImageError(img.id)}
-                                unoptimized // Added to bypass Next.js image optimization for external URLs
                               />
                             )}
                           </div>
@@ -1800,20 +2110,28 @@ export default function EnhancePage() {
                         <div className="bg-red-500/10 border border-red-500/30 rounded p-2 flex items-start gap-2">
                           <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
                           <p className="text-xs text-red-400">
-                            The enhanced image URL may have expired or is unavailable. Try downloading it immediately
-                            after processing.
+                            Image URL expired. Download immediately after processing to avoid this.
                           </p>
                         </div>
                       )}
                       <div className="flex gap-2">
                         <Button
-                          onClick={() => downloadImage(img.enhanced, img.original.name)}
+                          onClick={() => downloadImage(img.enhanced, img.original.name, img.id)}
                           size="sm"
                           className="flex-1 bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/30 text-xs h-8"
-                          disabled={img.imageError}
+                          disabled={img.imageError || downloadingImages.has(img.id)}
                         >
-                          <Download className="w-3 h-3 mr-1" />
-                          Download
+                          {downloadingImages.has(img.id) ? (
+                            <>
+                              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                              Downloading...
+                            </>
+                          ) : (
+                            <>
+                              <Download className="w-3 h-3 mr-1" />
+                              Download
+                            </>
+                          )}
                         </Button>
                         <Button
                           variant="ghost"
