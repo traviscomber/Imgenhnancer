@@ -3,6 +3,8 @@ import { stripe } from "@/lib/stripe"
 import { neon } from "@neondatabase/serverless"
 import { sendPaymentNotification } from "@/lib/whatsapp"
 
+export const runtime = "nodejs"
+
 const sql = neon(process.env.DATABASE_URL!)
 const ADMIN_PHONE = "+56940946660"
 

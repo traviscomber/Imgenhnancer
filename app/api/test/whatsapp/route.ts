@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sendWhatsAppNotification } from "@/lib/whatsapp"
 
+export const runtime = "nodejs"
+
 export async function POST(request: NextRequest) {
   try {
     // Get admin secret from request
@@ -11,17 +13,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Send test notification
-    const result = await sendWhatsAppNotification(
-      "🧪 Test Notification\n\n" +
-        "This is a test message from your AI Image Enhancer payment system.\n\n" +
-        "✅ WhatsApp notifications are working correctly!\n\n" +
-        "You will receive alerts here when:\n" +
-        "• Stripe payments are completed\n" +
-        "• Crypto payments are verified\n\n" +
-        "Test sent at: " +
-        new Date().toLocaleString(),
-    )
+    const testMessage = `🧪 *WhatsApp Alert System Test*
+
+✅ *Status:* Active and Working!
+
+📱 *Notification Details:*
+• Recipient: +56940946660
+• System: AI Image Enhancer
+• Test Time: ${new Date().toLocaleString("es-CL", { timeZone: "America/Santiago" })}
+
+💰 *You will receive alerts for:*
+✓ Stripe payments (automatic)
+✓ Crypto USDT payments (manual verification)
+
+📊 *Alert Information Includes:*
+• Payment amount & credits
+• Package purchased
+• User email
+• Transaction ID
+
+🎉 *Integration successful!* You're all set to receive payment notifications.`
+
+    const result = await sendWhatsAppNotification(testMessage)
 
     if (result.success) {
       return NextResponse.json({

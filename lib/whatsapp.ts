@@ -1,22 +1,60 @@
-import twilio from "twilio"
-
 const accountSid = process.env.TWILIO_ACCOUNT_SID
 const authToken = process.env.TWILIO_AUTH_TOKEN
-const whatsappFrom = process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+14155238886" // Twilio Sandbox number
+const whatsappFromEnv = process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+14155238886"
+// Remove whatsapp: prefix if it exists, then add it back to ensure consistent formatting
+const whatsappFrom = whatsappFromEnv.startsWith("whatsapp:") ? whatsappFromEnv : `whatsapp:${whatsappFromEnv}`
 
-let client: ReturnType<typeof twilio> | null = null
-
-function getTwilioClient() {
+async function sendTwilioMessage(
+  to: string,
+  body: string,
+): Promise<{ success: boolean; messageSid?: string; error?: string }> {
   if (!accountSid || !authToken) {
-    console.error("[v0] Twilio credentials not configured")
-    return null
+    return {
+      success: false,
+      error:
+        "Twilio credentials not configured. Please check TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN environment variables.",
+    }
   }
 
-  if (!client) {
-    client = twilio(accountSid, authToken)
-  }
+  try {
+    const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`
+    const auth = Buffer.from(`${accountSid}:${authToken}`).toString("base64")
 
-  return client
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${auth}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        From: whatsappFrom,
+        To: to,
+        Body: body,
+      }),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      console.error("[v0] Twilio API error:", errorData)
+      return {
+        success: false,
+        error: errorData.message || `HTTP ${response.status}`,
+      }
+    }
+
+    const data = await response.json()
+    console.log("[v0] WhatsApp notification sent successfully, SID:", data.sid)
+    return {
+      success: true,
+      messageSid: data.sid,
+    }
+  } catch (error) {
+    console.error("[v0] Failed to send WhatsApp notification:", error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    }
+  }
 }
 
 export interface PaymentNotification {
@@ -33,28 +71,9 @@ export async function sendPaymentNotification(
   phoneNumber: string,
   notification: PaymentNotification,
 ): Promise<boolean> {
-  const client = getTwilioClient()
-
-  if (!client) {
-    console.error("[v0] Cannot send WhatsApp notification: Twilio not configured")
-    return false
-  }
-
-  try {
-    const message = formatPaymentMessage(notification)
-
-    await client.messages.create({
-      from: whatsappFrom,
-      to: `whatsapp:${phoneNumber}`,
-      body: message,
-    })
-
-    console.log("[v0] WhatsApp notification sent successfully to", phoneNumber)
-    return true
-  } catch (error) {
-    console.error("[v0] Failed to send WhatsApp notification:", error)
-    return false
-  }
+  const message = formatPaymentMessage(notification)
+  const result = await sendTwilioMessage(`whatsapp:${phoneNumber}`, message)
+  return result.success
 }
 
 function formatPaymentMessage(notification: PaymentNotification): string {
@@ -84,40 +103,12 @@ export async function sendCustomWhatsAppNotification(
   phoneNumber: string,
   message: string,
 ): Promise<{ success: boolean; messageSid?: string; error?: string }> {
-  const client = getTwilioClient()
-
-  if (!client) {
-    return {
-      success: false,
-      error: "Twilio not configured. Please check TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN environment variables.",
-    }
-  }
-
-  try {
-    const result = await client.messages.create({
-      from: whatsappFrom,
-      to: `whatsapp:${phoneNumber}`,
-      body: message,
-    })
-
-    console.log("[v0] WhatsApp notification sent successfully, SID:", result.sid)
-    return {
-      success: true,
-      messageSid: result.sid,
-    }
-  } catch (error) {
-    console.error("[v0] Failed to send WhatsApp notification:", error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
-    }
-  }
+  return sendTwilioMessage(`whatsapp:${phoneNumber}`, message)
 }
 
 export async function sendWhatsAppNotification(
   message: string,
 ): Promise<{ success: boolean; messageSid?: string; error?: string }> {
-  // Default phone number for notifications
   const defaultPhoneNumber = "+56940946660"
   return sendCustomWhatsAppNotification(defaultPhoneNumber, message)
 }
