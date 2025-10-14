@@ -45,6 +45,7 @@ import {
 import { FacialAnalysisCard } from "@/components/facial-analysis-card"
 import { isAuthenticated, logout } from "@/lib/auth" // Added for authentication
 import { LoginModal } from "@/components/auth/login-modal" // Added for login modal
+import { CreditDisplay } from "@/components/credits/credit-display" // Added for credit display
 
 interface EnhancedImage {
   id: string
@@ -127,6 +128,9 @@ export default function EnhancePage() {
   const [imageAspectRatios, setImageAspectRatios] = useState<Map<number, number>>(new Map())
   const [facialAnalysisResults, setFacialAnalysisResults] = useState(new Map<string, any>()) // Added state for facial analysis results
 
+  const [userCredits, setUserCredits] = useState<number>(0)
+  const [isLoadingCredits, setIsLoadingCredits] = useState(true)
+
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -140,6 +144,26 @@ export default function EnhancePage() {
 
     checkAuth()
   }, [])
+
+  useEffect(() => {
+    const fetchCredits = async () => {
+      try {
+        const response = await fetch("/api/credits/check")
+        const data = await response.json()
+        if (data.success) {
+          setUserCredits(data.credits)
+        }
+      } catch (error) {
+        console.error("[v0] Failed to fetch credits:", error)
+      } finally {
+        setIsLoadingCredits(false)
+      }
+    }
+
+    if (isAuth) {
+      fetchCredits()
+    }
+  }, [isAuth])
 
   useEffect(() => {
     // Only run camera setup if user is authenticated and camera is active
@@ -310,6 +334,11 @@ export default function EnhancePage() {
     async (acceptedFiles: File[], fileRejections: FileRejection[]) => {
       console.log(`[v0] Files dropped: ${acceptedFiles.length} accepted, ${fileRejections.length} rejected`)
 
+      if (!acceptedFiles || !Array.isArray(acceptedFiles)) {
+        console.error("[v0] acceptedFiles is not an array:", acceptedFiles)
+        return
+      }
+
       if (fileRejections.length > 0) {
         const newErrors = fileRejections.map((rejection) => {
           const file = rejection.file
@@ -343,38 +372,60 @@ export default function EnhancePage() {
           }
         })
 
-        setUploadErrors((prev) => [...prev, ...newErrors])
+        setUploadErrors((prev) => {
+          const prevArray = Array.isArray(prev) ? prev : []
+          return [...prevArray, ...newErrors]
+        })
 
         // Auto-dismiss after 10 seconds
         setTimeout(() => {
-          setUploadErrors((prev) => prev.filter((e) => !newErrors.find((ne) => ne.id === e.id)))
+          setUploadErrors((prev) => {
+            const prevArray = Array.isArray(prev) ? prev : []
+            return prevArray.filter((e) => !newErrors.find((ne) => ne.id === e.id))
+          })
         }, 10000)
       }
 
       if (acceptedFiles.length === 0) return
 
+      const duplicateErrors: any[] = []
       const newFiles = acceptedFiles.filter((file) => {
         const isDuplicate = uploadedFiles.some((existing) => existing.name === file.name && existing.size === file.size)
         if (isDuplicate) {
           console.log(`[v0] Skipping duplicate file: ${file.name}`)
-          setUploadErrors((prev) => [
-            ...prev,
-            {
-              id: `error-${Date.now()}-${Math.random()}`,
-              fileName: file.name,
-              error: "Duplicate file",
-              tip: "This file has already been uploaded",
-            },
-          ])
+          duplicateErrors.push({
+            id: `error-${Date.now()}-${Math.random()}`,
+            fileName: file.name,
+            error: "Duplicate file",
+            tip: "This file has already been uploaded",
+          })
         }
         return !isDuplicate
       })
 
+      // Set duplicate errors after filtering is complete
+      if (duplicateErrors.length > 0) {
+        setUploadErrors((prev) => {
+          const prevArray = Array.isArray(prev) ? prev : []
+          return [...prevArray, ...duplicateErrors]
+        })
+      }
+
       if (newFiles.length === 0) return
 
       console.log(`[v0] Adding ${newFiles.length} new files`)
-      const startIndex = uploadedFiles.length
-      setUploadedFiles((prev) => [...prev, ...newFiles])
+      console.log("[v0] uploadedFiles:", uploadedFiles)
+      console.log("[v0] newFiles:", newFiles)
+
+      const startIndex = Array.isArray(uploadedFiles) ? uploadedFiles.length : 0
+
+      setUploadedFiles((prev) => {
+        const prevArray = Array.isArray(prev) ? prev : []
+        const newFilesArray = Array.isArray(newFiles) ? newFiles : []
+        const result = prevArray.concat(newFilesArray)
+        console.log("[v0] Files added successfully, total:", result.length)
+        return result
+      })
 
       newFiles.forEach((file, idx) => {
         detectImageAspectRatio(file, startIndex + idx)
@@ -396,7 +447,19 @@ export default function EnhancePage() {
             return { fileName: file.name, hasFace: false, confidence: 0 }
           }
 
-          const data = await response.json()
+          let data
+          try {
+            data = await response.json()
+          } catch (jsonError) {
+            console.error(`[v0] Failed to parse JSON response for ${file.name}:`, jsonError)
+            return { fileName: file.name, hasFace: false, confidence: 0 }
+          }
+
+          if (!data || typeof data !== "object") {
+            console.error(`[v0] Invalid data format for ${file.name}:`, data)
+            return { fileName: file.name, hasFace: false, confidence: 0 }
+          }
+
           console.log(`[v0] Facial analysis complete for ${file.name}:`, data)
           return { fileName: file.name, ...data }
         } catch (error) {
@@ -422,20 +485,52 @@ export default function EnhancePage() {
           analysis: null, // Analysis is handled above and stored in facialAnalysisResults
           isAnalyzing: true, // Set to true while the parallel analysis is running
         }))
-        const combined = [...prev, ...newEntries]
+        const prevArray = Array.isArray(prev) ? prev : []
+        const combined = [...prevArray, ...newEntries]
 
         // After parallel analysis is done, update the analysis field
         setTimeout(() => {
-          results.forEach((result) => {
-            const fileIndex = combined.findIndex((item) => item.file.name === result.fileName)
-            if (fileIndex !== -1) {
-              setUploadedFilesWithAnalysis((current) =>
-                current.map((item, idx) =>
-                  idx === fileIndex ? { ...item, analysis: result.analysis || null, isAnalyzing: false } : item,
-                ),
-              )
+          try {
+            if (!Array.isArray(results)) {
+              console.error("[v0] results is not an array:", results)
+              return
             }
-          })
+
+            results.forEach((result) => {
+              if (!result || typeof result !== "object") {
+                console.error("[v0] Invalid result object:", result)
+                return
+              }
+
+              const fileIndex = combined.findIndex((item) => {
+                if (!item || !item.file) {
+                  console.error("[v0] Invalid item in combined:", item)
+                  return false
+                }
+                return item.file.name === result.fileName
+              })
+
+              if (fileIndex !== -1) {
+                setUploadedFilesWithAnalysis((current) => {
+                  if (!Array.isArray(current)) {
+                    console.error("[v0] current is not an array:", current)
+                    return current
+                  }
+
+                  return current.map((item, idx) => {
+                    if (!item || typeof item !== "object") {
+                      console.error("[v0] Invalid item in current:", item)
+                      return item
+                    }
+
+                    return idx === fileIndex ? { ...item, analysis: result.analysis || null, isAnalyzing: false } : item
+                  })
+                })
+              }
+            })
+          } catch (error) {
+            console.error("[v0] Error in setTimeout callback:", error)
+          }
         }, 0) // Use setTimeout to ensure state updates happen after initial render
 
         return combined
@@ -445,7 +540,7 @@ export default function EnhancePage() {
       const totalSize = newFiles.reduce((sum, file) => sum + file.size, 0)
       trackImageUpload(newFiles.length, totalSize)
     },
-    [uploadedFiles, facialAnalysisResults, detectImageAspectRatio],
+    [uploadedFiles, uploadErrors, facialAnalysisResults, detectImageAspectRatio],
   )
 
   const toggleFileSelection = useCallback((index: number) => {
@@ -611,6 +706,14 @@ export default function EnhancePage() {
       return
     }
 
+    const creditsNeeded = selectedFiles.size * 6 // 6 credits per image
+    if (userCredits < creditsNeeded) {
+      setError(
+        `Insufficient credits. You need ${creditsNeeded} credits but only have ${userCredits}. Please purchase more credits.`,
+      )
+      return
+    }
+
     setIsProcessing(true)
     setError(null)
 
@@ -644,6 +747,8 @@ export default function EnhancePage() {
     setSelectedFiles(new Set())
 
     const isAvatarMode = selectedCategory === "avatar"
+
+    let successfulEnhancements = 0
 
     // Process each image
     for (let i = 0; i < filesToProcess.length; i++) {
@@ -749,6 +854,31 @@ export default function EnhancePage() {
           }
         }
 
+        try {
+          const deductResponse = await fetch("/api/credits/deduct", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              amount: 6,
+              description: `Enhanced ${file.name}`,
+              metadata: {
+                fileName: file.name,
+                model: settings.model,
+                category: selectedCategory,
+              },
+            }),
+          })
+
+          const deductData = await deductResponse.json()
+          if (deductData.success) {
+            setUserCredits(deductData.remainingCredits)
+            successfulEnhancements++
+            console.log(`[v0] Credits deducted. Remaining: ${deductData.remainingCredits}`)
+          }
+        } catch (creditError) {
+          console.error("[v0] Failed to deduct credits:", creditError)
+        }
+
         setProcessingImages((prev) =>
           prev.map((img) => (img.id === processingId ? { ...img, progress: 90, status: "Finalizing..." } : img)),
         )
@@ -762,7 +892,7 @@ export default function EnhancePage() {
           processingTime: data.processingTime,
           model: settings.model,
           settings: { ...settings },
-          imageError: false, // Initialize imageError to false
+          imageError: false,
         }
 
         // Move to enhanced column
@@ -796,6 +926,12 @@ export default function EnhancePage() {
       category: selectedCategory,
     })
 
+    if (successfulEnhancements > 0) {
+      console.log(
+        `[v0] Successfully enhanced ${successfulEnhancements} image(s), used ${successfulEnhancements * 6} credits`,
+      )
+    }
+
     setIsProcessing(false)
   }, [
     selectedFiles,
@@ -803,6 +939,7 @@ export default function EnhancePage() {
     settings,
     selectedCategory,
     selectedPresetId,
+    userCredits,
     removeProcessingImage,
     trackEnhancementComplete,
     trackEnhancementFailure,
@@ -1374,8 +1511,25 @@ export default function EnhancePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black">
-      <Navbar />
+    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black text-white">
+      <div className="sticky top-0 z-50 bg-gray-950/80 backdrop-blur-lg border-b border-gray-800">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
+            AI Image Enhancer
+          </h1>
+          <div className="flex items-center gap-4">
+            {!isLoadingCredits && <CreditDisplay credits={userCredits} />}
+            <Button
+              onClick={handleLogout}
+              variant="outline"
+              size="sm"
+              className="bg-transparent border-gray-700 text-gray-300 hover:bg-gray-800"
+            >
+              Logout
+            </Button>
+          </div>
+        </div>
+      </div>
 
       <main className="container mx-auto px-4 py-8 md:py-12">
         {/* Header */}

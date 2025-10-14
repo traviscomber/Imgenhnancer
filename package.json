@@ -41,6 +41,8 @@
     "@radix-ui/react-toggle": "latest",
     "@radix-ui/react-toggle-group": "latest",
     "@radix-ui/react-tooltip": "latest",
+    "@supabase/ssr": "latest",
+    "@supabase/supabase-js": "latest",
     "@vercel/analytics": "latest",
     "@vercel/speed-insights": "latest",
     "ai": "^4.1.10",

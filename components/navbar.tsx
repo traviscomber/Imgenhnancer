@@ -1,12 +1,37 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Menu, X, Sparkles } from "lucide-react"
+import { CreditDisplay } from "@/components/credits/credit-display"
+import { isAuthenticated } from "@/lib/auth"
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isAuth, setIsAuth] = useState(false)
+  const [userCredits, setUserCredits] = useState<number>(0)
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const authenticated = isAuthenticated()
+      setIsAuth(authenticated)
+
+      if (authenticated) {
+        try {
+          const response = await fetch("/api/credits/check")
+          const data = await response.json()
+          if (data.success) {
+            setUserCredits(data.credits)
+          }
+        } catch (error) {
+          console.error("Failed to fetch credits:", error)
+        }
+      }
+    }
+
+    checkAuth()
+  }, [])
 
   return (
     <nav className="sticky top-0 z-50 bg-gray-950/80 backdrop-blur-lg border-b border-gray-800">
@@ -30,6 +55,7 @@ export function Navbar() {
             <Link href="/#professional" className="text-gray-300 hover:text-amber-400 transition-colors text-sm">
               Professional Use
             </Link>
+            {isAuth && <CreditDisplay credits={userCredits} />}
             <Link href="/enhance">
               <Button
                 size="sm"
@@ -67,6 +93,16 @@ export function Navbar() {
             >
               Professional Use
             </Link>
+            {isAuth && (
+              <Link href="/credits" onClick={() => setIsMenuOpen(false)}>
+                <Button
+                  size="sm"
+                  className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold"
+                >
+                  Credits: {userCredits}
+                </Button>
+              </Link>
+            )}
             <Link href="/enhance" onClick={() => setIsMenuOpen(false)}>
               <Button
                 size="sm"
