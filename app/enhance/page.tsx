@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback, useRef, useEffect } from "react"
-import { useDropzone } from "react-dropzone"
+import { useDropzone, type FileRejection } from "react-dropzone"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -124,6 +124,9 @@ export default function EnhancePage() {
   // Added downloadingImages state
   const [downloadingImages, setDownloadingImages] = useState<Set<string>>(new Set())
 
+  const [imageAspectRatios, setImageAspectRatios] = useState<Map<number, number>>(new Map())
+  const [facialAnalysisResults, setFacialAnalysisResults] = useState(new Map<string, any>()) // Added state for facial analysis results
+
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -234,13 +237,81 @@ export default function EnhancePage() {
     [setError],
   )
 
-  const onDrop = useCallback(
-    (acceptedFiles: File[], rejectedFiles: any[]) => {
-      console.log("[v0] Files dropped:", { accepted: acceptedFiles.length, rejected: rejectedFiles.length })
+  const detectImageAspectRatio = useCallback((file: File, index: number) => {
+    const img = new Image()
+    const objectUrl = URL.createObjectURL(file)
 
-      // Handle rejected files
-      if (rejectedFiles.length > 0) {
-        const newErrors: UploadError[] = rejectedFiles.map((rejection) => {
+    img.onload = () => {
+      const aspectRatio = img.width / img.height
+      console.log(`[v0] Image ${file.name}: ${img.width}x${img.height}, aspect ratio: ${aspectRatio.toFixed(2)}`)
+
+      setImageAspectRatios((prev) => {
+        const newMap = new Map(prev)
+        newMap.set(index, aspectRatio)
+        return newMap
+      })
+
+      URL.revokeObjectURL(objectUrl)
+    }
+
+    img.onerror = () => {
+      console.error(`[v0] Failed to load image for aspect ratio detection: ${file.name}`)
+      URL.revokeObjectURL(objectUrl)
+    }
+
+    img.src = objectUrl
+  }, [])
+
+  const getAspectRatioClass = useCallback(
+    (index: number) => {
+      const aspectRatio = imageAspectRatios.get(index)
+
+      if (!aspectRatio) return "aspect-video" // Default
+
+      // Equirectangular (panoramic) - 2:1 ratio
+      if (aspectRatio >= 1.8 && aspectRatio <= 2.2) {
+        return "aspect-[2/1]"
+      }
+
+      // Ultra-wide panoramic - wider than 2:1
+      if (aspectRatio > 2.2) {
+        return "aspect-[3/1]"
+      }
+
+      // Portrait - taller than wide
+      if (aspectRatio < 0.8) {
+        return "aspect-[3/4]"
+      }
+
+      // Square-ish
+      if (aspectRatio >= 0.8 && aspectRatio <= 1.2) {
+        return "aspect-square"
+      }
+
+      // Standard landscape (16:9)
+      return "aspect-video"
+    },
+    [imageAspectRatios],
+  )
+
+  const shouldUseContain = useCallback(
+    (index: number) => {
+      const aspectRatio = imageAspectRatios.get(index)
+
+      if (!aspectRatio) return false
+
+      // Use contain for panoramic images (preserve full image)
+      return aspectRatio >= 1.8 || aspectRatio < 0.8
+    },
+    [imageAspectRatios],
+  )
+
+  const onDrop = useCallback(
+    async (acceptedFiles: File[], fileRejections: FileRejection[]) => {
+      console.log(`[v0] Files dropped: ${acceptedFiles.length} accepted, ${fileRejections.length} rejected`)
+
+      if (fileRejections.length > 0) {
+        const newErrors = fileRejections.map((rejection) => {
           const file = rejection.file
           const errors = rejection.errors
 
@@ -248,8 +319,14 @@ export default function EnhancePage() {
           let tip = "Please try again"
 
           if (errors.some((e: any) => e.code === "file-too-large")) {
+            const sizeMB = (file.size / 1024 / 1024).toFixed(2)
             errorMessage = `File too large: ${file.name}`
-            tip = `Maximum file size is 15MB. Current size: ${(file.size / 1024 / 1024).toFixed(2)}MB. Try compressing the image first.`
+
+            if (file.size > 20 * 1024 * 1024) {
+              tip = `This file is ${sizeMB}MB. For panoramic/360° images, try compressing to under 20MB first, or use a lower resolution version.`
+            } else {
+              tip = `Maximum file size is 20MB. Current size: ${sizeMB}MB. Try compressing the image first.`
+            }
           } else if (errors.some((e: any) => e.code === "file-invalid-type")) {
             errorMessage = `Invalid file type: ${file.name}`
             tip = "Only PNG, JPG, JPEG, and WebP images are supported. Please convert your file to a supported format."
@@ -268,70 +345,107 @@ export default function EnhancePage() {
 
         setUploadErrors((prev) => [...prev, ...newErrors])
 
-        // Auto-dismiss errors after 10 seconds
+        // Auto-dismiss after 10 seconds
         setTimeout(() => {
           setUploadErrors((prev) => prev.filter((e) => !newErrors.find((ne) => ne.id === e.id)))
         }, 10000)
       }
 
-      // Handle accepted files
-      if (acceptedFiles.length > 0) {
-        // Check for duplicates
-        const existingNames = new Set(uploadedFiles.map((f) => f.name))
-        const newFiles = acceptedFiles.filter((file) => {
-          if (existingNames.has(file.name)) {
-            const duplicateError: UploadError = {
+      if (acceptedFiles.length === 0) return
+
+      const newFiles = acceptedFiles.filter((file) => {
+        const isDuplicate = uploadedFiles.some((existing) => existing.name === file.name && existing.size === file.size)
+        if (isDuplicate) {
+          console.log(`[v0] Skipping duplicate file: ${file.name}`)
+          setUploadErrors((prev) => [
+            ...prev,
+            {
               id: `error-${Date.now()}-${Math.random()}`,
               fileName: file.name,
-              error: `Duplicate file: ${file.name}`,
-              tip: "This file is already uploaded. Please rename it if you want to upload it again.",
-            }
-            setUploadErrors((prev) => [...prev, duplicateError])
-            setTimeout(() => {
-              setUploadErrors((prev) => prev.filter((e) => e.id !== duplicateError.id))
-            }, 10000)
-            return false
+              error: "Duplicate file",
+              tip: "This file has already been uploaded",
+            },
+          ])
+        }
+        return !isDuplicate
+      })
+
+      if (newFiles.length === 0) return
+
+      console.log(`[v0] Adding ${newFiles.length} new files`)
+      const startIndex = uploadedFiles.length
+      setUploadedFiles((prev) => [...prev, ...newFiles])
+
+      newFiles.forEach((file, idx) => {
+        detectImageAspectRatio(file, startIndex + idx)
+      })
+
+      const analysisPromises = newFiles.map(async (file) => {
+        try {
+          console.log(`[v0] Starting facial analysis for: ${file.name}`)
+          const formData = new FormData()
+          formData.append("image", file)
+
+          const response = await fetch("/api/analyze-face", {
+            method: "POST",
+            body: formData,
+          })
+
+          if (!response.ok) {
+            console.error(`[v0] Facial analysis failed for ${file.name}: ${response.status}`)
+            return { fileName: file.name, hasFace: false, confidence: 0 }
           }
-          return true
-        })
 
-        if (newFiles.length === 0) return
+          const data = await response.json()
+          console.log(`[v0] Facial analysis complete for ${file.name}:`, data)
+          return { fileName: file.name, ...data }
+        } catch (error) {
+          console.error(`[v0] Facial analysis error for ${file.name}:`, error)
+          return { fileName: file.name, hasFace: false, confidence: 0 }
+        }
+      })
 
-        setUploadedFiles((prev) => {
-          const combined = [...prev, ...newFiles]
-          setSelectedFiles((prevSelected) => {
-            const newSelected = new Set(prevSelected)
-            for (let i = prev.length; i < combined.length; i++) {
-              newSelected.add(i)
+      const results = await Promise.all(analysisPromises)
+      console.log(`[v0] All facial analyses complete:`, results)
+
+      // Store analysis results
+      const newAnalysisResults = new Map(facialAnalysisResults)
+      results.forEach((result) => {
+        newAnalysisResults.set(result.fileName, result)
+      })
+      setFacialAnalysisResults(newAnalysisResults)
+
+      // Update uploadedFilesWithAnalysis state
+      setUploadedFilesWithAnalysis((prev) => {
+        const newEntries = newFiles.map((file, idx) => ({
+          file,
+          analysis: null, // Analysis is handled above and stored in facialAnalysisResults
+          isAnalyzing: true, // Set to true while the parallel analysis is running
+        }))
+        const combined = [...prev, ...newEntries]
+
+        // After parallel analysis is done, update the analysis field
+        setTimeout(() => {
+          results.forEach((result) => {
+            const fileIndex = combined.findIndex((item) => item.file.name === result.fileName)
+            if (fileIndex !== -1) {
+              setUploadedFilesWithAnalysis((current) =>
+                current.map((item, idx) =>
+                  idx === fileIndex ? { ...item, analysis: result.analysis || null, isAnalyzing: false } : item,
+                ),
+              )
             }
-            return newSelected
           })
-          return combined
-        })
+        }, 0) // Use setTimeout to ensure state updates happen after initial render
 
-        setUploadedFilesWithAnalysis((prev) => {
-          const newFilesWithAnalysis = newFiles.map((file) => ({
-            file,
-            analysis: null,
-            isAnalyzing: false,
-          }))
-          const combined = [...prev, ...newFilesWithAnalysis]
+        return combined
+      })
 
-          // Start analysis for new files in parallel
-          newFiles.forEach((file, idx) => {
-            const actualIndex = prev.length + idx
-            analyzeImage(file, actualIndex)
-          })
-
-          return combined
-        })
-
-        setError(null)
-        const totalSize = newFiles.reduce((sum, file) => sum + file.size, 0)
-        trackImageUpload(newFiles.length, totalSize)
-      }
+      setError(null)
+      const totalSize = newFiles.reduce((sum, file) => sum + file.size, 0)
+      trackImageUpload(newFiles.length, totalSize)
     },
-    [analyzeImage, uploadedFiles],
+    [uploadedFiles, facialAnalysisResults, detectImageAspectRatio],
   )
 
   const toggleFileSelection = useCallback((index: number) => {
@@ -367,6 +481,12 @@ export default function EnhancePage() {
         }
       })
       return newSelected
+    })
+    // Remove aspect ratio for removed file
+    setImageAspectRatios((prev) => {
+      const newMap = new Map(prev)
+      newMap.delete(index)
+      return newMap
     })
   }, [])
 
@@ -1228,7 +1348,7 @@ export default function EnhancePage() {
     accept: {
       "image/*": [".png", ".jpg", ".jpeg", ".webp"],
     },
-    maxSize: 15 * 1024 * 1024, // 15MB
+    maxSize: 20 * 1024 * 1024, // Increased to 20MB for panoramic images
   })
 
   const currentPresets = getPresetsByCategory(selectedCategory)
@@ -1916,14 +2036,13 @@ export default function EnhancePage() {
                         </Button>
                       </div>
                       <div
-                        className="aspect-video relative bg-gray-900 rounded overflow-hidden cursor-pointer"
+                        className={`${getAspectRatioClass(index)} relative bg-gray-900 rounded overflow-hidden cursor-pointer`}
                         onClick={() => toggleFileSelection(index)}
                       >
-                        <Image
+                        <img
                           src={URL.createObjectURL(file) || "/placeholder.svg"}
                           alt={file.name}
-                          fill
-                          className="object-cover"
+                          className={`w-full h-full ${shouldUseContain(index) ? "object-contain" : "object-cover"}`}
                         />
                         {selectedFiles.has(index) && (
                           <div className="absolute inset-0 bg-amber-500/20 flex items-center justify-center">
@@ -1986,11 +2105,13 @@ export default function EnhancePage() {
                     }`}
                   >
                     <CardContent className="p-3 space-y-3">
-                      <div className="aspect-video relative bg-gray-900 rounded overflow-hidden">
+                      <div
+                        className={`${getAspectRatioClass(processingImages.findIndex((p) => p.id === img.id))} relative bg-gray-900 rounded overflow-hidden`}
+                      >
                         <img
                           src={img.preview || "/placeholder.svg"}
                           alt="Processing"
-                          className="w-full h-full object-cover"
+                          className={`w-full h-full ${shouldUseContain(processingImages.findIndex((p) => p.id === img.id)) ? "object-contain" : "object-cover"}`}
                         />
                         {!img.status.includes("Error") && !img.status.includes("failed") && (
                           <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
@@ -1998,7 +2119,7 @@ export default function EnhancePage() {
                           </div>
                         )}
                         {(img.status.includes("Error") || img.status.includes("failed")) && (
-                          <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center">
+                          <div className="absolute inset-0 bg-red-500/10 flex items-center justify-center">
                             <AlertCircle className="w-8 h-8 text-red-400" />
                           </div>
                         )}

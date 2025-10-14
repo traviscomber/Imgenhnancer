@@ -5,8 +5,9 @@ export async function compressImageForUpload(file: File | Blob, maxSizeMB: numbe
   const fileSizeKB = file.size / 1024
   console.log(`[v0] File size: ${Math.round(fileSizeKB)}KB`)
 
-  // If file is already under 3MB, return as-is
-  if (fileSizeKB < 3072) {
+  // If file is already under 5MB, return as-is
+  if (fileSizeKB < 5120) {
+    // 5MB threshold
     console.log(`[v0] File is already small enough, skipping compression`)
     if (file instanceof File) {
       return file
@@ -30,12 +31,19 @@ export async function compressImageForUpload(file: File | Blob, maxSizeMB: numbe
       try {
         console.log(`[v0] Image loaded successfully: ${img.width}x${img.height}`)
 
+        const aspectRatio = img.width / img.height
+        const isEquirectangular = aspectRatio >= 1.8 && aspectRatio <= 2.2
+        const isPanoramic = aspectRatio > 2.2
+
+        console.log(
+          `[v0] Aspect ratio: ${aspectRatio.toFixed(2)}${isEquirectangular ? " (equirectangular)" : isPanoramic ? " (panoramic)" : ""}`,
+        )
+
         const canvas = document.createElement("canvas")
         const ctx = canvas.getContext("2d")
 
         if (!ctx) {
           cleanup()
-          // Return original file as fallback
           if (file instanceof File) {
             resolve(file)
           } else {
@@ -46,7 +54,8 @@ export async function compressImageForUpload(file: File | Blob, maxSizeMB: numbe
 
         let width = img.width
         let height = img.height
-        const maxDimension = 1536
+
+        const maxDimension = isEquirectangular || isPanoramic ? 4096 : 2048
 
         if (width > maxDimension || height > maxDimension) {
           if (width > height) {
@@ -58,16 +67,19 @@ export async function compressImageForUpload(file: File | Blob, maxSizeMB: numbe
           }
         }
 
+        console.log(`[v0] Resizing to: ${Math.round(width)}x${Math.round(height)}`)
+
         canvas.width = width
         canvas.height = height
         ctx.drawImage(img, 0, 0, width, height)
+
+        const quality = isEquirectangular || isPanoramic ? 0.9 : 0.85
 
         canvas.toBlob(
           (blob) => {
             cleanup()
 
             if (!blob) {
-              // Return original file as fallback
               if (file instanceof File) {
                 resolve(file)
               } else {
@@ -88,12 +100,11 @@ export async function compressImageForUpload(file: File | Blob, maxSizeMB: numbe
             resolve(compressedFile)
           },
           "image/jpeg",
-          0.85,
+          quality,
         )
       } catch (error: any) {
         cleanup()
         console.error("[v0] Compression error:", error)
-        // Return original file as fallback
         if (file instanceof File) {
           resolve(file)
         } else {
@@ -105,7 +116,6 @@ export async function compressImageForUpload(file: File | Blob, maxSizeMB: numbe
     img.onerror = (event) => {
       cleanup()
       console.error("[v0] Image load error:", event)
-      // Return original file as fallback
       if (file instanceof File) {
         console.log("[v0] Returning original file as fallback")
         resolve(file)
@@ -121,7 +131,6 @@ export async function compressImageForUpload(file: File | Blob, maxSizeMB: numbe
     } catch (error: any) {
       cleanup()
       console.error("[v0] Failed to create object URL:", error)
-      // Return original file as fallback
       if (file instanceof File) {
         resolve(file)
       } else {
