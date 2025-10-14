@@ -1,6 +1,14 @@
--- Add unique constraint on name column first to enable ON CONFLICT
-ALTER TABLE credit_packages 
-ADD CONSTRAINT credit_packages_name_key UNIQUE (name);
+-- Add unique constraint only if it doesn't exist
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint 
+    WHERE conname = 'credit_packages_name_key'
+  ) THEN
+    ALTER TABLE credit_packages 
+    ADD CONSTRAINT credit_packages_name_key UNIQUE (name);
+  END IF;
+END $$;
 
 -- Seed credit packages table with the defined packages
 INSERT INTO credit_packages (id, name, description, credits, price_usd, is_active)

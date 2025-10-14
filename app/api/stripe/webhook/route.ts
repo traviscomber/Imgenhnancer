@@ -1,14 +1,15 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { stripe } from "@/lib/stripe"
-import { neon } from "@neondatabase/serverless"
+import { createAdminClient } from "@/lib/supabase/server"
 import { sendPaymentNotification } from "@/lib/whatsapp"
 
 export const runtime = "nodejs"
 
-const sql = neon(process.env.DATABASE_URL!)
 const ADMIN_PHONE = "+56940946660"
 
 export async function POST(request: NextRequest) {
+  const supabase = createAdminClient()
+
   const body = await request.text()
   const signature = request.headers.get("stripe-signature")
 
@@ -41,38 +42,51 @@ export async function POST(request: NextRequest) {
       }
 
       // Find user by email
-      const users = await sql`
-        SELECT id FROM users WHERE email = ${customerEmail}
-      `
+      const { data: users, error: userError } = await supabase
+        .from("users")
+        .select("id")
+        .eq("email", customerEmail)
+        .limit(1)
 
-      if (users.length === 0) {
-        console.error("[STRIPE] User not found for email:", customerEmail)
+      if (userError || !users || users.length === 0) {
+        console.error("[STRIPE] User not found for email:", customerEmail, userError)
         return NextResponse.json({ error: "User not found" }, { status: 404 })
       }
 
       const userId = users[0].id
 
       // Add credits to user account
-      await sql`
-        INSERT INTO user_credits (user_id, credits)
-        VALUES (${userId}, ${credits})
-        ON CONFLICT (user_id)
-        DO UPDATE SET 
-          credits = user_credits.credits + ${credits},
-          updated_at = NOW()
-      `
+      const { data: existingCredits } = await supabase
+        .from("user_credits")
+        .select("credits")
+        .eq("user_id", userId)
+        .single()
+
+      if (existingCredits) {
+        // Update existing credits
+        await supabase
+          .from("user_credits")
+          .update({
+            credits: existingCredits.credits + credits,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("user_id", userId)
+      } else {
+        // Insert new credits record
+        await supabase.from("user_credits").insert({
+          user_id: userId,
+          credits: credits,
+        })
+      }
 
       // Record transaction
-      await sql`
-        INSERT INTO credit_transactions (user_id, amount, type, description, operation)
-        VALUES (
-          ${userId},
-          ${credits},
-          'purchase',
-          ${`Purchased ${packageId} package via Stripe`},
-          'PURCHASE'
-        )
-      `
+      await supabase.from("credit_transactions").insert({
+        user_id: userId,
+        amount: credits,
+        type: "purchase",
+        description: `Purchased ${packageId} package via Stripe`,
+        operation: "PURCHASE",
+      })
 
       console.log(`[STRIPE] Added ${credits} credits to user ${userId}`)
 
