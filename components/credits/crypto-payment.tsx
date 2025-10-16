@@ -57,32 +57,8 @@ export function CryptoPayment({ packageId, open, onOpenChange }: CryptoPaymentPr
         throw new Error("Failed to send notification")
       }
 
-      toast.success("Payment notification sent! Admin will verify your payment.")
-
-      // Create WhatsApp message with payment details
-      const message = `Payment Notification
-
-Package: ${selectedPackage?.name}
-Amount: $${selectedPackage?.price} USDT
-User: ${user.email}
-User ID: ${user.id}
-
-I have sent the payment and waiting for verification.`
-
-      // Open WhatsApp with pre-filled message
-      const phoneNumber = "56940946660"
-      const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`
-
-      console.log("[v0] Opening WhatsApp URL:", whatsappUrl)
-
-      // Try to open in new tab
-      const newWindow = window.open(whatsappUrl, "_blank")
-
-      // Fallback if popup blocked
-      if (!newWindow || newWindow.closed || typeof newWindow.closed === "undefined") {
-        console.log("[v0] Popup blocked, using location.href")
-        window.location.href = whatsappUrl
-      }
+      toast.success("Payment notification sent! Admin will verify your payment shortly.")
+      onOpenChange(false)
     } catch (error) {
       console.error("[v0] Error notifying payment:", error)
       toast.error("Failed to send notification. Please try again.")
@@ -178,7 +154,7 @@ I have sent the payment and waiting for verification.`
           {/* Contact Support */}
           <div className="text-center space-y-2">
             <p className="text-xs text-muted-foreground">
-              After sending payment, click the button above to notify our admin via WhatsApp for faster processing.
+              After sending payment, click the button above to notify the admin for faster processing.
             </p>
             <p className="text-xs text-muted-foreground">Having issues? Contact support with your transaction hash.</p>
           </div>

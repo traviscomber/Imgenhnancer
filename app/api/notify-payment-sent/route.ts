@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/client"
 import { CREDIT_PACKAGES } from "@/lib/credits"
-import { sendWhatsAppMessage } from "@/lib/whatsapp-web"
 
 export const runtime = "nodejs"
 
@@ -41,39 +40,29 @@ export async function POST(request: Request) {
       }
     }
 
-    const notificationMessage = `🔔 *PAYMENT NOTIFICATION*
+    console.log("[v0] Creating pending payment transaction for user:", userEmail)
 
-👤 User: ${userEmail}
-📦 Package: ${packageData.name}
-💰 Amount: $${packageData.price_usd} USDT
-⭐ Credits: ${packageData.credits}
-🌐 Network: Tron (TRC20)
-📍 Address: TJi1odaRdVm5e7yKLy3Uck3dwiUKDbmJ4a
-
-🆔 User ID: ${userId}
-📋 Package ID: ${packageId}
-
-Please verify the transaction on the blockchain and credit the user's account.`
-
-    console.log("[v0] Payment notification:", notificationMessage)
-
-    // Send via WhatsApp Web API
-    await sendWhatsAppMessage("56940946660", notificationMessage)
-
-    // Store notification in database for admin to check
-    await supabase.from("credit_transactions").insert({
+    const { error: insertError } = await supabase.from("credit_transactions").insert({
       user_id: userId,
       amount: packageData.credits,
+      type: "crypto",
       operation: "pending_purchase",
       description: `Pending crypto payment: ${packageData.name} package - $${packageData.price_usd} USDT`,
     })
+
+    if (insertError) {
+      console.error("[v0] Database insert error:", insertError)
+      throw insertError
+    }
+
+    console.log("[v0] Pending transaction created successfully")
 
     return NextResponse.json({
       success: true,
       message: "Payment notification sent. Admin will verify your payment shortly.",
     })
   } catch (error) {
-    console.error("[v0] Error sending payment notification:", error)
-    return NextResponse.json({ error: "Failed to send notification" }, { status: 500 })
+    console.error("[v0] Error creating pending transaction:", error)
+    return NextResponse.json({ error: "Failed to create pending transaction" }, { status: 500 })
   }
 }

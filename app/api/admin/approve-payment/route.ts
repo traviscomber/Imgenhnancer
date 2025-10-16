@@ -33,16 +33,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Transaction not found" }, { status: 404 })
     }
 
-    // Parse package info from description
-    const packageMatch = transaction.description.match(/\$(\d+)/)
-    const priceUsd = packageMatch ? Number.parseInt(packageMatch[1]) : 0
+    const packageMatch = transaction.description.match(/\$(\d+(?:\.\d+)?)/)
+    const priceUsd = packageMatch ? Number.parseFloat(packageMatch[1]) : 0
+
+    console.log("[v0] Parsed price from description:", priceUsd)
 
     // Find matching package
     const packageData = CREDIT_PACKAGES.find((pkg) => pkg.price === priceUsd)
 
     if (!packageData) {
+      console.error("[v0] No package found for price:", priceUsd)
+      console.error(
+        "[v0] Available packages:",
+        CREDIT_PACKAGES.map((p) => ({ name: p.name, price: p.price })),
+      )
       return NextResponse.json({ error: "Package not found" }, { status: 404 })
     }
+
+    console.log("[v0] Found package:", packageData.name, "with", packageData.credits, "credits")
 
     // Get current credits
     const { data: currentCredits, error: creditsError } = await supabase
@@ -57,12 +65,15 @@ export async function POST(request: NextRequest) {
 
     const newCredits = (currentCredits?.credits || 0) + packageData.credits
 
-    // Update user credits
-    const { error: upsertError } = await supabase.from("user_credits").upsert({
-      user_id: transaction.user_id,
-      credits: newCredits,
-      updated_at: new Date().toISOString(),
-    })
+    // Update user credits using upsert with conflict resolution on user_id
+    const { error: upsertError } = await supabase.from("user_credits").upsert(
+      {
+        user_id: transaction.user_id,
+        credits: newCredits,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id" },
+    )
 
     if (upsertError) throw upsertError
 
