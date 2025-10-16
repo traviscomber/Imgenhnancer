@@ -3,9 +3,11 @@
 import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Copy, Check } from "lucide-react"
+import { Copy, Check, Send } from "lucide-react"
 import { CREDIT_PACKAGES } from "@/lib/credits"
 import Image from "next/image"
+import { useAuth } from "@/lib/auth"
+import { toast } from "sonner"
 
 interface CryptoPaymentProps {
   packageId: string
@@ -19,12 +21,47 @@ const NETWORK_NAME = "Tron (TRC20)"
 
 export function CryptoPayment({ packageId, open, onOpenChange }: CryptoPaymentProps) {
   const [copied, setCopied] = useState(false)
+  const { user } = useAuth()
   const selectedPackage = CREDIT_PACKAGES.find((pkg) => pkg.id === packageId)
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(DEPOSIT_ADDRESS)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleNotifyPayment = () => {
+    if (!user) {
+      toast.error("Please login to notify payment")
+      return
+    }
+
+    // Create WhatsApp message with payment details
+    const message = `Payment Notification
+
+Package: ${selectedPackage?.name}
+Amount: $${selectedPackage?.price} USDT
+User: ${user.email}
+User ID: ${user.id}
+
+I have sent the payment and waiting for verification.`
+
+    // Open WhatsApp with pre-filled message
+    const phoneNumber = "56940946660"
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`
+
+    console.log("[v0] Opening WhatsApp URL:", whatsappUrl)
+
+    // Try to open in new tab
+    const newWindow = window.open(whatsappUrl, "_blank")
+
+    // Fallback if popup blocked
+    if (!newWindow || newWindow.closed || typeof newWindow.closed === "undefined") {
+      console.log("[v0] Popup blocked, using location.href")
+      window.location.href = whatsappUrl
+    }
+
+    toast.success("Opening WhatsApp...")
   }
 
   if (!selectedPackage) return null
@@ -106,10 +143,15 @@ export function CryptoPayment({ packageId, open, onOpenChange }: CryptoPaymentPr
             </p>
           </div>
 
+          <Button onClick={handleNotifyPayment} className="w-full">
+            <Send className="h-4 w-4 mr-2" />
+            Confirm Payment
+          </Button>
+
           {/* Contact Support */}
           <div className="text-center space-y-2">
             <p className="text-xs text-muted-foreground">
-              After sending payment, our system will automatically detect and credit your account.
+              After sending payment, click the button above to notify our admin via WhatsApp for faster processing.
             </p>
             <p className="text-xs text-muted-foreground">Having issues? Contact support with your transaction hash.</p>
           </div>

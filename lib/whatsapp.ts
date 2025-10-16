@@ -71,20 +71,8 @@ export async function sendPaymentNotification(
   phoneNumber: string,
   notification: PaymentNotification,
 ): Promise<boolean> {
-  console.log("[v0] Sending payment notification to:", phoneNumber)
-  console.log("[v0] Notification details:", JSON.stringify(notification, null, 2))
-
   const message = formatPaymentMessage(notification)
-  console.log("[v0] Formatted message:", message)
-
   const result = await sendTwilioMessage(`whatsapp:${phoneNumber}`, message)
-
-  if (result.success) {
-    console.log("[v0] WhatsApp notification sent successfully, SID:", result.messageSid)
-  } else {
-    console.error("[v0] WhatsApp notification failed:", result.error)
-  }
-
   return result.success
 }
 

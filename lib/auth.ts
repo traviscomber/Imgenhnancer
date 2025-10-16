@@ -1,6 +1,7 @@
 "use client"
 
 import { createClient } from "@/lib/supabase/client"
+import { useState, useEffect } from "react"
 
 export interface User {
   id: string
@@ -131,4 +132,43 @@ export async function getUser(): Promise<User | null> {
 export async function isAuthenticated(): Promise<boolean> {
   const user = await getUser()
   return user !== null
+}
+
+export function useAuth() {
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    // Get initial user
+    getUser().then((user) => {
+      setUser(user)
+      setLoading(false)
+    })
+
+    // Listen for auth changes
+    const supabase = createClient()
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        const user = await getUser()
+        setUser(user)
+      } else {
+        setUser(null)
+      }
+      setLoading(false)
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [])
+
+  return {
+    user,
+    loading,
+    login,
+    logout,
+    isAuthenticated: user !== null,
+  }
 }
