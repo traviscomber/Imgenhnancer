@@ -40,7 +40,6 @@ export function CryptoPayment({ packageId, open, onOpenChange }: CryptoPaymentPr
     setIsNotifying(true)
 
     try {
-      // Call API to create pending transaction
       const response = await fetch("/api/notify-payment-sent", {
         method: "POST",
         headers: {
@@ -57,7 +56,24 @@ export function CryptoPayment({ packageId, open, onOpenChange }: CryptoPaymentPr
         throw new Error("Failed to send notification")
       }
 
-      toast.success("Payment notification sent! Admin will verify your payment shortly.")
+      const message = `🔔 *Payment Notification*
+
+I have sent a payment for the *${selectedPackage.name}* package.
+
+📦 Package: ${selectedPackage.name}
+💰 Amount: $${selectedPackage.price} USDT
+🌐 Network: ${NETWORK_NAME}
+📧 Email: ${user.email}
+🆔 User ID: ${user.id}
+
+Please verify my transaction and credit my account. Thank you!`
+
+      const whatsappUrl = `https://wa.me/56940946660?text=${encodeURIComponent(message)}`
+
+      // Open WhatsApp in new tab
+      window.open(whatsappUrl, "_blank")
+
+      toast.success("Payment notification sent! Please send the WhatsApp message to complete the notification.")
       onOpenChange(false)
     } catch (error) {
       console.error("[v0] Error notifying payment:", error)

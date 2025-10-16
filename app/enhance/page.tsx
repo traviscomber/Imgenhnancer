@@ -135,6 +135,8 @@ export default function EnhancePage() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
+  const isPaidUser = userCredits > 0
+
   useEffect(() => {
     const checkAuth = async () => {
       const authenticated = await isAuthenticated()
@@ -1809,18 +1811,39 @@ export default function EnhancePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">
                   <label className="text-sm font-medium text-gray-300 flex items-center justify-between">
-                    <span>Upscale Factor</span>
+                    <span className="flex items-center gap-2">
+                      Upscale Factor
+                      {!isPaidUser && (
+                        <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30 flex items-center gap-1">
+                          <Lock className="w-3 h-3" />
+                          PRO
+                        </span>
+                      )}
+                    </span>
                     <span className="text-amber-400">{settings.upscaleFactor}x</span>
                   </label>
                   <Slider
                     value={[settings.upscaleFactor]}
-                    onValueChange={(value) => setSettings((prev) => ({ ...prev, upscaleFactor: value[0] }))}
+                    onValueChange={(value) => {
+                      if (!isPaidUser) {
+                        setError("Higher upscale factors (3x, 4x) require credits. Please purchase credits to unlock.")
+                        return
+                      }
+                      setSettings((prev) => ({ ...prev, upscaleFactor: value[0] }))
+                    }}
                     min={2}
-                    max={4}
+                    max={isPaidUser ? 4 : 2}
                     step={1}
-                    className="w-full"
+                    className={`w-full ${!isPaidUser ? "opacity-50 cursor-not-allowed" : ""}`}
+                    disabled={!isPaidUser}
                   />
-                  <p className="text-xs text-gray-500">Higher = larger output (slower)</p>
+                  <div className="flex items-center justify-between text-xs">
+                    {!isPaidUser ? (
+                      <span className="text-amber-400">Purchase credits to unlock 3x and 4x upscaling</span>
+                    ) : (
+                      <span className="text-gray-500">Higher = larger output (slower)</span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="space-y-3">
