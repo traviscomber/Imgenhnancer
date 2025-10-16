@@ -61,7 +61,7 @@ export async function GET() {
       const { data: userData } = await supabase.from("users").select("role").eq("id", user.id).maybeSingle()
 
       const isAdmin = userData?.role === "admin"
-      const defaultCredits = isAdmin ? 999999 : 100
+      const defaultCredits = isAdmin ? 999999 : 50
 
       const { data: newCreditData, error: insertError } = await supabase
         .from("user_credits")

@@ -18,7 +18,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "User already exists" }, { status: 200 })
     }
 
-    // Create user record with default 100 credits
+    // Create user record with default 50 credits
     const { error: userError } = await supabase.from("users").insert({
       id: userId,
       email: email,
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     // Create credit record
     const { error: creditError } = await supabase.from("user_credits").insert({
       user_id: userId,
-      credits: 100, // Default credits for new users
+      credits: 50, // Default credits for new users
     })
 
     if (creditError) {

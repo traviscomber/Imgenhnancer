@@ -53,10 +53,10 @@ export async function POST(request: Request) {
       }
     }
 
-    // Create credit record with default 100 credits
+    // Create credit record with default 50 credits
     const { error: creditError } = await adminClient.from("user_credits").insert({
       user_id: authData.user.id,
-      credits: 100,
+      credits: 50,
     })
 
     if (creditError) {
