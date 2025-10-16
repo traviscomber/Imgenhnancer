@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle, Clock, RefreshCw } from "lucide-react"
+import { CheckCircle, Clock, RefreshCw, AlertCircle } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 interface Transaction {
   id: string
@@ -25,24 +26,43 @@ export default function AdminPaymentsPage() {
   const [loading, setLoading] = useState(false)
   const [approving, setApproving] = useState<string | null>(null)
   const [authenticated, setAuthenticated] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const fetchPendingPayments = async () => {
-    if (!adminSecret) return
+    if (!adminSecret.trim()) {
+      setError("Please enter the admin secret")
+      return
+    }
 
+    console.log("[v0] Attempting admin login")
     setLoading(true)
+    setError(null)
+
     try {
       const response = await fetch(`/api/admin/pending-payments?adminSecret=${encodeURIComponent(adminSecret)}`)
 
+      console.log("[v0] Admin login response status:", response.status)
+
       if (response.status === 401) {
         setAuthenticated(false)
+        setError("Invalid admin secret. Please check your credentials.")
         return
       }
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
       const data = await response.json()
+      console.log("[v0] Fetched transactions:", data.transactions?.length || 0)
+
       setTransactions(data.transactions || [])
       setAuthenticated(true)
+      setError(null)
     } catch (error) {
-      console.error("Error fetching payments:", error)
+      console.error("[v0] Error fetching payments:", error)
+      setError("Failed to connect to server. Please try again.")
+      setAuthenticated(false)
     } finally {
       setLoading(false)
     }
@@ -50,6 +70,8 @@ export default function AdminPaymentsPage() {
 
   const approvePayment = async (transactionId: string) => {
     setApproving(transactionId)
+    setError(null)
+
     try {
       const response = await fetch("/api/admin/approve-payment", {
         method: "POST",
@@ -57,22 +79,20 @@ export default function AdminPaymentsPage() {
         body: JSON.stringify({ adminSecret, transactionId }),
       })
 
-      if (response.ok) {
-        // Refresh the list
-        await fetchPendingPayments()
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || "Failed to approve payment")
       }
+
+      // Refresh the list
+      await fetchPendingPayments()
     } catch (error) {
-      console.error("Error approving payment:", error)
+      console.error("[v0] Error approving payment:", error)
+      setError(error instanceof Error ? error.message : "Failed to approve payment")
     } finally {
       setApproving(null)
     }
   }
-
-  useEffect(() => {
-    if (authenticated) {
-      fetchPendingPayments()
-    }
-  }, [authenticated])
 
   if (!authenticated) {
     return (
@@ -83,6 +103,12 @@ export default function AdminPaymentsPage() {
             <CardDescription>Enter your admin secret to access the payment panel</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
             <Input
               type="password"
               placeholder="Admin Secret"
@@ -90,8 +116,15 @@ export default function AdminPaymentsPage() {
               onChange={(e) => setAdminSecret(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && fetchPendingPayments()}
             />
-            <Button onClick={fetchPendingPayments} className="w-full">
-              Login
+            <Button onClick={fetchPendingPayments} className="w-full" disabled={loading}>
+              {loading ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                  Authenticating...
+                </>
+              ) : (
+                "Login"
+              )}
             </Button>
           </CardContent>
         </Card>
@@ -111,6 +144,13 @@ export default function AdminPaymentsPage() {
           Refresh
         </Button>
       </div>
+
+      {error && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
       {transactions.length === 0 ? (
         <Card>

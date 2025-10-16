@@ -21,6 +21,7 @@ const NETWORK_NAME = "Tron (TRC20)"
 
 export function CryptoPayment({ packageId, open, onOpenChange }: CryptoPaymentProps) {
   const [copied, setCopied] = useState(false)
+  const [isNotifying, setIsNotifying] = useState(false)
   const { user } = useAuth()
   const selectedPackage = CREDIT_PACKAGES.find((pkg) => pkg.id === packageId)
 
@@ -30,14 +31,36 @@ export function CryptoPayment({ packageId, open, onOpenChange }: CryptoPaymentPr
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const handleNotifyPayment = () => {
+  const handleNotifyPayment = async () => {
     if (!user) {
       toast.error("Please login to notify payment")
       return
     }
 
-    // Create WhatsApp message with payment details
-    const message = `Payment Notification
+    setIsNotifying(true)
+
+    try {
+      // Call API to create pending transaction
+      const response = await fetch("/api/notify-payment-sent", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          packageId: packageId,
+          userEmail: user.email,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to send notification")
+      }
+
+      toast.success("Payment notification sent! Admin will verify your payment.")
+
+      // Create WhatsApp message with payment details
+      const message = `Payment Notification
 
 Package: ${selectedPackage?.name}
 Amount: $${selectedPackage?.price} USDT
@@ -46,22 +69,26 @@ User ID: ${user.id}
 
 I have sent the payment and waiting for verification.`
 
-    // Open WhatsApp with pre-filled message
-    const phoneNumber = "56940946660"
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`
+      // Open WhatsApp with pre-filled message
+      const phoneNumber = "56940946660"
+      const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`
 
-    console.log("[v0] Opening WhatsApp URL:", whatsappUrl)
+      console.log("[v0] Opening WhatsApp URL:", whatsappUrl)
 
-    // Try to open in new tab
-    const newWindow = window.open(whatsappUrl, "_blank")
+      // Try to open in new tab
+      const newWindow = window.open(whatsappUrl, "_blank")
 
-    // Fallback if popup blocked
-    if (!newWindow || newWindow.closed || typeof newWindow.closed === "undefined") {
-      console.log("[v0] Popup blocked, using location.href")
-      window.location.href = whatsappUrl
+      // Fallback if popup blocked
+      if (!newWindow || newWindow.closed || typeof newWindow.closed === "undefined") {
+        console.log("[v0] Popup blocked, using location.href")
+        window.location.href = whatsappUrl
+      }
+    } catch (error) {
+      console.error("[v0] Error notifying payment:", error)
+      toast.error("Failed to send notification. Please try again.")
+    } finally {
+      setIsNotifying(false)
     }
-
-    toast.success("Opening WhatsApp...")
   }
 
   if (!selectedPackage) return null
@@ -143,9 +170,9 @@ I have sent the payment and waiting for verification.`
             </p>
           </div>
 
-          <Button onClick={handleNotifyPayment} className="w-full">
+          <Button onClick={handleNotifyPayment} className="w-full" disabled={isNotifying}>
             <Send className="h-4 w-4 mr-2" />
-            Confirm Payment
+            {isNotifying ? "Sending..." : "Confirm Payment"}
           </Button>
 
           {/* Contact Support */}
