@@ -46,6 +46,7 @@ import { FacialAnalysisCard } from "@/components/facial-analysis-card"
 import { isAuthenticated, logout } from "@/lib/auth" // Added for authentication
 import { LoginModal } from "@/components/auth/login-modal" // Added for login modal
 import { CreditDisplay } from "@/components/credits/credit-display" // Added for credit display
+import { ClarityLogo } from "@/components/clarity-logo"
 
 interface EnhancedImage {
   id: string
@@ -1529,9 +1530,7 @@ export default function EnhancePage() {
 
       <div className="sticky top-0 z-50 bg-gray-950/80 backdrop-blur-lg border-b border-gray-800">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
-            AI Image Enhancer
-          </h1>
+          <ClarityLogo className="h-8 w-auto" />
           <div className="flex items-center gap-4">
             {!isLoadingCredits && <CreditDisplay credits={userCredits} />}
             {/* CHANGED: Show Login button when not authenticated, Logout when authenticated */}
@@ -1589,8 +1588,8 @@ export default function EnhancePage() {
             <Sparkles className="w-4 h-4 mr-2 inline" />
             AI-Powered Enhancement
           </Badge>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white">Enhance Your Images</h1>
-          <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white">Enhance Your Images</h1>
+          <p className="text-base md:text-lg text-gray-400 max-w-2xl mx-auto">
             Choose between face-preserving, creative enhancement, experimental, or avatar generation modes
           </p>
         </div>
@@ -1660,7 +1659,7 @@ export default function EnhancePage() {
           }`}
         >
           <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
+            <CardTitle className="text-white flex items-center gap-2 text-base md:text-lg">
               <Sparkles
                 className={`w-5 h-5 ${
                   selectedCategory === "faces"
@@ -1712,7 +1711,7 @@ export default function EnhancePage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="text-2xl">{preset.icon}</span>
-                        <h3 className="text-lg font-bold text-white">{preset.name}</h3>
+                        <h3 className="text-base md:text-lg font-bold text-white">{preset.name}</h3>
                       </div>
                       {selectedPresetId === preset.id && (
                         <CheckCircle2
@@ -1800,7 +1799,7 @@ export default function EnhancePage() {
         {showAdvanced && (
           <Card className="mb-8 bg-gray-900/50 border-gray-800">
             <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
+              <CardTitle className="text-white flex items-center gap-2 text-base md:text-lg">
                 <Zap className="w-5 h-5 text-amber-400" />
                 Advanced Settings
               </CardTitle>

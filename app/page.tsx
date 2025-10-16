@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { ImageComparisonSlider } from "@/components/image-comparison-slider"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
+import { ClarityLogo } from "@/components/clarity-logo"
 import {
   Sparkles,
   Zap,
@@ -58,11 +59,14 @@ export default function Home() {
           <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20 text-xs md:text-sm">
             ✨ AI-Powered Enhancement
           </Badge>
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">
+          <div className="flex justify-center mb-6">
+            <ClarityLogo className="h-16 md:h-24 lg:h-32 w-auto" />
+          </div>
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">
             Transform Your Images with{" "}
             <span className="bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">AI Magic</span>
           </h1>
-          <p className="text-lg md:text-xl text-gray-400 max-w-3xl mx-auto px-4">
+          <p className="text-base md:text-lg text-gray-400 max-w-3xl mx-auto px-4">
             Professional-grade image enhancement powered by cutting-edge AI. Restore heritage photos, enhance wedding
             memories, and elevate your creative work.
           </p>
@@ -108,8 +112,8 @@ export default function Home() {
             {/* Hero Comparison Sliders */}
             <div className="space-y-8 md:space-y-12">
               <div className="text-center space-y-2 md:space-y-3">
-                <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white">See the Difference</h2>
-                <p className="text-sm md:text-base text-gray-400">Drag the slider to compare before and after</p>
+                <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-white">See the Difference</h2>
+                <p className="text-sm text-gray-400">Drag the slider to compare before and after</p>
               </div>
 
               <div className="space-y-6 md:space-y-8">
@@ -147,7 +151,7 @@ export default function Home() {
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-amber-500/10 rounded-lg flex items-center justify-center">
                     <Sparkles className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
                   </div>
-                  <h3 className="text-lg md:text-xl font-semibold text-white">AI Enhancement</h3>
+                  <h3 className="text-base md:text-lg font-semibold text-white">AI Enhancement</h3>
                   <p className="text-xs md:text-sm text-gray-400">
                     Advanced AI algorithms restore and enhance image quality with unprecedented detail.
                   </p>
@@ -159,7 +163,7 @@ export default function Home() {
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-amber-500/10 rounded-lg flex items-center justify-center">
                     <Zap className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
                   </div>
-                  <h3 className="text-lg md:text-xl font-semibold text-white">Lightning Fast</h3>
+                  <h3 className="text-base md:text-lg font-semibold text-white">Lightning Fast</h3>
                   <p className="text-xs md:text-sm text-gray-400">
                     Process images in seconds with our optimized AI pipeline.
                   </p>
@@ -171,7 +175,7 @@ export default function Home() {
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-amber-500/10 rounded-lg flex items-center justify-center">
                     <Shield className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
                   </div>
-                  <h3 className="text-lg md:text-xl font-semibold text-white">Face Preservation</h3>
+                  <h3 className="text-base md:text-lg font-semibold text-white">Face Preservation</h3>
                   <p className="text-xs md:text-sm text-gray-400">
                     Maintains facial features and skin tones for ASEAN portraits.
                   </p>
@@ -183,7 +187,7 @@ export default function Home() {
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-amber-500/10 rounded-lg flex items-center justify-center">
                     <ImageIcon className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
                   </div>
-                  <h3 className="text-lg md:text-xl font-semibold text-white">High Resolution</h3>
+                  <h3 className="text-base md:text-lg font-semibold text-white">High Resolution</h3>
                   <p className="text-xs md:text-sm text-gray-400">
                     Upscale to 4K and beyond without losing quality or detail.
                   </p>
@@ -194,8 +198,8 @@ export default function Home() {
             {/* How It Works */}
             <div className="space-y-6 md:space-y-8">
               <div className="text-center space-y-2 md:space-y-3">
-                <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white">How It Works</h2>
-                <p className="text-sm md:text-base text-gray-400">Three simple steps to transform your images</p>
+                <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-white">How It Works</h2>
+                <p className="text-sm text-gray-400">Three simple steps to transform your images</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
@@ -203,7 +207,7 @@ export default function Home() {
                   <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full flex items-center justify-center mx-auto">
                     <Upload className="w-6 h-6 md:w-8 md:h-8 text-black" />
                   </div>
-                  <h3 className="text-lg md:text-xl font-semibold text-white">1. Upload</h3>
+                  <h3 className="text-base md:text-lg font-semibold text-white">1. Upload</h3>
                   <p className="text-xs md:text-sm text-gray-400">
                     Upload your image or drag and drop it into the enhancer.
                   </p>
@@ -213,7 +217,7 @@ export default function Home() {
                   <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full flex items-center justify-center mx-auto">
                     <Sparkles className="w-6 h-6 md:w-8 md:h-8 text-black" />
                   </div>
-                  <h3 className="text-lg md:text-xl font-semibold text-white">2. Enhance</h3>
+                  <h3 className="text-base md:text-lg font-semibold text-white">2. Enhance</h3>
                   <p className="text-xs md:text-sm text-gray-400">
                     Our AI processes and enhances your image automatically.
                   </p>
@@ -223,7 +227,7 @@ export default function Home() {
                   <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full flex items-center justify-center mx-auto">
                     <Download className="w-6 h-6 md:w-8 md:h-8 text-black" />
                   </div>
-                  <h3 className="text-lg md:text-xl font-semibold text-white">3. Download</h3>
+                  <h3 className="text-base md:text-lg font-semibold text-white">3. Download</h3>
                   <p className="text-xs md:text-sm text-gray-400">Download your enhanced image in high resolution.</p>
                 </div>
               </div>
@@ -233,10 +237,8 @@ export default function Home() {
           {/* Examples Tab - Categorized by Use Case */}
           <TabsContent value="examples" className="space-y-8 md:space-y-12" id="examples">
             <div className="text-center space-y-2 md:space-y-3">
-              <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white">Real Examples</h2>
-              <p className="text-sm md:text-base text-gray-400">
-                See the transformation across different types of images
-              </p>
+              <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-white">Real Examples</h2>
+              <p className="text-sm text-gray-400">See the transformation across different types of images</p>
             </div>
 
             <div className="space-y-8 md:space-y-12">
@@ -244,7 +246,7 @@ export default function Home() {
               <div className="space-y-4 md:space-y-6">
                 <div className="flex items-center gap-2 md:gap-3">
                   <Camera className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
-                  <h3 className="text-xl md:text-2xl font-bold text-white">Wedding Photography</h3>
+                  <h3 className="text-lg md:text-xl font-bold text-white">Wedding Photography</h3>
                 </div>
                 <div className="space-y-4 md:space-y-6">
                   <ImageComparisonSlider
@@ -272,7 +274,7 @@ export default function Home() {
               <div className="space-y-4 md:space-y-6">
                 <div className="flex items-center gap-2 md:gap-3">
                   <Church className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
-                  <h3 className="text-xl md:text-2xl font-bold text-white">Cultural Heritage Restoration</h3>
+                  <h3 className="text-lg md:text-xl font-bold text-white">Cultural Heritage Restoration</h3>
                 </div>
                 <div className="space-y-4 md:space-y-6">
                   <ImageComparisonSlider
@@ -294,7 +296,7 @@ export default function Home() {
               <div className="space-y-4 md:space-y-6">
                 <div className="flex items-center gap-2 md:gap-3">
                   <Building2 className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
-                  <h3 className="text-xl md:text-2xl font-bold text-white">Real Estate Marketing</h3>
+                  <h3 className="text-lg md:text-xl font-bold text-white">Real Estate Marketing</h3>
                 </div>
                 <ImageComparisonSlider
                   beforeImage="/images/real-estate-before.png"
@@ -309,8 +311,8 @@ export default function Home() {
           {/* Professional Use Tab */}
           <TabsContent value="professional" className="space-y-8 md:space-y-12">
             <div className="text-center space-y-2 md:space-y-3">
-              <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white">Professional Applications</h2>
-              <p className="text-sm md:text-base text-gray-400">Trusted by professionals across industries</p>
+              <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-white">Professional Applications</h2>
+              <p className="text-sm text-gray-400">Trusted by professionals across industries</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
@@ -321,7 +323,7 @@ export default function Home() {
                     <Camera className="w-6 h-6 md:w-8 md:h-8 text-pink-400 group-hover:text-amber-400 transition-colors" />
                   </div>
                   <div className="space-y-2 md:space-y-3">
-                    <h3 className="text-xl md:text-2xl font-bold text-white">Wedding Photography</h3>
+                    <h3 className="text-lg md:text-xl font-bold text-white">Wedding Photography</h3>
                     <p className="text-xs md:text-sm text-gray-400 leading-relaxed">
                       Professional photographers enhance their wedding portfolios with AI-powered image improvement,
                       delivering flawless memories to clients.
@@ -351,7 +353,7 @@ export default function Home() {
                     <Church className="w-6 h-6 md:w-8 md:h-8 text-purple-400 group-hover:text-amber-400 transition-colors" />
                   </div>
                   <div className="space-y-2 md:space-y-3">
-                    <h3 className="text-xl md:text-2xl font-bold text-white">Cultural Heritage Preservation</h3>
+                    <h3 className="text-lg md:text-xl font-bold text-white">Cultural Heritage Preservation</h3>
                     <p className="text-xs md:text-sm text-gray-400 leading-relaxed">
                       Museums and archivists use our AI to restore and preserve historical photographs, maintaining
                       cultural authenticity while removing age-related damage.
@@ -381,7 +383,7 @@ export default function Home() {
                     <Building2 className="w-6 h-6 md:w-8 md:h-8 text-blue-400 group-hover:text-amber-400 transition-colors" />
                   </div>
                   <div className="space-y-2 md:space-y-3">
-                    <h3 className="text-xl md:text-2xl font-bold text-white">Real Estate Marketing</h3>
+                    <h3 className="text-lg md:text-xl font-bold text-white">Real Estate Marketing</h3>
                     <p className="text-xs md:text-sm text-gray-400 leading-relaxed">
                       Real estate agents transform property photos to attract buyers, turning dim interiors into bright,
                       inviting spaces that sell faster.
@@ -411,7 +413,7 @@ export default function Home() {
                     <ImageIcon className="w-6 h-6 md:w-8 md:h-8 text-green-400 group-hover:text-amber-400 transition-colors" />
                   </div>
                   <div className="space-y-2 md:space-y-3">
-                    <h3 className="text-xl md:text-2xl font-bold text-white">Professional Photography</h3>
+                    <h3 className="text-lg md:text-xl font-bold text-white">Professional Photography</h3>
                     <p className="text-xs md:text-sm text-gray-400 leading-relaxed">
                       Professional photographers enhance their portfolio work, delivering stunning results for
                       commercial clients and personal projects.
@@ -439,8 +441,8 @@ export default function Home() {
 
         {/* CTA Section */}
         <div className="mt-16 md:mt-20 text-center space-y-4 md:space-y-6 bg-gradient-to-r from-amber-500/10 to-amber-600/10 border border-amber-500/20 rounded-2xl p-8 md:p-12">
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white">Ready to Transform Your Images?</h2>
-          <p className="text-sm md:text-base text-gray-400 max-w-2xl mx-auto">
+          <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-white">Ready to Transform Your Images?</h2>
+          <p className="text-sm text-gray-400 max-w-2xl mx-auto">
             Join thousands of professionals using clar1ty to enhance their images with AI
           </p>
           <Button

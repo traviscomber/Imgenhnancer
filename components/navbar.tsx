@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Menu, X, Sparkles } from "lucide-react"
+import { Menu, X } from "lucide-react"
 import { CreditDisplay } from "@/components/credits/credit-display"
 import { isAuthenticated } from "@/lib/auth"
+import { ClarityLogo } from "@/components/clarity-logo"
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -37,14 +38,8 @@ export function Navbar() {
     <nav className="sticky top-0 z-50 bg-gray-950/80 backdrop-blur-lg border-b border-gray-800">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2 group">
-            <div className="w-8 h-8 bg-gradient-to-r from-amber-500 to-amber-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-              <Sparkles className="w-5 h-5 text-black" />
-            </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
-              clar1ty
-            </span>
+          <Link href="/" className="flex items-center group">
+            <ClarityLogo className="h-8 w-auto group-hover:scale-105 transition-transform" />
           </Link>
 
           {/* Desktop Navigation */}
