@@ -3,11 +3,11 @@
  */
 export async function compressImageForUpload(file: File | Blob, maxSizeMB: number): Promise<File> {
   const fileSizeKB = file.size / 1024
-  console.log(`[v0] File size: ${Math.round(fileSizeKB)}KB`)
+  console.log(`[v0] Original file size: ${Math.round(fileSizeKB)}KB`)
 
-  // If file is already under 5MB, return as-is
-  if (fileSizeKB < 5120) {
-    // 5MB threshold
+  // If file is already under 2MB, return as-is
+  if (fileSizeKB < 2048) {
+    // 2MB threshold (safe for serverless functions)
     console.log(`[v0] File is already small enough, skipping compression`)
     if (file instanceof File) {
       return file
@@ -55,7 +55,7 @@ export async function compressImageForUpload(file: File | Blob, maxSizeMB: numbe
         let width = img.width
         let height = img.height
 
-        const maxDimension = isEquirectangular || isPanoramic ? 4096 : 2048
+        const maxDimension = isEquirectangular || isPanoramic ? 3072 : 2048
 
         if (width > maxDimension || height > maxDimension) {
           if (width > height) {
@@ -73,7 +73,7 @@ export async function compressImageForUpload(file: File | Blob, maxSizeMB: numbe
         canvas.height = height
         ctx.drawImage(img, 0, 0, width, height)
 
-        const quality = isEquirectangular || isPanoramic ? 0.9 : 0.85
+        const quality = 0.92 // Very high quality, minimal compression
 
         canvas.toBlob(
           (blob) => {
@@ -93,9 +93,7 @@ export async function compressImageForUpload(file: File | Blob, maxSizeMB: numbe
               lastModified: Date.now(),
             })
 
-            console.log(
-              `✅ Compression complete: ${Math.round(file.size / 1024)}KB → ${Math.round(compressedFile.size / 1024)}KB`,
-            )
+            console.log(`[v0] Compressed file size: ${Math.round(compressedFile.size / 1024)}KB`)
 
             resolve(compressedFile)
           },

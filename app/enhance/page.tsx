@@ -48,6 +48,11 @@ import { LoginModal } from "@/components/auth/login-modal" // Added for login mo
 import { CreditDisplay } from "@/components/credits/credit-display" // Added for credit display
 import { ClarityLogo } from "@/components/clarity-logo"
 
+interface FileWithPreview {
+  file: File
+  preview: string
+}
+
 interface EnhancedImage {
   id: string
   original: File
@@ -104,7 +109,7 @@ export default function EnhancePage() {
   const [isAuth, setIsAuth] = useState(false)
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
 
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
+  const [uploadedFiles, setUploadedFiles] = useState<FileWithPreview[]>([])
   const [selectedFiles, setSelectedFiles] = useState<Set<number>>(new Set())
   const [processingImages, setProcessingImages] = useState<ProcessingImage[]>([]) // Track processing images
   const [enhancedImages, setEnhancedImages] = useState<EnhancedImage[]>([])
@@ -399,7 +404,9 @@ export default function EnhancePage() {
 
       const duplicateErrors: any[] = []
       const newFiles = acceptedFiles.filter((file) => {
-        const isDuplicate = uploadedFiles.some((existing) => existing.name === file.name && existing.size === file.size)
+        const isDuplicate = uploadedFiles.some(
+          (existing) => existing.file.name === file.name && existing.file.size === file.size,
+        )
         if (isDuplicate) {
           console.log(`[v0] Skipping duplicate file: ${file.name}`)
           duplicateErrors.push({
@@ -426,12 +433,16 @@ export default function EnhancePage() {
       console.log("[v0] uploadedFiles:", uploadedFiles)
       console.log("[v0] newFiles:", newFiles)
 
+      const filesWithPreviews: FileWithPreview[] = newFiles.map((file) => ({
+        file,
+        preview: URL.createObjectURL(file),
+      }))
+
       const startIndex = Array.isArray(uploadedFiles) ? uploadedFiles.length : 0
 
       setUploadedFiles((prev) => {
         const prevArray = Array.isArray(prev) ? prev : []
-        const newFilesArray = Array.isArray(newFiles) ? newFiles : []
-        const result = prevArray.concat(newFilesArray)
+        const result = prevArray.concat(filesWithPreviews)
         console.log("[v0] Files added successfully, total:", result.length)
         return result
       })
@@ -678,7 +689,13 @@ export default function EnhancePage() {
           if (blob) {
             const file = new File([blob], `camera-capture-${Date.now()}.jpg`, { type: "image/jpeg" })
             setUploadedFiles((prev) => {
-              const newFiles = [...prev, file]
+              const newFiles: FileWithPreview[] = [
+                ...prev,
+                {
+                  file,
+                  preview: URL.createObjectURL(blob),
+                },
+              ]
               setSelectedFiles((prevSelected) => {
                 const newSelected = new Set(prevSelected)
                 newSelected.add(prev.length)
@@ -729,6 +746,7 @@ export default function EnhancePage() {
     const filesToProcess = Array.from(selectedFiles)
       .sort((a, b) => a - b)
       .map((index) => uploadedFiles[index])
+
     const startTime = Date.now()
 
     trackEnhancementStart({
@@ -741,10 +759,10 @@ export default function EnhancePage() {
     })
 
     // Move selected files to processing column
-    const processingBatch: ProcessingImage[] = filesToProcess.map((file, i) => ({
+    const processingBatch: ProcessingImage[] = filesToProcess.map((fileWithPreview, i) => ({
       id: `processing-${Date.now()}-${i}`,
-      file,
-      preview: URL.createObjectURL(file),
+      file: fileWithPreview.file,
+      preview: fileWithPreview.preview,
       progress: 0,
       status: "Starting...",
     }))
@@ -761,7 +779,8 @@ export default function EnhancePage() {
 
     // Process each image
     for (let i = 0; i < filesToProcess.length; i++) {
-      const file = filesToProcess[i]
+      const fileWithPreview = filesToProcess[i]
+      const file = fileWithPreview.file
       const processingId = processingBatch[i].id
 
       try {
@@ -944,11 +963,11 @@ export default function EnhancePage() {
     setIsProcessing(false)
   }, [
     selectedFiles,
-    uploadedFiles,
+    uploadedFiles, // REMOVED: no longer directly used, but dependency for filtering
+    userCredits,
     settings,
     selectedCategory,
     selectedPresetId,
-    userCredits,
     removeProcessingImage,
     trackEnhancementComplete,
     trackEnhancementFailure,
@@ -2222,20 +2241,23 @@ export default function EnhancePage() {
               </div>
 
               {/* Uploaded Files with Analysis */}
-              {uploadedFiles.map((file, index) => {
-                const analysisData = uploadedFilesWithAnalysis[index]
+              {uploadedFiles.map((fileWithPreview, index) => {
+                const isSelected = selectedFiles.has(index)
+                const file = fileWithPreview.file
+                const analysis = facialAnalysisResults.get(file.name)
+                const aspectRatio = imageAspectRatios.get(index) || 1
 
                 return (
                   <div key={index} className="space-y-2">
                     <Card
                       className={`bg-gray-800/50 transition-all ${
-                        selectedFiles.has(index) ? "border-amber-500 ring-2 ring-amber-500/20" : "border-gray-700"
+                        isSelected ? "border-amber-500 ring-2 ring-amber-500/20" : "border-gray-700"
                       }`}
                     >
                       <CardContent className="p-3">
                         <div className="flex items-start gap-2 mb-2">
                           <Checkbox
-                            checked={selectedFiles.has(index)}
+                            checked={isSelected}
                             onCheckedChange={() => toggleFileSelection(index)}
                             className="mt-1"
                           />
@@ -2257,11 +2279,15 @@ export default function EnhancePage() {
                           onClick={() => toggleFileSelection(index)}
                         >
                           <img
-                            src={URL.createObjectURL(file) || "/placeholder.svg"}
+                            src={fileWithPreview.preview || "/placeholder.svg"}
                             alt={file.name}
-                            className={`w-full h-full ${shouldUseContain(index) ? "object-contain" : "object-cover"}`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              console.error(`[v0] Failed to load image: ${file.name}`)
+                              e.currentTarget.src = "/placeholder.svg?height=200&width=200"
+                            }}
                           />
-                          {selectedFiles.has(index) && (
+                          {isSelected && (
                             <div className="absolute inset-0 bg-amber-500/20 flex items-center justify-center">
                               <CheckCircle2 className="w-8 h-8 text-amber-400" />
                             </div>
@@ -2270,7 +2296,7 @@ export default function EnhancePage() {
                       </CardContent>
                     </Card>
 
-                    {analysisData?.isAnalyzing && (
+                    {uploadedFilesWithAnalysis[index]?.isAnalyzing && (
                       <Card className="bg-purple-500/10 border-purple-500/30">
                         <CardContent className="p-3 flex items-center gap-2">
                           <Loader2 className="w-4 h-4 text-purple-400 animate-spin" />
@@ -2279,9 +2305,9 @@ export default function EnhancePage() {
                       </Card>
                     )}
 
-                    {analysisData?.analysis && (
+                    {analysis && (
                       <FacialAnalysisCard
-                        analysis={analysisData.analysis}
+                        analysis={analysis}
                         selectedCategory={selectedCategory}
                         selectedPreset={ALL_PRESETS[selectedPresetId]?.name || ""}
                       />
