@@ -346,221 +346,263 @@ export default function EnhancePage() {
 
   const onDrop = useCallback(
     async (acceptedFiles: File[], fileRejections: FileRejection[]) => {
-      console.log(`[v0] Files dropped: ${acceptedFiles.length} accepted, ${fileRejections.length} rejected`)
+      try {
+        console.log(`[v0] Files dropped: ${acceptedFiles.length} accepted, ${fileRejections.length} rejected`)
 
-      if (!acceptedFiles || !Array.isArray(acceptedFiles)) {
-        console.error("[v0] acceptedFiles is not an array:", acceptedFiles)
-        return
-      }
+        if (!acceptedFiles || !Array.isArray(acceptedFiles)) {
+          console.error("[v0] acceptedFiles is not an array:", acceptedFiles)
+          setUploadErrors((prev) => [
+            ...(Array.isArray(prev) ? prev : []),
+            {
+              id: `error-${Date.now()}`,
+              fileName: "Unknown",
+              error: "Invalid file upload",
+              tip: "Please try uploading your files again",
+            },
+          ])
+          return
+        }
 
-      if (fileRejections.length > 0) {
-        const newErrors = fileRejections.map((rejection) => {
-          const file = rejection.file
-          const errors = rejection.errors
+        if (fileRejections.length > 0) {
+          const newErrors = fileRejections.map((rejection) => {
+            const file = rejection.file
+            const errors = rejection.errors
 
-          let errorMessage = "Upload failed"
-          let tip = "Please try again"
+            let errorMessage = "Upload failed"
+            let tip = "Please try again"
 
-          if (errors.some((e: any) => e.code === "file-too-large")) {
-            const sizeMB = (file.size / 1024 / 1024).toFixed(2)
-            errorMessage = `File too large: ${file.name}`
+            if (errors.some((e: any) => e.code === "file-too-large")) {
+              const sizeMB = (file.size / 1024 / 1024).toFixed(2)
+              errorMessage = `File too large: ${file.name}`
 
-            if (file.size > 20 * 1024 * 1024) {
-              tip = `This file is ${sizeMB}MB. For panoramic/360° images, try compressing to under 20MB first, or use a lower resolution version.`
+              if (file.size > 20 * 1024 * 1024) {
+                tip = `This file is ${sizeMB}MB. For panoramic/360° images, try compressing to under 20MB first, or use a lower resolution version.`
+              } else {
+                tip = `Maximum file size is 20MB. Current size: ${sizeMB}MB. Try compressing the image first.`
+              }
+            } else if (errors.some((e: any) => e.code === "file-invalid-type")) {
+              errorMessage = `Invalid file type: ${file.name}`
+              tip =
+                "Only PNG, JPG, JPEG, and WebP images are supported. Please convert your file to a supported format."
             } else {
-              tip = `Maximum file size is 20MB. Current size: ${sizeMB}MB. Try compressing the image first.`
+              errorMessage = `Cannot upload: ${file.name}`
+              tip = errors.map((e: any) => e.message).join(", ")
             }
-          } else if (errors.some((e: any) => e.code === "file-invalid-type")) {
-            errorMessage = `Invalid file type: ${file.name}`
-            tip = "Only PNG, JPG, JPEG, and WebP images are supported. Please convert your file to a supported format."
-          } else {
-            errorMessage = `Cannot upload: ${file.name}`
-            tip = errors.map((e: any) => e.message).join(", ")
-          }
 
-          return {
-            id: `error-${Date.now()}-${Math.random()}`,
-            fileName: file.name,
-            error: errorMessage,
-            tip,
-          }
-        })
+            return {
+              id: `error-${Date.now()}-${Math.random()}`,
+              fileName: file.name,
+              error: errorMessage,
+              tip,
+            }
+          })
 
-        setUploadErrors((prev) => {
-          const prevArray = Array.isArray(prev) ? prev : []
-          return [...prevArray, ...newErrors]
-        })
-
-        // Auto-dismiss after 10 seconds
-        setTimeout(() => {
           setUploadErrors((prev) => {
             const prevArray = Array.isArray(prev) ? prev : []
-            return prevArray.filter((e) => !newErrors.find((ne) => ne.id === e.id))
+            return [...prevArray, ...newErrors]
           })
-        }, 10000)
-      }
 
-      if (acceptedFiles.length === 0) return
-
-      const duplicateErrors: any[] = []
-      const newFiles = acceptedFiles.filter((file) => {
-        const isDuplicate = uploadedFiles.some(
-          (existing) => existing.file.name === file.name && existing.file.size === file.size,
-        )
-        if (isDuplicate) {
-          console.log(`[v0] Skipping duplicate file: ${file.name}`)
-          duplicateErrors.push({
-            id: `error-${Date.now()}-${Math.random()}`,
-            fileName: file.name,
-            error: "Duplicate file",
-            tip: "This file has already been uploaded",
-          })
+          // Auto-dismiss after 10 seconds
+          setTimeout(() => {
+            setUploadErrors((prev) => {
+              const prevArray = Array.isArray(prev) ? prev : []
+              return prevArray.filter((e) => !newErrors.find((ne) => ne.id === e.id))
+            })
+          }, 10000)
         }
-        return !isDuplicate
-      })
 
-      // Set duplicate errors after filtering is complete
-      if (duplicateErrors.length > 0) {
-        setUploadErrors((prev) => {
-          const prevArray = Array.isArray(prev) ? prev : []
-          return [...prevArray, ...duplicateErrors]
+        if (acceptedFiles.length === 0) return
+
+        const duplicateErrors: any[] = []
+        const newFiles = acceptedFiles.filter((file) => {
+          const isDuplicate = uploadedFiles.some(
+            (existing) => existing.file.name === file.name && existing.file.size === file.size,
+          )
+          if (isDuplicate) {
+            console.log(`[v0] Skipping duplicate file: ${file.name}`)
+            duplicateErrors.push({
+              id: `error-${Date.now()}-${Math.random()}`,
+              fileName: file.name,
+              error: "Duplicate file",
+              tip: "This file has already been uploaded",
+            })
+          }
+          return !isDuplicate
         })
-      }
 
-      if (newFiles.length === 0) return
-
-      console.log(`[v0] Adding ${newFiles.length} new files`)
-      console.log("[v0] uploadedFiles:", uploadedFiles)
-      console.log("[v0] newFiles:", newFiles)
-
-      const filesWithPreviews: FileWithPreview[] = newFiles.map((file) => ({
-        file,
-        preview: URL.createObjectURL(file),
-      }))
-
-      const startIndex = Array.isArray(uploadedFiles) ? uploadedFiles.length : 0
-
-      setUploadedFiles((prev) => {
-        const prevArray = Array.isArray(prev) ? prev : []
-        const result = prevArray.concat(filesWithPreviews)
-        console.log("[v0] Files added successfully, total:", result.length)
-        return result
-      })
-
-      newFiles.forEach((file, idx) => {
-        detectImageAspectRatio(file, startIndex + idx)
-      })
-
-      const analysisPromises = newFiles.map(async (file) => {
-        try {
-          console.log(`[v0] Starting facial analysis for: ${file.name}`)
-          const formData = new FormData()
-          formData.append("image", file)
-
-          const response = await fetch("/api/analyze-face", {
-            method: "POST",
-            body: formData,
+        // Set duplicate errors after filtering is complete
+        if (duplicateErrors.length > 0) {
+          setUploadErrors((prev) => {
+            const prevArray = Array.isArray(prev) ? prev : []
+            return [...prevArray, ...duplicateErrors]
           })
-
-          if (!response.ok) {
-            console.error(`[v0] Facial analysis failed for ${file.name}: ${response.status}`)
-            return { fileName: file.name, hasFace: false, confidence: 0 }
-          }
-
-          let data
-          try {
-            data = await response.json()
-          } catch (jsonError) {
-            console.error(`[v0] Failed to parse JSON response for ${file.name}:`, jsonError)
-            return { fileName: file.name, hasFace: false, confidence: 0 }
-          }
-
-          if (!data || typeof data !== "object") {
-            console.error(`[v0] Invalid data format for ${file.name}:`, data)
-            return { fileName: file.name, hasFace: false, confidence: 0 }
-          }
-
-          console.log(`[v0] Facial analysis complete for ${file.name}:`, data)
-          return { fileName: file.name, ...data }
-        } catch (error) {
-          console.error(`[v0] Facial analysis error for ${file.name}:`, error)
-          return { fileName: file.name, hasFace: false, confidence: 0 }
         }
-      })
 
-      const results = await Promise.all(analysisPromises)
-      console.log(`[v0] All facial analyses complete:`, results)
+        if (newFiles.length === 0) return
 
-      // Store analysis results
-      const newAnalysisResults = new Map(facialAnalysisResults)
-      results.forEach((result) => {
-        newAnalysisResults.set(result.fileName, result)
-      })
-      setFacialAnalysisResults(newAnalysisResults)
+        console.log(`[v0] Adding ${newFiles.length} new files`)
+        console.log("[v0] uploadedFiles:", uploadedFiles)
+        console.log("[v0] newFiles:", newFiles)
 
-      // Update uploadedFilesWithAnalysis state
-      setUploadedFilesWithAnalysis((prev) => {
-        const newEntries = newFiles.map((file, idx) => ({
+        const filesWithPreviews: FileWithPreview[] = newFiles.map((file) => ({
           file,
-          analysis: null, // Analysis is handled above and stored in facialAnalysisResults
-          isAnalyzing: true, // Set to true while the parallel analysis is running
+          preview: URL.createObjectURL(file),
         }))
-        const prevArray = Array.isArray(prev) ? prev : []
-        const combined = [...prevArray, ...newEntries]
 
-        // After parallel analysis is done, update the analysis field
-        setTimeout(() => {
+        const startIndex = Array.isArray(uploadedFiles) ? uploadedFiles.length : 0
+
+        setUploadedFiles((prev) => {
+          const prevArray = Array.isArray(prev) ? prev : []
+          const result = prevArray.concat(filesWithPreviews)
+          console.log("[v0] Files added successfully, total:", result.length)
+          return result
+        })
+
+        newFiles.forEach((file, idx) => {
+          detectImageAspectRatio(file, startIndex + idx)
+        })
+
+        const analysisPromises = newFiles.map(async (file) => {
           try {
-            if (!Array.isArray(results)) {
-              console.error("[v0] results is not an array:", results)
-              return
+            console.log(`[v0] Starting facial analysis for: ${file.name}`)
+            const formData = new FormData()
+            formData.append("image", file)
+
+            const response = await fetch("/api/analyze-face", {
+              method: "POST",
+              body: formData,
+            })
+
+            if (!response.ok) {
+              console.error(`[v0] Facial analysis failed for ${file.name}: ${response.status}`)
+              return { fileName: file.name, hasFace: false, confidence: 0 }
             }
 
-            results.forEach((result) => {
-              if (!result || typeof result !== "object") {
-                console.error("[v0] Invalid result object:", result)
-                return
-              }
+            let data
+            try {
+              data = await response.json()
+            } catch (jsonError) {
+              console.error(`[v0] Failed to parse JSON response for ${file.name}:`, jsonError)
+              return { fileName: file.name, hasFace: false, confidence: 0 }
+            }
 
-              const fileIndex = combined.findIndex((item) => {
-                if (!item || !item.file) {
-                  console.error("[v0] Invalid item in combined:", item)
-                  return false
+            if (!data || typeof data !== "object") {
+              console.error(`[v0] Invalid data format for ${file.name}:`, data)
+              return { fileName: file.name, hasFace: false, confidence: 0 }
+            }
+
+            console.log(`[v0] Facial analysis complete for ${file.name}:`, data)
+            return { fileName: file.name, ...data }
+          } catch (error) {
+            console.error(`[v0] Facial analysis error for ${file.name}:`, error)
+            return { fileName: file.name, hasFace: false, confidence: 0 }
+          }
+        })
+
+        try {
+          const results = await Promise.all(analysisPromises)
+          console.log(`[v0] All facial analyses complete:`, results)
+
+          // Store analysis results with null checks
+          const newAnalysisResults = new Map(facialAnalysisResults)
+          results.forEach((result) => {
+            if (result && typeof result === "object" && result.fileName) {
+              newAnalysisResults.set(result.fileName, result)
+            } else {
+              console.error("[v0] Invalid analysis result:", result)
+            }
+          })
+          setFacialAnalysisResults(newAnalysisResults)
+
+          // Update uploadedFilesWithAnalysis state
+          setUploadedFilesWithAnalysis((prev) => {
+            const newEntries = newFiles.map((file) => ({
+              file,
+              analysis: null, // Analysis is handled above and stored in facialAnalysisResults
+              isAnalyzing: true, // Set to true while the parallel analysis is running
+            }))
+            const prevArray = Array.isArray(prev) ? prev : []
+            const combined = [...prevArray, ...newEntries]
+
+            // After parallel analysis is done, update the analysis field
+            setTimeout(() => {
+              try {
+                if (!Array.isArray(results)) {
+                  console.error("[v0] results is not an array:", results)
+                  return
                 }
-                return item.file.name === result.fileName
-              })
 
-              if (fileIndex !== -1) {
-                setUploadedFilesWithAnalysis((current) => {
-                  if (!Array.isArray(current)) {
-                    console.error("[v0] current is not an array:", current)
-                    return current
+                results.forEach((result) => {
+                  if (!result || typeof result !== "object" || !result.fileName) {
+                    console.error("[v0] Invalid result object:", result)
+                    return
                   }
 
-                  return current.map((item, idx) => {
-                    if (!item || typeof item !== "object") {
-                      console.error("[v0] Invalid item in current:", item)
-                      return item
+                  const fileIndex = combined.findIndex((item) => {
+                    if (!item || !item.file) {
+                      console.error("[v0] Invalid item in combined:", item)
+                      return false
                     }
-
-                    return idx === fileIndex ? { ...item, analysis: result.analysis || null, isAnalyzing: false } : item
+                    return item.file.name === result.fileName
                   })
+
+                  if (fileIndex !== -1) {
+                    setUploadedFilesWithAnalysis((current) => {
+                      if (!Array.isArray(current)) {
+                        console.error("[v0] current is not an array:", current)
+                        return current
+                      }
+
+                      const updated = [...current]
+                      if (updated[fileIndex]) {
+                        updated[fileIndex] = {
+                          ...updated[fileIndex],
+                          analysis: result, // Store the full result object
+                          isAnalyzing: false,
+                        }
+                      }
+                      return updated
+                    })
+                  }
                 })
+              } catch (error) {
+                console.error("[v0] Error in setTimeout callback:", error)
               }
-            })
-          } catch (error) {
-            console.error("[v0] Error in setTimeout callback:", error)
-          }
-        }, 0) // Use setTimeout to ensure state updates happen after initial render
+            }, 100) // Use setTimeout to ensure state updates happen after initial render
 
-        return combined
-      })
+            return combined
+          })
+        } catch (analysisError) {
+          console.error("[v0] Error processing analysis results:", analysisError)
+          // Continue without facial analysis if it fails
+          setUploadedFilesWithAnalysis((prev) => {
+            const newEntries = newFiles.map((file) => ({
+              file,
+              analysis: { fileName: file.name, hasFace: false, confidence: 0 }, // Default analysis if error
+              isAnalyzing: false,
+            }))
+            const prevArray = Array.isArray(prev) ? prev : []
+            return [...prevArray, ...newEntries]
+          })
+        }
 
-      setError(null)
-      const totalSize = newFiles.reduce((sum, file) => sum + file.size, 0)
-      trackImageUpload(newFiles.length, totalSize)
+        setError(null)
+        const totalSize = newFiles.reduce((sum, file) => sum + file.size, 0)
+        trackImageUpload(newFiles.length, totalSize)
+      } catch (dropError) {
+        console.error("[v0] Error in onDrop handler:", dropError)
+        setUploadErrors((prev) => [
+          ...(Array.isArray(prev) ? prev : []),
+          {
+            id: `error-${Date.now()}`,
+            fileName: "Upload Error",
+            error: "Failed to process files",
+            tip: "An unexpected error occurred. Please try again.",
+          },
+        ])
+      }
     },
-    [uploadedFiles, uploadErrors, facialAnalysisResults, detectImageAspectRatio],
+    [uploadedFiles, uploadErrors, facialAnalysisResults, detectImageAspectRatio, uploadedFilesWithAnalysis],
   )
 
   const toggleFileSelection = useCallback((index: number) => {

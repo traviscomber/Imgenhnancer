@@ -5,7 +5,7 @@ import { calculateCreditsNeeded } from "@/lib/credits"
 
 export async function POST(request: Request) {
   try {
-    const { amount, operation, upscaleFactor, imageId, description, metadata } = await request.json()
+    const { amount, operation, upscaleFactor, imageId, description } = await request.json()
 
     const cookieStore = await cookies()
     const supabase = createServerClient(
@@ -76,15 +76,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Failed to deduct credits" }, { status: 500 })
     }
 
-    await supabase.from("credit_transactions").insert({
+    const { error: transactionError } = await supabase.from("credit_transactions").insert({
       user_id: user.id,
       amount: -creditsNeeded,
       type: "usage",
       description: description || `${operation || "Enhancement"} operation`,
       image_id: imageId,
       operation: operation || "enhance",
-      metadata: metadata || null,
     })
+
+    if (transactionError) {
+      console.error("[CREDITS] Error creating transaction:", transactionError)
+      // Don't fail the request if transaction logging fails
+    }
 
     return NextResponse.json({
       success: true,
