@@ -78,6 +78,8 @@ interface EnhancementSettings {
   creativity: number
   resemblance: number
   hdr: number
+  tilingWidth: number
+  tilingHeight: number
   prompt?: string
 }
 
@@ -117,7 +119,15 @@ export default function EnhancePage() {
   const [error, setError] = useState<string | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<PresetCategory>("faces")
   const [selectedPresetId, setSelectedPresetId] = useState<string>("indonesian-wedding")
-  const [settings, setSettings] = useState<EnhancementSettings>(ALL_PRESETS["indonesian-wedding"].settings)
+  const [settings, setSettings] = useState<EnhancementSettings>({
+    model: "philz1337x/clarity-upscaler",
+    upscaleFactor: 2,
+    creativity: 0.35,
+    resemblance: 0.6,
+    hdr: 0.0,
+    tilingWidth: 112,
+    tilingHeight: 144,
+  })
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false)
 
@@ -344,77 +354,118 @@ export default function EnhancePage() {
     [imageAspectRatios],
   )
 
-  const onDrop = useCallback(
-    async (acceptedFiles: File[], fileRejections: FileRejection[]) => {
-      try {
-        console.log(`[v0] Files dropped: ${acceptedFiles.length} accepted, ${fileRejections.length} rejected`)
+  // Add simple file validation function
+  const validateFile = (file: File): { valid: boolean; error?: string; tip?: string } => {
+    try {
+      // Check if file object exists and has required properties
+      if (!file || typeof file !== "object") {
+        return {
+          valid: false,
+          error: "Invalid file object",
+          tip: "The file could not be read. Please try uploading again.",
+        }
+      }
 
-        if (!acceptedFiles || !Array.isArray(acceptedFiles)) {
-          console.error("[v0] acceptedFiles is not an array:", acceptedFiles)
-          setUploadErrors((prev) => [
-            ...(Array.isArray(prev) ? prev : []),
-            {
-              id: `error-${Date.now()}`,
-              fileName: "Unknown",
-              error: "Invalid file upload",
-              tip: "Please try uploading your files again",
-            },
-          ])
+      // Check if file has required properties
+      if (!file.type || !file.name || file.size === undefined) {
+        return {
+          valid: false,
+          error: `Invalid file: ${file.name || "unknown"}`,
+          tip: "The file is missing required information. Please try a different file.",
+        }
+      }
+
+      // Check file type
+      const validTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"]
+      const fileType = file.type.toLowerCase()
+      if (!validTypes.includes(fileType)) {
+        return {
+          valid: false,
+          error: `Invalid file format: ${file.name}`,
+          tip: "Only PNG, JPG, JPEG, and WebP images are supported. Please convert your file first.",
+        }
+      }
+
+      // Check file size (20MB max)
+      const maxSize = 20 * 1024 * 1024 // 20MB in bytes
+      if (file.size > maxSize) {
+        const sizeMB = (file.size / 1024 / 1024).toFixed(2)
+        return {
+          valid: false,
+          error: `File too large: ${file.name} (${sizeMB}MB)`,
+          tip: "Maximum file size is 20MB. Please compress your image or use a lower resolution version.",
+        }
+      }
+
+      // Check minimum file size (1KB to avoid empty files)
+      if (file.size < 1024) {
+        return {
+          valid: false,
+          error: `File too small: ${file.name}`,
+          tip: "The file appears to be empty or corrupted. Please try a different image.",
+        }
+      }
+
+      return { valid: true }
+    } catch (error) {
+      console.error("[v0] Error in validateFile:", error)
+      return {
+        valid: false,
+        error: "File validation failed",
+        tip: "An error occurred while validating the file. Please try again.",
+      }
+    }
+  }
+
+  const onDrop = useCallback(
+    async (acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
+      try {
+        console.log(`[v0] Files dropped: ${acceptedFiles.length} accepted, ${rejectedFiles.length} rejected`)
+
+        const validFiles: File[] = []
+        const newErrors: UploadError[] = []
+
+        // Validate each accepted file
+        for (const file of acceptedFiles) {
+          const validation = validateFile(file)
+          if (!validation.valid) {
+            newErrors.push({
+              id: `${Date.now()}-${Math.random()}`,
+              fileName: file.name || "unknown",
+              error: validation.error || "Validation failed",
+              tip: validation.tip || "Please try a different file.",
+            })
+          } else {
+            validFiles.push(file)
+          }
+        }
+
+        // Handle rejected files
+        rejectedFiles.forEach((rejection) => {
+          const errorMessages = rejection.errors.map((e) => e.message).join(", ")
+          newErrors.push({
+            id: `${Date.now()}-${Math.random()}`,
+            fileName: rejection.file.name || "unknown",
+            error: errorMessages,
+            tip: "Please check the file format and size requirements.",
+          })
+        })
+
+        // Update errors state
+        if (newErrors.length > 0) {
+          setUploadErrors((prev) => [...prev, ...newErrors])
+        }
+
+        // Only process valid files
+        if (validFiles.length === 0) {
+          console.log("[v0] No valid files to process")
           return
         }
 
-        if (fileRejections.length > 0) {
-          const newErrors = fileRejections.map((rejection) => {
-            const file = rejection.file
-            const errors = rejection.errors
-
-            let errorMessage = "Upload failed"
-            let tip = "Please try again"
-
-            if (errors.some((e: any) => e.code === "file-too-large")) {
-              const sizeMB = (file.size / 1024 / 1024).toFixed(2)
-              errorMessage = `File too large: ${file.name}`
-
-              if (file.size > 20 * 1024 * 1024) {
-                tip = `This file is ${sizeMB}MB. For panoramic/360° images, try compressing to under 20MB first, or use a lower resolution version.`
-              } else {
-                tip = `Maximum file size is 20MB. Current size: ${sizeMB}MB. Try compressing the image first.`
-              }
-            } else if (errors.some((e: any) => e.code === "file-invalid-type")) {
-              errorMessage = `Invalid file type: ${file.name}`
-              tip =
-                "Only PNG, JPG, JPEG, and WebP images are supported. Please convert your file to a supported format."
-            } else {
-              errorMessage = `Cannot upload: ${file.name}`
-              tip = errors.map((e: any) => e.message).join(", ")
-            }
-
-            return {
-              id: `error-${Date.now()}-${Math.random()}`,
-              fileName: file.name,
-              error: errorMessage,
-              tip,
-            }
-          })
-
-          setUploadErrors((prev) => {
-            const prevArray = Array.isArray(prev) ? prev : []
-            return [...prevArray, ...newErrors]
-          })
-
-          // Auto-dismiss after 10 seconds
-          setTimeout(() => {
-            setUploadErrors((prev) => {
-              const prevArray = Array.isArray(prev) ? prev : []
-              return prevArray.filter((e) => !newErrors.find((ne) => ne.id === e.id))
-            })
-          }, 10000)
-        }
-
-        if (acceptedFiles.length === 0) return
+        console.log(`[v0] Adding ${validFiles.length} new files`)
 
         const duplicateErrors: any[] = []
-        const newFiles = acceptedFiles.filter((file) => {
+        const filesToAdd = validFiles.filter((file) => {
           const isDuplicate = uploadedFiles.some(
             (existing) => existing.file.name === file.name && existing.file.size === file.size,
           )
@@ -438,13 +489,12 @@ export default function EnhancePage() {
           })
         }
 
-        if (newFiles.length === 0) return
+        if (filesToAdd.length === 0) return
 
-        console.log(`[v0] Adding ${newFiles.length} new files`)
         console.log("[v0] uploadedFiles:", uploadedFiles)
-        console.log("[v0] newFiles:", newFiles)
+        console.log("[v0] filesToAdd:", filesToAdd)
 
-        const filesWithPreviews: FileWithPreview[] = newFiles.map((file) => ({
+        const filesWithPreviews: FileWithPreview[] = filesToAdd.map((file) => ({
           file,
           preview: URL.createObjectURL(file),
         }))
@@ -458,11 +508,11 @@ export default function EnhancePage() {
           return result
         })
 
-        newFiles.forEach((file, idx) => {
+        filesToAdd.forEach((file, idx) => {
           detectImageAspectRatio(file, startIndex + idx)
         })
 
-        const analysisPromises = newFiles.map(async (file) => {
+        const analysisPromises = filesToAdd.map(async (file) => {
           try {
             console.log(`[v0] Starting facial analysis for: ${file.name}`)
             const formData = new FormData()
@@ -516,7 +566,7 @@ export default function EnhancePage() {
 
           // Update uploadedFilesWithAnalysis state
           setUploadedFilesWithAnalysis((prev) => {
-            const newEntries = newFiles.map((file) => ({
+            const newEntries = filesToAdd.map((file) => ({
               file,
               analysis: null, // Analysis is handled above and stored in facialAnalysisResults
               isAnalyzing: true, // Set to true while the parallel analysis is running
@@ -576,7 +626,7 @@ export default function EnhancePage() {
           console.error("[v0] Error processing analysis results:", analysisError)
           // Continue without facial analysis if it fails
           setUploadedFilesWithAnalysis((prev) => {
-            const newEntries = newFiles.map((file) => ({
+            const newEntries = filesToAdd.map((file) => ({
               file,
               analysis: { fileName: file.name, hasFace: false, confidence: 0 }, // Default analysis if error
               isAnalyzing: false,
@@ -587,8 +637,8 @@ export default function EnhancePage() {
         }
 
         setError(null)
-        const totalSize = newFiles.reduce((sum, file) => sum + file.size, 0)
-        trackImageUpload(newFiles.length, totalSize)
+        const totalSize = filesToAdd.reduce((sum, file) => sum + file.size, 0)
+        trackImageUpload(filesToAdd.length, totalSize)
       } catch (dropError) {
         console.error("[v0] Error in onDrop handler:", dropError)
         setUploadErrors((prev) => [
@@ -768,6 +818,171 @@ export default function EnhancePage() {
     }
   }, [stopCamera, analyzeImage])
 
+  // Function to process a single image
+  const processImage = async (file: File, index: number, processingId: string) => {
+    try {
+      console.log(`[v0] Original file size: ${Math.round(file.size / 1024)}KB`)
+      const compressedFile = await compressImageForUpload(file, 0.8)
+      console.log(`[v0] Compressed file size: ${Math.round(compressedFile.size / 1024)}KB`)
+
+      setProcessingImages((prev) =>
+        prev.map((img) =>
+          img.id === processingId
+            ? {
+                ...img,
+                progress: 30,
+                status: selectedCategory === "avatar" ? "Generating avatar body..." : "Uploading...",
+              }
+            : img,
+        ),
+      )
+
+      const formData = new FormData()
+      formData.append("image", compressedFile)
+
+      formData.append("scale_factor", (settings.upscaleFactor ?? 2).toString())
+      formData.append("model", settings.model || "philz1337x/clarity-upscaler")
+      formData.append("dynamic", "6")
+
+      const creativity = settings.creativity ?? 0.35
+      const resemblance = settings.resemblance ?? 0.6
+      formData.append("creativity", creativity.toString())
+      formData.append("resemblance", resemblance.toString())
+
+      const hdr = settings.hdr ?? 0.0
+      const tilingWidth = settings.tilingWidth ?? 112
+      const tilingHeight = settings.tilingHeight ?? 144
+      formData.append("hdr", hdr.toString())
+      formData.append("tiling_width", tilingWidth.toString())
+      formData.append("tiling_height", tilingHeight.toString())
+
+      if (settings.prompt) {
+        formData.append("prompt", settings.prompt)
+      }
+
+      setProcessingImages((prev) =>
+        prev.map((img) =>
+          img.id === processingId
+            ? { ...img, progress: 50, status: selectedCategory === "avatar" ? "Creating avatar..." : "Enhancing..." }
+            : img,
+        ),
+      )
+
+      // Send to API
+      const response = await fetch("/api/enhance-replicate", {
+        method: "POST",
+        body: formData,
+      })
+
+      const contentType = response.headers.get("content-type")
+      let data: any
+
+      if (contentType?.includes("application/json")) {
+        data = await response.json()
+      } else {
+        const text = await response.text()
+        throw new Error(text || `Server error: ${response.status}`)
+      }
+
+      if (!response.ok) {
+        throw new Error(data.error || `API error: ${response.status}`)
+      }
+
+      if (!data.success || !data.output) {
+        throw new Error(data.error || "Enhancement failed")
+      }
+
+      let finalOutput = data.output
+
+      if (selectedCategory === "avatar") {
+        setProcessingImages((prev) =>
+          prev.map((img) =>
+            img.id === processingId ? { ...img, progress: 70, status: "Swapping your face..." } : img,
+          ),
+        )
+
+        console.log("[v0] Starting face swap...")
+        const faceSwapFormData = new FormData()
+        faceSwapFormData.append("source", file) // Original user photo
+        faceSwapFormData.append("target", data.output) // Generated avatar body
+
+        const faceSwapResponse = await fetch("/api/face-swap", {
+          method: "POST",
+          body: faceSwapFormData,
+        })
+
+        const faceSwapData = await faceSwapResponse.json()
+
+        if (!faceSwapResponse.ok || !faceSwapData.success) {
+          console.error("[v0] Face swap failed, using original generation")
+          // Fallback to original generation if face swap fails
+        } else {
+          finalOutput = faceSwapData.output
+          console.log("[v0] Face swap successful!")
+        }
+      }
+
+      try {
+        const deductResponse = await fetch("/api/credits/deduct", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            amount: 6,
+            description: `Enhanced ${file.name}`,
+            metadata: {
+              fileName: file.name,
+              model: settings.model,
+              category: selectedCategory,
+            },
+          }),
+        })
+
+        const deductData = await deductResponse.json()
+        if (deductData.success) {
+          setUserCredits(deductData.remainingCredits)
+          console.log(`[v0] Credits deducted. Remaining: ${deductData.remainingCredits}`)
+        }
+      } catch (creditError) {
+        console.error("[v0] Failed to deduct credits:", creditError)
+      }
+
+      setProcessingImages((prev) =>
+        prev.map((img) => (img.id === processingId ? { ...img, progress: 90, status: "Finalizing..." } : img)),
+      )
+
+      // Create enhanced image
+      const enhancedImage: EnhancedImage = {
+        id: `enhanced-${Date.now()}-${index}`,
+        original: file,
+        enhanced: finalOutput,
+        originalPreview: URL.createObjectURL(file),
+        processingTime: data.processingTime,
+        model: settings.model,
+        settings: { ...settings },
+        imageError: false,
+      }
+
+      // Move to enhanced column
+      setEnhancedImages((prev) => [...prev, enhancedImage])
+      setProcessingImages((prev) => prev.filter((img) => img.id !== processingId))
+
+      return { success: true, originalFile: file }
+    } catch (error: any) {
+      console.error(`❌ Error processing ${file.name}:`, error)
+      setProcessingImages((prev) =>
+        prev.map((img) =>
+          img.id === processingId ? { ...img, progress: 100, status: `Error: ${error.message}` } : img,
+        ),
+      )
+      trackEnhancementFailure(error.message, {
+        model: settings.model,
+        category: selectedCategory,
+        presetId: selectedPresetId,
+      })
+      return { success: false, originalFile: file, error: error.message }
+    }
+  }
+
   const handleEnhance = useCallback(async () => {
     if (selectedFiles.size === 0) {
       setError("Please select at least one image to enhance")
@@ -815,177 +1030,35 @@ export default function EnhancePage() {
     setUploadedFiles((prev) => prev.filter((_, index) => !selectedFiles.has(index)))
     setSelectedFiles(new Set())
 
-    const isAvatarMode = selectedCategory === "avatar"
-
     let successfulEnhancements = 0
+    const processingResults: { success: boolean; originalFile: File; error?: string }[] = []
 
-    // Process each image
-    for (let i = 0; i < filesToProcess.length; i++) {
-      const fileWithPreview = filesToProcess[i]
-      const file = fileWithPreview.file
-      const processingId = processingBatch[i].id
+    // Process each image concurrently
+    const promises = processingBatch.map((img) =>
+      processImage(
+        img.file,
+        uploadedFiles.findIndex((item) => item.file.name === img.file.name),
+        img.id,
+      ),
+    )
 
-      try {
-        // Update status
-        setProcessingImages((prev) =>
-          prev.map((img) => (img.id === processingId ? { ...img, progress: 10, status: "Compressing..." } : img)),
-        )
-
-        console.log(`[v0] Original file size: ${Math.round(file.size / 1024)}KB`)
-        const processedFile = await compressImageForUpload(file, 0.8)
-        console.log(`[v0] Compressed file size: ${Math.round(processedFile.size / 1024)}KB`)
-
-        setProcessingImages((prev) =>
-          prev.map((img) =>
-            img.id === processingId
-              ? { ...img, progress: 30, status: isAvatarMode ? "Generating avatar body..." : "Uploading..." }
-              : img,
-          ),
-        )
-
-        // Create FormData
-        const formData = new FormData()
-        formData.append("image", processedFile)
-        formData.append("model", settings.model)
-        formData.append("scale_factor", settings.upscaleFactor.toString())
-
-        if (isAvatarMode) {
-          formData.append("creativity", "0.95") // High creativity for body generation
-          formData.append("resemblance", "0.3") // Low resemblance - we'll swap face later
-        } else {
-          formData.append("creativity", settings.creativity.toString())
-          formData.append("resemblance", settings.resemblance.toString())
-        }
-
-        formData.append("hdr", settings.hdr.toString())
-        if (settings.prompt) {
-          formData.append("prompt", settings.prompt)
-        }
-
-        setProcessingImages((prev) =>
-          prev.map((img) =>
-            img.id === processingId
-              ? { ...img, progress: 50, status: isAvatarMode ? "Creating avatar..." : "Enhancing..." }
-              : img,
-          ),
-        )
-
-        // Send to API
-        const response = await fetch("/api/enhance-replicate", {
-          method: "POST",
-          body: formData,
-        })
-
-        const contentType = response.headers.get("content-type")
-        let data: any
-
-        if (contentType?.includes("application/json")) {
-          data = await response.json()
-        } else {
-          const text = await response.text()
-          throw new Error(text || `Server error: ${response.status}`)
-        }
-
-        if (!response.ok) {
-          throw new Error(data.error || `API error: ${response.status}`)
-        }
-
-        if (!data.success || !data.output) {
-          throw new Error(data.error || "Enhancement failed")
-        }
-
-        let finalOutput = data.output
-
-        if (isAvatarMode) {
-          setProcessingImages((prev) =>
-            prev.map((img) =>
-              img.id === processingId ? { ...img, progress: 70, status: "Swapping your face..." } : img,
-            ),
-          )
-
-          console.log("[v0] Starting face swap...")
-          const faceSwapFormData = new FormData()
-          faceSwapFormData.append("source", file) // Original user photo
-          faceSwapFormData.append("target", data.output) // Generated avatar body
-
-          const faceSwapResponse = await fetch("/api/face-swap", {
-            method: "POST",
-            body: faceSwapFormData,
-          })
-
-          const faceSwapData = await faceSwapResponse.json()
-
-          if (!faceSwapResponse.ok || !faceSwapData.success) {
-            console.error("[v0] Face swap failed, using original generation")
-            // Fallback to original generation if face swap fails
-          } else {
-            finalOutput = faceSwapData.output
-            console.log("[v0] Face swap successful!")
-          }
-        }
-
-        try {
-          const deductResponse = await fetch("/api/credits/deduct", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              amount: 6,
-              description: `Enhanced ${file.name}`,
-              metadata: {
-                fileName: file.name,
-                model: settings.model,
-                category: selectedCategory,
-              },
-            }),
-          })
-
-          const deductData = await deductResponse.json()
-          if (deductData.success) {
-            setUserCredits(deductData.remainingCredits)
-            successfulEnhancements++
-            console.log(`[v0] Credits deducted. Remaining: ${deductData.remainingCredits}`)
-          }
-        } catch (creditError) {
-          console.error("[v0] Failed to deduct credits:", creditError)
-        }
-
-        setProcessingImages((prev) =>
-          prev.map((img) => (img.id === processingId ? { ...img, progress: 90, status: "Finalizing..." } : img)),
-        )
-
-        // Create enhanced image
-        const enhancedImage: EnhancedImage = {
-          id: `enhanced-${Date.now()}-${i}`,
-          original: file,
-          enhanced: finalOutput,
-          originalPreview: URL.createObjectURL(file),
-          processingTime: data.processingTime,
-          model: settings.model,
-          settings: { ...settings },
-          imageError: false,
-        }
-
-        // Move to enhanced column
-        setEnhancedImages((prev) => [...prev, enhancedImage])
-        setProcessingImages((prev) => prev.filter((img) => img.id !== processingId))
-      } catch (error: any) {
-        console.error(`❌ Error processing ${file.name}:`, error)
-        setProcessingImages((prev) =>
-          prev.map((img) =>
-            img.id === processingId ? { ...img, progress: 100, status: `Error: ${error.message}` } : img,
-          ),
-        )
-        trackEnhancementFailure(error.message, {
-          model: settings.model,
-          category: selectedCategory,
-          presetId: selectedPresetId,
-        })
-
-        // Remove failed image after 3 seconds
-        setTimeout(() => {
-          removeProcessingImage(processingId)
-        }, 3000)
+    const results = await Promise.all(promises)
+    results.forEach((res) => {
+      if (res.success) {
+        successfulEnhancements++
       }
+      processingResults.push(res)
+    })
+
+    const failedImages = processingResults.filter((res) => !res.success)
+
+    if (failedImages.length > 0) {
+      // Remove failed images from processingImages after a delay
+      setTimeout(() => {
+        setProcessingImages((prev) =>
+          prev.filter((p) => !failedImages.some((f) => f.originalFile.name === p.file.name)),
+        )
+      }, 5000)
     }
 
     const endTime = Date.now()
@@ -1005,7 +1078,7 @@ export default function EnhancePage() {
     setIsProcessing(false)
   }, [
     selectedFiles,
-    uploadedFiles, // REMOVED: no longer directly used, but dependency for filtering
+    uploadedFiles,
     userCredits,
     settings,
     selectedCategory,
@@ -1115,6 +1188,8 @@ export default function EnhancePage() {
         }
 
         formData.append("hdr", settings.hdr.toString())
+        formData.append("tiling_width", settings.tilingWidth.toString())
+        formData.append("tiling_height", settings.tilingHeight.toString())
         if (settings.prompt) {
           formData.append("prompt", settings.prompt)
         }
@@ -1613,6 +1688,7 @@ export default function EnhancePage() {
                 size="sm"
                 className="bg-transparent border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
               >
+                <Lock className="w-4 h-4 mr-2" /> {/* Added Lock icon */}
                 Login
               </Button>
             )}
@@ -1977,6 +2053,38 @@ export default function EnhancePage() {
                           ? "0.1-0.3 for avatars"
                           : "0.2-0.4 for experimental"}
                   </p>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-sm font-medium text-gray-300 flex items-center justify-between">
+                    <span>Tiling Width (Fractality)</span>
+                    <span className="text-amber-400">{settings.tilingWidth}</span>
+                  </label>
+                  <Slider
+                    value={[settings.tilingWidth]}
+                    onValueChange={(value) => setSettings((prev) => ({ ...prev, tilingWidth: value[0] }))}
+                    min={16}
+                    max={256}
+                    step={16}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-gray-500">Lower = higher fractality, more detail (slower)</p>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-sm font-medium text-gray-300 flex items-center justify-between">
+                    <span>Tiling Height (Fractality)</span>
+                    <span className="text-amber-400">{settings.tilingHeight}</span>
+                  </label>
+                  <Slider
+                    value={[settings.tilingHeight]}
+                    onValueChange={(value) => setSettings((prev) => ({ ...prev, tilingHeight: value[0] }))}
+                    min={16}
+                    max={256}
+                    step={16}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-gray-500">Lower = higher fractality, more detail (slower)</p>
                 </div>
               </div>
 

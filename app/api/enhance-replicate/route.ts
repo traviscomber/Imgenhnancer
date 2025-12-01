@@ -33,17 +33,28 @@ export async function POST(req: NextRequest) {
     const creativity = Number.parseFloat(formData.get("creativity") as string) || 0.35
     const resemblance = Number.parseFloat(formData.get("resemblance") as string) || 0.75
     const hdr = Number.parseFloat(formData.get("hdr") as string) || 0
+    const tilingWidth = Number.parseInt(formData.get("tiling_width") as string) || 112
+    const tilingHeight = Number.parseInt(formData.get("tiling_height") as string) || 144
     const prompt = formData.get("prompt") as string | null
 
+    const validScaleFactor = Math.max(1, Math.min(4, scaleFactor))
+    const validCreativity = Math.max(0, Math.min(1, creativity))
+    const validResemblance = Math.max(0.3, Math.min(3, resemblance))
+    const validHdr = Math.max(0, Math.min(1, hdr))
+    const validTilingWidth = Math.max(16, Math.min(256, Math.round(tilingWidth / 16) * 16))
+    const validTilingHeight = Math.max(16, Math.min(256, Math.round(tilingHeight / 16) * 16))
+
     // Creativity 0.35 → dynamic 2 (optimal for faces)
-    const dynamicSteps = Math.max(1, Math.round(creativity * 6))
+    const dynamicSteps = Math.max(1, Math.min(50, Math.round(creativity * 6)))
 
     console.log("⚙️ Enhancement settings:", {
-      scaleFactor,
-      creativity,
-      resemblance,
-      hdr,
+      scaleFactor: validScaleFactor,
+      creativity: validCreativity,
+      resemblance: validResemblance,
+      hdr: validHdr,
       dynamicSteps,
+      tilingWidth: validTilingWidth,
+      tilingHeight: validTilingHeight,
       prompt,
     })
 
@@ -71,18 +82,20 @@ export async function POST(req: NextRequest) {
         version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
         input: {
           image: dataUrl,
-          scale_factor: scaleFactor,
+          prompt: prompt || "masterpiece, best quality, highres",
+          negative_prompt: "(worst quality, low quality, normal quality:2) JuggernautNegative-neg",
+          scale_factor: validScaleFactor,
           dynamic: dynamicSteps,
-          creativity: creativity,
-          resemblance: resemblance,
-          hdr: hdr,
+          creativity: validCreativity,
+          resemblance: validResemblance,
+          tiling_width: validTilingWidth,
+          tiling_height: validTilingHeight,
           sharpen: 0,
           sd_model: "juggernaut_reborn.safetensors [338b85bc4f]",
           scheduler: "DPM++ 3M SDE Karras",
           num_inference_steps: 18,
           downscaling: false,
           output_format: "png",
-          ...(prompt && { prompt }),
         },
       }),
     })
@@ -195,11 +208,13 @@ export async function POST(req: NextRequest) {
       model: "clarity-upscaler",
       predictionId: prediction.id,
       settings: {
-        scaleFactor,
-        creativity,
-        resemblance,
-        hdr,
+        scaleFactor: validScaleFactor,
+        creativity: validCreativity,
+        resemblance: validResemblance,
+        hdr: validHdr,
         dynamicSteps,
+        tilingWidth: validTilingWidth,
+        tilingHeight: validTilingHeight,
         prompt,
       },
     })
