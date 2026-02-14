@@ -23,18 +23,7 @@ FROM pg_indexes
 WHERE schemaname = 'public'
 ORDER BY tablename, indexname;
 
--- Check for slow queries in pg_stat_statements
-SELECT 
-  query,
-  calls,
-  total_time,
-  mean_time
-FROM pg_stat_statements
-WHERE query LIKE '%SELECT%' OR query LIKE '%UPDATE%'
-ORDER BY mean_time DESC
-LIMIT 20;
-
--- Check table sizes and bloat
+-- Check table sizes
 SELECT 
   schemaname,
   tablename,
