@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { checkFreeUpscaleAvailability, useFreeUpscale } from "@/lib/free-upscale"
 
 export async function POST(req: NextRequest) {
   try {
@@ -39,45 +40,26 @@ export async function POST(req: NextRequest) {
     const tilingHeight = Number.parseInt(formData.get("tiling_height") as string) || 144
     const prompt = formData.get("prompt") as string | null
 
-    // Check if 2x upscale is free for this user this week
-    let isFreeUpscaleAvailable = false
-    if (scaleFactor === 2 && userId) {
-      const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-        process.env.SUPABASE_SERVICE_ROLE_KEY || "",
-      )
+    // Check if using free upscale
+    let usedFreeUpscale = false
+    let freeUpscaleType: "initial" | "monthly" | null = null
 
-      // Get current week start (Monday)
-      const today = new Date()
-      const dayOfWeek = today.getDay()
-      const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1)
-      const weekStart = new Date(today.setDate(diff))
-      const weekStartStr = weekStart.toISOString().split("T")[0]
+    if (userId) {
+      const freeStatus = await checkFreeUpscaleAvailability(userId)
 
-      // Check existing usage
-      const { data: usage, error: usageError } = await supabase
-        .from("free_upscale_usage")
-        .select("upscales_used")
-        .eq("user_id", userId)
-        .eq("week_start", weekStartStr)
-        .single()
+      if (freeStatus.available) {
+        usedFreeUpscale = true
+        freeUpscaleType = freeStatus.type
 
-      if (!usageError && usage && usage.upscales_used < 1) {
-        isFreeUpscaleAvailable = true
-        // Mark as used
-        await supabase
-          .from("free_upscale_usage")
-          .update({ upscales_used: 1 })
-          .eq("user_id", userId)
-          .eq("week_start", weekStartStr)
-      } else if (usageError && usageError.code === "PGRST116") {
-        // No record yet, create one
-        isFreeUpscaleAvailable = true
-        await supabase.from("free_upscale_usage").insert({
-          user_id: userId,
-          week_start: weekStartStr,
-          upscales_used: 1,
-        })
+        // Deduct free upscale
+        const useResult = await useFreeUpscale(userId, freeStatus.type)
+        if (!useResult.success) {
+          console.warn("Failed to deduct free upscale:", useResult.error)
+        } else {
+          console.log(`✅ Free upscale used (${freeStatus.type}), remaining: ${useResult.remaining}`)
+        }
+      } else if (freeStatus.nextResetDate) {
+        console.log(`⏰ No free upscales available. Next reset: ${freeStatus.nextResetDate.toISOString()}`)
       }
     }
 
@@ -100,7 +82,8 @@ export async function POST(req: NextRequest) {
       tilingWidth: validTilingWidth,
       tilingHeight: validTilingHeight,
       prompt,
-      isFreeUpscaleAvailable,
+      usedFreeUpscale,
+      freeUpscaleType,
     })
 
     // Convert File to base64 data URL
