@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { createClient } from "@supabase/supabase-js"
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,6 +17,7 @@ export async function POST(req: NextRequest) {
     // Parse form data
     const formData = await req.formData()
     const imageFile = formData.get("image") as File
+    const userId = formData.get("user_id") as string
 
     if (!imageFile) {
       console.error("❌ No image file provided")
@@ -37,6 +39,48 @@ export async function POST(req: NextRequest) {
     const tilingHeight = Number.parseInt(formData.get("tiling_height") as string) || 144
     const prompt = formData.get("prompt") as string | null
 
+    // Check if 2x upscale is free for this user this week
+    let isFreeUpscaleAvailable = false
+    if (scaleFactor === 2 && userId) {
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+        process.env.SUPABASE_SERVICE_ROLE_KEY || "",
+      )
+
+      // Get current week start (Monday)
+      const today = new Date()
+      const dayOfWeek = today.getDay()
+      const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1)
+      const weekStart = new Date(today.setDate(diff))
+      const weekStartStr = weekStart.toISOString().split("T")[0]
+
+      // Check existing usage
+      const { data: usage, error: usageError } = await supabase
+        .from("free_upscale_usage")
+        .select("upscales_used")
+        .eq("user_id", userId)
+        .eq("week_start", weekStartStr)
+        .single()
+
+      if (!usageError && usage && usage.upscales_used < 1) {
+        isFreeUpscaleAvailable = true
+        // Mark as used
+        await supabase
+          .from("free_upscale_usage")
+          .update({ upscales_used: 1 })
+          .eq("user_id", userId)
+          .eq("week_start", weekStartStr)
+      } else if (usageError && usageError.code === "PGRST116") {
+        // No record yet, create one
+        isFreeUpscaleAvailable = true
+        await supabase.from("free_upscale_usage").insert({
+          user_id: userId,
+          week_start: weekStartStr,
+          upscales_used: 1,
+        })
+      }
+    }
+
     const validScaleFactor = Math.max(1, Math.min(4, scaleFactor))
     const validCreativity = Math.max(0, Math.min(1, creativity))
     const validResemblance = Math.max(0.3, Math.min(3, resemblance))
@@ -56,6 +100,7 @@ export async function POST(req: NextRequest) {
       tilingWidth: validTilingWidth,
       tilingHeight: validTilingHeight,
       prompt,
+      isFreeUpscaleAvailable,
     })
 
     // Convert File to base64 data URL
@@ -207,6 +252,7 @@ export async function POST(req: NextRequest) {
       processingTime,
       model: "clarity-upscaler",
       predictionId: prediction.id,
+      isFreeUpscaleUsed: scaleFactor === 2 && isFreeUpscaleAvailable,
       settings: {
         scaleFactor: validScaleFactor,
         creativity: validCreativity,
