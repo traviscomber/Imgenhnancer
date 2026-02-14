@@ -1,17 +1,75 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml"
         xmlns:geo="http://www.google.com/geo/schemas/sitemap/1.0">
+  
+  <!-- Homepage -->
   <url>
-    <loc>https://www.clar1ty.art</loc>
-    <lastmod>2026-02-13</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-  </url>
-  <url>
-    <loc>https://www.clar1ty.art/enhance</loc>
-    <lastmod>2026-02-13</lastmod>
+    <loc>https://clar1ty.art/</loc>
+    <lastmod>2026-02-14</lastmod>
     <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://clar1ty.art/?lang=en" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://clar1ty.art/?lang=es" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://clar1ty.art/" />
+    <image:image>
+      <image:loc>https://clar1ty.art/og-image.jpg</image:loc>
+      <image:title>clar1ty - AI Image Enhancement for ASEAN Heritage</image:title>
+    </image:image>
+    <geo:geo>
+      <geo:format>kml</geo:format>
+      <geo:location>SG,ID,TH,MY,PH,VN</geo:location>
+    </geo:geo>
+  </url>
+
+  <!-- English version -->
+  <url>
+    <loc>https://clar1ty.art/?lang=en</loc>
+    <lastmod>2026-02-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.95</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://clar1ty.art/?lang=es" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://clar1ty.art/?lang=en" />
+  </url>
+
+  <!-- Spanish version -->
+  <url>
+    <loc>https://clar1ty.art/?lang=es</loc>
+    <lastmod>2026-02-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.95</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://clar1ty.art/?lang=en" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://clar1ty.art/?lang=es" />
+    <geo:geo>
+      <geo:format>kml</geo:format>
+      <geo:location>MX,AR,CO,CL,PE</geo:location>
+    </geo:geo>
+  </url>
+
+  <!-- Enhancement tool -->
+  <url>
+    <loc>https://clar1ty.art/enhance</loc>
+    <lastmod>2026-02-14</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://clar1ty.art/enhance?lang=en" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://clar1ty.art/enhance?lang=es" />
+  </url>
+
+  <!-- Examples section -->
+  <url>
+    <loc>https://clar1ty.art/#examples</loc>
+    <lastmod>2026-02-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Professional use section -->
+  <url>
+    <loc>https://clar1ty.art/#professional</loc>
+    <lastmod>2026-02-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
   </url>
 </urlset>

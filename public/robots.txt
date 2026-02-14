@@ -1,16 +1,61 @@
+# clar1ty - AI Image Enhancement Platform
+# Optimized for Cloudflare, Google Search Engine, and LLM crawlers
+
+# Default rule
 User-agent: *
 Allow: /
+Allow: /?lang=en
+Allow: /?lang=es
 Disallow: /admin/
 Disallow: /api/
+Disallow: /.well-known/
+Crawl-delay: 1
 
-Sitemap: https://www.clar1ty.art/sitemap.xml
-
+# Google Search Engine
 User-agent: Googlebot
 Allow: /
+Allow: /?lang=en
+Allow: /?lang=es
 Disallow: /admin/
 Disallow: /api/
+Crawl-delay: 0
 
+# Bing
 User-agent: Bingbot
 Allow: /
+Allow: /?lang=en
+Allow: /?lang=es
 Disallow: /admin/
 Disallow: /api/
+Crawl-delay: 1
+
+# Cloudflare crawler
+User-agent: CCBot
+Allow: /
+Allow: /?lang=en
+Allow: /?lang=es
+Disallow: /admin/
+
+# LLM crawlers (GPTBot, Claude, etc)
+User-agent: GPTBot
+Allow: /
+Allow: /?lang=en
+Allow: /?lang=es
+
+User-agent: Claude-Web
+Allow: /
+Allow: /?lang=en
+Allow: /?lang=es
+
+User-agent: Llama
+Allow: /
+Allow: /?lang=en
+Allow: /?lang=es
+
+User-agent: Anthropic-WebFetcher
+Allow: /
+Allow: /?lang=en
+Allow: /?lang=es
+
+# Sitemap locations
+Sitemap: https://clar1ty.art/sitemap.xml
