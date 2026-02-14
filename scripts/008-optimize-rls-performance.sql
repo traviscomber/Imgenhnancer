@@ -2,11 +2,12 @@
 -- This prevents re-evaluation of auth.uid() for each row
 
 -- Drop existing problematic policies
-DROP POLICY IF EXISTS user_s_read_own ON public.users;
-DROP POLICY IF EXISTS user_s_update_own ON public.users;
-DROP POLICY IF EXISTS credits_update_own ON public.user_credits;
-DROP POLICY IF EXISTS credits_insert_own ON public.user_credits;
-DROP POLICY IF EXISTS credits_select_own ON public.user_credits;
+DROP POLICY IF EXISTS user_s_read_own ON public.users CASCADE;
+DROP POLICY IF EXISTS user_s_update_own ON public.users CASCADE;
+DROP POLICY IF EXISTS credits_update_own ON public.user_credits CASCADE;
+DROP POLICY IF EXISTS credits_insert_own ON public.user_credits CASCADE;
+DROP POLICY IF EXISTS credits_select_own ON public.user_credits CASCADE;
+DROP POLICY IF EXISTS credits_delete_own ON public.user_credits CASCADE;
 
 -- Recreate with optimized subquery syntax
 -- Users table - SELECT policy
