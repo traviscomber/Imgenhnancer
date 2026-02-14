@@ -100,6 +100,17 @@ export function Footer() {
                 </Link>
               </li>
             </ul>
+            <div className="pt-2 border-t border-gray-800">
+              <div className="flex items-center gap-2">
+                <Mail className="w-4 h-4 text-amber-400" />
+                <a
+                  href="mailto:info@clar1ty.com"
+                  className="text-sm text-gray-400 hover:text-amber-400 transition-colors"
+                >
+                  info@clar1ty.com
+                </a>
+              </div>
+            </div>
           </div>
 
           {/* Legal */}
