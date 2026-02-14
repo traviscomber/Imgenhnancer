@@ -1,9 +1,11 @@
-export const metadata = {
-  title: "Privacy Policy - clar1ty",
-  description: "Privacy Policy for clar1ty image enhancement service",
-}
+"use client"
+
+import { useEffect } from "react"
 
 export default function PrivacyPage() {
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
   return (
     <div className="min-h-screen bg-gray-900">
       <div className="container mx-auto px-4 py-16 md:py-24 max-w-4xl">

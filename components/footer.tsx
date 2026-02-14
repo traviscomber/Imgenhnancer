@@ -68,9 +68,9 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <a href="#" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
+                <Link href="/pricing" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
                   Pricing
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -80,24 +80,24 @@ export function Footer() {
             <h4 className="text-sm font-semibold text-white uppercase tracking-wider">Company</h4>
             <ul className="space-y-3">
               <li>
-                <a href="#" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
+                <Link href="/about" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
                   About Us
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
+                <Link href="/blog" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
                   Blog
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
+                <Link href="/careers" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
                   Careers
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
+                <Link href="/contact" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
                   Contact
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
