@@ -4,10 +4,10 @@ export type Language = "en" | "es"
 
 export function useLanguage(): [Language, (lang: Language) => void] {
   const [language, setLanguageState] = useState<Language>("en")
-  const [mounted, setMounted] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
-    setMounted(true)
+    setIsMounted(true)
     
     // Check URL param first
     const urlParams = new URLSearchParams(window.location.search)
@@ -31,10 +31,13 @@ export function useLanguage(): [Language, (lang: Language) => void] {
     if (browserLang.startsWith("es")) {
       setLanguageState("es")
       localStorage.setItem("clarity_lang", "es")
+    } else {
+      setLanguageState("en")
     }
   }, [])
 
   const setLanguage = (lang: Language) => {
+    console.log("[v0] Language changed to:", lang)
     setLanguageState(lang)
     localStorage.setItem("clarity_lang", lang)
     
@@ -44,6 +47,5 @@ export function useLanguage(): [Language, (lang: Language) => void] {
     window.history.replaceState({}, "", url.toString())
   }
 
-  if (!mounted) return ["en", setLanguage]
   return [language, setLanguage]
 }
