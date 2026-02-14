@@ -11,17 +11,14 @@ import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { ClarityLogo } from "@/components/clarity-logo"
 import {
+  ArrowRight,
   Sparkles,
   Zap,
   Shield,
   ImageIcon,
-  CheckCircle2,
-  ArrowRight,
-  Upload,
   Download,
-  Camera,
-  Building2,
-  Church,
+  Upload,
+  Globe,
 } from "lucide-react"
 import { trackCTAClick, trackExampleView } from "@/lib/analytics"
 import { logout } from "@/lib/auth"
@@ -53,22 +50,22 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black">
       <Navbar />
 
-      {/* Hero Section */}
+      {/* Hero Section with Storytelling */}
       <section className="container mx-auto px-4 py-12 md:py-20">
         <div className="text-center space-y-4 md:space-y-6 mb-12 md:mb-16">
           <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20 text-xs md:text-sm">
-            ✨ AI-Powered Enhancement
+            ✨ Built for ASEAN Heritage
           </Badge>
           <div className="flex justify-center mb-6">
             <ClarityLogo className="h-16 md:h-24 lg:h-32 w-auto" />
           </div>
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">
-            Transform Your Images with{" "}
-            <span className="bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">AI Magic</span>
+            Preserve Your{" "}
+            <span className="bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">Cultural Heritage</span>
+            {" "}with AI
           </h1>
           <p className="text-base md:text-lg text-gray-400 max-w-3xl mx-auto px-4">
-            Professional-grade image enhancement powered by cutting-edge AI. Restore heritage photos, enhance wedding
-            memories, and elevate your creative work.
+            clar1ty is built by <span className="font-semibold text-amber-400">n3uralia group</span> with specialized AI models trained on ASEAN faces and cultural imagery. Enhance family heirlooms, restore faded memories, and celebrate identity—all while preserving the authenticity of your heritage.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
             <Button
@@ -146,16 +143,16 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Features Grid */}
+            {/* Features Grid - ASEAN Focused */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
               <Card className="bg-gray-800/50 border-gray-700 hover:border-amber-500/50 transition-all">
                 <CardContent className="p-4 md:p-6 space-y-3 md:space-y-4">
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-amber-500/10 rounded-lg flex items-center justify-center">
                     <Sparkles className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
                   </div>
-                  <h3 className="text-base md:text-lg font-semibold text-white">AI Enhancement</h3>
+                  <h3 className="text-base md:text-lg font-semibold text-white">ASEAN-Trained AI</h3>
                   <p className="text-xs md:text-sm text-gray-400">
-                    Advanced AI algorithms restore and enhance image quality with unprecedented detail.
+                    Specialized LoRA models trained on Southeast Asian faces, skin tones, and cultural imagery.
                   </p>
                 </CardContent>
               </Card>
@@ -167,7 +164,7 @@ export default function Home() {
                   </div>
                   <h3 className="text-base md:text-lg font-semibold text-white">Lightning Fast</h3>
                   <p className="text-xs md:text-sm text-gray-400">
-                    Process images in seconds with our optimized AI pipeline.
+                    Enhance photos in seconds without sacrificing quality or cultural authenticity.
                   </p>
                 </CardContent>
               </Card>
@@ -177,9 +174,9 @@ export default function Home() {
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-amber-500/10 rounded-lg flex items-center justify-center">
                     <Shield className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
                   </div>
-                  <h3 className="text-base md:text-lg font-semibold text-white">Face Preservation</h3>
+                  <h3 className="text-base md:text-lg font-semibold text-white">Identity Preservation</h3>
                   <p className="text-xs md:text-sm text-gray-400">
-                    Maintains facial features and skin tones for ASEAN portraits.
+                    Maintains facial features, cultural clothing details, and authentic heritage colors.
                   </p>
                 </CardContent>
               </Card>
@@ -189,48 +186,48 @@ export default function Home() {
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-amber-500/10 rounded-lg flex items-center justify-center">
                     <ImageIcon className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
                   </div>
-                  <h3 className="text-base md:text-lg font-semibold text-white">High Resolution</h3>
+                  <h3 className="text-base md:text-lg font-semibold text-white">Heirloom Restoration</h3>
                   <p className="text-xs md:text-sm text-gray-400">
-                    Upscale to 4K and beyond without losing quality or detail.
+                    Restore faded family photos and heritage archives to pristine 4K quality.
                   </p>
                 </CardContent>
               </Card>
             </div>
 
-            {/* How It Works */}
+            {/* Why clar1ty Section */}
             <div className="space-y-6 md:space-y-8">
               <div className="text-center space-y-2 md:space-y-3">
-                <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-white">How It Works</h2>
-                <p className="text-sm text-gray-400">Three simple steps to transform your images</p>
+                <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-white">Why Choose clar1ty?</h2>
+                <p className="text-sm text-gray-400">Built for ASEAN identity. Expanding to Latin America.</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
                 <div className="text-center space-y-3 md:space-y-4">
                   <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full flex items-center justify-center mx-auto">
-                    <Upload className="w-6 h-6 md:w-8 md:h-8 text-black" />
-                  </div>
-                  <h3 className="text-base md:text-lg font-semibold text-white">1. Upload</h3>
-                  <p className="text-xs md:text-sm text-gray-400">
-                    Upload your image or drag and drop it into the enhancer.
-                  </p>
-                </div>
-
-                <div className="text-center space-y-3 md:space-y-4">
-                  <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full flex items-center justify-center mx-auto">
                     <Sparkles className="w-6 h-6 md:w-8 md:h-8 text-black" />
                   </div>
-                  <h3 className="text-base md:text-lg font-semibold text-white">2. Enhance</h3>
+                  <h3 className="text-base md:text-lg font-semibold text-white">Specialized for You</h3>
                   <p className="text-xs md:text-sm text-gray-400">
-                    Our AI processes and enhances your image automatically.
+                    Our LoRA models understand ASEAN faces, traditional clothing, and cultural context—delivering results that feel authentic.
                   </p>
                 </div>
 
                 <div className="text-center space-y-3 md:space-y-4">
                   <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full flex items-center justify-center mx-auto">
-                    <Download className="w-6 h-6 md:w-8 md:h-8 text-black" />
+                    <Shield className="w-6 h-6 md:w-8 md:h-8 text-black" />
                   </div>
-                  <h3 className="text-base md:text-lg font-semibold text-white">3. Download</h3>
-                  <p className="text-xs md:text-sm text-gray-400">Download your enhanced image in high resolution.</p>
+                  <h3 className="text-base md:text-lg font-semibold text-white">Privacy First</h3>
+                  <p className="text-xs md:text-sm text-gray-400">Your family photos and heirlooms stay protected. We don't train on your images.</p>
+                </div>
+
+                <div className="text-center space-y-3 md:space-y-4">
+                  <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full flex items-center justify-center mx-auto">
+                    <Globe className="w-6 h-6 md:w-8 md:h-8 text-black" />
+                  </div>
+                  <h3 className="text-base md:text-lg font-semibold text-white">Growing Globally</h3>
+                  <p className="text-xs md:text-sm text-gray-400">
+                    Started in Southeast Asia. Expanding to Latin America with localized models.
+                  </p>
                 </div>
               </div>
             </div>
