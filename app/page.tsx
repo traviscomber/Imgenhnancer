@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { ImageComparisonSlider } from "@/components/image-comparison-slider"
+import { ImageComparisonHybrid } from "@/components/image-comparison-hybrid"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { ClarityLogo } from "@/components/clarity-logo"
@@ -118,28 +118,30 @@ export default function Home() {
 
               <div className="space-y-6 md:space-y-8">
                 {/* Main Wedding Showcase */}
-                <ImageComparisonSlider
+                <ImageComparisonHybrid
                   beforeImage="/images/wedding-before.png"
                   afterImage="/images/wedding-after.png"
                   beforeLabel="Original"
                   afterLabel="AI Enhanced"
-                  priority={true}
+                  improvements={["↑ 45% sharper", "↑ 30% brighter", "↑ 60% detail"]}
                 />
 
                 {/* Indonesian Heritage */}
-                <ImageComparisonSlider
+                <ImageComparisonHybrid
                   beforeImage="/images/javanese-wedding-faded.png"
                   afterImage="/images/javanese-wedding-restored.png"
                   beforeLabel="Faded Photo"
                   afterLabel="Restored Heritage"
+                  improvements={["↑ 50% color accuracy", "↑ 70% contrast", "✓ Heritage preserved"]}
                 />
 
                 {/* Vintage Wedding Clarity */}
-                <ImageComparisonSlider
+                <ImageComparisonHybrid
                   beforeImage="/images/vintage-wedding-blur.png"
                   afterImage="/images/vintage-wedding-clear.jpg"
                   beforeLabel="Blurred"
                   afterLabel="Crystal Clear"
+                  improvements={["↑ 80% sharpness", "↑ 40% detail", "✓ Noise reduced"]}
                 />
               </div>
             </div>
@@ -249,19 +251,19 @@ export default function Home() {
                   <h3 className="text-lg md:text-xl font-bold text-white">Wedding Photography</h3>
                 </div>
                 <div className="space-y-4 md:space-y-6">
-                  <ImageComparisonSlider
+                  <ImageComparisonHybrid
                     beforeImage="/images/wedding-before.png"
                     afterImage="/images/wedding-after.png"
                     beforeLabel="Original"
                     afterLabel="Enhanced"
                   />
-                  <ImageComparisonSlider
+                  <ImageComparisonHybrid
                     beforeImage="/images/wedding-set1-before.png"
                     afterImage="/images/wedding-set1-after.png"
                     beforeLabel="Before"
                     afterLabel="After"
                   />
-                  <ImageComparisonSlider
+                  <ImageComparisonHybrid
                     beforeImage="/images/vintage-wedding-blur.png"
                     afterImage="/images/vintage-wedding-clear.jpg"
                     beforeLabel="Blurred"
@@ -277,13 +279,13 @@ export default function Home() {
                   <h3 className="text-lg md:text-xl font-bold text-white">Cultural Heritage Restoration</h3>
                 </div>
                 <div className="space-y-4 md:space-y-6">
-                  <ImageComparisonSlider
+                  <ImageComparisonHybrid
                     beforeImage="/images/javanese-wedding-faded.png"
                     afterImage="/images/javanese-wedding-restored.png"
                     beforeLabel="Faded Photo"
                     afterLabel="Restored"
                   />
-                  <ImageComparisonSlider
+                  <ImageComparisonHybrid
                     beforeImage="/images/thai-family-faded.png"
                     afterImage="/images/thai-family-restored.png"
                     beforeLabel="Original"
@@ -298,7 +300,7 @@ export default function Home() {
                   <Building2 className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
                   <h3 className="text-lg md:text-xl font-bold text-white">Real Estate Marketing</h3>
                 </div>
-                <ImageComparisonSlider
+                <ImageComparisonHybrid
                   beforeImage="/images/real-estate-before.png"
                   afterImage="/images/real-estate-after.png"
                   beforeLabel="Dark Interior"
