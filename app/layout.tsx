@@ -46,6 +46,9 @@ export const metadata: Metadata = {
     "max-snippet": -1,
     "max-video-preview": -1,
   },
+  verification: {
+    google: "wu2fLbp5c2oow0CInRDVAnx-C5_nJKGm0bUNUDMn72E",
+  },
     generator: 'v0.app'
 }
 
