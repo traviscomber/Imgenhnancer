@@ -26,18 +26,20 @@ export const metadata: Metadata = {
   authors: [{ name: "n3uralia group", url: "https://n3uralia.group" }],
   creator: "n3uralia group",
   publisher: "n3uralia group",
-  metadataBase: new URL("https://clar1ty.art"),
+  metadataBase: new URL("https://www.clar1ty.art"),
   openGraph: {
     title: "clar1ty - AI Image Enhancement Platform",
     description: "Professional AI-powered image enhancement by n3uralia group",
     type: "website",
     locale: "en_US",
-    url: "https://clar1ty.art",
+    url: "https://www.clar1ty.art",
+    siteName: "clar1ty",
   },
   twitter: {
     card: "summary_large_image",
     title: "clar1ty - AI Image Enhancer",
     description: "Professional AI-powered image enhancement and restoration",
+    creator: "@n3uralia",
   },
   robots: {
     index: true,
@@ -45,9 +47,22 @@ export const metadata: Metadata = {
     "max-image-preview": "large",
     "max-snippet": -1,
     "max-video-preview": -1,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
   verification: {
     google: "wu2fLbp5c2oow0CInRDVAnx-C5_nJKGm0bUNUDMn72E",
+  },
+  alternates: {
+    canonical: "https://www.clar1ty.art",
+    languages: {
+      "en-US": "https://www.clar1ty.art",
+      "en": "https://www.clar1ty.art",
+    },
   },
     generator: 'v0.app'
 }
