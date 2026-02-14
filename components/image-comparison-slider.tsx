@@ -131,10 +131,10 @@ export function ImageComparisonSlider({
       </div>
 
       {/* Labels */}
-      <div className="absolute top-4 left-1/2 -translate-x-[60px] px-3 py-1.5 bg-black/60 backdrop-blur-sm text-white text-xs md:text-sm rounded-full font-medium">
+      <div className="absolute top-4 left-4 px-3 py-1.5 bg-black/60 backdrop-blur-sm text-white text-xs md:text-sm rounded-full font-medium">
         {beforeLabel}
       </div>
-      <div className="absolute top-4 left-1/2 translate-x-[10px] px-3 py-1.5 bg-black/60 backdrop-blur-sm text-white text-xs md:text-sm rounded-full font-medium">
+      <div className="absolute top-4 right-4 px-3 py-1.5 bg-black/60 backdrop-blur-sm text-white text-xs md:text-sm rounded-full font-medium">
         {afterLabel}
       </div>
 
