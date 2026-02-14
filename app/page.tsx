@@ -20,6 +20,9 @@ import {
   Upload,
   Globe,
   Camera,
+  Church,
+  Building2,
+  CheckCircle2,
 } from "lucide-react"
 import { trackCTAClick, trackExampleView } from "@/lib/analytics"
 import { logout } from "@/lib/auth"
