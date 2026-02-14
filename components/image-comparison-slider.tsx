@@ -83,7 +83,11 @@ export function ImageComparisonSlider({
   return (
     <div
       ref={containerRef}
-      className="relative w-full max-w-2xl mx-auto overflow-hidden rounded-xl shadow-2xl cursor-col-resize touch-none select-none bg-gray-900 aspect-video"
+      className="relative w-full overflow-hidden rounded-xl shadow-2xl cursor-col-resize touch-none select-none bg-gray-900"
+      style={{
+        aspectRatio: "16 / 9",
+        maxWidth: "100%",
+      }}
       onMouseDown={handleMouseDown}
       onTouchStart={handleMouseDown}
     >
