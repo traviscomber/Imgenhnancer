@@ -107,23 +107,23 @@ export function Footer() {
             <h4 className="text-sm font-semibold text-white uppercase tracking-wider">Legal</h4>
             <ul className="space-y-3">
               <li>
-                <a href="#" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
+                <Link href="/privacy" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
                   Privacy Policy
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
+                <Link href="/terms" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
                   Terms of Service
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
-                  Cookie Policy
-                </a>
+                <Link href="/disclaimer" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
+                  Disclaimer
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
-                  GDPR
+                <a href="mailto:legal@clar1ty.art" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
+                  Legal Contact
                 </a>
               </li>
             </ul>
