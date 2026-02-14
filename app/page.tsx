@@ -26,10 +26,14 @@ import {
 } from "lucide-react"
 import { trackCTAClick, trackExampleView } from "@/lib/analytics"
 import { logout } from "@/lib/auth"
+import { useLanguage } from "@/hooks/use-language"
+import { translations } from "@/lib/i18n"
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("home")
+  const [language] = useLanguage()
   const router = useRouter()
+  const t = translations[language]
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab)
@@ -58,17 +62,21 @@ export default function Home() {
       <section className="container mx-auto px-4 py-12 md:py-20">
         <div className="text-center space-y-4 md:space-y-6 mb-12 md:mb-16">
           <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20 text-xs md:text-sm">
-            ✨ Built for ASEAN Heritage
+            ✨ {language === "en" ? "Built for ASEAN Heritage" : "Construido para el Patrimonio de ASEAN"}
           </Badge>
           <div className="flex justify-center mb-6">
             <ClarityLogo className="h-16 md:h-24 lg:h-32 w-auto" />
           </div>
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">
-            Keep Your Stories{" "}
-            <span className="bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">Alive & Vibrant</span>
+            {language === "en" ? "Keep Your Stories" : "Mantén Tus Historias"}{" "}
+            <span className="bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
+              {language === "en" ? "Alive & Vibrant" : "Vivas y Vibrantes"}
+            </span>
           </h1>
           <p className="text-base md:text-lg text-gray-400 max-w-3xl mx-auto px-4">
-            Your family photos tell stories. Faded prints, worn-out memories, and aging heirlooms deserve to shine again. clar1ty brings clarity and color back to the moments that matter most—restoring your heritage with care and precision.
+            {language === "en"
+              ? "Your family photos tell stories. Faded prints, worn-out memories, and aging heirlooms deserve to shine again. clar1ty brings clarity and color back to the moments that matter most—restoring your heritage with care and precision."
+              : "Tus fotos de familia cuentan historias. Los impresos descoloridos, los recuerdos gastados y las reliquias familiares antiguas merecen brillar de nuevo. clar1ty devuelve la claridad y el color a los momentos más importantes, restaurando tu patrimonio con cuidado y precisión."}
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
             <Button
@@ -88,7 +96,7 @@ export default function Home() {
                 trackCTAClick("hero", "View Examples")
               }}
             >
-              View Examples
+              {language === "en" ? "View Examples" : "Ver Ejemplos"}
             </Button>
           </div>
         </div>
@@ -153,9 +161,13 @@ export default function Home() {
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-amber-500/10 rounded-lg flex items-center justify-center">
                     <Camera className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
                   </div>
-                  <h3 className="text-base md:text-lg font-semibold text-white">Restore Heirlooms</h3>
+                  <h3 className="text-base md:text-lg font-semibold text-white">
+                    {language === "en" ? "Restore Heirlooms" : "Restaurar Reliquias"}
+                  </h3>
                   <p className="text-xs md:text-sm text-gray-400">
-                    Bring old family photos back to life with stunning clarity and vibrant colors.
+                    {language === "en"
+                      ? "Bring old family photos back to life with stunning clarity and vibrant colors."
+                      : "Devuelve vida a las fotos familiares antiguas con claridad impresionante y colores vibrantes."}
                   </p>
                 </CardContent>
               </Card>
@@ -165,9 +177,13 @@ export default function Home() {
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-amber-500/10 rounded-lg flex items-center justify-center">
                     <Zap className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
                   </div>
-                  <h3 className="text-base md:text-lg font-semibold text-white">Instant Results</h3>
+                  <h3 className="text-base md:text-lg font-semibold text-white">
+                    {language === "en" ? "Instant Results" : "Resultados Instantáneos"}
+                  </h3>
                   <p className="text-xs md:text-sm text-gray-400">
-                    Get enhanced photos in seconds—no complicated settings or technical knowledge needed.
+                    {language === "en"
+                      ? "Get enhanced photos in seconds—no complicated settings or technical knowledge needed."
+                      : "Obtén fotos mejoradas en segundos, sin configuraciones complicadas ni conocimientos técnicos."}
                   </p>
                 </CardContent>
               </Card>
@@ -177,9 +193,13 @@ export default function Home() {
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-amber-500/10 rounded-lg flex items-center justify-center">
                     <Shield className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
                   </div>
-                  <h3 className="text-base md:text-lg font-semibold text-white">Respect & Privacy</h3>
+                  <h3 className="text-base md:text-lg font-semibold text-white">
+                    {language === "en" ? "Respect & Privacy" : "Respeto y Privacidad"}
+                  </h3>
                   <p className="text-xs md:text-sm text-gray-400">
-                    Your memories stay yours. We never save or train on your personal photos.
+                    {language === "en"
+                      ? "Your memories stay yours. We never save or train on your personal photos."
+                      : "Tus recuerdos son tuyos. Nunca guardamos ni entrenamos con tus fotos personales."}
                   </p>
                 </CardContent>
               </Card>
@@ -189,9 +209,13 @@ export default function Home() {
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-amber-500/10 rounded-lg flex items-center justify-center">
                     <ImageIcon className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
                   </div>
-                  <h3 className="text-base md:text-lg font-semibold text-white">Authentic Beauty</h3>
+                  <h3 className="text-base md:text-lg font-semibold text-white">
+                    {language === "en" ? "Authentic Beauty" : "Belleza Auténtica"}
+                  </h3>
                   <p className="text-xs md:text-sm text-gray-400">
-                    Enhanced photos stay true to their original character and cultural context.
+                    {language === "en"
+                      ? "Enhanced photos stay true to their original character and cultural context."
+                      : "Las fotos mejoradas mantienen su carácter original y contexto cultural."}
                   </p>
                 </CardContent>
               </Card>
@@ -200,8 +224,12 @@ export default function Home() {
             {/* Story Section */}
             <div className="space-y-6 md:space-y-8">
               <div className="text-center space-y-2 md:space-y-3">
-                <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-white">More Than Photos</h2>
-                <p className="text-sm text-gray-400">Preserving the memories that shape us</p>
+                <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-white">
+                  {language === "en" ? "More Than Photos" : "Más Que Fotos"}
+                </h2>
+                <p className="text-sm text-gray-400">
+                  {language === "en" ? "Preserving the memories that shape us" : "Preservando los recuerdos que nos moldean"}
+                </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
@@ -209,9 +237,13 @@ export default function Home() {
                   <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full flex items-center justify-center mx-auto">
                     <Church className="w-6 h-6 md:w-8 md:h-8 text-black" />
                   </div>
-                  <h3 className="text-base md:text-lg font-semibold text-white">Family Legacy</h3>
+                  <h3 className="text-base md:text-lg font-semibold text-white">
+                    {language === "en" ? "Family Legacy" : "Legado Familiar"}
+                  </h3>
                   <p className="text-xs md:text-sm text-gray-400">
-                    Keep your grandparents' images crystal clear. Celebrate generations of moments that matter.
+                    {language === "en"
+                      ? "Keep your grandparents' images crystal clear. Celebrate generations of moments that matter."
+                      : "Mantén las imágenes de tus abuelos cristalinas. Celebra generaciones de momentos que importan."}
                   </p>
                 </div>
 
@@ -219,9 +251,13 @@ export default function Home() {
                   <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full flex items-center justify-center mx-auto">
                     <Globe className="w-6 h-6 md:w-8 md:h-8 text-black" />
                   </div>
-                  <h3 className="text-base md:text-lg font-semibold text-white">Cultural Pride</h3>
+                  <h3 className="text-base md:text-lg font-semibold text-white">
+                    {language === "en" ? "Cultural Pride" : "Orgullo Cultural"}
+                  </h3>
                   <p className="text-xs md:text-sm text-gray-400">
-                    Honor your heritage with photos that shine. Share your story with authenticity and beauty.
+                    {language === "en"
+                      ? "Honor your heritage with photos that shine. Share your story with authenticity and beauty."
+                      : "Honra tu patrimonio con fotos que brillen. Comparte tu historia con autenticidad y belleza."}
                   </p>
                 </div>
 
@@ -229,9 +265,13 @@ export default function Home() {
                   <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full flex items-center justify-center mx-auto">
                     <CheckCircle2 className="w-6 h-6 md:w-8 md:h-8 text-black" />
                   </div>
-                  <h3 className="text-base md:text-lg font-semibold text-white">Simply Done</h3>
+                  <h3 className="text-base md:text-lg font-semibold text-white">
+                    {language === "en" ? "Simply Done" : "Simplemente Hecho"}
+                  </h3>
                   <p className="text-xs md:text-sm text-gray-400">
-                    No experts needed. Just upload, enhance, and download—your memories are ready to treasure.
+                    {language === "en"
+                      ? "No experts needed. Just upload, enhance, and download—your memories are ready to treasure."
+                      : "No se necesitan expertos. Solo carga, mejora y descarga, tus recuerdos están listos para atesorar."}
                   </p>
                 </div>
               </div>
