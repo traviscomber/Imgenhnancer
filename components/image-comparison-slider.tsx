@@ -85,18 +85,18 @@ export function ImageComparisonSlider({
       ref={containerRef}
       className="relative w-full overflow-hidden rounded-xl shadow-2xl cursor-col-resize touch-none select-none bg-gray-900"
       style={{
-        aspectRatio: "16 / 9",
+        aspectRatio: "16 / 6",
         maxWidth: "100%",
       }}
       onMouseDown={handleMouseDown}
       onTouchStart={handleMouseDown}
     >
       {/* After Image (Background) */}
-      <div className="relative w-full h-full">
+      <div className="relative w-full h-full flex items-center justify-center">
         <img
           src={afterImage}
           alt={afterLabel}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain"
           onLoad={handleImageLoad}
           crossOrigin="anonymous"
         />
@@ -104,13 +104,13 @@ export function ImageComparisonSlider({
 
       {/* Before Image (Overlay with clip) */}
       <div
-        className="absolute top-0 left-0 w-full h-full overflow-hidden"
+        className="absolute top-0 left-0 w-full h-full overflow-hidden flex items-center justify-center"
         style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
       >
         <img
           src={beforeImage}
           alt={beforeLabel}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain"
           onLoad={handleImageLoad}
           crossOrigin="anonymous"
         />
