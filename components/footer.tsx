@@ -133,7 +133,21 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="mt-12 pt-8 border-t border-gray-800">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-gray-400">© 2025 clar1ty. All rights reserved.</p>
+            <div className="flex flex-col sm:flex-row items-center gap-2 text-sm text-gray-400">
+              <p>© 2025 clar1ty. All rights reserved.</p>
+              <span className="hidden sm:inline">•</span>
+              <p>
+                Built by{" "}
+                <a
+                  href="https://www.n3uralia.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-amber-400 hover:text-amber-300 transition-colors font-semibold"
+                >
+                  n3uralia group
+                </a>
+              </p>
+            </div>
             <div className="flex items-center gap-2">
               <Mail className="w-4 h-4 text-gray-400" />
               <a

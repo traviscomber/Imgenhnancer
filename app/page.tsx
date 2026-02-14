@@ -64,12 +64,11 @@ export default function Home() {
             <ClarityLogo className="h-16 md:h-24 lg:h-32 w-auto" />
           </div>
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">
-            Preserve Your{" "}
-            <span className="bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">Cultural Heritage</span>
-            {" "}with AI
+            Keep Your Stories{" "}
+            <span className="bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">Alive & Vibrant</span>
           </h1>
           <p className="text-base md:text-lg text-gray-400 max-w-3xl mx-auto px-4">
-            clar1ty is built by <span className="font-semibold text-amber-400">n3uralia group</span> with specialized AI models trained on ASEAN faces and cultural imagery. Enhance family heirlooms, restore faded memories, and celebrate identity—all while preserving the authenticity of your heritage.
+            Your family photos tell stories. Faded prints, worn-out memories, and aging heirlooms deserve to shine again. clar1ty brings clarity and color back to the moments that matter most—restoring your heritage with care and precision.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
             <Button
@@ -152,11 +151,11 @@ export default function Home() {
               <Card className="bg-gray-800/50 border-gray-700 hover:border-amber-500/50 transition-all">
                 <CardContent className="p-4 md:p-6 space-y-3 md:space-y-4">
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-amber-500/10 rounded-lg flex items-center justify-center">
-                    <Sparkles className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
+                    <Camera className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
                   </div>
-                  <h3 className="text-base md:text-lg font-semibold text-white">ASEAN-Trained AI</h3>
+                  <h3 className="text-base md:text-lg font-semibold text-white">Restore Heirlooms</h3>
                   <p className="text-xs md:text-sm text-gray-400">
-                    Specialized LoRA models trained on Southeast Asian faces, skin tones, and cultural imagery.
+                    Bring old family photos back to life with stunning clarity and vibrant colors.
                   </p>
                 </CardContent>
               </Card>
@@ -166,9 +165,9 @@ export default function Home() {
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-amber-500/10 rounded-lg flex items-center justify-center">
                     <Zap className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
                   </div>
-                  <h3 className="text-base md:text-lg font-semibold text-white">Lightning Fast</h3>
+                  <h3 className="text-base md:text-lg font-semibold text-white">Instant Results</h3>
                   <p className="text-xs md:text-sm text-gray-400">
-                    Enhance photos in seconds without sacrificing quality or cultural authenticity.
+                    Get enhanced photos in seconds—no complicated settings or technical knowledge needed.
                   </p>
                 </CardContent>
               </Card>
@@ -178,9 +177,9 @@ export default function Home() {
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-amber-500/10 rounded-lg flex items-center justify-center">
                     <Shield className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
                   </div>
-                  <h3 className="text-base md:text-lg font-semibold text-white">Identity Preservation</h3>
+                  <h3 className="text-base md:text-lg font-semibold text-white">Respect & Privacy</h3>
                   <p className="text-xs md:text-sm text-gray-400">
-                    Maintains facial features, cultural clothing details, and authentic heritage colors.
+                    Your memories stay yours. We never save or train on your personal photos.
                   </p>
                 </CardContent>
               </Card>
@@ -190,47 +189,49 @@ export default function Home() {
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-amber-500/10 rounded-lg flex items-center justify-center">
                     <ImageIcon className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
                   </div>
-                  <h3 className="text-base md:text-lg font-semibold text-white">Heirloom Restoration</h3>
+                  <h3 className="text-base md:text-lg font-semibold text-white">Authentic Beauty</h3>
                   <p className="text-xs md:text-sm text-gray-400">
-                    Restore faded family photos and heritage archives to pristine 4K quality.
+                    Enhanced photos stay true to their original character and cultural context.
                   </p>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Why clar1ty Section */}
+            {/* Story Section */}
             <div className="space-y-6 md:space-y-8">
               <div className="text-center space-y-2 md:space-y-3">
-                <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-white">Why Choose clar1ty?</h2>
-                <p className="text-sm text-gray-400">Built for ASEAN identity. Expanding to Latin America.</p>
+                <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-white">More Than Photos</h2>
+                <p className="text-sm text-gray-400">Preserving the memories that shape us</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
                 <div className="text-center space-y-3 md:space-y-4">
                   <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full flex items-center justify-center mx-auto">
-                    <Sparkles className="w-6 h-6 md:w-8 md:h-8 text-black" />
+                    <Church className="w-6 h-6 md:w-8 md:h-8 text-black" />
                   </div>
-                  <h3 className="text-base md:text-lg font-semibold text-white">Specialized for You</h3>
+                  <h3 className="text-base md:text-lg font-semibold text-white">Family Legacy</h3>
                   <p className="text-xs md:text-sm text-gray-400">
-                    Our LoRA models understand ASEAN faces, traditional clothing, and cultural context—delivering results that feel authentic.
+                    Keep your grandparents' images crystal clear. Celebrate generations of moments that matter.
                   </p>
-                </div>
-
-                <div className="text-center space-y-3 md:space-y-4">
-                  <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full flex items-center justify-center mx-auto">
-                    <Shield className="w-6 h-6 md:w-8 md:h-8 text-black" />
-                  </div>
-                  <h3 className="text-base md:text-lg font-semibold text-white">Privacy First</h3>
-                  <p className="text-xs md:text-sm text-gray-400">Your family photos and heirlooms stay protected. We don't train on your images.</p>
                 </div>
 
                 <div className="text-center space-y-3 md:space-y-4">
                   <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full flex items-center justify-center mx-auto">
                     <Globe className="w-6 h-6 md:w-8 md:h-8 text-black" />
                   </div>
-                  <h3 className="text-base md:text-lg font-semibold text-white">Growing Globally</h3>
+                  <h3 className="text-base md:text-lg font-semibold text-white">Cultural Pride</h3>
                   <p className="text-xs md:text-sm text-gray-400">
-                    Started in Southeast Asia. Expanding to Latin America with localized models.
+                    Honor your heritage with photos that shine. Share your story with authenticity and beauty.
+                  </p>
+                </div>
+
+                <div className="text-center space-y-3 md:space-y-4">
+                  <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full flex items-center justify-center mx-auto">
+                    <CheckCircle2 className="w-6 h-6 md:w-8 md:h-8 text-black" />
+                  </div>
+                  <h3 className="text-base md:text-lg font-semibold text-white">Simply Done</h3>
+                  <p className="text-xs md:text-sm text-gray-400">
+                    No experts needed. Just upload, enhance, and download—your memories are ready to treasure.
                   </p>
                 </div>
               </div>
