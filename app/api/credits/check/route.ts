@@ -3,38 +3,77 @@ import { NextResponse } from "next/server"
 
 export async function GET() {
   try {
-    const supabase = await createClient()
+    let supabase
+    
+    try {
+      supabase = await createClient()
+    } catch (clientError) {
+      console.error("[CREDITS] Failed to create Supabase client:", clientError)
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Service temporarily unavailable",
+          retry: true,
+          credits: 0,
+        },
+        { status: 503 }
+      )
+    }
+
+    if (!supabase) {
+      console.error("[CREDITS] Supabase client is null")
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Service not configured",
+          retry: false,
+          credits: 0,
+        },
+        { status: 503 }
+      )
+    }
 
     let user
     let authError
 
     try {
       const result = await supabase.auth.getUser()
-      user = result.data.user
+      user = result.data?.user
       authError = result.error
     } catch (fetchError) {
       console.error("[CREDITS] Failed to fetch user from Supabase:", fetchError)
-      // Return a temporary error that the client can retry
       return NextResponse.json(
         {
+          success: false,
           error: "Session not ready",
           retry: true,
-          message: "Please wait a moment and try again",
+          credits: 0,
         },
-        { status: 503 },
+        { status: 503 }
       )
     }
 
     if (authError || !user) {
       console.log("[CREDITS] No authenticated user:", authError?.message)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Unauthorized",
+          credits: 0,
+        },
+        { status: 401 }
+      )
     }
 
     let creditData
     let creditError
 
     try {
-      const result = await supabase.from("user_credits").select("credits").eq("user_id", user.id).maybeSingle()
+      const result = await supabase
+        .from("user_credits")
+        .select("credits")
+        .eq("user_id", user.id)
+        .maybeSingle()
 
       creditData = result.data
       creditError = result.error
@@ -42,23 +81,36 @@ export async function GET() {
       console.error("[CREDITS] Failed to fetch credits from database:", fetchError)
       return NextResponse.json(
         {
+          success: false,
           error: "Database temporarily unavailable",
           retry: true,
+          credits: 0,
         },
-        { status: 503 },
+        { status: 503 }
       )
     }
 
     if (creditError) {
       console.error("[CREDITS] Error fetching credits:", creditError)
-      return NextResponse.json({ error: "Failed to fetch credits" }, { status: 500 })
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Failed to fetch credits",
+          credits: 0,
+        },
+        { status: 500 }
+      )
     }
 
     if (!creditData) {
       console.log("[CREDITS] No credit record found, creating default record for user:", user.id)
 
       // Check if user is admin
-      const { data: userData } = await supabase.from("users").select("role").eq("id", user.id).maybeSingle()
+      const { data: userData } = await supabase
+        .from("users")
+        .select("role")
+        .eq("id", user.id)
+        .maybeSingle()
 
       const isAdmin = userData?.role === "admin"
       const defaultCredits = isAdmin ? 999999 : 50
@@ -74,7 +126,14 @@ export async function GET() {
 
       if (insertError) {
         console.error("[CREDITS] Error creating credit record:", insertError)
-        return NextResponse.json({ error: "Failed to create credit record" }, { status: 500 })
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Failed to create credit record",
+            credits: defaultCredits,
+          },
+          { status: 500 }
+        )
       }
 
       return NextResponse.json({
@@ -90,7 +149,14 @@ export async function GET() {
       userId: user.id,
     })
   } catch (error) {
-    console.error("[CREDITS] Check error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error("[CREDITS] Unhandled error:", error)
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Internal server error",
+        credits: 0,
+      },
+      { status: 500 }
+    )
   }
 }

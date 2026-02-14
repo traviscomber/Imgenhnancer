@@ -24,13 +24,26 @@ export function Navbar() {
 
       if (authenticated) {
         try {
-          const response = await fetch("/api/credits/check")
+          const response = await fetch("/api/credits/check", {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+          })
+
+          if (!response.ok) {
+            console.warn(`[v0] Credits check failed with status ${response.status}`)
+            setUserCredits(0)
+            return
+          }
+
           const data = await response.json()
-          if (data.success) {
+          if (data.success && typeof data.credits === "number") {
             setUserCredits(data.credits)
+          } else {
+            setUserCredits(0)
           }
         } catch (error) {
-          console.error("Failed to fetch credits:", error)
+          console.error("[v0] Failed to fetch credits:", error)
+          setUserCredits(0)
         }
       }
     }
