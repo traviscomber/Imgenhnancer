@@ -19,6 +19,7 @@ import {
   Download,
   Upload,
   Globe,
+  Camera,
 } from "lucide-react"
 import { trackCTAClick, trackExampleView } from "@/lib/analytics"
 import { logout } from "@/lib/auth"
