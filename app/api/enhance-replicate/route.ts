@@ -235,7 +235,7 @@ export async function POST(req: NextRequest) {
       processingTime,
       model: "clarity-upscaler",
       predictionId: prediction.id,
-      isFreeUpscaleUsed: scaleFactor === 2 && isFreeUpscaleAvailable,
+      isFreeUpscaleUsed: usedFreeUpscale,
       settings: {
         scaleFactor: validScaleFactor,
         creativity: validCreativity,
