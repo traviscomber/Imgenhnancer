@@ -593,8 +593,9 @@ export default function EnhancePage() {
                 }
 
                 results.forEach((result) => {
-                  if (!result || typeof result !== "object" || !result.fileName) {
-                    console.error("[v0] Invalid result object:", result)
+                  // Guard against undefined or invalid results
+                  if (!result || typeof result !== "object") {
+                    console.log("[v0] Skipping invalid or undefined result")
                     return
                   }
 
@@ -603,26 +604,8 @@ export default function EnhancePage() {
                       console.error("[v0] Invalid item in combined:", item)
                       return false
                     }
-                    return item.file.name === result.fileName
+                    return item.file.name === fileName
                   })
-
-                  if (fileIndex !== -1) {
-                    setUploadedFilesWithAnalysis((current) => {
-                      if (!Array.isArray(current)) {
-                        console.error("[v0] current is not an array:", current)
-                        return current
-                      }
-
-                      const updated = [...current]
-                      if (updated[fileIndex]) {
-                        updated[fileIndex] = {
-                          ...updated[fileIndex],
-                          analysis: result, // Store the full result object
-                          isAnalyzing: false,
-                        }
-                      }
-                      return updated
-                    })
                   }
                 })
               } catch (error) {
