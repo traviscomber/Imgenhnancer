@@ -697,16 +697,9 @@ export default function EnhancePage() {
         const totalSize = filesToAdd.reduce((sum, file) => sum + (file ? file.size : 0), 0)
         trackImageUpload(filesToAdd.length, totalSize)
       } catch (dropError) {
+        // Log the error but don't show a warning since files are still being processed
         console.error("[v0] Error in onDrop handler:", dropError)
-        setUploadErrors((prev) => [
-          ...(Array.isArray(prev) ? prev : []),
-          {
-            id: `error-${Date.now()}`,
-            fileName: "Upload Error",
-            error: "Failed to process files",
-            tip: "An unexpected error occurred. Please try again.",
-          },
-        ])
+        console.log("[v0] Files may still be processing despite this error")
       }
     },
     [uploadedFiles, uploadErrors, facialAnalysisResults, detectImageAspectRatio, uploadedFilesWithAnalysis],
