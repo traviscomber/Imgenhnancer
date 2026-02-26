@@ -599,6 +599,12 @@ export default function EnhancePage() {
                     return
                   }
 
+                  const { fileName } = result
+                  if (!fileName || typeof fileName !== "string") {
+                    console.error("[v0] Invalid result object - missing fileName:", result)
+                    return
+                  }
+
                   const fileIndex = combined.findIndex((item) => {
                     if (!item || !item.file) {
                       console.error("[v0] Invalid item in combined:", item)
@@ -606,6 +612,15 @@ export default function EnhancePage() {
                     }
                     return item.file.name === fileName
                   })
+
+                  if (fileIndex !== -1) {
+                    const updatedArray = [...combined]
+                    updatedArray[fileIndex] = {
+                      ...updatedArray[fileIndex],
+                      analysis: result,
+                      isAnalyzing: false,
+                    }
+                    setUploadedFilesWithAnalysis(updatedArray)
                   }
                 })
               } catch (error) {
