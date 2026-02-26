@@ -137,10 +137,11 @@ export default function EnhancePage() {
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null)
   const [uploadedFilesWithAnalysis, setUploadedFilesWithAnalysis] = useState<UploadedFileWithAnalysis[]>([])
 
-  // Added uploadErrors state
   const [uploadErrors, setUploadErrors] = useState<UploadError[]>([])
   // Added downloadingImages state
   const [downloadingImages, setDownloadingImages] = useState<Set<string>>(new Set())
+  // Added showLoginModal state
+  const [showLoginModal, setShowLoginModal] = useState(false)
 
   const [imageAspectRatios, setImageAspectRatios] = useState<Map<number, number>>(new Map())
   const [facialAnalysisResults, setFacialAnalysisResults] = useState(new Map<string, any>()) // Added state for facial analysis results
@@ -168,6 +169,12 @@ export default function EnhancePage() {
     const fetchCredits = async () => {
       try {
         const response = await fetch("/api/credits/check")
+        if (response.status === 401) {
+          console.log("[v0] User not authenticated, showing login modal")
+          setShowLoginModal(true)
+          setIsLoadingCredits(false)
+          return
+        }
         const data = await response.json()
         if (data.success) {
           setUserCredits(data.credits)
@@ -181,6 +188,8 @@ export default function EnhancePage() {
 
     if (isAuth) {
       fetchCredits()
+    } else {
+      setIsLoadingCredits(false)
     }
   }, [isAuth])
 
@@ -985,6 +994,12 @@ export default function EnhancePage() {
   }
 
   const handleEnhance = useCallback(async () => {
+    if (!isAuth) {
+      console.log("[v0] User not authenticated, showing login modal")
+      setShowLoginModal(true)
+      return
+    }
+
     if (selectedFiles.size === 0) {
       setError("Please select at least one image to enhance")
       return
