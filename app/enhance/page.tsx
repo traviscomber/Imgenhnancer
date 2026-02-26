@@ -441,6 +441,7 @@ export default function EnhancePage() {
             console.error("[v0] Invalid file object:", file)
             continue
           }
+          console.log("[v0] File object properties:", { name: file.name, size: file.size, type: file.type })
           const validation = validateFile(file)
           if (!validation.valid) {
             newErrors.push({
@@ -450,6 +451,7 @@ export default function EnhancePage() {
               tip: validation.tip || "Please try a different file.",
             })
           } else {
+            console.log("[v0] File passed validation, adding to validFiles:", file.name)
             validFiles.push(file)
           }
         }
@@ -514,17 +516,29 @@ export default function EnhancePage() {
 
         console.log("[v0] uploadedFiles:", uploadedFiles)
         console.log("[v0] filesToAdd:", filesToAdd)
+        console.log("[v0] filesToAdd type check:", filesToAdd.map((f) => ({ name: f?.name, isFile: f instanceof File })))
 
-        const filesWithPreviews: FileWithPreview[] = filesToAdd.map((file) => {
-          if (!file) {
-            console.error("[v0] File is null/undefined in map")
-            throw new Error("Invalid file object")
+        const filesWithPreviews: FileWithPreview[] = []
+        for (let i = 0; i < filesToAdd.length; i++) {
+          const file = filesToAdd[i]
+          try {
+            if (!file) {
+              console.error("[v0] File is null/undefined at index", i)
+              continue
+            }
+            if (typeof file !== "object" || !file.name) {
+              console.error("[v0] Invalid file object at index", i, ":", file)
+              continue
+            }
+            const preview = URL.createObjectURL(file)
+            filesWithPreviews.push({
+              file,
+              preview,
+            })
+          } catch (err) {
+            console.error("[v0] Error processing file at index", i, ":", err)
           }
-          return {
-            file,
-            preview: URL.createObjectURL(file),
-          }
-        })
+        }
 
         const startIndex = Array.isArray(uploadedFiles) ? uploadedFiles.length : 0
 
