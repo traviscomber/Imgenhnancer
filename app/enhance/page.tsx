@@ -593,15 +593,19 @@ export default function EnhancePage() {
                 }
 
                 results.forEach((result) => {
-                  // Guard against undefined or invalid results
-                  if (!result || typeof result !== "object") {
-                    console.log("[v0] Skipping invalid or undefined result")
+                  // Guard against undefined or invalid results - check before destructuring
+                  if (!result) {
+                    console.log("[v0] Skipping null/undefined result")
+                    return
+                  }
+                  
+                  if (typeof result !== "object") {
+                    console.log("[v0] Skipping non-object result:", typeof result)
                     return
                   }
 
-                  const { fileName } = result
-                  if (!fileName || typeof fileName !== "string") {
-                    console.error("[v0] Invalid result object - missing fileName:", result)
+                  if (!result.fileName || typeof result.fileName !== "string") {
+                    console.error("[v0] Invalid result object - missing or invalid fileName:", result)
                     return
                   }
 
@@ -610,7 +614,7 @@ export default function EnhancePage() {
                       console.error("[v0] Invalid item in combined:", item)
                       return false
                     }
-                    return item.file.name === fileName
+                    return item.file.name === result.fileName
                   })
 
                   if (fileIndex !== -1) {
