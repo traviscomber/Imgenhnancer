@@ -437,6 +437,10 @@ export default function EnhancePage() {
 
         // Validate each accepted file
         for (const file of acceptedFiles) {
+          if (!file) {
+            console.error("[v0] Invalid file object:", file)
+            continue
+          }
           const validation = validateFile(file)
           if (!validation.valid) {
             newErrors.push({
@@ -451,15 +455,21 @@ export default function EnhancePage() {
         }
 
         // Handle rejected files
-        rejectedFiles.forEach((rejection) => {
-          const errorMessages = rejection.errors.map((e) => e.message).join(", ")
-          newErrors.push({
-            id: `${Date.now()}-${Math.random()}`,
-            fileName: rejection.file.name || "unknown",
-            error: errorMessages,
-            tip: "Please check the file format and size requirements.",
+        if (Array.isArray(rejectedFiles)) {
+          rejectedFiles.forEach((rejection) => {
+            if (!rejection || !rejection.file) {
+              console.error("[v0] Invalid rejection object:", rejection)
+              return
+            }
+            const errorMessages = rejection.errors.map((e) => e.message).join(", ")
+            newErrors.push({
+              id: `${Date.now()}-${Math.random()}`,
+              fileName: rejection.file.name || "unknown",
+              error: errorMessages,
+              tip: "Please check the file format and size requirements.",
+            })
           })
-        })
+        }
 
         // Update errors state
         if (newErrors.length > 0) {
@@ -476,8 +486,9 @@ export default function EnhancePage() {
 
         const duplicateErrors: any[] = []
         const filesToAdd = validFiles.filter((file) => {
+          if (!file) return false
           const isDuplicate = uploadedFiles.some(
-            (existing) => existing.file.name === file.name && existing.file.size === file.size,
+            (existing) => existing && existing.file && existing.file.name === file.name && existing.file.size === file.size,
           )
           if (isDuplicate) {
             console.log(`[v0] Skipping duplicate file: ${file.name}`)
@@ -504,10 +515,16 @@ export default function EnhancePage() {
         console.log("[v0] uploadedFiles:", uploadedFiles)
         console.log("[v0] filesToAdd:", filesToAdd)
 
-        const filesWithPreviews: FileWithPreview[] = filesToAdd.map((file) => ({
-          file,
-          preview: URL.createObjectURL(file),
-        }))
+        const filesWithPreviews: FileWithPreview[] = filesToAdd.map((file) => {
+          if (!file) {
+            console.error("[v0] File is null/undefined in map")
+            throw new Error("Invalid file object")
+          }
+          return {
+            file,
+            preview: URL.createObjectURL(file),
+          }
+        })
 
         const startIndex = Array.isArray(uploadedFiles) ? uploadedFiles.length : 0
 
@@ -519,11 +536,17 @@ export default function EnhancePage() {
         })
 
         filesToAdd.forEach((file, idx) => {
-          detectImageAspectRatio(file, startIndex + idx)
+          if (file) {
+            detectImageAspectRatio(file, startIndex + idx)
+          }
         })
 
         const analysisPromises = filesToAdd.map(async (file) => {
           try {
+            if (!file) {
+              console.error("[v0] File is null/undefined in analysis promise")
+              return { fileName: "unknown", hasFace: false, confidence: 0 }
+            }
             console.log(`[v0] Starting facial analysis for: ${file.name}`)
             const formData = new FormData()
             formData.append("image", file)
@@ -576,11 +599,16 @@ export default function EnhancePage() {
 
           // Update uploadedFilesWithAnalysis state
           setUploadedFilesWithAnalysis((prev) => {
-            const newEntries = filesToAdd.map((file) => ({
-              file,
-              analysis: null, // Analysis is handled above and stored in facialAnalysisResults
-              isAnalyzing: true, // Set to true while the parallel analysis is running
-            }))
+            const newEntries = filesToAdd.map((file) => {
+              if (!file) {
+                throw new Error("File is undefined in newEntries map")
+              }
+              return {
+                file,
+                analysis: null,
+                isAnalyzing: true,
+              }
+            })
             const prevArray = Array.isArray(prev) ? prev : []
             const combined = [...prevArray, ...newEntries]
 
@@ -593,12 +621,11 @@ export default function EnhancePage() {
                 }
 
                 results.forEach((result) => {
-                  // Guard against undefined or invalid results - check before destructuring
                   if (!result) {
                     console.log("[v0] Skipping null/undefined result")
                     return
                   }
-                  
+
                   if (typeof result !== "object") {
                     console.log("[v0] Skipping non-object result:", typeof result)
                     return
@@ -611,7 +638,6 @@ export default function EnhancePage() {
 
                   const fileIndex = combined.findIndex((item) => {
                     if (!item || !item.file) {
-                      console.error("[v0] Invalid item in combined:", item)
                       return false
                     }
                     return item.file.name === result.fileName
@@ -630,7 +656,7 @@ export default function EnhancePage() {
               } catch (error) {
                 console.error("[v0] Error in setTimeout callback:", error)
               }
-            }, 100) // Use setTimeout to ensure state updates happen after initial render
+            }, 100)
 
             return combined
           })
@@ -638,18 +664,23 @@ export default function EnhancePage() {
           console.error("[v0] Error processing analysis results:", analysisError)
           // Continue without facial analysis if it fails
           setUploadedFilesWithAnalysis((prev) => {
-            const newEntries = filesToAdd.map((file) => ({
-              file,
-              analysis: { fileName: file.name, hasFace: false, confidence: 0 }, // Default analysis if error
-              isAnalyzing: false,
-            }))
+            const newEntries = filesToAdd.map((file) => {
+              if (!file) {
+                throw new Error("File is undefined in error handler map")
+              }
+              return {
+                file,
+                analysis: { fileName: file.name, hasFace: false, confidence: 0 },
+                isAnalyzing: false,
+              }
+            })
             const prevArray = Array.isArray(prev) ? prev : []
             return [...prevArray, ...newEntries]
           })
         }
 
         setError(null)
-        const totalSize = filesToAdd.reduce((sum, file) => sum + file.size, 0)
+        const totalSize = filesToAdd.reduce((sum, file) => sum + (file ? file.size : 0), 0)
         trackImageUpload(filesToAdd.length, totalSize)
       } catch (dropError) {
         console.error("[v0] Error in onDrop handler:", dropError)
