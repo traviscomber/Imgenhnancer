@@ -171,25 +171,6 @@ export function Footer() {
           </div>
         </div>
       </div>
-
-      {/* SEO Structured Data */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "SoftwareApplication",
-            name: "clar1ty",
-            applicationCategory: "MultimediaApplication",
-            offers: {
-              "@type": "Offer",
-              price: "0",
-              priceCurrency: "USD",
-            },
-            description: "AI-powered image enhancement and restoration",
-          }),
-        }}
-      />
     </footer>
   )
 }
