@@ -79,35 +79,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode
-}>) {
-  // JSON-LD Schema for SoftwareApplication
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    name: "clar1ty",
-    description:
-      "AI-powered image enhancement platform trained for ASEAN heritage preservation",
-    url: "https://clar1ty.art",
-    applicationCategory: "UtilityApplication",
-    creator: {
-      "@type": "Organization",
-      name: "n3uralia group",
-      url: "https://n3uralia.group",
-    },
-    offers: {
-      "@type": "Offer",
-      price: "0",
-      priceCurrency: "USD",
-    },
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.8",
-      ratingCount: "500",
-    },
-  }
-
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -117,12 +91,6 @@ export default function RootLayout({
         <meta name="author" content="n3uralia group" />
         <meta name="creator" content="n3uralia group" />
         
-        {/* JSON-LD Schema */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-
         {/* Cloudflare specific meta tags for GEO targeting */}
         <meta name="geo.placename" content="ASEAN" />
         <meta name="geo.region" content="SG, ID, TH, MY, PH, VN" />
