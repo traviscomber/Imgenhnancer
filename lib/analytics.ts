@@ -13,6 +13,37 @@ export type AnalyticsEvent =
   | "slider_interacted"
   | "cta_clicked"
   | "example_viewed"
+  | "language_switched"
+  | "geo_detected"
+
+// Get GEO location data from Cloudflare headers (or fallback)
+export function getGeoLocation(): {
+  country?: string
+  region?: string
+  continent?: string
+} {
+  if (typeof window === "undefined") return {}
+
+  // Try to get from Cloudflare headers (works on Vercel with Cloudflare)
+  const country = (globalThis as any).__CLOUDFLARE_COUNTRY || undefined
+  const continent = (globalThis as any).__CLOUDFLARE_CONTINENT || undefined
+
+  return {
+    country,
+    continent,
+  }
+}
+
+// Track language switch for GEO + language analytics
+export function trackLanguageSwitch(language: "en" | "es", previousLanguage?: "en" | "es") {
+  const geo = getGeoLocation()
+  trackEvent("language_switched", {
+    language,
+    previous_language: previousLanguage,
+    country: geo.country,
+    continent: geo.continent,
+  })
+}
 
 // Track custom events with properties
 export function trackEvent(event: AnalyticsEvent, properties?: Record<string, any>) {

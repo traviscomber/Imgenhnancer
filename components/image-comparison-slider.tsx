@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useRef, useEffect, useCallback } from "react"
-import Image from "next/image"
 import { trackSliderInteraction } from "@/lib/analytics"
 
 interface ImageComparisonSliderProps {
@@ -21,6 +20,7 @@ export function ImageComparisonSlider({
 }: ImageComparisonSliderProps) {
   const [sliderPosition, setSliderPosition] = useState(50)
   const [isDragging, setIsDragging] = useState(false)
+  const [imagesLoaded, setImagesLoaded] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const hasTrackedRef = useRef(false)
 
@@ -60,6 +60,10 @@ export function ImageComparisonSlider({
     handleMove(e.touches[0].clientX)
   }
 
+  const handleImageLoad = useCallback(() => {
+    setImagesLoaded(true)
+  }, [])
+
   useEffect(() => {
     if (isDragging) {
       document.addEventListener("mousemove", handleMouseMove)
@@ -79,38 +83,36 @@ export function ImageComparisonSlider({
   return (
     <div
       ref={containerRef}
-      className="relative w-full max-w-2xl mx-auto overflow-hidden rounded-xl shadow-2xl cursor-col-resize touch-none select-none"
+      className="relative w-full overflow-hidden rounded-xl shadow-2xl cursor-col-resize touch-none select-none bg-gray-900"
+      style={{
+        aspectRatio: "16 / 6",
+        maxWidth: "100%",
+      }}
       onMouseDown={handleMouseDown}
       onTouchStart={handleMouseDown}
     >
       {/* After Image (Background) */}
-      <div className="relative w-full">
-        <Image
-          src={afterImage || "/placeholder.svg"}
+      <div className="relative w-full h-full flex items-center justify-center">
+        <img
+          src={afterImage}
           alt={afterLabel}
-          width={800}
-          height={600}
-          className="w-full h-auto object-contain"
-          priority={priority}
-          quality={95}
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 800px"
+          className="w-full h-full object-contain"
+          onLoad={handleImageLoad}
+          crossOrigin="anonymous"
         />
       </div>
 
       {/* Before Image (Overlay with clip) */}
       <div
-        className="absolute top-0 left-0 w-full h-full overflow-hidden"
+        className="absolute top-0 left-0 w-full h-full overflow-hidden flex items-center justify-center"
         style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
       >
-        <Image
-          src={beforeImage || "/placeholder.svg"}
+        <img
+          src={beforeImage}
           alt={beforeLabel}
-          width={800}
-          height={600}
-          className="w-full h-auto object-contain"
-          priority={priority}
-          quality={95}
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 800px"
+          className="w-full h-full object-contain"
+          onLoad={handleImageLoad}
+          crossOrigin="anonymous"
         />
       </div>
 

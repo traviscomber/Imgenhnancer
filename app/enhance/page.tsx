@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useCallback, useRef, useEffect } from "react"
+import type { Metadata } from "next"
 import { useDropzone, type FileRejection } from "react-dropzone"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -136,10 +137,11 @@ export default function EnhancePage() {
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null)
   const [uploadedFilesWithAnalysis, setUploadedFilesWithAnalysis] = useState<UploadedFileWithAnalysis[]>([])
 
-  // Added uploadErrors state
   const [uploadErrors, setUploadErrors] = useState<UploadError[]>([])
   // Added downloadingImages state
   const [downloadingImages, setDownloadingImages] = useState<Set<string>>(new Set())
+  // Added showLoginModal state
+  const [showLoginModal, setShowLoginModal] = useState(false)
 
   const [imageAspectRatios, setImageAspectRatios] = useState<Map<number, number>>(new Map())
   const [facialAnalysisResults, setFacialAnalysisResults] = useState(new Map<string, any>()) // Added state for facial analysis results
@@ -167,6 +169,12 @@ export default function EnhancePage() {
     const fetchCredits = async () => {
       try {
         const response = await fetch("/api/credits/check")
+        if (response.status === 401) {
+          console.log("[v0] User not authenticated, showing login modal")
+          setShowLoginModal(true)
+          setIsLoadingCredits(false)
+          return
+        }
         const data = await response.json()
         if (data.success) {
           setUserCredits(data.credits)
@@ -180,6 +188,8 @@ export default function EnhancePage() {
 
     if (isAuth) {
       fetchCredits()
+    } else {
+      setIsLoadingCredits(false)
     }
   }, [isAuth])
 
@@ -427,6 +437,11 @@ export default function EnhancePage() {
 
         // Validate each accepted file
         for (const file of acceptedFiles) {
+          if (!file) {
+            console.error("[v0] Invalid file object:", file)
+            continue
+          }
+          console.log("[v0] File object properties:", { name: file.name, size: file.size, type: file.type })
           const validation = validateFile(file)
           if (!validation.valid) {
             newErrors.push({
@@ -436,20 +451,27 @@ export default function EnhancePage() {
               tip: validation.tip || "Please try a different file.",
             })
           } else {
+            console.log("[v0] File passed validation, adding to validFiles:", file.name)
             validFiles.push(file)
           }
         }
 
         // Handle rejected files
-        rejectedFiles.forEach((rejection) => {
-          const errorMessages = rejection.errors.map((e) => e.message).join(", ")
-          newErrors.push({
-            id: `${Date.now()}-${Math.random()}`,
-            fileName: rejection.file.name || "unknown",
-            error: errorMessages,
-            tip: "Please check the file format and size requirements.",
+        if (Array.isArray(rejectedFiles)) {
+          rejectedFiles.forEach((rejection) => {
+            if (!rejection || !rejection.file) {
+              console.error("[v0] Invalid rejection object:", rejection)
+              return
+            }
+            const errorMessages = rejection.errors.map((e) => e.message).join(", ")
+            newErrors.push({
+              id: `${Date.now()}-${Math.random()}`,
+              fileName: rejection.file.name || "unknown",
+              error: errorMessages,
+              tip: "Please check the file format and size requirements.",
+            })
           })
-        })
+        }
 
         // Update errors state
         if (newErrors.length > 0) {
@@ -466,8 +488,9 @@ export default function EnhancePage() {
 
         const duplicateErrors: any[] = []
         const filesToAdd = validFiles.filter((file) => {
+          if (!file) return false
           const isDuplicate = uploadedFiles.some(
-            (existing) => existing.file.name === file.name && existing.file.size === file.size,
+            (existing) => existing && existing.file && existing.file.name === file.name && existing.file.size === file.size,
           )
           if (isDuplicate) {
             console.log(`[v0] Skipping duplicate file: ${file.name}`)
@@ -493,11 +516,29 @@ export default function EnhancePage() {
 
         console.log("[v0] uploadedFiles:", uploadedFiles)
         console.log("[v0] filesToAdd:", filesToAdd)
+        console.log("[v0] filesToAdd type check:", filesToAdd.map((f) => ({ name: f?.name, isFile: f instanceof File })))
 
-        const filesWithPreviews: FileWithPreview[] = filesToAdd.map((file) => ({
-          file,
-          preview: URL.createObjectURL(file),
-        }))
+        const filesWithPreviews: FileWithPreview[] = []
+        for (let i = 0; i < filesToAdd.length; i++) {
+          const file = filesToAdd[i]
+          try {
+            if (!file) {
+              console.error("[v0] File is null/undefined at index", i)
+              continue
+            }
+            if (typeof file !== "object" || !file.name) {
+              console.error("[v0] Invalid file object at index", i, ":", file)
+              continue
+            }
+            const preview = URL.createObjectURL(file)
+            filesWithPreviews.push({
+              file,
+              preview,
+            })
+          } catch (err) {
+            console.error("[v0] Error processing file at index", i, ":", err)
+          }
+        }
 
         const startIndex = Array.isArray(uploadedFiles) ? uploadedFiles.length : 0
 
@@ -509,11 +550,17 @@ export default function EnhancePage() {
         })
 
         filesToAdd.forEach((file, idx) => {
-          detectImageAspectRatio(file, startIndex + idx)
+          if (file) {
+            detectImageAspectRatio(file, startIndex + idx)
+          }
         })
 
         const analysisPromises = filesToAdd.map(async (file) => {
           try {
+            if (!file) {
+              console.error("[v0] File is null/undefined in analysis promise")
+              return { fileName: "unknown", hasFace: false, confidence: 0 }
+            }
             console.log(`[v0] Starting facial analysis for: ${file.name}`)
             const formData = new FormData()
             formData.append("image", file)
@@ -566,11 +613,16 @@ export default function EnhancePage() {
 
           // Update uploadedFilesWithAnalysis state
           setUploadedFilesWithAnalysis((prev) => {
-            const newEntries = filesToAdd.map((file) => ({
-              file,
-              analysis: null, // Analysis is handled above and stored in facialAnalysisResults
-              isAnalyzing: true, // Set to true while the parallel analysis is running
-            }))
+            const newEntries = filesToAdd.map((file) => {
+              if (!file) {
+                throw new Error("File is undefined in newEntries map")
+              }
+              return {
+                file,
+                analysis: null,
+                isAnalyzing: true,
+              }
+            })
             const prevArray = Array.isArray(prev) ? prev : []
             const combined = [...prevArray, ...newEntries]
 
@@ -583,42 +635,42 @@ export default function EnhancePage() {
                 }
 
                 results.forEach((result) => {
-                  if (!result || typeof result !== "object" || !result.fileName) {
-                    console.error("[v0] Invalid result object:", result)
+                  if (!result) {
+                    console.log("[v0] Skipping null/undefined result")
+                    return
+                  }
+
+                  if (typeof result !== "object") {
+                    console.log("[v0] Skipping non-object result:", typeof result)
+                    return
+                  }
+
+                  if (!result.fileName || typeof result.fileName !== "string") {
+                    console.error("[v0] Invalid result object - missing or invalid fileName:", result)
                     return
                   }
 
                   const fileIndex = combined.findIndex((item) => {
                     if (!item || !item.file) {
-                      console.error("[v0] Invalid item in combined:", item)
                       return false
                     }
                     return item.file.name === result.fileName
                   })
 
                   if (fileIndex !== -1) {
-                    setUploadedFilesWithAnalysis((current) => {
-                      if (!Array.isArray(current)) {
-                        console.error("[v0] current is not an array:", current)
-                        return current
-                      }
-
-                      const updated = [...current]
-                      if (updated[fileIndex]) {
-                        updated[fileIndex] = {
-                          ...updated[fileIndex],
-                          analysis: result, // Store the full result object
-                          isAnalyzing: false,
-                        }
-                      }
-                      return updated
-                    })
+                    const updatedArray = [...combined]
+                    updatedArray[fileIndex] = {
+                      ...updatedArray[fileIndex],
+                      analysis: result,
+                      isAnalyzing: false,
+                    }
+                    setUploadedFilesWithAnalysis(updatedArray)
                   }
                 })
               } catch (error) {
                 console.error("[v0] Error in setTimeout callback:", error)
               }
-            }, 100) // Use setTimeout to ensure state updates happen after initial render
+            }, 100)
 
             return combined
           })
@@ -626,30 +678,28 @@ export default function EnhancePage() {
           console.error("[v0] Error processing analysis results:", analysisError)
           // Continue without facial analysis if it fails
           setUploadedFilesWithAnalysis((prev) => {
-            const newEntries = filesToAdd.map((file) => ({
-              file,
-              analysis: { fileName: file.name, hasFace: false, confidence: 0 }, // Default analysis if error
-              isAnalyzing: false,
-            }))
+            const newEntries = filesToAdd.map((file) => {
+              if (!file) {
+                throw new Error("File is undefined in error handler map")
+              }
+              return {
+                file,
+                analysis: { fileName: file.name, hasFace: false, confidence: 0 },
+                isAnalyzing: false,
+              }
+            })
             const prevArray = Array.isArray(prev) ? prev : []
             return [...prevArray, ...newEntries]
           })
         }
 
         setError(null)
-        const totalSize = filesToAdd.reduce((sum, file) => sum + file.size, 0)
+        const totalSize = filesToAdd.reduce((sum, file) => sum + (file ? file.size : 0), 0)
         trackImageUpload(filesToAdd.length, totalSize)
       } catch (dropError) {
+        // Log the error but don't show a warning since files are still being processed
         console.error("[v0] Error in onDrop handler:", dropError)
-        setUploadErrors((prev) => [
-          ...(Array.isArray(prev) ? prev : []),
-          {
-            id: `error-${Date.now()}`,
-            fileName: "Upload Error",
-            error: "Failed to process files",
-            tip: "An unexpected error occurred. Please try again.",
-          },
-        ])
+        console.log("[v0] Files may still be processing despite this error")
       }
     },
     [uploadedFiles, uploadErrors, facialAnalysisResults, detectImageAspectRatio, uploadedFilesWithAnalysis],
@@ -984,6 +1034,12 @@ export default function EnhancePage() {
   }
 
   const handleEnhance = useCallback(async () => {
+    if (!isAuth) {
+      console.log("[v0] User not authenticated, showing login modal")
+      setShowLoginModal(true)
+      return
+    }
+
     if (selectedFiles.size === 0) {
       setError("Please select at least one image to enhance")
       return
