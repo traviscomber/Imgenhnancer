@@ -40,12 +40,12 @@ This script MUST be run before production launch. It:
 - Prevents unauthorized data access
 
 **Action Required:**
-```
+\`\`\`
 1. Copy entire contents of scripts/003-enable-rls-policies.sql
 2. Paste into Supabase SQL Editor
 3. Click "Run" button
 4. Verify success (no errors should appear)
-```
+\`\`\`
 
 #### Script 4: Seed Credit Packages
 **File:** `scripts/seed-credit-packages.sql`
@@ -56,12 +56,12 @@ This script populates the available credit packages:
 - Business: 1500 credits @ $99.99
 
 **Action Required:**
-```
+\`\`\`
 1. Copy entire contents of scripts/seed-credit-packages.sql
 2. Paste into Supabase SQL Editor
 3. Click "Run" button
 4. Verify success (should show "INSERT 0 3" or similar)
-```
+\`\`\`
 
 ---
 
@@ -70,12 +70,12 @@ This script populates the available credit packages:
 After running all scripts, verify in Supabase:
 
 ### Verify Tables Exist
-```sql
+\`\`\`sql
 SELECT table_name 
 FROM information_schema.tables 
 WHERE table_schema = 'public' 
 ORDER BY table_name;
-```
+\`\`\`
 
 You should see:
 - credit_packages
@@ -84,21 +84,21 @@ You should see:
 - users
 
 ### Verify RLS is Enabled
-```sql
+\`\`\`sql
 SELECT schemaname, tablename, rowsecurity 
 FROM pg_tables 
 WHERE schemaname = 'public' 
 AND tablename IN ('users', 'user_credits', 'credit_transactions', 'credit_packages');
-```
+\`\`\`
 
 All should show: `rowsecurity = true`
 
 ### Verify Credit Packages
-```sql
+\`\`\`sql
 SELECT name, credits, price_usd, is_active 
 FROM credit_packages 
 ORDER BY credits;
-```
+\`\`\`
 
 Should show 3 packages:
 - Starter | 100 | 9.99 | true

@@ -6,29 +6,34 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { ImageComparisonSlider } from "@/components/image-comparison-slider"
+import { ImageComparisonHybrid } from "@/components/image-comparison-hybrid"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { ClarityLogo } from "@/components/clarity-logo"
 import {
+  ArrowRight,
   Sparkles,
   Zap,
   Shield,
   ImageIcon,
-  CheckCircle2,
-  ArrowRight,
-  Upload,
   Download,
+  Upload,
+  Globe,
   Camera,
-  Building2,
   Church,
+  Building2,
+  CheckCircle2,
 } from "lucide-react"
 import { trackCTAClick, trackExampleView } from "@/lib/analytics"
 import { logout } from "@/lib/auth"
+import { useLanguage } from "@/hooks/use-language"
+import { translations } from "@/lib/i18n"
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("home")
+  const [language] = useLanguage()
   const router = useRouter()
+  const t = translations[language]
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab)
@@ -53,22 +58,25 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black">
       <Navbar />
 
-      {/* Hero Section */}
+      {/* Hero Section with Storytelling */}
       <section className="container mx-auto px-4 py-12 md:py-20">
         <div className="text-center space-y-4 md:space-y-6 mb-12 md:mb-16">
           <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20 text-xs md:text-sm">
-            ✨ AI-Powered Enhancement
+            ✨ {language === "en" ? "Built for ASEAN Heritage" : "Construido para el Patrimonio de ASEAN"}
           </Badge>
           <div className="flex justify-center mb-6">
             <ClarityLogo className="h-16 md:h-24 lg:h-32 w-auto" />
           </div>
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">
-            Transform Your Images with{" "}
-            <span className="bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">AI Magic</span>
+            {language === "en" ? "Keep Your Stories" : "Mantén Tus Historias"}{" "}
+            <span className="bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
+              {language === "en" ? "Alive & Vibrant" : "Vivas y Vibrantes"}
+            </span>
           </h1>
           <p className="text-base md:text-lg text-gray-400 max-w-3xl mx-auto px-4">
-            Professional-grade image enhancement powered by cutting-edge AI. Restore heritage photos, enhance wedding
-            memories, and elevate your creative work.
+            {language === "en"
+              ? "Your family photos tell stories. Faded prints, worn-out memories, and aging heirlooms deserve to shine again. clar1ty brings clarity and color back to the moments that matter most—restoring your heritage with care and precision."
+              : "Tus fotos de familia cuentan historias. Los impresos descoloridos, los recuerdos gastados y las reliquias familiares antiguas merecen brillar de nuevo. clar1ty devuelve la claridad y el color a los momentos más importantes, restaurando tu patrimonio con cuidado y precisión."}
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
             <Button
@@ -88,7 +96,7 @@ export default function Home() {
                 trackCTAClick("hero", "View Examples")
               }}
             >
-              View Examples
+              {language === "en" ? "View Examples" : "Ver Ejemplos"}
             </Button>
           </div>
         </div>
@@ -118,42 +126,48 @@ export default function Home() {
 
               <div className="space-y-6 md:space-y-8">
                 {/* Main Wedding Showcase */}
-                <ImageComparisonSlider
+                <ImageComparisonHybrid
                   beforeImage="/images/wedding-before.png"
                   afterImage="/images/wedding-after.png"
                   beforeLabel="Original"
                   afterLabel="AI Enhanced"
-                  priority={true}
+                  improvements={["↑ 45% sharper", "↑ 30% brighter", "↑ 60% detail"]}
                 />
 
                 {/* Indonesian Heritage */}
-                <ImageComparisonSlider
+                <ImageComparisonHybrid
                   beforeImage="/images/javanese-wedding-faded.png"
                   afterImage="/images/javanese-wedding-restored.png"
                   beforeLabel="Faded Photo"
                   afterLabel="Restored Heritage"
+                  improvements={["↑ 50% color accuracy", "↑ 70% contrast", "✓ Heritage preserved"]}
                 />
 
                 {/* Vintage Wedding Clarity */}
-                <ImageComparisonSlider
+                <ImageComparisonHybrid
                   beforeImage="/images/vintage-wedding-blur.png"
                   afterImage="/images/vintage-wedding-clear.jpg"
                   beforeLabel="Blurred"
                   afterLabel="Crystal Clear"
+                  improvements={["↑ 80% sharpness", "↑ 40% detail", "✓ Noise reduced"]}
                 />
               </div>
             </div>
 
-            {/* Features Grid */}
+            {/* Features Grid - ASEAN Focused */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
               <Card className="bg-gray-800/50 border-gray-700 hover:border-amber-500/50 transition-all">
                 <CardContent className="p-4 md:p-6 space-y-3 md:space-y-4">
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-amber-500/10 rounded-lg flex items-center justify-center">
-                    <Sparkles className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
+                    <Camera className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
                   </div>
-                  <h3 className="text-base md:text-lg font-semibold text-white">AI Enhancement</h3>
+                  <h3 className="text-base md:text-lg font-semibold text-white">
+                    {language === "en" ? "Restore Heirlooms" : "Restaurar Reliquias"}
+                  </h3>
                   <p className="text-xs md:text-sm text-gray-400">
-                    Advanced AI algorithms restore and enhance image quality with unprecedented detail.
+                    {language === "en"
+                      ? "Bring old family photos back to life with stunning clarity and vibrant colors."
+                      : "Devuelve vida a las fotos familiares antiguas con claridad impresionante y colores vibrantes."}
                   </p>
                 </CardContent>
               </Card>
@@ -163,9 +177,13 @@ export default function Home() {
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-amber-500/10 rounded-lg flex items-center justify-center">
                     <Zap className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
                   </div>
-                  <h3 className="text-base md:text-lg font-semibold text-white">Lightning Fast</h3>
+                  <h3 className="text-base md:text-lg font-semibold text-white">
+                    {language === "en" ? "Instant Results" : "Resultados Instantáneos"}
+                  </h3>
                   <p className="text-xs md:text-sm text-gray-400">
-                    Process images in seconds with our optimized AI pipeline.
+                    {language === "en"
+                      ? "Get enhanced photos in seconds—no complicated settings or technical knowledge needed."
+                      : "Obtén fotos mejoradas en segundos, sin configuraciones complicadas ni conocimientos técnicos."}
                   </p>
                 </CardContent>
               </Card>
@@ -175,9 +193,13 @@ export default function Home() {
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-amber-500/10 rounded-lg flex items-center justify-center">
                     <Shield className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
                   </div>
-                  <h3 className="text-base md:text-lg font-semibold text-white">Face Preservation</h3>
+                  <h3 className="text-base md:text-lg font-semibold text-white">
+                    {language === "en" ? "Respect & Privacy" : "Respeto y Privacidad"}
+                  </h3>
                   <p className="text-xs md:text-sm text-gray-400">
-                    Maintains facial features and skin tones for ASEAN portraits.
+                    {language === "en"
+                      ? "Your memories stay yours. We never save or train on your personal photos."
+                      : "Tus recuerdos son tuyos. Nunca guardamos ni entrenamos con tus fotos personales."}
                   </p>
                 </CardContent>
               </Card>
@@ -187,48 +209,70 @@ export default function Home() {
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-amber-500/10 rounded-lg flex items-center justify-center">
                     <ImageIcon className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
                   </div>
-                  <h3 className="text-base md:text-lg font-semibold text-white">High Resolution</h3>
+                  <h3 className="text-base md:text-lg font-semibold text-white">
+                    {language === "en" ? "Authentic Beauty" : "Belleza Auténtica"}
+                  </h3>
                   <p className="text-xs md:text-sm text-gray-400">
-                    Upscale to 4K and beyond without losing quality or detail.
+                    {language === "en"
+                      ? "Enhanced photos stay true to their original character and cultural context."
+                      : "Las fotos mejoradas mantienen su carácter original y contexto cultural."}
                   </p>
                 </CardContent>
               </Card>
             </div>
 
-            {/* How It Works */}
+            {/* Story Section */}
             <div className="space-y-6 md:space-y-8">
               <div className="text-center space-y-2 md:space-y-3">
-                <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-white">How It Works</h2>
-                <p className="text-sm text-gray-400">Three simple steps to transform your images</p>
+                <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-white">
+                  {language === "en" ? "More Than Photos" : "Más Que Fotos"}
+                </h2>
+                <p className="text-sm text-gray-400">
+                  {language === "en" ? "Preserving the memories that shape us" : "Preservando los recuerdos que nos moldean"}
+                </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
                 <div className="text-center space-y-3 md:space-y-4">
                   <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full flex items-center justify-center mx-auto">
-                    <Upload className="w-6 h-6 md:w-8 md:h-8 text-black" />
+                    <Church className="w-6 h-6 md:w-8 md:h-8 text-black" />
                   </div>
-                  <h3 className="text-base md:text-lg font-semibold text-white">1. Upload</h3>
+                  <h3 className="text-base md:text-lg font-semibold text-white">
+                    {language === "en" ? "Family Legacy" : "Legado Familiar"}
+                  </h3>
                   <p className="text-xs md:text-sm text-gray-400">
-                    Upload your image or drag and drop it into the enhancer.
+                    {language === "en"
+                      ? "Keep your grandparents' images crystal clear. Celebrate generations of moments that matter."
+                      : "Mantén las imágenes de tus abuelos cristalinas. Celebra generaciones de momentos que importan."}
                   </p>
                 </div>
 
                 <div className="text-center space-y-3 md:space-y-4">
                   <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full flex items-center justify-center mx-auto">
-                    <Sparkles className="w-6 h-6 md:w-8 md:h-8 text-black" />
+                    <Globe className="w-6 h-6 md:w-8 md:h-8 text-black" />
                   </div>
-                  <h3 className="text-base md:text-lg font-semibold text-white">2. Enhance</h3>
+                  <h3 className="text-base md:text-lg font-semibold text-white">
+                    {language === "en" ? "Cultural Pride" : "Orgullo Cultural"}
+                  </h3>
                   <p className="text-xs md:text-sm text-gray-400">
-                    Our AI processes and enhances your image automatically.
+                    {language === "en"
+                      ? "Honor your heritage with photos that shine. Share your story with authenticity and beauty."
+                      : "Honra tu patrimonio con fotos que brillen. Comparte tu historia con autenticidad y belleza."}
                   </p>
                 </div>
 
                 <div className="text-center space-y-3 md:space-y-4">
                   <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full flex items-center justify-center mx-auto">
-                    <Download className="w-6 h-6 md:w-8 md:h-8 text-black" />
+                    <CheckCircle2 className="w-6 h-6 md:w-8 md:h-8 text-black" />
                   </div>
-                  <h3 className="text-base md:text-lg font-semibold text-white">3. Download</h3>
-                  <p className="text-xs md:text-sm text-gray-400">Download your enhanced image in high resolution.</p>
+                  <h3 className="text-base md:text-lg font-semibold text-white">
+                    {language === "en" ? "Simply Done" : "Simplemente Hecho"}
+                  </h3>
+                  <p className="text-xs md:text-sm text-gray-400">
+                    {language === "en"
+                      ? "No experts needed. Just upload, enhance, and download—your memories are ready to treasure."
+                      : "No se necesitan expertos. Solo carga, mejora y descarga, tus recuerdos están listos para atesorar."}
+                  </p>
                 </div>
               </div>
             </div>
@@ -249,19 +293,19 @@ export default function Home() {
                   <h3 className="text-lg md:text-xl font-bold text-white">Wedding Photography</h3>
                 </div>
                 <div className="space-y-4 md:space-y-6">
-                  <ImageComparisonSlider
+                  <ImageComparisonHybrid
                     beforeImage="/images/wedding-before.png"
                     afterImage="/images/wedding-after.png"
                     beforeLabel="Original"
                     afterLabel="Enhanced"
                   />
-                  <ImageComparisonSlider
+                  <ImageComparisonHybrid
                     beforeImage="/images/wedding-set1-before.png"
                     afterImage="/images/wedding-set1-after.png"
                     beforeLabel="Before"
                     afterLabel="After"
                   />
-                  <ImageComparisonSlider
+                  <ImageComparisonHybrid
                     beforeImage="/images/vintage-wedding-blur.png"
                     afterImage="/images/vintage-wedding-clear.jpg"
                     beforeLabel="Blurred"
@@ -277,13 +321,13 @@ export default function Home() {
                   <h3 className="text-lg md:text-xl font-bold text-white">Cultural Heritage Restoration</h3>
                 </div>
                 <div className="space-y-4 md:space-y-6">
-                  <ImageComparisonSlider
+                  <ImageComparisonHybrid
                     beforeImage="/images/javanese-wedding-faded.png"
                     afterImage="/images/javanese-wedding-restored.png"
                     beforeLabel="Faded Photo"
                     afterLabel="Restored"
                   />
-                  <ImageComparisonSlider
+                  <ImageComparisonHybrid
                     beforeImage="/images/thai-family-faded.png"
                     afterImage="/images/thai-family-restored.png"
                     beforeLabel="Original"
@@ -298,7 +342,7 @@ export default function Home() {
                   <Building2 className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
                   <h3 className="text-lg md:text-xl font-bold text-white">Real Estate Marketing</h3>
                 </div>
-                <ImageComparisonSlider
+                <ImageComparisonHybrid
                   beforeImage="/images/real-estate-before.png"
                   afterImage="/images/real-estate-after.png"
                   beforeLabel="Dark Interior"

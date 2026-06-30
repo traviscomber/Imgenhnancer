@@ -1,4 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { createClient } from "@supabase/supabase-js"
+import { checkFreeUpscaleAvailability, useFreeUpscale } from "@/lib/free-upscale"
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,6 +18,7 @@ export async function POST(req: NextRequest) {
     // Parse form data
     const formData = await req.formData()
     const imageFile = formData.get("image") as File
+    const userId = formData.get("user_id") as string
 
     if (!imageFile) {
       console.error("❌ No image file provided")
@@ -37,6 +40,29 @@ export async function POST(req: NextRequest) {
     const tilingHeight = Number.parseInt(formData.get("tiling_height") as string) || 144
     const prompt = formData.get("prompt") as string | null
 
+    // Check if using free upscale
+    let usedFreeUpscale = false
+    let freeUpscaleType: "initial" | "monthly" | null = null
+
+    if (userId) {
+      const freeStatus = await checkFreeUpscaleAvailability(userId)
+
+      if (freeStatus.available) {
+        usedFreeUpscale = true
+        freeUpscaleType = freeStatus.type
+
+        // Deduct free upscale
+        const useResult = await useFreeUpscale(userId, freeStatus.type)
+        if (!useResult.success) {
+          console.warn("Failed to deduct free upscale:", useResult.error)
+        } else {
+          console.log(`✅ Free upscale used (${freeStatus.type}), remaining: ${useResult.remaining}`)
+        }
+      } else if (freeStatus.nextResetDate) {
+        console.log(`⏰ No free upscales available. Next reset: ${freeStatus.nextResetDate.toISOString()}`)
+      }
+    }
+
     const validScaleFactor = Math.max(1, Math.min(4, scaleFactor))
     const validCreativity = Math.max(0, Math.min(1, creativity))
     const validResemblance = Math.max(0.3, Math.min(3, resemblance))
@@ -56,6 +82,8 @@ export async function POST(req: NextRequest) {
       tilingWidth: validTilingWidth,
       tilingHeight: validTilingHeight,
       prompt,
+      usedFreeUpscale,
+      freeUpscaleType,
     })
 
     // Convert File to base64 data URL
@@ -207,6 +235,7 @@ export async function POST(req: NextRequest) {
       processingTime,
       model: "clarity-upscaler",
       predictionId: prediction.id,
+      isFreeUpscaleUsed: usedFreeUpscale,
       settings: {
         scaleFactor: validScaleFactor,
         creativity: validCreativity,

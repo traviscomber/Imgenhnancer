@@ -68,9 +68,9 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <a href="#" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
+                <Link href="/pricing" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
                   Pricing
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -80,26 +80,37 @@ export function Footer() {
             <h4 className="text-sm font-semibold text-white uppercase tracking-wider">Company</h4>
             <ul className="space-y-3">
               <li>
-                <a href="#" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
+                <Link href="/about" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
                   About Us
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
+                <Link href="/blog" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
                   Blog
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
+                <Link href="/careers" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
                   Careers
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
+                <Link href="/contact" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
                   Contact
-                </a>
+                </Link>
               </li>
             </ul>
+            <div className="pt-2 border-t border-gray-800">
+              <div className="flex items-center gap-2">
+                <Mail className="w-4 h-4 text-amber-400" />
+                <a
+                  href="mailto:info@clar1ty.art"
+                  className="text-sm text-gray-400 hover:text-amber-400 transition-colors"
+                >
+                  info@clar1ty.art
+                </a>
+              </div>
+            </div>
           </div>
 
           {/* Legal */}
@@ -107,23 +118,23 @@ export function Footer() {
             <h4 className="text-sm font-semibold text-white uppercase tracking-wider">Legal</h4>
             <ul className="space-y-3">
               <li>
-                <a href="#" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
+                <Link href="/privacy" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
                   Privacy Policy
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
+                <Link href="/terms" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
                   Terms of Service
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
-                  Cookie Policy
-                </a>
+                <Link href="/disclaimer" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
+                  Disclaimer
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
-                  GDPR
+                <a href="mailto:legal@clar1ty.art" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
+                  Legal Contact
                 </a>
               </li>
             </ul>
@@ -133,7 +144,21 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="mt-12 pt-8 border-t border-gray-800">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-gray-400">© 2025 clar1ty. All rights reserved.</p>
+            <div className="flex flex-col sm:flex-row items-center gap-2 text-sm text-gray-400">
+              <p>© 2025 clar1ty. All rights reserved.</p>
+              <span className="hidden sm:inline">•</span>
+              <p>
+                Built by{" "}
+                <a
+                  href="https://www.n3uralia.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-amber-400 hover:text-amber-300 transition-colors font-semibold"
+                >
+                  n3uralia group
+                </a>
+              </p>
+            </div>
             <div className="flex items-center gap-2">
               <Mail className="w-4 h-4 text-gray-400" />
               <a
@@ -146,25 +171,6 @@ export function Footer() {
           </div>
         </div>
       </div>
-
-      {/* SEO Structured Data */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "SoftwareApplication",
-            name: "clar1ty",
-            applicationCategory: "MultimediaApplication",
-            offers: {
-              "@type": "Offer",
-              price: "0",
-              priceCurrency: "USD",
-            },
-            description: "AI-powered image enhancement and restoration",
-          }),
-        }}
-      />
     </footer>
   )
 }
