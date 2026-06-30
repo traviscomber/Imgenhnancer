@@ -57,18 +57,18 @@ export default function Home() {
       <section className="container mx-auto px-4 py-12 md:py-20">
         <div className="text-center space-y-4 md:space-y-6 mb-12 md:mb-16">
           <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20 text-xs md:text-sm">
-            ✨ AI-Powered Enhancement
+            ✨ Built for ASEAN Heritage
           </Badge>
           <div className="flex justify-center mb-6">
             <ClarityLogo className="h-16 md:h-24 lg:h-32 w-auto" />
           </div>
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">
-            Transform Your Images with{" "}
-            <span className="bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">AI Magic</span>
+            Keep Your Stories<span className="block">
+            <span className="bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">Alive & Vibrant</span>
+            </span>
           </h1>
           <p className="text-base md:text-lg text-gray-400 max-w-3xl mx-auto px-4">
-            Professional-grade image enhancement powered by cutting-edge AI. Restore heritage photos, enhance wedding
-            memories, and elevate your creative work.
+            Your family photos tell stories. Faded prints, worn-out memories, and aging heirlooms deserve to shine again. clar1ty brings clarity and color back to the moments that matter most—restoring your heritage with care and precision.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
             <Button
