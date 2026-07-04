@@ -30,14 +30,14 @@ export const metadata: Metadata = {
   authors: [{ name: "n3uralia group", url: "https://n3uralia.com" }],
   creator: "n3uralia group",
   publisher: "n3uralia group",
-  metadataBase: new URL("https://clar1ty.art"),
-  canonical: "https://clar1ty.art",
+  metadataBase: new URL("https://www.clar1ty.art"),
+  canonical: "https://www.clar1ty.art/",
   alternates: {
-    canonical: "https://clar1ty.art",
+    canonical: "https://www.clar1ty.art/",
     languages: {
-      "en-US": "https://clar1ty.art?lang=en",
-      "es-ES": "https://clar1ty.art?lang=es",
-      "es-MX": "https://clar1ty.art?lang=es",
+      "en-US": "https://www.clar1ty.art/?lang=en",
+      "es-ES": "https://www.clar1ty.art/?lang=es",
+      "es-MX": "https://www.clar1ty.art/?lang=es",
     },
   },
   openGraph: {
@@ -45,11 +45,11 @@ export const metadata: Metadata = {
     description: "Professional AI-powered image enhancement and restoration for ASEAN heritage",
     type: "website",
     locale: "en_US",
-    url: "https://clar1ty.art",
+    url: "https://www.clar1ty.art/",
     siteName: "clar1ty",
     images: [
       {
-        url: "https://clar1ty.art/og-image.jpg",
+        url: "https://www.clar1ty.art/og-image.jpg",
         width: 1200,
         height: 630,
         alt: "clar1ty - AI Image Enhancer for ASEAN Heritage",
@@ -61,7 +61,7 @@ export const metadata: Metadata = {
     title: "clar1ty.art — Keep Your Stories Alive & Vibrant",
     description: "Professional AI-powered image enhancement and restoration",
     creator: "@n3uralia",
-    images: ["https://clar1ty.art/og-image.jpg"],
+    images: ["https://www.clar1ty.art/og-image.jpg"],
   },
   robots: {
     index: true,
@@ -123,7 +123,7 @@ export default function RootLayout({
         <meta property="og:type" content="website" />
         
         {/* Canonical link for Cloudflare */}
-        <link rel="canonical" href="https://clar1ty.art" />
+        <link rel="canonical" href="https://www.clar1ty.art/" />
         
         {/* LLM-friendly meta tags */}
         <meta name="model" content="gpt-4, claude-3, llama-2" />
