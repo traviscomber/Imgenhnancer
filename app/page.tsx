@@ -3,6 +3,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useCallback, useEffect, useRef, useState } from "react"
 import {
   Archive,
   ArrowRight,
@@ -194,20 +195,7 @@ export default function Home() {
 
       <main>
         <section className="relative min-h-[720px] overflow-hidden bg-black">
-          <div className="absolute inset-y-0 right-0 w-full lg:w-[68%]">
-            <Image
-              src="/images/thai-family-restored.png"
-              alt="Restored Southeast Asian portrait"
-              fill
-              priority
-              className="object-cover object-center opacity-90"
-            />
-            <div className="absolute inset-0 bg-[linear-gradient(90deg,#000_0%,rgba(0,0,0,0.86)_18%,rgba(0,0,0,0.18)_56%,rgba(0,0,0,0.35)_100%)]" />
-            <div className="absolute left-[58%] top-24 hidden h-[520px] w-px bg-white/70 lg:block" />
-            <div className="absolute left-[calc(58%-14px)] top-[346px] hidden h-7 w-7 items-center justify-center rounded-full border border-white/60 bg-white/80 text-[10px] text-black lg:flex">
-              <span className="h-2 w-2 rounded-full bg-black" />
-            </div>
-          </div>
+          <HeroComparison />
 
           <div className="relative z-10 mx-auto flex min-h-[720px] max-w-6xl items-center px-6 pt-20">
             <div className="max-w-[470px]">
@@ -235,7 +223,7 @@ export default function Home() {
 
         <section className="grid min-h-[700px] bg-[#817463] lg:grid-cols-[0.78fr_1.22fr]">
           <div className="bg-[#928879] px-6 py-16 lg:px-28">
-            <h2 className="text-5xl font-light tracking-[0.02em] text-[#e8dfd1]">Upload image</h2>
+            <h2 className="text-left text-5xl font-light tracking-[0.02em] text-[#e8dfd1]">Upload image</h2>
             <p className="mx-auto mt-16 max-w-[330px] text-center text-[13px] leading-6 text-[#f0eadf]">
               Natural skin tones. Real facial structure.
               <br />
@@ -279,7 +267,7 @@ export default function Home() {
             <h2 className="text-4xl font-light leading-tight tracking-[0.08em] text-[#ddd4c8] md:text-5xl">
               Generic AI-tools upscale pixels.
               <br />
-              Clarity preserves context.
+              Clar1ty preserves context.
             </h2>
             <div className="mx-auto mt-12 h-9 w-40 border-y border-[#32291f]" />
             <p className="mx-auto mt-10 max-w-3xl text-[13px] leading-6 text-[#d8d0c4]">
@@ -341,7 +329,7 @@ export default function Home() {
         <section className="bg-black px-6 py-24">
           <div className="mx-auto max-w-6xl">
             <div className="text-center">
-              <h2 className="text-4xl font-light uppercase tracking-[0.06em] text-[#c9b493]">
+              <h2 className="text-center text-4xl font-light uppercase tracking-[0.06em] text-[#c9b493]">
                 CHOOSE THE RIGHT ENHANCEMENT
               </h2>
               <p className="mt-14 text-[12px] font-semibold text-[#f0eadf]">Presets for every image type</p>
@@ -377,7 +365,7 @@ export default function Home() {
 
         <section id="how-it-works" className="bg-[#151515] px-6 py-24">
           <div className="mx-auto max-w-6xl text-center">
-            <h2 className="text-4xl font-light uppercase tracking-[0.08em] text-[#c9b493]">
+            <h2 className="text-center text-4xl font-light uppercase tracking-[0.08em] text-[#c9b493]">
               SIMPLE. FAST. EFFECTIVE.
             </h2>
             <p className="mt-14 text-[12px] font-semibold text-white">How it works</p>
@@ -403,7 +391,7 @@ export default function Home() {
         <section className="bg-[#33271d] px-6 py-24">
           <div className="mx-auto max-w-6xl">
             <div className="text-center">
-              <h2 className="text-4xl font-light uppercase tracking-[0.08em] text-[#d2c6b6]">
+              <h2 className="text-center text-4xl font-light uppercase tracking-[0.08em] text-[#d2c6b6]">
                 BETTER QUALITY. SAME IDENTITY
               </h2>
               <p className="mt-14 text-[12px] font-semibold text-white">How it works</p>
@@ -461,7 +449,7 @@ export default function Home() {
 
         <section id="use-cases" className="bg-black px-6 py-24">
           <div className="mx-auto max-w-6xl text-center">
-            <h2 className="text-4xl font-light uppercase tracking-[0.06em] text-[#c9b493]">
+            <h2 className="text-center text-4xl font-light uppercase tracking-[0.06em] text-[#c9b493]">
               FOR PEOPLE, PROJECTS, AND PURPOSE
             </h2>
             <p className="mt-16 text-[12px] font-semibold text-white">Who uses Clar1ty?</p>
@@ -585,4 +573,83 @@ export default function Home() {
 
 function CheckDot() {
   return <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-[#8a6a36] text-[9px] text-[#c79b4b]">+</span>
+}
+
+function HeroComparison() {
+  const [position, setPosition] = useState(56)
+  const [isDragging, setIsDragging] = useState(false)
+  const containerRef = useRef<HTMLDivElement | null>(null)
+
+  const updatePosition = useCallback((clientX: number) => {
+    const container = containerRef.current
+    if (!container) return
+    const rect = container.getBoundingClientRect()
+    const next = ((clientX - rect.left) / rect.width) * 100
+    setPosition(Math.min(88, Math.max(18, next)))
+  }, [])
+
+  useEffect(() => {
+    if (!isDragging) return
+
+    const handleMove = (event: PointerEvent) => updatePosition(event.clientX)
+    const handleUp = () => setIsDragging(false)
+
+    window.addEventListener("pointermove", handleMove)
+    window.addEventListener("pointerup", handleUp)
+
+    return () => {
+      window.removeEventListener("pointermove", handleMove)
+      window.removeEventListener("pointerup", handleUp)
+    }
+  }, [isDragging, updatePosition])
+
+  return (
+    <div
+      ref={containerRef}
+      className="absolute inset-y-0 right-0 w-full cursor-ew-resize select-none lg:w-[68%]"
+      style={{ touchAction: "none" }}
+      onPointerDown={(event) => {
+        setIsDragging(true)
+        updatePosition(event.clientX)
+      }}
+    >
+      <Image
+        src="/images/thai-family-restored.png"
+        alt="Upscaled Southeast Asian portrait"
+        fill
+        priority
+        className="object-cover object-center opacity-90"
+      />
+      <div className="absolute inset-0" style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}>
+        <Image
+          src="/images/thai-family-faded.png"
+          alt="Original Southeast Asian portrait"
+          fill
+          priority
+          className="object-cover object-center opacity-95"
+        />
+      </div>
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,#000_0%,rgba(0,0,0,0.86)_18%,rgba(0,0,0,0.18)_56%,rgba(0,0,0,0.35)_100%)]" />
+      <div className="absolute inset-y-0 z-20" style={{ left: `${position}%` }}>
+        <div className="h-full w-px bg-white/75" />
+        <button
+          type="button"
+          aria-label="Drag to compare original and upscaled image"
+          className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/70 bg-white/90 px-2 py-1 text-[10px] font-semibold text-black shadow-[0_0_20px_rgba(0,0,0,0.45)]"
+          onPointerDown={(event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            setIsDragging(true)
+            updatePosition(event.clientX)
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowLeft") setPosition((current) => Math.max(18, current - 3))
+            if (event.key === "ArrowRight") setPosition((current) => Math.min(88, current + 3))
+          }}
+        >
+          <span aria-hidden="true">&lt;&gt;</span>
+        </button>
+      </div>
+    </div>
+  )
 }
