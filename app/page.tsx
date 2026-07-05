@@ -4,54 +4,41 @@ import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
-import {
-  Archive,
-  ArrowRight,
-  Brush,
-  Castle,
-  Download,
-  FileImage,
-  Gem,
-  Landmark,
-  Leaf,
-  Palette,
-  Scale,
-  Shield,
-  Sparkles,
-  Store,
-  Upload,
-  UserRound,
-  Wand2,
-} from "lucide-react"
+import { ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ClarityLogo } from "@/components/clarity-logo"
 import { trackCTAClick } from "@/lib/analytics"
 import { logout } from "@/lib/auth"
 
+type LandingIconSpec = {
+  sheet?: string
+  position: string
+}
+
 const enhancementCards = [
   {
-    icon: Archive,
+    icon: { sheet: "square", position: "0% 0%" },
     title: "ARCHIVE SCAN",
     copy: "Clean scans, reduce scratches, and improve faded printed photos.",
     image: "/images/wedding-set1-after.png",
     before: "/images/wedding-set1-before.png",
   },
   {
-    icon: UserRound,
+    icon: { sheet: "square", position: "60% 33.33%" },
     title: "ASEAN PORTRAIT PRESERVE",
     copy: "Enhance portraits while preserving facial identity and natural skin tones.",
     image: "/images/thai-family-restored.png",
     before: "/images/thai-family-faded.png",
   },
   {
-    icon: Landmark,
+    icon: { sheet: "square", position: "80% 66.67%" },
     title: "HERITAGE RESTORE",
     copy: "Clar1ty art restores clarity without erasing who people are.",
     image: "/images/real-estate-after.png",
     before: "/images/real-estate-before.png",
   },
   {
-    icon: Wand2,
+    icon: { sheet: "square", position: "80% 0%" },
     title: "DIGITAL ART UPSCALE",
     copy: "Upscale digital art, illustrations, and concepts without losing style. Print Ready.",
     image: "/images/abstract-art-enhanced.png",
@@ -61,17 +48,17 @@ const enhancementCards = [
 
 const steps = [
   {
-    icon: Upload,
+    icon: { sheet: "square", position: "0% 33.33%" },
     title: "Upload your image",
     copy: "Start with a heritage photo, portrait, archive scan, low-resolution file, or digital artwork.",
   },
   {
-    icon: Sparkles,
+    icon: { sheet: "square", position: "20% 33.33%" },
     title: "Choose your preset",
     copy: "Select the enhancement mode that matches your image. Clar1ty applies the right treatment automatically.",
   },
   {
-    icon: Download,
+    icon: { sheet: "square", position: "40% 33.33%" },
     title: "Download your result",
     copy: "Receive a cleaner, sharper, higher-resolution image ready for digital use, print, or archive.",
   },
@@ -79,32 +66,32 @@ const steps = [
 
 const qualityItems = [
   {
-    icon: UserRound,
+    icon: { sheet: "square", position: "60% 33.33%" },
     title: "Face Preservation",
     copy: "Protects facial structure and expressions.",
   },
   {
-    icon: Leaf,
+    icon: { sheet: "square", position: "80% 33.33%" },
     title: "Natural tones",
     copy: "Keeps skin tones and colors true.",
   },
   {
-    icon: FileImage,
+    icon: { sheet: "square", position: "100% 33.33%" },
     title: "Real detail",
     copy: "Brings out textures, edges, and fine detail.",
   },
   {
-    icon: Castle,
+    icon: { sheet: "square", position: "0% 66.67%" },
     title: "Cultural respect",
     copy: "Enhances without altering cultural elements.",
   },
   {
-    icon: Scale,
+    icon: { sheet: "square", position: "20% 66.67%" },
     title: "Balanced results",
     copy: "No over-processing. Just the right touch.",
   },
   {
-    icon: Gem,
+    icon: { sheet: "square", position: "40% 66.67%" },
     title: "High resolution",
     copy: "Sharper images for modern use and printing.",
   },
@@ -112,32 +99,32 @@ const qualityItems = [
 
 const useCases = [
   {
-    icon: Palette,
+    icon: { sheet: "square", position: "0% 100%" },
     title: "Cultural archives",
     copy: "Restore and preserve historical photographs and documents.",
   },
   {
-    icon: Brush,
+    icon: { sheet: "square", position: "20% 100%" },
     title: "Photo restoration services",
     copy: "Deliver higher-quality results faster with AI-powered enhancement.",
   },
   {
-    icon: Landmark,
+    icon: { sheet: "square", position: "40% 100%" },
     title: "Creators & digital artists",
     copy: "Enhance references, concepts, and artwork with more detail and clarity.",
   },
   {
-    icon: Castle,
+    icon: { sheet: "wide", position: "40% 66.67%" },
     title: "Museums & heritage projects",
     copy: "Prepare images for exhibitions, publications, and educational materials.",
   },
   {
-    icon: FileImage,
+    icon: { sheet: "wide", position: "80% 100%" },
     title: "Print shops & studios",
     copy: "Produce print-ready files with clean detail and balanced contrast.",
   },
   {
-    icon: Store,
+    icon: { sheet: "wide", position: "100% 100%" },
     title: "Brands & businesses",
     copy: "Improve visual assets for marketing, storytelling, and brand heritage.",
   },
@@ -236,9 +223,7 @@ export default function Home() {
                   onClick={() => openEnhancer("upload_section")}
                   className="mt-12 flex h-64 w-full flex-col items-center justify-center border border-dashed border-[#b7ab99] bg-[#9d9384] text-center transition hover:bg-[#a69b8a]"
                 >
-                  <span className="flex h-20 w-20 items-center justify-center rounded-full bg-[#eee9df] text-[#a77833]">
-                    <Upload className="h-9 w-9" />
-                  </span>
+                  <IconTile icon={{ sheet: "square", position: "0% 33.33%" }} className="h-20 w-20 rounded-full bg-[#eee9df]" />
                   <span className="mt-7 text-[13px] font-semibold text-white">Drop or select your image here</span>
                   <span className="mt-2 text-[12px] text-[#f3eee5]">Browse PNG, JPG, WebP</span>
                   <span className="mt-7 text-[12px] text-[#f3eee5]">Up to 10 MB</span>
@@ -255,9 +240,7 @@ export default function Home() {
 
             <div className="flex items-center justify-center px-6 py-16">
               <div className="flex min-h-[420px] w-full max-w-[520px] flex-col items-center justify-center text-center">
-                <span className="flex h-20 w-20 items-center justify-center rounded-full border border-[#efe3cf] text-[#efe3cf]">
-                  <Upload className="h-10 w-10" />
-                </span>
+                <IconTile icon={{ sheet: "square", position: "0% 33.33%" }} className="h-20 w-20 rounded-full bg-[#eee9df]" />
                 <h3 className="mt-10 text-[15px] font-semibold text-white">No images upscaled yet</h3>
                 <p className="mt-8 text-[13px] text-[#eee5d8]">Upload an image to upscale it</p>
               </div>
@@ -346,7 +329,7 @@ export default function Home() {
                 <article key={card.title} className="grid min-h-[280px] grid-cols-[0.44fr_0.56fr] bg-[#111111]">
                   <div className="p-8">
                     <span className="flex h-16 w-16 items-center justify-center border border-[#9c762d] text-[#c99b3f]">
-                      <card.icon className="h-9 w-9" />
+                      <IconTile icon={card.icon} className="h-full w-full" />
                     </span>
                     <h3 className="mt-14 text-[13px] font-medium uppercase tracking-[0.06em] text-[#b9822c]">
                       {card.title}
@@ -380,7 +363,7 @@ export default function Home() {
                     <ArrowRight className="absolute -right-8 top-1/2 hidden h-5 w-5 text-[#c79b4b] lg:block" />
                   )}
                   <span className="mx-auto flex h-24 w-24 items-center justify-center rounded-md border border-[#c79b4b] text-[#c79b4b]">
-                    <step.icon className="h-12 w-12" />
+                    <IconTile icon={step.icon} className="h-full w-full" />
                   </span>
                   <h3 className="mt-10 text-lg font-semibold text-white">{step.title}</h3>
                   <p className="mt-5 text-[13px] leading-6 text-[#d8d0c4]">{step.copy}</p>
@@ -404,7 +387,7 @@ export default function Home() {
               {qualityItems.map((item) => (
                 <article key={item.title} className="flex items-center gap-8 rounded-lg bg-[#837763] p-5 shadow-[0_10px_24px_rgba(0,0,0,0.45)]">
                   <span className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-black text-[#c79b4b]">
-                    <item.icon className="h-12 w-12" />
+                    <IconTile icon={item.icon} className="h-full w-full rounded-full" />
                   </span>
                   <div>
                     <h3 className="text-lg font-semibold text-white">{item.title}</h3>
@@ -464,7 +447,7 @@ export default function Home() {
               {useCases.map((card) => (
                 <article key={card.title} className="grid min-h-[220px] grid-cols-[0.48fr_0.52fr] items-center rounded-xl border border-[#34302a] bg-black p-8 text-left shadow-[0_0_28px_rgba(214,188,117,0.28)]">
                   <span className="flex h-28 w-28 items-center justify-center rounded-md border border-[#b88a32] text-[#c79b4b]">
-                    <card.icon className="h-16 w-16" />
+                    <IconTile icon={card.icon} className="h-full w-full" />
                   </span>
                   <div>
                     <h3 className="text-[14px] font-semibold leading-5 text-white">{card.title}</h3>
@@ -521,7 +504,7 @@ export default function Home() {
                   ["Your images stay yours", "You own your images. Always."],
                 ].map(([title, copy]) => (
                   <div key={title} className="flex gap-5">
-                    <Shield className="mt-1 h-8 w-8 shrink-0 text-[#c79b4b]" />
+                    <IconTile icon={{ sheet: "wide", position: "0% 100%" }} className="mt-1 h-10 w-10 shrink-0" />
                     <div>
                       <p className="text-[15px] font-semibold text-white">{title}</p>
                       <p className="mt-1 text-[13px] text-[#d8d0c4]">{copy}</p>
@@ -571,10 +554,6 @@ export default function Home() {
   )
 }
 
-function CheckDot() {
-  return <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-[#8a6a36] text-[9px] text-[#c79b4b]">+</span>
-}
-
 function HeroComparison() {
   return (
     <div className="absolute inset-y-0 right-0 w-full lg:w-[68%]">
@@ -590,6 +569,32 @@ function HeroComparison() {
       />
     </div>
   )
+}
+
+function IconTile({ icon, className = "" }: { icon: LandingIconSpec; className?: string }) {
+  const sheet =
+    icon.sheet === "wide"
+      ? "/images/landing/icons-grid-wide.jpg"
+      : icon.sheet === "glow"
+        ? "/images/landing/icons-glow.jpg"
+        : "/images/landing/icons-grid-square.jpg"
+  const backgroundSize = icon.sheet === "wide" ? "600% 500%" : icon.sheet === "glow" ? "400% 200%" : "600% 400%"
+
+  return (
+    <span
+      aria-hidden="true"
+      className={`block bg-black bg-no-repeat ${className}`}
+      style={{
+        backgroundImage: `url(${sheet})`,
+        backgroundPosition: icon.position,
+        backgroundSize,
+      }}
+    />
+  )
+}
+
+function CheckDot() {
+  return <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-[#8a6a36] text-[9px] text-[#c79b4b]">+</span>
 }
 
 function LandingComparison({
