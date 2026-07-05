@@ -25,7 +25,6 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ClarityLogo } from "@/components/clarity-logo"
-import { ImageComparisonHybrid } from "@/components/image-comparison-hybrid"
 import { trackCTAClick } from "@/lib/analytics"
 import { logout } from "@/lib/auth"
 
@@ -350,12 +349,11 @@ export default function Home() {
                     </h3>
                     <p className="mt-10 text-[14px] leading-7 text-[#e1d9ce]">{card.copy}</p>
                   </div>
-                  <ImageComparisonHybrid
+                  <LandingComparison
                     beforeImage={card.before}
                     afterImage={card.image}
-                    beforeLabel=""
-                    afterLabel=""
                     className="h-full"
+                    imageClassName="object-cover object-center"
                   />
                 </article>
               ))}
@@ -416,19 +414,17 @@ export default function Home() {
 
         <section className="grid bg-black lg:grid-cols-[0.72fr_0.28fr]">
           <div className="grid grid-cols-2">
-            <ImageComparisonHybrid
+            <LandingComparison
               beforeImage="/images/vintage-wedding-blur.png"
               afterImage="/images/vintage-wedding-clear.jpg"
-              beforeLabel=""
-              afterLabel=""
               className="h-[360px]"
+              imageClassName="object-cover object-center"
             />
-            <ImageComparisonHybrid
+            <LandingComparison
               beforeImage="/images/javanese-wedding-faded.png"
               afterImage="/images/javanese-wedding-restored.png"
-              beforeLabel=""
-              afterLabel=""
               className="h-[360px]"
+              imageClassName="object-cover object-center"
             />
           </div>
           <div className="flex flex-col justify-center px-12 py-14">
@@ -576,7 +572,42 @@ function CheckDot() {
 }
 
 function HeroComparison() {
-  const [position, setPosition] = useState(56)
+  return (
+    <div className="absolute inset-y-0 right-0 w-full lg:w-[68%]">
+      <LandingComparison
+        beforeImage="/images/thai-family-faded.png"
+        afterImage="/images/thai-family-restored.png"
+        beforeAlt="Original Southeast Asian portrait"
+        afterAlt="Upscaled Southeast Asian portrait"
+        className="h-full w-full"
+        imageClassName="object-cover object-center opacity-90"
+        overlayClassName="bg-[linear-gradient(90deg,#000_0%,rgba(0,0,0,0.86)_18%,rgba(0,0,0,0.18)_56%,rgba(0,0,0,0.35)_100%)]"
+        initialPosition={56}
+      />
+    </div>
+  )
+}
+
+function LandingComparison({
+  beforeImage,
+  afterImage,
+  beforeAlt = "Original image",
+  afterAlt = "Upscaled image",
+  className = "",
+  imageClassName = "object-cover object-center",
+  overlayClassName = "",
+  initialPosition = 50,
+}: {
+  beforeImage: string
+  afterImage: string
+  beforeAlt?: string
+  afterAlt?: string
+  className?: string
+  imageClassName?: string
+  overlayClassName?: string
+  initialPosition?: number
+}) {
+  const [position, setPosition] = useState(initialPosition)
   const [isDragging, setIsDragging] = useState(false)
   const containerRef = useRef<HTMLDivElement | null>(null)
 
@@ -606,7 +637,7 @@ function HeroComparison() {
   return (
     <div
       ref={containerRef}
-      className="absolute inset-y-0 right-0 w-full cursor-ew-resize select-none lg:w-[68%]"
+      className={`relative cursor-ew-resize select-none overflow-hidden bg-black ${className}`}
       style={{ touchAction: "none" }}
       onPointerDown={(event) => {
         setIsDragging(true)
@@ -614,22 +645,22 @@ function HeroComparison() {
       }}
     >
       <Image
-        src="/images/thai-family-restored.png"
-        alt="Upscaled Southeast Asian portrait"
+        src={afterImage}
+        alt={afterAlt}
         fill
         priority
-        className="object-cover object-center opacity-90"
+        className={imageClassName}
       />
       <div className="absolute inset-0" style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}>
         <Image
-          src="/images/thai-family-faded.png"
-          alt="Original Southeast Asian portrait"
+          src={beforeImage}
+          alt={beforeAlt}
           fill
           priority
-          className="object-cover object-center opacity-95"
+          className={imageClassName}
         />
       </div>
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,#000_0%,rgba(0,0,0,0.86)_18%,rgba(0,0,0,0.18)_56%,rgba(0,0,0,0.35)_100%)]" />
+      {overlayClassName ? <div className={`absolute inset-0 ${overlayClassName}`} /> : null}
       <div className="absolute inset-y-0 z-20" style={{ left: `${position}%` }}>
         <div className="h-full w-px bg-white/75" />
         <button
