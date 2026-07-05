@@ -1,632 +1,588 @@
 "use client"
 
 import Image from "next/image"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
-import { ArrowRight, Building2, Camera, CheckCircle2, Church, Globe, Shield, Sparkles, Upload, Zap } from "lucide-react"
-import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
+import {
+  Archive,
+  ArrowRight,
+  Brush,
+  Castle,
+  Download,
+  FileImage,
+  Gem,
+  Landmark,
+  Leaf,
+  Palette,
+  Scale,
+  Shield,
+  Sparkles,
+  Store,
+  Upload,
+  UserRound,
+  Wand2,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ClarityLogo } from "@/components/clarity-logo"
 import { ImageComparisonHybrid } from "@/components/image-comparison-hybrid"
-import { trackCTAClick, trackExampleView } from "@/lib/analytics"
+import { trackCTAClick } from "@/lib/analytics"
 import { logout } from "@/lib/auth"
-
-const comparisonCards = [
-  {
-    title: "Restore family archives",
-    beforeImage: "/images/wedding-before.png",
-    afterImage: "/images/wedding-after.png",
-    beforeLabel: "Original",
-    afterLabel: "Restored",
-  },
-  {
-    title: "Preserve cultural detail",
-    beforeImage: "/images/javanese-wedding-faded.png",
-    afterImage: "/images/javanese-wedding-restored.png",
-    beforeLabel: "Faded",
-    afterLabel: "Recovered",
-  },
-  {
-    title: "Recover soft focus",
-    beforeImage: "/images/vintage-wedding-blur.png",
-    afterImage: "/images/vintage-wedding-clear.jpg",
-    beforeLabel: "Blurred",
-    afterLabel: "Clear",
-  },
-]
 
 const enhancementCards = [
   {
-    eyebrow: "01",
-    title: "Photo restoration",
-    copy: "Lift age, dust, and damage while keeping original texture and character intact.",
-    image: "/images/abstract-art-enhanced.png",
-  },
-  {
-    eyebrow: "02",
-    title: "Face refinement",
-    copy: "Bring back definition in portraits without turning people into something artificial.",
-    image: "/images/thai-family-restored.png",
-  },
-  {
-    eyebrow: "03",
-    title: "Document cleanup",
-    copy: "Recover old scans and prints with cleaner edges, deeper contrast, and less noise.",
+    icon: Archive,
+    title: "ARCHIVE SCAN",
+    copy: "Clean scans, reduce scratches, and improve faded printed photos.",
     image: "/images/wedding-set1-after.png",
+    before: "/images/wedding-set1-before.png",
   },
   {
-    eyebrow: "04",
-    title: "Print-ready finish",
-    copy: "Prepare images for archives, exhibitions, and keepsakes with a polished final look.",
+    icon: UserRound,
+    title: "ASEAN PORTRAIT PRESERVE",
+    copy: "Enhance portraits while preserving facial identity and natural skin tones.",
+    image: "/images/thai-family-restored.png",
+    before: "/images/thai-family-faded.png",
+  },
+  {
+    icon: Landmark,
+    title: "HERITAGE RESTORE",
+    copy: "Clar1ty art restores clarity without erasing who people are.",
     image: "/images/real-estate-after.png",
+    before: "/images/real-estate-before.png",
+  },
+  {
+    icon: Wand2,
+    title: "DIGITAL ART UPSCALE",
+    copy: "Upscale digital art, illustrations, and concepts without losing style. Print Ready.",
+    image: "/images/abstract-art-enhanced.png",
+    before: "/images/abstract-art-low.png",
   },
 ]
 
-const useCaseCards = [
+const steps = [
   {
-    icon: Camera,
-    title: "Family memories",
-    copy: "Restore old prints and keep the original mood.",
-  },
-  {
-    icon: Church,
-    title: "Cultural archives",
-    copy: "Preserve regional identity and ceremonial detail.",
-  },
-  {
-    icon: Building2,
-    title: "Commercial work",
-    copy: "Improve presentation without losing realism.",
-  },
-  {
-    icon: Globe,
-    title: "Community stories",
-    copy: "Create images that feel grounded and respectful.",
-  },
-  {
-    icon: Shield,
-    title: "Private workflow",
-    copy: "Keep uploads controlled and your work protected.",
+    icon: Upload,
+    title: "Upload your image",
+    copy: "Start with a heritage photo, portrait, archive scan, low-resolution file, or digital artwork.",
   },
   {
     icon: Sparkles,
-    title: "Fast delivery",
-    copy: "Move from upload to output with a simple flow.",
+    title: "Choose your preset",
+    copy: "Select the enhancement mode that matches your image. Clar1ty applies the right treatment automatically.",
+  },
+  {
+    icon: Download,
+    title: "Download your result",
+    copy: "Receive a cleaner, sharper, higher-resolution image ready for digital use, print, or archive.",
   },
 ]
 
-const qualityPoints = [
-  "Face preservation",
-  "Natural tones",
-  "Context-aware enhancement",
-  "Less hallucination",
-  "Sharper textures",
-  "Archive-friendly output",
+const qualityItems = [
+  {
+    icon: UserRound,
+    title: "Face Preservation",
+    copy: "Protects facial structure and expressions.",
+  },
+  {
+    icon: Leaf,
+    title: "Natural tones",
+    copy: "Keeps skin tones and colors true.",
+  },
+  {
+    icon: FileImage,
+    title: "Real detail",
+    copy: "Brings out textures, edges, and fine detail.",
+  },
+  {
+    icon: Castle,
+    title: "Cultural respect",
+    copy: "Enhances without altering cultural elements.",
+  },
+  {
+    icon: Scale,
+    title: "Balanced results",
+    copy: "No over-processing. Just the right touch.",
+  },
+  {
+    icon: Gem,
+    title: "High resolution",
+    copy: "Sharper images for modern use and printing.",
+  },
 ]
 
-const galleryImages = [
-  "/images/thai-family-restored.png",
+const useCases = [
+  {
+    icon: Palette,
+    title: "Cultural archives",
+    copy: "Restore and preserve historical photographs and documents.",
+  },
+  {
+    icon: Brush,
+    title: "Photo restoration services",
+    copy: "Deliver higher-quality results faster with AI-powered enhancement.",
+  },
+  {
+    icon: Landmark,
+    title: "Creators & digital artists",
+    copy: "Enhance references, concepts, and artwork with more detail and clarity.",
+  },
+  {
+    icon: Castle,
+    title: "Museums & heritage projects",
+    copy: "Prepare images for exhibitions, publications, and educational materials.",
+  },
+  {
+    icon: FileImage,
+    title: "Print shops & studios",
+    copy: "Produce print-ready files with clean detail and balanced contrast.",
+  },
+  {
+    icon: Store,
+    title: "Brands & businesses",
+    copy: "Improve visual assets for marketing, storytelling, and brand heritage.",
+  },
+]
+
+const portraitStrip = [
   "/images/javanese-wedding-restored.png",
   "/images/wedding-after.png",
+  "/images/thai-family-restored.png",
   "/images/vintage-wedding-clear.jpg",
   "/images/abstract-art-enhanced.png",
 ]
 
+const finalPrints = [
+  "/images/javanese-wedding-restored.png",
+  "/images/real-estate-after.png",
+  "/images/wedding-after.png",
+  "/images/abstract-art-enhanced.png",
+  "/images/vintage-wedding-clear.jpg",
+]
+
 export default function Home() {
-  const [activeTab, setActiveTab] = useState("overview")
   const router = useRouter()
 
-  const handleTryEnhancer = async () => {
-    trackCTAClick("hero", "Try Enhancer")
+  const openEnhancer = async (source: string) => {
+    trackCTAClick(source, "Upload image")
     await logout()
     router.push("/enhance")
-  }
-
-  const handleGetStarted = async () => {
-    trackCTAClick("bottom_cta", "Get Started Free")
-    await logout()
-    router.push("/enhance")
-  }
-
-  const handleTabChange = (tab: string) => {
-    setActiveTab(tab)
-    trackExampleView(tab, tab)
   }
 
   return (
-    <div className="min-h-screen bg-[#050403] text-[#efe3cf]">
-      <Navbar />
+    <div className="min-h-screen bg-black text-[#efe8dc]">
+      <header className="absolute left-0 right-0 top-0 z-30">
+        <nav className="mx-auto flex h-20 max-w-6xl items-center justify-between px-6">
+          <Link href="/" aria-label="clar1ty home">
+            <ClarityLogo className="h-10 w-auto" width={130} height={40} />
+          </Link>
+          <div className="hidden items-center gap-10 text-[11px] font-medium text-[#e8dfd0] md:flex">
+            <a href="#features" className="hover:text-[#d7a957]">
+              Features
+            </a>
+            <a href="#use-cases" className="hover:text-[#d7a957]">
+              Use Cases
+            </a>
+            <a href="#how-it-works" className="hover:text-[#d7a957]">
+              How It Works
+            </a>
+            <Link href="/pricing" className="hover:text-[#d7a957]">
+              Pricing
+            </Link>
+          </div>
+        </nav>
+      </header>
 
-      <main className="pb-16">
-        <section className="mx-auto max-w-7xl px-4 pt-10 pb-14 lg:px-8 lg:pt-14 lg:pb-20">
-          <div className="grid items-center gap-10 lg:grid-cols-[0.92fr_1.08fr] lg:gap-14">
-            <div className="space-y-6">
-              <div className="space-y-3">
-                <p className="text-xs uppercase tracking-[0.4em] text-[#9a8567]">clar1ty</p>
-                <h1 className="max-w-xl text-4xl font-light leading-[0.96] tracking-[-0.04em] text-[#f4ecde] sm:text-5xl lg:text-[5.2rem]">
-                  Restore Southeast Asia&apos;s{" "}
-                  <span className="text-[#c9a057]">visual identity</span>
-                </h1>
-                <p className="max-w-md text-sm leading-6 text-[#baac95] sm:text-base">
-                  Generic AI tools upscale pixels. clar1ty protects faces, fabric, ceremony, and context so the
-                  result still feels like the original image.
-                </p>
-              </div>
-
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <Button
-                  size="lg"
-                  onClick={handleTryEnhancer}
-                  className="rounded-none border border-[#8a6a36] bg-[#c79b4b] px-6 text-sm font-medium text-black hover:bg-[#d6af63]"
-                >
-                  Upload image
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  onClick={() => {
-                    document.getElementById("upload-panel")?.scrollIntoView({ behavior: "smooth", block: "start" })
-                    trackCTAClick("hero", "View upload")
-                  }}
-                  className="rounded-none border-[#6f5d49] bg-transparent px-6 text-sm font-medium text-[#dcc9ae] hover:bg-[#17120f] hover:text-[#f4ecde]"
-                >
-                  View the flow
-                </Button>
-              </div>
-            </div>
-
-            <div className="relative mx-auto w-full max-w-[680px]">
-              <div className="absolute -inset-6 bg-[radial-gradient(circle_at_50%_35%,rgba(201,160,87,0.12),transparent_62%)] blur-2xl" />
-              <div className="relative overflow-hidden border border-[#5d4b37] bg-[#0b0907] shadow-[0_0_0_1px_rgba(201,160,87,0.08)]">
-                <Image
-                  src="/images/thai-family-restored.png"
-                  alt="Restored Southeast Asian portrait"
-                  width={1200}
-                  height={1500}
-                  priority
-                  className="h-[560px] w-full object-cover object-center"
-                />
-                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(5,4,3,0.14),rgba(5,4,3,0.04)_28%,rgba(5,4,3,0.18)_100%)]" />
-                <div className="absolute inset-0 border border-white/5" />
-                <div className="absolute bottom-5 left-5 max-w-[220px] border border-white/10 bg-[#0b0907]/72 px-4 py-3 backdrop-blur-sm">
-                  <p className="text-[10px] uppercase tracking-[0.32em] text-[#d5bc87]">Restoration preview</p>
-                  <p className="mt-2 text-xs leading-5 text-[#eadfcd]">
-                    Faithful detail recovery, tuned for heritage images and intimate portraits.
-                  </p>
-                </div>
-                <div className="absolute right-4 top-4 border border-white/10 bg-[#11100f]/80 px-3 py-2 text-right backdrop-blur-sm">
-                  <p className="text-[10px] uppercase tracking-[0.28em] text-[#c9a057]">Context-aware</p>
-                  <p className="text-sm text-[#f4ecde]">No plastic skin, no blown highlights</p>
-                </div>
-              </div>
+      <main>
+        <section className="relative min-h-[720px] overflow-hidden bg-black">
+          <div className="absolute inset-y-0 right-0 w-full lg:w-[68%]">
+            <Image
+              src="/images/thai-family-restored.png"
+              alt="Restored Southeast Asian portrait"
+              fill
+              priority
+              className="object-cover object-center opacity-90"
+            />
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,#000_0%,rgba(0,0,0,0.86)_18%,rgba(0,0,0,0.18)_56%,rgba(0,0,0,0.35)_100%)]" />
+            <div className="absolute left-[58%] top-24 hidden h-[520px] w-px bg-white/70 lg:block" />
+            <div className="absolute left-[calc(58%-14px)] top-[346px] hidden h-7 w-7 items-center justify-center rounded-full border border-white/60 bg-white/80 text-[10px] text-black lg:flex">
+              <span className="h-2 w-2 rounded-full bg-black" />
             </div>
           </div>
-        </section>
 
-        <section id="upload-panel" className="bg-[#8a7b68] px-4 py-5 text-[#efe3cf] lg:px-8">
-          <div className="mx-auto grid max-w-7xl gap-4 lg:grid-cols-[0.78fr_1.22fr]">
-            <div className="border border-[#9f8f7c]/40 bg-[#a1917e] px-6 py-7">
-              <p className="text-sm uppercase tracking-[0.34em] text-[#d3c2a8]">Upload image</p>
-              <p className="mt-4 max-w-xs text-sm leading-6 text-[#efe5d2]">
-                Start with a single photo or a whole archive. The workflow stays simple, visible, and easy to control.
+          <div className="relative z-10 mx-auto flex min-h-[720px] max-w-6xl items-center px-6 pt-20">
+            <div className="max-w-[470px]">
+              <h1 className="text-5xl font-light leading-[1.12] tracking-[0.01em] text-white md:text-6xl">
+                Restore
+                <br />
+                Southeast Asia&apos;s
+                <br />
+                <span className="text-[#c9953d]">visual identity</span>
+              </h1>
+              <p className="mt-12 max-w-[390px] text-[13px] leading-7 text-[#d2c7b7]">
+                Enhance heritage photos, portraits, cultural archives, low-resolution images, and digital art with AI
+                designed to preserve ASEAN faces, tones, and visual character.
               </p>
+              <p className="mt-6 text-[13px] text-[#b98a44]">Upload. Enhance. Preserve identity.</p>
               <Button
-                onClick={handleTryEnhancer}
-                className="mt-6 rounded-none border border-[#6f5d49] bg-[#18120f] px-5 text-sm text-[#efe3cf] hover:bg-[#241a15]"
+                onClick={() => openEnhancer("hero")}
+                className="mt-16 h-11 rounded-none bg-[#8b7d6a] px-10 text-[12px] font-medium text-white hover:bg-[#a28f76]"
               >
-                Open enhancer
+                Upload image
               </Button>
             </div>
+          </div>
+        </section>
 
-            <div className="grid gap-4 lg:grid-cols-2">
-              <Card className="border border-[#9f8f7c]/40 bg-[#968574] rounded-none">
-                <CardContent className="flex min-h-[220px] flex-col items-center justify-center px-6 py-8 text-center">
-                  <div className="flex h-16 w-16 items-center justify-center border border-[#e5d8c5]/40 bg-[#b8a695]/30">
-                    <Upload className="h-7 w-7 text-[#f4ecde]" />
-                  </div>
-                  <p className="mt-5 text-lg uppercase tracking-[0.22em] text-[#f4ecde]">Drag and drop</p>
-                  <p className="mt-2 max-w-[280px] text-sm leading-6 text-[#efe5d2]">
-                    Upload a photo and keep the process visible from start to finish.
-                  </p>
-                </CardContent>
-              </Card>
+        <section className="grid min-h-[700px] bg-[#817463] lg:grid-cols-[0.78fr_1.22fr]">
+          <div className="bg-[#928879] px-6 py-16 lg:px-28">
+            <h2 className="text-5xl font-light tracking-[0.02em] text-[#e8dfd1]">Upload image</h2>
+            <p className="mx-auto mt-16 max-w-[330px] text-center text-[13px] leading-6 text-[#f0eadf]">
+              Natural skin tones. Real facial structure.
+              <br />
+              Local visual character. Cultural detail.
+            </p>
 
-              <Card className="border border-[#9f8f7c]/40 bg-[#8f7c68] rounded-none">
-                <CardContent className="flex min-h-[220px] flex-col items-center justify-center px-6 py-8 text-center">
-                  <div className="flex h-16 w-16 items-center justify-center border border-[#e5d8c5]/40 bg-[#b8a695]/30">
-                    <Sparkles className="h-7 w-7 text-[#f4ecde]" />
-                  </div>
-                  <p className="mt-5 text-lg uppercase tracking-[0.22em] text-[#f4ecde]">Pick a preset</p>
-                  <p className="mt-2 max-w-[280px] text-sm leading-6 text-[#efe5d2]">
-                    Choose the right enhancement path and let the advanced controls follow automatically.
-                  </p>
-                </CardContent>
-              </Card>
+            <button
+              type="button"
+              onClick={() => openEnhancer("upload_section")}
+              className="mx-auto mt-12 flex h-64 w-full max-w-[320px] flex-col items-center justify-center border border-dashed border-[#b7ab99] bg-[#9d9384] text-center"
+            >
+              <span className="flex h-20 w-20 items-center justify-center rounded-full bg-[#eee9df] text-[#a77833]">
+                <Upload className="h-9 w-9" />
+              </span>
+              <span className="mt-7 text-[13px] font-semibold text-white">Drop or select your image here</span>
+              <span className="mt-2 text-[12px] text-[#f3eee5]">Browse PNG, JPG, WebP</span>
+              <span className="mt-7 text-[12px] text-[#f3eee5]">Up to 10 MB</span>
+            </button>
+
+            <Button
+              onClick={() => openEnhancer("upload_section")}
+              className="mx-auto mt-10 flex h-11 w-full max-w-[320px] rounded-none bg-[#241b13] text-[12px] text-white hover:bg-[#34271d]"
+            >
+              Upscale Image
+            </Button>
+          </div>
+
+          <div className="flex items-center justify-center px-6 py-16">
+            <div className="text-center">
+              <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#efe3cf] text-[#efe3cf]">
+                <Upload className="h-10 w-10" />
+              </span>
+              <h3 className="mt-10 text-[15px] font-semibold text-white">No images upscaled yet</h3>
+              <p className="mt-8 text-[13px] text-[#eee5d8]">Upload an image to upscale it</p>
             </div>
           </div>
         </section>
 
-        <section className="bg-[#050403] px-4 py-16 lg:px-8 lg:py-20">
-          <div className="mx-auto max-w-7xl">
-            <div className="mx-auto max-w-3xl text-center">
-              <p className="text-sm uppercase tracking-[0.34em] text-[#8d7a60]">Generic AI-tools upscale pixels</p>
-              <h2 className="mt-4 text-3xl font-light tracking-[-0.03em] text-[#f4ecde] sm:text-4xl">
-                Clar1ty preserves context.
-              </h2>
-              <p className="mt-4 text-sm leading-6 text-[#b9aa93]">
-                Built for heritage, family, and professional work where realism matters more than novelty.
-              </p>
-            </div>
+        <section id="features" className="bg-black px-6 py-24">
+          <div className="mx-auto max-w-6xl text-center">
+            <h2 className="text-4xl font-light leading-tight tracking-[0.08em] text-[#ddd4c8] md:text-5xl">
+              Generic AI-tools upscale pixels.
+              <br />
+              Clarity preserves context.
+            </h2>
+            <div className="mx-auto mt-12 h-9 w-40 border-y border-[#32291f]" />
+            <p className="mx-auto mt-10 max-w-3xl text-[13px] leading-6 text-[#d8d0c4]">
+              ASEAN images carry faces, skin tones, textiles, architecture, ornaments, symbols, and visual identity.
+              Generic upscalers often alter faces, attire and design. Clar1ty is built to preserve what matters.
+            </p>
 
-            <div className="mt-10 grid gap-4 md:grid-cols-3">
-              {comparisonCards.map((card) => (
-                <div key={card.title} className="space-y-3 border border-[#2b241d] bg-[#0e0c0a] p-3">
-                  <ImageComparisonHybrid
-                    beforeImage={card.beforeImage}
-                    afterImage={card.afterImage}
-                    beforeLabel={card.beforeLabel}
-                    afterLabel={card.afterLabel}
-                    className="w-full"
-                  />
-                  <p className="px-1 text-xs uppercase tracking-[0.22em] text-[#d0ba96]">{card.title}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="bg-[#050403] px-4 py-16 lg:px-8">
-          <div className="mx-auto max-w-7xl">
-            <div className="max-w-3xl">
-              <p className="text-xs uppercase tracking-[0.34em] text-[#8d7a60]">Choose the right enhancement</p>
-              <h2 className="mt-4 text-3xl font-light tracking-[-0.03em] text-[#f4ecde] sm:text-4xl">
-                Match the tool to the image.
-              </h2>
-            </div>
-
-            <div className="mt-10 grid gap-4 md:grid-cols-2">
-              {enhancementCards.map((card) => (
-                <Card key={card.title} className="overflow-hidden rounded-none border border-[#2b241d] bg-[#11100f]">
-                  <CardContent className="grid gap-0 p-0 md:grid-cols-[0.95fr_1.05fr]">
-                    <div className="space-y-4 p-6 md:p-7">
-                      <p className="text-xs uppercase tracking-[0.34em] text-[#a3885d]">{card.eyebrow}</p>
-                      <h3 className="text-2xl font-light tracking-[-0.03em] text-[#f4ecde]">{card.title}</h3>
-                      <p className="max-w-sm text-sm leading-6 text-[#b9aa93]">{card.copy}</p>
-                    </div>
-                    <div className="relative min-h-[220px] border-t border-[#2b241d] md:border-l md:border-t-0">
-                      <Image src={card.image} alt={card.title} fill className="object-cover object-center" />
-                      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,4,3,0.02),rgba(5,4,3,0.2))]" />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="bg-[#11100f] px-4 py-16 lg:px-8">
-          <div className="mx-auto max-w-7xl">
-            <div className="max-w-3xl">
-              <p className="text-xs uppercase tracking-[0.34em] text-[#8d7a60]">Simple. Fast. Effective.</p>
-              <h2 className="mt-4 text-3xl font-light tracking-[-0.03em] text-[#f4ecde] sm:text-4xl">
-                A clean path from upload to output.
-              </h2>
-            </div>
-
-            <div className="mt-10 grid gap-4 md:grid-cols-3">
+            <div className="mt-16 grid gap-7 lg:grid-cols-3">
               {[
                 {
-                  icon: Upload,
-                  title: "Upload the image",
-                  copy: "Drop in a scan, portrait, or print and keep the flow straightforward.",
+                  title: "ORIGINAL ARCHIVE",
+                  subtitle: "Low-quality source",
+                  image: "/images/thai-family-faded.png",
+                  points: ["Faded & noisy", "Low detail", "Hard to read"],
                 },
                 {
-                  icon: Zap,
-                  title: "Apply the preset",
-                  copy: "Choose the intended outcome and let the controls sync to that choice.",
+                  title: "GENERIC UPSCALER",
+                  subtitle: "Changes what matters",
+                  image: "/images/thai-family-restored.png",
+                  points: ["Altered faces", "Changed details", "Lost authenticity"],
                 },
                 {
-                  icon: CheckCircle2,
-                  title: "Download the result",
-                  copy: "Export a clean, context-aware final image that still feels authentic.",
+                  title: "CLAR1TY ENHANCED",
+                  subtitle: "Identity-preserved result",
+                  image: "/images/thai-family-restored.png",
+                  points: ["True to original", "Cultural details kept", "Clear & authentic"],
                 },
-              ].map((item) => (
-                <Card key={item.title} className="rounded-none border border-[#2b241d] bg-[#0d0b09]">
-                  <CardContent className="space-y-4 p-6">
-                    <div className="flex h-12 w-12 items-center justify-center border border-[#6f5d49] bg-[#151210] text-[#d7b777]">
-                      <item.icon className="h-6 w-6" />
+              ].map((card) => (
+                <article key={card.title} className="text-left">
+                  <div className="relative h-[260px] overflow-hidden border border-[#2b241d] bg-[#11100f]">
+                    <Image src={card.image} alt={card.title} fill className="object-cover object-center" />
+                  </div>
+                  <div className="border border-[#231d17] bg-[#080706] p-5">
+                    <h3 className="text-[13px] font-medium tracking-[0.08em] text-[#d2a450]">{card.title}</h3>
+                    <p className="mt-1 text-[12px] text-[#b5aa9a]">{card.subtitle}</p>
+                    <div className="mt-5 flex flex-wrap gap-3 text-[11px] text-[#d9d0c2]">
+                      {card.points.map((point) => (
+                        <span key={point} className="flex items-center gap-2">
+                          <CheckDot />
+                          {point}
+                        </span>
+                      ))}
                     </div>
-                    <h3 className="text-lg font-medium tracking-[0.02em] text-[#f4ecde]">{item.title}</h3>
-                    <p className="text-sm leading-6 text-[#b9aa93]">{item.copy}</p>
-                  </CardContent>
-                </Card>
+                  </div>
+                </article>
               ))}
             </div>
+
+            <Button
+              onClick={() => openEnhancer("context_section")}
+              className="mt-24 h-12 rounded-none bg-[#8b7d6a] px-20 text-[12px] font-semibold uppercase text-white hover:bg-[#a28f76]"
+            >
+              TRY CLAR1TY ON YOUR IMAGE
+            </Button>
+            <p className="mt-5 text-[12px] text-[#8f8678]">Secure, private, and encrypted</p>
           </div>
         </section>
 
-        <section className="bg-[#8a7b68] px-4 py-16 text-[#efe3cf] lg:px-8">
-          <div className="mx-auto max-w-7xl">
-            <div className="max-w-3xl">
-              <p className="text-xs uppercase tracking-[0.34em] text-[#d2c2a8]">Better quality, same identity</p>
-              <h2 className="mt-4 text-3xl font-light tracking-[-0.03em] text-[#f4ecde] sm:text-4xl">
-                Subtle changes that keep the person intact.
+        <section className="bg-black px-6 py-24">
+          <div className="mx-auto max-w-6xl">
+            <div className="text-center">
+              <h2 className="text-4xl font-light uppercase tracking-[0.06em] text-[#c9b493]">
+                CHOOSE THE RIGHT ENHANCEMENT
               </h2>
-            </div>
-
-            <div className="mt-8 grid gap-4 md:grid-cols-2">
-              {qualityPoints.map((point, index) => (
-                <div key={point} className="flex items-center gap-4 border border-[#9f8f7c]/40 bg-[#a29280] px-4 py-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center border border-[#eadfcd]/30 bg-[#11100f]/20 text-[#f4ecde]">
-                    <span className="text-sm font-medium">{String(index + 1).padStart(2, "0")}</span>
-                  </div>
-                  <div>
-                    <p className="text-sm uppercase tracking-[0.2em] text-[#f4ecde]">{point}</p>
-                    <p className="mt-1 text-xs leading-5 text-[#f0e6d6]">
-                      Controlled enhancement that stays close to the source.
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="bg-[#050403] px-4 py-16 lg:px-8">
-          <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="overflow-hidden border border-[#2b241d] bg-[#0e0c0a]">
-                <Image src="/images/javanese-wedding-restored.png" alt="Restored portrait" width={900} height={1200} className="h-[300px] w-full object-cover object-center" />
-              </div>
-              <div className="overflow-hidden border border-[#2b241d] bg-[#0e0c0a]">
-                <Image src="/images/thai-family-restored.png" alt="Restored family portrait" width={900} height={1200} className="h-[300px] w-full object-cover object-center" />
-              </div>
-            </div>
-
-            <div className="max-w-xl space-y-4">
-              <p className="text-xs uppercase tracking-[0.34em] text-[#8d7a60]">Beautiful results built for ASEAN faces</p>
-              <h2 className="text-3xl font-light tracking-[-0.03em] text-[#f4ecde] sm:text-4xl">
-                Respect the face. Respect the image.
-              </h2>
-              <p className="text-sm leading-6 text-[#b9aa93]">
-                The model should improve what is damaged, not erase identity. That means careful tonal recovery,
-                restrained sharpening, and no over-processing.
+              <p className="mt-14 text-[12px] font-semibold text-[#f0eadf]">Presets for every image type</p>
+              <p className="mt-2 text-[12px] text-[#d8d0c4]">
+                Different images need different care. Our presets are tuned for specific image types and results.
               </p>
             </div>
-          </div>
-        </section>
 
-        <section className="bg-[#050403] px-4 py-16 lg:px-8">
-          <div className="mx-auto max-w-7xl">
-            <div className="max-w-3xl">
-              <p className="text-xs uppercase tracking-[0.34em] text-[#8d7a60]">For people, projects, and purpose</p>
-              <h2 className="mt-4 text-3xl font-light tracking-[-0.03em] text-[#f4ecde] sm:text-4xl">
-                Built for more than a single use case.
-              </h2>
-            </div>
-
-            <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {useCaseCards.map((card) => (
-                <Card key={card.title} className="rounded-none border border-[#2b241d] bg-[#0f0d0b]">
-                  <CardContent className="space-y-4 p-6">
-                    <div className="flex h-12 w-12 items-center justify-center border border-[#6f5d49] bg-[#151210] text-[#d7b777]">
-                      <card.icon className="h-6 w-6" />
-                    </div>
-                    <h3 className="text-lg font-medium tracking-[0.02em] text-[#f4ecde]">{card.title}</h3>
-                    <p className="text-sm leading-6 text-[#b9aa93]">{card.copy}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="bg-[#050403] px-4 py-8 lg:px-8">
-          <div className="mx-auto max-w-7xl">
-            <div className="grid gap-6 border border-[#2b241d] bg-[#0e0c0a] px-6 py-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
-              <div className="space-y-4">
-                <ClarityLogo variant="white" className="h-12 w-auto sm:h-14" />
-                <p className="max-w-md text-sm leading-6 text-[#b9aa93]">
-                  Secure, private, and simple. The UI stays calm while the workflow stays direct.
-                </p>
-              </div>
-              <div className="grid gap-3 text-sm text-[#dcc9ae] sm:grid-cols-2">
-                <div className="border border-[#2b241d] bg-[#11100f] px-4 py-3">Private uploads by default</div>
-                <div className="border border-[#2b241d] bg-[#11100f] px-4 py-3">Keep settings easy to reach</div>
-                <div className="border border-[#2b241d] bg-[#11100f] px-4 py-3">Preset-aware advanced controls</div>
-                <div className="border border-[#2b241d] bg-[#11100f] px-4 py-3">Fast path to generation</div>
-              </div>
-            </div>
-
-            <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-5">
-              {galleryImages.map((image, index) => (
-                <div key={image} className="overflow-hidden border border-[#2b241d] bg-[#0e0c0a]">
-                  <Image
-                    src={image}
-                    alt={`Gallery preview ${index + 1}`}
-                    width={700}
-                    height={900}
-                    className="h-[260px] w-full object-cover object-center"
+            <div className="mt-20 grid gap-10 lg:grid-cols-2">
+              {enhancementCards.map((card) => (
+                <article key={card.title} className="grid min-h-[280px] grid-cols-[0.44fr_0.56fr] bg-[#111111]">
+                  <div className="p-8">
+                    <span className="flex h-16 w-16 items-center justify-center border border-[#9c762d] text-[#c99b3f]">
+                      <card.icon className="h-9 w-9" />
+                    </span>
+                    <h3 className="mt-14 text-[13px] font-medium uppercase tracking-[0.06em] text-[#b9822c]">
+                      {card.title}
+                    </h3>
+                    <p className="mt-10 text-[14px] leading-7 text-[#e1d9ce]">{card.copy}</p>
+                  </div>
+                  <ImageComparisonHybrid
+                    beforeImage={card.before}
+                    afterImage={card.image}
+                    beforeLabel=""
+                    afterLabel=""
+                    className="h-full"
                   />
-                </div>
+                </article>
               ))}
             </div>
           </div>
         </section>
 
-        <section className="bg-[#050403] px-4 py-16 lg:px-8">
-          <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-            <div className="space-y-5">
-              <p className="text-xs uppercase tracking-[0.34em] text-[#8d7a60]">Secure, private, and simple</p>
-              <ul className="space-y-3 text-sm text-[#ccbca2]">
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#d7b777]" />
-                  <span>Process photos without exposing the workflow to clutter.</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#d7b777]" />
-                  <span>Keep advanced settings visible so the next step is never hidden.</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#d7b777]" />
-                  <span>Use presets that automatically set the correct supporting toggles.</span>
-                </li>
-              </ul>
-            </div>
+        <section id="how-it-works" className="bg-[#151515] px-6 py-24">
+          <div className="mx-auto max-w-6xl text-center">
+            <h2 className="text-4xl font-light uppercase tracking-[0.08em] text-[#c9b493]">
+              SIMPLE. FAST. EFFECTIVE.
+            </h2>
+            <p className="mt-14 text-[12px] font-semibold text-white">How it works</p>
+            <p className="mt-2 text-[12px] text-[#d8d0c4]">Three easy steps to restore and enhance your images.</p>
 
-            <div className="border border-[#2b241d] bg-[#11100f] p-6">
-              <p className="text-sm uppercase tracking-[0.28em] text-[#a3885d]">Start enhancing your images today</p>
-              <p className="mt-3 text-sm leading-6 text-[#b9aa93]">
-                Move into the actual enhancer without losing the polished landing experience.
-              </p>
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                <Button
-                  onClick={handleGetStarted}
-                  className="rounded-none border border-[#8a6a36] bg-[#c79b4b] px-6 text-sm font-medium text-black hover:bg-[#d6af63]"
-                >
-                  Upload your photo
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => document.getElementById("explore")?.scrollIntoView({ behavior: "smooth" })}
-                  className="rounded-none border-[#6f5d49] bg-transparent px-6 text-sm font-medium text-[#dcc9ae] hover:bg-[#1a1612]"
-                >
-                  See examples
-                </Button>
-              </div>
+            <div className="mt-20 grid gap-12 lg:grid-cols-3">
+              {steps.map((step, index) => (
+                <article key={step.title} className="relative rounded-xl bg-black px-12 py-16 shadow-[0_0_28px_rgba(0,0,0,0.6)]">
+                  {index < steps.length - 1 && (
+                    <ArrowRight className="absolute -right-8 top-1/2 hidden h-5 w-5 text-[#c79b4b] lg:block" />
+                  )}
+                  <span className="mx-auto flex h-24 w-24 items-center justify-center rounded-md border border-[#c79b4b] text-[#c79b4b]">
+                    <step.icon className="h-12 w-12" />
+                  </span>
+                  <h3 className="mt-10 text-lg font-semibold text-white">{step.title}</h3>
+                  <p className="mt-5 text-[13px] leading-6 text-[#d8d0c4]">{step.copy}</p>
+                </article>
+              ))}
             </div>
           </div>
         </section>
 
-        <section className="bg-[#050403] px-4 py-16 lg:px-8">
-          <div className="mx-auto max-w-7xl">
-            <div className="relative overflow-hidden border border-[#2b241d] bg-[#0d0b09] px-4 py-6 sm:px-6 sm:py-8">
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <section className="bg-[#33271d] px-6 py-24">
+          <div className="mx-auto max-w-6xl">
+            <div className="text-center">
+              <h2 className="text-4xl font-light uppercase tracking-[0.08em] text-[#d2c6b6]">
+                BETTER QUALITY. SAME IDENTITY
+              </h2>
+              <p className="mt-14 text-[12px] font-semibold text-white">How it works</p>
+              <p className="mt-2 text-[12px] text-[#d8d0c4]">Three easy steps to restore and enhance your images.</p>
+            </div>
+
+            <div className="mt-16 grid gap-8 lg:grid-cols-2">
+              {qualityItems.map((item) => (
+                <article key={item.title} className="flex items-center gap-8 rounded-lg bg-[#837763] p-5 shadow-[0_10px_24px_rgba(0,0,0,0.45)]">
+                  <span className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-black text-[#c79b4b]">
+                    <item.icon className="h-12 w-12" />
+                  </span>
+                  <div>
+                    <h3 className="text-lg font-semibold text-white">{item.title}</h3>
+                    <p className="mt-5 text-[13px] leading-6 text-[#f1eadf]">{item.copy}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="grid bg-black lg:grid-cols-[0.72fr_0.28fr]">
+          <div className="grid grid-cols-2">
+            <ImageComparisonHybrid
+              beforeImage="/images/vintage-wedding-blur.png"
+              afterImage="/images/vintage-wedding-clear.jpg"
+              beforeLabel=""
+              afterLabel=""
+              className="h-[360px]"
+            />
+            <ImageComparisonHybrid
+              beforeImage="/images/javanese-wedding-faded.png"
+              afterImage="/images/javanese-wedding-restored.png"
+              beforeLabel=""
+              afterLabel=""
+              className="h-[360px]"
+            />
+          </div>
+          <div className="flex flex-col justify-center px-12 py-14">
+            <h2 className="text-4xl font-light leading-tight text-[#c9a057]">
+              Beautiful results,
+              <br />
+              built for ASEAN
+              <br />
+              faces
+            </h2>
+            <p className="mt-16 text-[12px] font-semibold text-white">See the difference!</p>
+            <p className="mt-8 max-w-[300px] text-[13px] leading-7 text-[#d8d0c4]">
+              From heritage portraits to cultural landmarks and digital art, Clar1ty brings out the best while
+              preserving what matters most.
+            </p>
+          </div>
+        </section>
+
+        <section id="use-cases" className="bg-black px-6 py-24">
+          <div className="mx-auto max-w-6xl text-center">
+            <h2 className="text-4xl font-light uppercase tracking-[0.06em] text-[#c9b493]">
+              FOR PEOPLE, PROJECTS, AND PURPOSE
+            </h2>
+            <p className="mt-16 text-[12px] font-semibold text-white">Who uses Clar1ty?</p>
+            <p className="mx-auto mt-4 max-w-[520px] text-[13px] leading-6 text-[#d8d0c4]">
+              Trusted by individuals, professionals, and institutions across Southeast Asia and beyond.
+              <br />
+              <br />
+              Improve visual assets for marketing, storytelling, and brand heritage.
+            </p>
+
+            <div className="mt-20 grid gap-14 lg:grid-cols-3">
+              {useCases.map((card) => (
+                <article key={card.title} className="grid min-h-[220px] grid-cols-[0.48fr_0.52fr] items-center rounded-xl border border-[#34302a] bg-black p-8 text-left shadow-[0_0_28px_rgba(214,188,117,0.28)]">
+                  <span className="flex h-28 w-28 items-center justify-center rounded-md border border-[#b88a32] text-[#c79b4b]">
+                    <card.icon className="h-16 w-16" />
+                  </span>
+                  <div>
+                    <h3 className="text-[14px] font-semibold leading-5 text-white">{card.title}</h3>
+                    <p className="mt-8 text-[13px] leading-6 text-[#d8d0c4]">{card.copy}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="bg-black px-6 py-20">
+          <div className="mx-auto grid max-w-6xl items-center gap-16 lg:grid-cols-[0.7fr_0.3fr]">
+            <ClarityLogo className="h-36 w-auto" width={620} height={150} />
+            <div>
+              <h2 className="text-4xl font-light leading-tight text-[#c9a057]">
+                Secure, private,
+                <br />
+                and simple
+              </h2>
+              <p className="mt-16 text-[13px] leading-7 text-[#d8d0c4]">
+                All images are encrypted and processed safely.
+                <br />
+                No unnecessary storage.
+                <br />
+                We save nothing you do not ask us to.
+                <br />
+                Your images stay yours
+              </p>
+              <p className="mt-10 text-[13px] font-semibold text-white">You own your images. Always.</p>
+            </div>
+          </div>
+
+          <div className="mx-auto mt-20 grid max-w-6xl grid-cols-2 gap-2 md:grid-cols-5">
+            {portraitStrip.map((image, index) => (
+              <div key={`${image}-${index}`} className="relative h-[420px] overflow-hidden bg-[#11100f]">
+                <Image src={image} alt={`ASEAN portrait ${index + 1}`} fill className="object-cover object-center" />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="relative overflow-hidden bg-black px-6 py-20">
+          <div className="absolute inset-0 opacity-25">
+            <Image src="/images/real-estate-after.png" alt="" fill className="object-cover object-center" />
+          </div>
+          <div className="relative mx-auto grid max-w-6xl items-center gap-14 lg:grid-cols-2">
+            <div>
+              <h2 className="text-3xl font-semibold text-white">Secure, private, and simple</h2>
+              <div className="mt-8 space-y-6">
                 {[
-                  "/images/thai-family-restored.png",
-                  "/images/javanese-wedding-restored.png",
-                  "/images/wedding-after.png",
-                  "/images/vintage-wedding-clear.jpg",
-                ].map((image, index) => (
-                  <div
-                    key={image}
-                    className={`overflow-hidden border border-[#3c3024] bg-[#151210] shadow-[0_18px_35px_rgba(0,0,0,0.35)] ${
-                      index % 2 === 0 ? "-rotate-3" : "rotate-2"
-                    }`}
-                  >
-                    <Image
-                      src={image}
-                      alt={`Printed preview ${index + 1}`}
-                      width={900}
-                      height={1200}
-                      className="h-[320px] w-full object-cover object-center"
-                    />
+                  ["Secure processing", "Your images are encrypted and processed safely."],
+                  ["No unnecessary storage", "We save nothing you don't ask us to."],
+                  ["Your images stay yours", "You own your images. Always."],
+                ].map(([title, copy]) => (
+                  <div key={title} className="flex gap-5">
+                    <Shield className="mt-1 h-8 w-8 shrink-0 text-[#c79b4b]" />
+                    <div>
+                      <p className="text-[15px] font-semibold text-white">{title}</p>
+                      <p className="mt-1 text-[13px] text-[#d8d0c4]">{copy}</p>
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
+
+            <div className="mx-auto w-full max-w-[410px] rounded-xl border border-[#6f5d49] bg-[#121212]/90 p-10 text-center">
+              <h2 className="text-3xl font-light leading-tight text-white">
+                Start enhancing
+                <br />
+                your images today
+              </h2>
+              <Button
+                onClick={() => openEnhancer("bottom_cta")}
+                className="mt-10 h-14 w-full rounded-md bg-[#d4933a] text-base font-semibold text-white hover:bg-[#e0a552]"
+              >
+                Upload your image
+              </Button>
+              <p className="mt-8 text-[13px] text-[#d8d0c4]">No credit card required.</p>
+            </div>
           </div>
         </section>
 
-        <section id="explore" className="bg-[#050403] px-4 py-16 lg:px-8">
-          <div className="mx-auto max-w-7xl">
-            <div className="max-w-3xl">
-              <Badge className="rounded-none border border-[#2b241d] bg-[#11100f] text-[#d7b777] hover:bg-[#11100f]">
-                Product view
-              </Badge>
-              <h2 className="mt-4 text-3xl font-light tracking-[-0.03em] text-[#f4ecde] sm:text-4xl">
-                Keep the real application underneath the landing.
-              </h2>
-              <p className="mt-3 text-sm leading-6 text-[#b9aa93]">
-                The homepage now matches the darker editorial landing style while the login, generation, examples,
-                and professional pathways remain available below.
-              </p>
-            </div>
-
-            <Tabs value={activeTab} onValueChange={handleTabChange} className="mt-8 w-full">
-              <TabsList className="grid w-full max-w-md grid-cols-3 rounded-none border border-[#2b241d] bg-[#11100f]">
-                <TabsTrigger value="overview" className="rounded-none text-xs uppercase tracking-[0.22em]">
-                  Overview
-                </TabsTrigger>
-                <TabsTrigger value="examples" className="rounded-none text-xs uppercase tracking-[0.22em]">
-                  Examples
-                </TabsTrigger>
-                <TabsTrigger value="professional" className="rounded-none text-xs uppercase tracking-[0.22em]">
-                  Professional
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="overview" className="mt-8 space-y-4">
-                <div className="grid gap-4 md:grid-cols-3">
-                  {comparisonCards.map((card) => (
-                    <Card key={card.title} className="rounded-none border border-[#2b241d] bg-[#11100f]">
-                      <CardContent className="space-y-3 p-4">
-                        <p className="text-xs uppercase tracking-[0.28em] text-[#a3885d]">{card.title}</p>
-                        <ImageComparisonHybrid
-                          beforeImage={card.beforeImage}
-                          afterImage={card.afterImage}
-                          beforeLabel={card.beforeLabel}
-                          afterLabel={card.afterLabel}
-                          className="w-full"
-                        />
-                      </CardContent>
-                    </Card>
-                  ))}
+        <section className="bg-black py-32">
+          <div className="relative h-[560px] overflow-hidden">
+            <Image src="/images/abstract-art-enhanced.png" alt="Printed Southeast Asian artwork collage" fill className="object-cover object-center opacity-70" />
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,#000_0%,rgba(0,0,0,0.04)_32%,rgba(0,0,0,0.08)_70%,#000_100%)]" />
+            <div className="absolute inset-x-0 top-12 mx-auto grid max-w-5xl grid-cols-5 items-center gap-4 px-6">
+              {finalPrints.map((image, index) => (
+                <div
+                  key={`${image}-${index}`}
+                  className={`relative h-80 overflow-hidden border-[10px] border-[#e9ddc8] bg-[#d4c6ad] shadow-2xl ${
+                    index % 2 === 0 ? "-rotate-6" : "rotate-5"
+                  }`}
+                >
+                  <Image src={image} alt={`Printed result ${index + 1}`} fill className="object-cover object-center" />
                 </div>
-              </TabsContent>
-
-              <TabsContent value="examples" className="mt-8 grid gap-4 md:grid-cols-2">
-                {enhancementCards.slice(0, 2).map((card) => (
-                  <Card key={card.title} className="rounded-none border border-[#2b241d] bg-[#11100f]">
-                    <CardContent className="grid gap-0 p-0 md:grid-cols-[0.95fr_1.05fr]">
-                      <div className="space-y-3 p-5">
-                        <p className="text-xs uppercase tracking-[0.28em] text-[#a3885d]">{card.eyebrow}</p>
-                        <h3 className="text-xl font-light text-[#f4ecde]">{card.title}</h3>
-                        <p className="text-sm leading-6 text-[#b9aa93]">{card.copy}</p>
-                      </div>
-                      <div className="relative min-h-[180px] border-t border-[#2b241d] md:border-l md:border-t-0">
-                        <Image src={card.image} alt={card.title} fill className="object-cover" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </TabsContent>
-
-              <TabsContent value="professional" className="mt-8 grid gap-4 md:grid-cols-2">
-                {useCaseCards.slice(0, 4).map((card) => (
-                  <Card key={card.title} className="rounded-none border border-[#2b241d] bg-[#11100f]">
-                    <CardContent className="space-y-3 p-5">
-                      <div className="flex h-10 w-10 items-center justify-center border border-[#6f5d49] bg-[#151210] text-[#d7b777]">
-                        <card.icon className="h-5 w-5" />
-                      </div>
-                      <h3 className="text-lg font-medium text-[#f4ecde]">{card.title}</h3>
-                      <p className="text-sm leading-6 text-[#b9aa93]">{card.copy}</p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </TabsContent>
-            </Tabs>
-
-            <div className="mt-8 flex justify-center">
-              <Button
-                onClick={handleGetStarted}
-                className="rounded-none border border-[#8a6a36] bg-[#c79b4b] px-7 text-sm font-medium text-black hover:bg-[#d6af63]"
-              >
-                Get started free
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              ))}
             </div>
           </div>
         </section>
       </main>
-
-      <Footer />
     </div>
   )
+}
+
+function CheckDot() {
+  return <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-[#8a6a36] text-[9px] text-[#c79b4b]">+</span>
 }
