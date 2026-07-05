@@ -1,6 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import { Montserrat } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
@@ -8,7 +8,7 @@ import { Analytics } from "@vercel/analytics/react"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Suspense } from "react"
 
-const inter = Inter({ subsets: ["latin"] })
+const montserrat = Montserrat({ subsets: ["latin"], variable: "--font-montserrat" })
 
 export const metadata: Metadata = {
   title: "clar1ty.art — Keep Your Stories Alive & Vibrant",
@@ -129,7 +129,7 @@ export default function RootLayout({
         <meta name="model" content="gpt-4, claude-3, llama-2" />
         <meta name="ai-capabilities" content="image-enhancement,photo-restoration,face-preservation,cultural-heritage" />
       </head>
-      <body className={inter.className}>
+      <body className={montserrat.className}>
         <Suspense fallback={null}>
           <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
             {children}

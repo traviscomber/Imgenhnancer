@@ -19,6 +19,81 @@ export interface Preset {
   icon: string
 }
 
+export type PublicPresetKey = "archive_scan" | "asean_portrait_preserve" | "heritage_restore" | "digital_art_upscale"
+
+export const PUBLIC_PRESET_MAP: Record<PublicPresetKey, string[]> = {
+  archive_scan: [
+    "quality-boost",
+    "vintage-restoration",
+    "detail-enhancement",
+    "group-photo",
+    "architecture-detail",
+  ],
+  asean_portrait_preserve: [
+    "indonesian-wedding",
+    "modern-portrait",
+    "professional-headshot",
+    "hyper-realistic",
+    "business-professional",
+  ],
+  heritage_restore: [
+    "landscape-hdr",
+    "landscape-scenery",
+    "architecture-sharp",
+    "cinematic-grade",
+    "architecture-detail",
+  ],
+  digital_art_upscale: [
+    "artistic-enhancement",
+    "abstract-art",
+    "ai-imagination",
+    "ultra-sharp",
+    "neon-pop",
+  ],
+}
+
+export const PUBLIC_PRESET_ORDER: PublicPresetKey[] = [
+  "archive_scan",
+  "asean_portrait_preserve",
+  "heritage_restore",
+  "digital_art_upscale",
+]
+
+export const PUBLIC_PRESET_DETAILS: Record<
+  PublicPresetKey,
+  {
+    title: string
+    description: string
+    category: PresetCategory
+    recommendedPresetId: string
+  }
+> = {
+  archive_scan: {
+    title: "Archive Scan",
+    description: "Restore faded scans and old prints with restrained cleanup.",
+    category: "faces",
+    recommendedPresetId: "quality-boost",
+  },
+  asean_portrait_preserve: {
+    title: "ASEAN Portrait Preserve",
+    description: "Keep identity, expression, and skin tone intact while improving clarity.",
+    category: "faces",
+    recommendedPresetId: "indonesian-wedding",
+  },
+  heritage_restore: {
+    title: "Heritage Restore",
+    description: "Recover aged cultural images with stronger tonal repair and detail retention.",
+    category: "abstract",
+    recommendedPresetId: "landscape-hdr",
+  },
+  digital_art_upscale: {
+    title: "Digital Art Upscale",
+    description: "Prepare art and creative work for print-ready output.",
+    category: "experimental",
+    recommendedPresetId: "artistic-enhancement",
+  },
+}
+
 // 6 Face Enhancement Presets
 export const FACE_PRESETS: Record<string, Preset> = {
   "quality-boost": {
@@ -628,4 +703,10 @@ export function getPresetsByCategory(category: PresetCategory): Preset[] {
 
 export function getPreset(id: string): Preset | undefined {
   return ALL_PRESETS[id]
+}
+
+export function getPublicPresetIds(key: PublicPresetKey): Preset[] {
+  return PUBLIC_PRESET_MAP[key]
+    .map((id) => ALL_PRESETS[id])
+    .filter((preset): preset is Preset => Boolean(preset))
 }

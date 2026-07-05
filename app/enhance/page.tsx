@@ -32,7 +32,14 @@ import {
 } from "lucide-react"
 import Image from "next/image"
 import { compressImageForUpload } from "@/utils/image-processing"
-import { ALL_PRESETS, getPresetsByCategory, type PresetCategory } from "@/lib/presets"
+import {
+  ALL_PRESETS,
+  PUBLIC_PRESET_DETAILS,
+  PUBLIC_PRESET_ORDER,
+  getPresetsByCategory,
+  type PresetCategory,
+  type PublicPresetKey,
+} from "@/lib/presets"
 import {
   trackImageUpload,
   trackPresetSelection,
@@ -120,6 +127,7 @@ export default function EnhancePage() {
   const [error, setError] = useState<string | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<PresetCategory>("faces")
   const [selectedPresetId, setSelectedPresetId] = useState<string>("indonesian-wedding")
+  const [selectedPublicPreset, setSelectedPublicPreset] = useState<PublicPresetKey>("archive_scan")
   const [settings, setSettings] = useState<EnhancementSettings>({
     model: "philz1337x/clarity-upscaler",
     upscaleFactor: 2,
@@ -1790,7 +1798,7 @@ export default function EnhancePage() {
         </div>
 
         {/* Category Selection */}
-        <Card className="mb-6 bg-gray-900/50 border-gray-800">
+        <Card className="mb-6 hidden bg-gray-900/50 border-gray-800">
           <CardContent className="p-6">
             <div className="flex items-center justify-center gap-4 flex-wrap">
               <Button
@@ -1841,9 +1849,65 @@ export default function EnhancePage() {
           </CardContent>
         </Card>
 
+        <div className="mb-8">
+          <Card className="bg-[#0f0e0d] border border-[#2a241d]">
+            <CardHeader className="space-y-3">
+              <CardTitle className="text-white flex items-center gap-2 text-base md:text-lg">
+                <Sparkles className="w-5 h-5 text-amber-400" />
+                Public Presets
+              </CardTitle>
+              <p className="text-sm text-gray-400">
+                Four simplified presets for the public landing, with the full preset library kept in the app for internal routing.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                {PUBLIC_PRESET_ORDER.map((presetKey) => {
+                  const preset = PUBLIC_PRESET_DETAILS[presetKey]
+                  const isActive = selectedPublicPreset === presetKey
+                  return (
+                    <button
+                      key={presetKey}
+                      onClick={() => {
+                        setSelectedPublicPreset(presetKey)
+                        setSelectedCategory(preset.category)
+                        applyPreset(preset.recommendedPresetId)
+                      }}
+                      className={`p-5 border text-left transition-colors ${
+                        isActive
+                          ? "border-amber-500 bg-amber-500/10"
+                          : "border-gray-800 bg-gray-900/60 hover:border-amber-500/40"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="space-y-2">
+                          <p className="text-xs uppercase tracking-[0.3em] text-amber-400/80">{presetKey.replaceAll("_", " ")}</p>
+                          <h3 className="text-lg font-medium text-white">{preset.title}</h3>
+                          <p className="text-sm text-gray-400 leading-6">{preset.description}</p>
+                        </div>
+                        {isActive && <CheckCircle2 className="w-5 h-5 text-amber-400 shrink-0" />}
+                      </div>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {PUBLIC_PRESET_DETAILS[presetKey].category && (
+                          <span className="text-[11px] uppercase tracking-[0.2em] text-gray-300 bg-white/5 px-2 py-1">
+                            {PUBLIC_PRESET_DETAILS[presetKey].category}
+                          </span>
+                        )}
+                        <span className="text-[11px] uppercase tracking-[0.2em] text-amber-300 bg-amber-500/10 px-2 py-1">
+                          Recommended
+                        </span>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Presets */}
         <Card
-          className={`mb-8 ${
+          className={`mb-8 hidden ${
             selectedCategory === "faces"
               ? "bg-gradient-to-br from-amber-500/5 to-rose-500/5 border-amber-500/20"
               : selectedCategory === "abstract"
