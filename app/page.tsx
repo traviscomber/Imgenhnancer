@@ -220,43 +220,47 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="grid min-h-[700px] bg-[#817463] lg:grid-cols-[0.78fr_1.22fr]">
-          <div className="bg-[#928879] px-6 py-16 lg:px-28">
-            <h2 className="text-left text-5xl font-light tracking-[0.02em] text-[#e8dfd1]">Upload image</h2>
-            <p className="mx-auto mt-16 max-w-[330px] text-center text-[13px] leading-6 text-[#f0eadf]">
-              Natural skin tones. Real facial structure.
-              <br />
-              Local visual character. Cultural detail.
-            </p>
+        <section className="bg-[#817463]">
+          <div className="mx-auto grid min-h-[700px] max-w-[1600px] lg:grid-cols-[0.78fr_1.22fr]">
+            <div className="flex bg-[#928879] px-6 py-16 lg:px-28">
+              <div className="mx-auto flex w-full max-w-[360px] flex-col">
+                <h2 className="text-left text-5xl font-light tracking-[0.02em] text-[#e8dfd1]">Upload image</h2>
+                <p className="mt-16 text-center text-[13px] leading-6 text-[#f0eadf]">
+                  Natural skin tones. Real facial structure.
+                  <br />
+                  Local visual character. Cultural detail.
+                </p>
 
-            <button
-              type="button"
-              onClick={() => openEnhancer("upload_section")}
-              className="mx-auto mt-12 flex h-64 w-full max-w-[320px] flex-col items-center justify-center border border-dashed border-[#b7ab99] bg-[#9d9384] text-center"
-            >
-              <span className="flex h-20 w-20 items-center justify-center rounded-full bg-[#eee9df] text-[#a77833]">
-                <Upload className="h-9 w-9" />
-              </span>
-              <span className="mt-7 text-[13px] font-semibold text-white">Drop or select your image here</span>
-              <span className="mt-2 text-[12px] text-[#f3eee5]">Browse PNG, JPG, WebP</span>
-              <span className="mt-7 text-[12px] text-[#f3eee5]">Up to 10 MB</span>
-            </button>
+                <button
+                  type="button"
+                  onClick={() => openEnhancer("upload_section")}
+                  className="mt-12 flex h-64 w-full flex-col items-center justify-center border border-dashed border-[#b7ab99] bg-[#9d9384] text-center transition hover:bg-[#a69b8a]"
+                >
+                  <span className="flex h-20 w-20 items-center justify-center rounded-full bg-[#eee9df] text-[#a77833]">
+                    <Upload className="h-9 w-9" />
+                  </span>
+                  <span className="mt-7 text-[13px] font-semibold text-white">Drop or select your image here</span>
+                  <span className="mt-2 text-[12px] text-[#f3eee5]">Browse PNG, JPG, WebP</span>
+                  <span className="mt-7 text-[12px] text-[#f3eee5]">Up to 10 MB</span>
+                </button>
 
-            <Button
-              onClick={() => openEnhancer("upload_section")}
-              className="mx-auto mt-10 flex h-11 w-full max-w-[320px] rounded-none bg-[#241b13] text-[12px] text-white hover:bg-[#34271d]"
-            >
-              Upscale Image
-            </Button>
-          </div>
+                <Button
+                  onClick={() => openEnhancer("upload_section")}
+                  className="mt-10 h-11 w-full rounded-none bg-[#241b13] text-[12px] text-white hover:bg-[#34271d]"
+                >
+                  Upscale Image
+                </Button>
+              </div>
+            </div>
 
-          <div className="flex items-center justify-center px-6 py-16">
-            <div className="text-center">
-              <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#efe3cf] text-[#efe3cf]">
-                <Upload className="h-10 w-10" />
-              </span>
-              <h3 className="mt-10 text-[15px] font-semibold text-white">No images upscaled yet</h3>
-              <p className="mt-8 text-[13px] text-[#eee5d8]">Upload an image to upscale it</p>
+            <div className="flex items-center justify-center px-6 py-16">
+              <div className="flex min-h-[420px] w-full max-w-[520px] flex-col items-center justify-center text-center">
+                <span className="flex h-20 w-20 items-center justify-center rounded-full border border-[#efe3cf] text-[#efe3cf]">
+                  <Upload className="h-10 w-10" />
+                </span>
+                <h3 className="mt-10 text-[15px] font-semibold text-white">No images upscaled yet</h3>
+                <p className="mt-8 text-[13px] text-[#eee5d8]">Upload an image to upscale it</p>
+              </div>
             </div>
           </div>
         </section>
