@@ -94,6 +94,31 @@ export const PUBLIC_PRESET_DETAILS: Record<
   },
 }
 
+export const PUBLIC_PRESET_SETTINGS: Record<
+  PublicPresetKey,
+  {
+    category: PresetCategory
+    presetId: string
+  }
+> = {
+  archive_scan: {
+    category: "faces",
+    presetId: "quality-boost",
+  },
+  asean_portrait_preserve: {
+    category: "faces",
+    presetId: "indonesian-wedding",
+  },
+  heritage_restore: {
+    category: "abstract",
+    presetId: "landscape-hdr",
+  },
+  digital_art_upscale: {
+    category: "experimental",
+    presetId: "artistic-enhancement",
+  },
+}
+
 // 6 Face Enhancement Presets
 export const FACE_PRESETS: Record<string, Preset> = {
   "quality-boost": {

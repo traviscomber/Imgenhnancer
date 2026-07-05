@@ -36,6 +36,7 @@ import {
   ALL_PRESETS,
   PUBLIC_PRESET_DETAILS,
   PUBLIC_PRESET_ORDER,
+  PUBLIC_PRESET_SETTINGS,
   getPresetsByCategory,
   type PresetCategory,
   type PublicPresetKey,
@@ -137,7 +138,7 @@ export default function EnhancePage() {
     tilingWidth: 112,
     tilingHeight: 144,
   })
-  const [showAdvanced, setShowAdvanced] = useState(false)
+  const [showAdvanced, setShowAdvanced] = useState(true)
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false)
 
   // Camera state
@@ -769,7 +770,6 @@ export default function EnhancePage() {
       setSelectedPresetId(presetId)
       setSelectedCategory(preset.category)
       setSettings(preset.settings)
-      setShowAdvanced(false)
       trackPresetSelection(presetId, preset.category)
     }
   }, [])
@@ -1849,219 +1849,27 @@ export default function EnhancePage() {
           </CardContent>
         </Card>
 
-        <div className="mb-8">
-          <Card className="bg-[#0f0e0d] border border-[#2a241d]">
-            <CardHeader className="space-y-3">
-              <CardTitle className="text-white flex items-center gap-2 text-base md:text-lg">
-                <Sparkles className="w-5 h-5 text-amber-400" />
-                Public Presets
-              </CardTitle>
-              <p className="text-sm text-gray-400">
-                Four simplified presets for the public landing, with the full preset library kept in the app for internal routing.
-              </p>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                {PUBLIC_PRESET_ORDER.map((presetKey) => {
-                  const preset = PUBLIC_PRESET_DETAILS[presetKey]
-                  const isActive = selectedPublicPreset === presetKey
-                  return (
-                    <button
-                      key={presetKey}
-                      onClick={() => {
-                        setSelectedPublicPreset(presetKey)
-                        setSelectedCategory(preset.category)
-                        applyPreset(preset.recommendedPresetId)
-                      }}
-                      className={`p-5 border text-left transition-colors ${
-                        isActive
-                          ? "border-amber-500 bg-amber-500/10"
-                          : "border-gray-800 bg-gray-900/60 hover:border-amber-500/40"
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="space-y-2">
-                          <p className="text-xs uppercase tracking-[0.3em] text-amber-400/80">{presetKey.replaceAll("_", " ")}</p>
-                          <h3 className="text-lg font-medium text-white">{preset.title}</h3>
-                          <p className="text-sm text-gray-400 leading-6">{preset.description}</p>
-                        </div>
-                        {isActive && <CheckCircle2 className="w-5 h-5 text-amber-400 shrink-0" />}
-                      </div>
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {PUBLIC_PRESET_DETAILS[presetKey].category && (
-                          <span className="text-[11px] uppercase tracking-[0.2em] text-gray-300 bg-white/5 px-2 py-1">
-                            {PUBLIC_PRESET_DETAILS[presetKey].category}
-                          </span>
-                        )}
-                        <span className="text-[11px] uppercase tracking-[0.2em] text-amber-300 bg-amber-500/10 px-2 py-1">
-                          Recommended
-                        </span>
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Presets */}
-        <Card
-          className={`mb-8 hidden ${
-            selectedCategory === "faces"
-              ? "bg-gradient-to-br from-amber-500/5 to-rose-500/5 border-amber-500/20"
-              : selectedCategory === "abstract"
-                ? "bg-gradient-to-br from-purple-500/5 to-pink-500/5 border-purple-500/20"
-                : selectedCategory === "experimental"
-                  ? "bg-gradient-to-br from-cyan-500/5 to-purple-500/5 border-cyan-500/20"
-                  : "bg-gradient-to-br from-pink-500/5 to-orange-500/5 border-pink-500/20"
-          }`}
-        >
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2 text-base md:text-lg">
-              <Sparkles
-                className={`w-5 h-5 ${
-                  selectedCategory === "faces"
-                    ? "text-amber-400"
-                    : selectedCategory === "abstract"
-                      ? "text-purple-400"
-                      : selectedCategory === "experimental"
-                        ? "text-cyan-400"
-                        : "text-pink-400"
-                }`}
-              />
-              {selectedCategory === "faces"
-                ? "Face Enhancement Presets"
-                : selectedCategory === "abstract"
-                  ? "Creative Enhancement Presets"
-                  : selectedCategory === "experimental"
-                    ? "Experimental Presets"
-                    : "Avatar Generation Presets"}
-            </CardTitle>
-            <p className="text-sm text-gray-400">
-              {selectedCategory === "faces"
-                ? "Optimized for portraits, weddings, and people photos"
-                : selectedCategory === "abstract"
-                  ? "Optimized for landscapes, products, and artistic images"
-                  : selectedCategory === "experimental"
-                    ? "Cutting-edge presets that push creative boundaries - use with caution!"
-                    : "Transform your photo into unique avatar styles - perfect for profile pictures and creative expression"}
-            </p>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {currentPresets.map((preset) => (
-                <button
-                  key={preset.id}
-                  onClick={() => applyPreset(preset.id)}
-                  className={`p-6 rounded-xl border-2 transition-all text-left ${
-                    selectedPresetId === preset.id
-                      ? selectedCategory === "faces"
-                        ? "border-amber-500 bg-amber-500/10 shadow-lg shadow-amber-500/20"
-                        : selectedCategory === "abstract"
-                          ? "border-purple-500 bg-purple-500/10 shadow-lg shadow-purple-500/20"
-                          : selectedCategory === "experimental"
-                            ? "border-cyan-500 bg-cyan-500/10 shadow-lg shadow-cyan-500/20"
-                            : "border-pink-500 bg-pink-500/10 shadow-lg shadow-pink-500/20"
-                      : "border-gray-700 bg-gray-800/50 hover:border-gray-600"
-                  }`}
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xl">{preset.icon}</span>
-                        <h3 className="text-base md:text-lg font-bold text-white">{preset.name}</h3>
-                      </div>
-                      {selectedPresetId === preset.id && (
-                        <CheckCircle2
-                          className={`w-6 h-6 ${
-                            selectedCategory === "faces"
-                              ? "text-amber-400"
-                              : selectedCategory === "abstract"
-                                ? "text-purple-400"
-                                : selectedCategory === "experimental"
-                                  ? "text-cyan-400"
-                                  : "text-pink-400"
-                          }`}
-                        />
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-300">{preset.description}</p>
-                    <div className="flex flex-wrap gap-2">
-                      {preset.features.map((feature, idx) => (
-                        <Badge
-                          key={idx}
-                          variant="secondary"
-                          className={
-                            selectedCategory === "faces"
-                              ? "bg-amber-500/20 text-amber-300 text-xs"
-                              : selectedCategory === "abstract"
-                                ? "bg-purple-500/20 text-purple-300 text-xs"
-                                : selectedCategory === "experimental"
-                                  ? "bg-cyan-500/20 text-cyan-300 text-xs"
-                                  : "bg-pink-500/20 text-pink-300 text-xs"
-                          }
-                        >
-                          {feature}
-                        </Badge>
-                      ))}
-                    </div>
-                    {selectedPresetId === preset.id && (
-                      <div
-                        className={`mt-3 pt-3 border-t ${
-                          selectedCategory === "faces"
-                            ? "border-amber-500/20"
-                            : selectedCategory === "abstract"
-                              ? "border-purple-500/20"
-                              : selectedCategory === "experimental"
-                                ? "border-cyan-500/20"
-                                : "border-pink-500/20"
-                        }`}
-                      >
-                        <div
-                          className={`text-xs space-y-1 ${
-                            selectedCategory === "faces"
-                              ? "text-amber-400"
-                              : selectedCategory === "abstract"
-                                ? "text-purple-400"
-                                : selectedCategory === "experimental"
-                                  ? "text-cyan-400"
-                                  : "text-pink-400"
-                          }`}
-                        >
-                          <div>Creativity: {preset.settings.creativity}</div>
-                          <div>Resemblance: {preset.settings.resemblance}</div>
-                          <div>Upscale: {preset.settings.upscaleFactor}x</div>
-                          {preset.settings.hdr > 0 && <div>HDR: {preset.settings.hdr}</div>}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            <Button
-              variant="outline"
-              className="w-full mt-4 bg-transparent border-gray-700 hover:border-amber-500/50"
-              onClick={() => {
-                setShowAdvanced(!showAdvanced)
-                trackAdvancedSettings(!showAdvanced)
-              }}
-            >
-              {showAdvanced ? "Hide" : "Show"} Advanced Settings
-            </Button>
-          </CardContent>
-        </Card>
-
         {/* Advanced Settings */}
         {showAdvanced && (
-          <Card className="mb-8 bg-gray-900/50 border-gray-800">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2 text-base md:text-lg">
-                <Zap className="w-5 h-5 text-amber-400" />
-                Advanced Settings
-              </CardTitle>
+          <Card className="mb-8 bg-[#0f0e0d] border border-[#2a241d]">
+            <CardHeader className="space-y-3">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <CardTitle className="text-white flex items-center gap-2 text-base md:text-lg">
+                  <Zap className="w-5 h-5 text-amber-400" />
+                  Advanced Settings
+                </CardTitle>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full md:w-auto bg-transparent border-[#6f5d49] text-[#d8c4a3] hover:bg-[#1a1612] rounded-none"
+                  onClick={() => {
+                    setShowAdvanced(!showAdvanced)
+                    trackAdvancedSettings(!showAdvanced)
+                  }}
+                >
+                  {showAdvanced ? "Hide Advanced" : "Show Advanced"}
+                </Button>
+              </div>
               <p className="text-sm text-gray-400">Fine-tune the enhancement parameters</p>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -2267,6 +2075,200 @@ export default function EnhancePage() {
             </CardContent>
           </Card>
         )}
+
+        <div className="mb-8">
+          <Card className="bg-[#0f0e0d] border border-[#2a241d]">
+            <CardHeader className="space-y-3">
+              <CardTitle className="text-white flex items-center gap-2 text-base md:text-lg">
+                <Sparkles className="w-5 h-5 text-amber-400" />
+                Public Presets
+              </CardTitle>
+              <p className="text-sm text-gray-400">
+                Four simplified presets for the public landing, with the full preset library kept in the app for internal routing.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                {PUBLIC_PRESET_ORDER.map((presetKey) => {
+                  const preset = PUBLIC_PRESET_DETAILS[presetKey]
+                  const isActive = selectedPublicPreset === presetKey
+                  return (
+                    <button
+                      key={presetKey}
+                      onClick={() => {
+                        setSelectedPublicPreset(presetKey)
+                        setSelectedCategory(PUBLIC_PRESET_SETTINGS[presetKey].category)
+                        applyPreset(PUBLIC_PRESET_SETTINGS[presetKey].presetId)
+                      }}
+                      className={`p-5 border text-left transition-colors ${
+                        isActive
+                          ? "border-amber-500 bg-amber-500/10"
+                          : "border-gray-800 bg-gray-900/60 hover:border-amber-500/40"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="space-y-2">
+                          <p className="text-xs uppercase tracking-[0.3em] text-amber-400/80">{presetKey.replaceAll("_", " ")}</p>
+                          <h3 className="text-lg font-medium text-white">{preset.title}</h3>
+                          <p className="text-sm text-gray-400 leading-6">{preset.description}</p>
+                        </div>
+                        {isActive && <CheckCircle2 className="w-5 h-5 text-amber-400 shrink-0" />}
+                      </div>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {PUBLIC_PRESET_DETAILS[presetKey].category && (
+                          <span className="text-[11px] uppercase tracking-[0.2em] text-gray-300 bg-white/5 px-2 py-1">
+                            {PUBLIC_PRESET_DETAILS[presetKey].category}
+                          </span>
+                        )}
+                        <span className="text-[11px] uppercase tracking-[0.2em] text-amber-300 bg-amber-500/10 px-2 py-1">
+                          Recommended
+                        </span>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Presets */}
+        <Card
+          className={`mb-8 hidden ${
+            selectedCategory === "faces"
+              ? "bg-gradient-to-br from-amber-500/5 to-rose-500/5 border-amber-500/20"
+              : selectedCategory === "abstract"
+                ? "bg-gradient-to-br from-purple-500/5 to-pink-500/5 border-purple-500/20"
+                : selectedCategory === "experimental"
+                  ? "bg-gradient-to-br from-cyan-500/5 to-purple-500/5 border-cyan-500/20"
+                  : "bg-gradient-to-br from-pink-500/5 to-orange-500/5 border-pink-500/20"
+          }`}
+        >
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2 text-base md:text-lg">
+              <Sparkles
+                className={`w-5 h-5 ${
+                  selectedCategory === "faces"
+                    ? "text-amber-400"
+                    : selectedCategory === "abstract"
+                      ? "text-purple-400"
+                      : selectedCategory === "experimental"
+                        ? "text-cyan-400"
+                        : "text-pink-400"
+                }`}
+              />
+              {selectedCategory === "faces"
+                ? "Face Enhancement Presets"
+                : selectedCategory === "abstract"
+                  ? "Creative Enhancement Presets"
+                  : selectedCategory === "experimental"
+                    ? "Experimental Presets"
+                    : "Avatar Generation Presets"}
+            </CardTitle>
+            <p className="text-sm text-gray-400">
+              {selectedCategory === "faces"
+                ? "Optimized for portraits, weddings, and people photos"
+                : selectedCategory === "abstract"
+                  ? "Optimized for landscapes, products, and artistic images"
+                  : selectedCategory === "experimental"
+                    ? "Cutting-edge presets that push creative boundaries - use with caution!"
+                    : "Transform your photo into unique avatar styles - perfect for profile pictures and creative expression"}
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {currentPresets.map((preset) => (
+                <button
+                  key={preset.id}
+                  onClick={() => applyPreset(preset.id)}
+                  className={`p-6 rounded-xl border-2 transition-all text-left ${
+                    selectedPresetId === preset.id
+                      ? selectedCategory === "faces"
+                        ? "border-amber-500 bg-amber-500/10 shadow-lg shadow-amber-500/20"
+                        : selectedCategory === "abstract"
+                          ? "border-purple-500 bg-purple-500/10 shadow-lg shadow-purple-500/20"
+                          : selectedCategory === "experimental"
+                            ? "border-cyan-500 bg-cyan-500/10 shadow-lg shadow-cyan-500/20"
+                            : "border-pink-500 bg-pink-500/10 shadow-lg shadow-pink-500/20"
+                      : "border-gray-700 bg-gray-800/50 hover:border-gray-600"
+                  }`}
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl">{preset.icon}</span>
+                        <h3 className="text-base md:text-lg font-bold text-white">{preset.name}</h3>
+                      </div>
+                      {selectedPresetId === preset.id && (
+                        <CheckCircle2
+                          className={`w-6 h-6 ${
+                            selectedCategory === "faces"
+                              ? "text-amber-400"
+                              : selectedCategory === "abstract"
+                                ? "text-purple-400"
+                                : selectedCategory === "experimental"
+                                  ? "text-cyan-400"
+                                  : "text-pink-400"
+                          }`}
+                        />
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-300">{preset.description}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {preset.features.map((feature, idx) => (
+                        <Badge
+                          key={idx}
+                          variant="secondary"
+                          className={
+                            selectedCategory === "faces"
+                              ? "bg-amber-500/20 text-amber-300 text-xs"
+                              : selectedCategory === "abstract"
+                                ? "bg-purple-500/20 text-purple-300 text-xs"
+                                : selectedCategory === "experimental"
+                                  ? "bg-cyan-500/20 text-cyan-300 text-xs"
+                                  : "bg-pink-500/20 text-pink-300 text-xs"
+                          }
+                        >
+                          {feature}
+                        </Badge>
+                      ))}
+                    </div>
+                    {selectedPresetId === preset.id && (
+                      <div
+                        className={`mt-3 pt-3 border-t ${
+                          selectedCategory === "faces"
+                            ? "border-amber-500/20"
+                            : selectedCategory === "abstract"
+                              ? "border-purple-500/20"
+                              : selectedCategory === "experimental"
+                                ? "border-cyan-500/20"
+                                : "border-pink-500/20"
+                        }`}
+                      >
+                        <div
+                          className={`text-xs space-y-1 ${
+                            selectedCategory === "faces"
+                              ? "text-amber-400"
+                              : selectedCategory === "abstract"
+                                ? "text-purple-400"
+                                : selectedCategory === "experimental"
+                                  ? "text-cyan-400"
+                                  : "text-pink-400"
+                          }`}
+                        >
+                          <div>Creativity: {preset.settings.creativity}</div>
+                          <div>Resemblance: {preset.settings.resemblance}</div>
+                          <div>Upscale: {preset.settings.upscaleFactor}x</div>
+                          {preset.settings.hdr > 0 && <div>HDR: {preset.settings.hdr}</div>}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Info Box */}
         <Card
