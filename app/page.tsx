@@ -1,569 +1,506 @@
-import Link from "next/link"
-import Image from "next/image"
-import type { ComponentType } from "react"
+"use client"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
+import { ImageComparisonHybrid } from "@/components/image-comparison-hybrid"
+import { Navbar } from "@/components/navbar"
+import { Footer } from "@/components/footer"
+import { ClarityLogo } from "@/components/clarity-logo"
 import {
   ArrowRight,
-  BadgeCheck,
-  Building2,
-  Camera,
-  CheckCircle2,
-  Clock3,
-  Download,
-  ImageIcon,
-  Lock,
   Sparkles,
-  Shield,
-  Upload,
-  Wand2,
   Zap,
-  Users,
+  Shield,
+  ImageIcon,
+  Download,
+  Upload,
+  Globe,
+  Camera,
   Church,
+  Building2,
+  CheckCircle2,
 } from "lucide-react"
-import { ImageComparisonHybrid } from "@/components/image-comparison-hybrid"
+import { trackCTAClick, trackExampleView } from "@/lib/analytics"
+import { logout } from "@/lib/auth"
+import { useLanguage } from "@/hooks/use-language"
+import { translations } from "@/lib/i18n"
 
-const comparisonPills = ["Before / After", "Drag to compare", "Touch enabled"]
+export default function Home() {
+  const [activeTab, setActiveTab] = useState("home")
+  const [language] = useLanguage()
+  const router = useRouter()
+  const t = translations[language]
 
-const enhancementCards = [
-  {
-    title: "Archive Scan",
-    description: "Restore faded scans and preserve fine detail without flattening texture.",
-    image: "/images/wedding-before.png",
-    accent: "/images/wedding-after.png",
-    icon: Upload,
-  },
-  {
-    title: "ASEAN Portrait Preserve",
-    description: "Improve clarity while keeping skin tone, expression, and identity intact.",
-    image: "/images/javanese-wedding-faded.png",
-    accent: "/images/javanese-wedding-restored.png",
-    icon: Camera,
-  },
-  {
-    title: "Heritage Restore",
-    description: "Bring back aged photographs with restrained tonal repair and color recovery.",
-    image: "/images/vintage-wedding-blur.png",
-    accent: "/images/vintage-wedding-clear.jpg",
-    icon: Church,
-  },
-  {
-    title: "Digital Art Upscale",
-    description: "Prepare sharp, printable work for posters, covers, and digital publishing.",
-    image: "/images/real-estate-before.png",
-    accent: "/images/real-estate-after.png",
-    icon: ImageIcon,
-  },
-]
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab)
+    if (tab === "examples" || tab === "professional") {
+      trackExampleView(tab, tab)
+    }
+  }
 
-const whoUsesCards = [
-  {
-    title: "Photographers",
-    description: "Deliver polished portraits and archive-ready visuals with less manual cleanup.",
-    icon: Camera,
-  },
-  {
-    title: "Families",
-    description: "Save treasured pictures and restore old albums for sharing and printing.",
-    icon: Users,
-  },
-  {
-    title: "Museums",
-    description: "Repair historic materials with a workflow designed around preservation.",
-    icon: Building2,
-  },
-  {
-    title: "Publishers",
-    description: "Enhance covers, editorial visuals, and heritage content for modern formats.",
-    icon: ImageIcon,
-  },
-  {
-    title: "Archives",
-    description: "Digitize and improve old prints while keeping the original story visible.",
-    icon: Lock,
-  },
-  {
-    title: "Studios",
-    description: "Use one consistent enhancement flow across client work and production needs.",
-    icon: Sparkles,
-  },
-]
+  const handleTryEnhancer = async () => {
+    trackCTAClick("hero", "Try Enhancer")
+    await logout()
+    router.push("/enhance")
+  }
 
-const featureList = [
-  "Face-preserving enhancement",
-  "Warm gold, low-noise finish",
-  "Private workflow by design",
-  "Print-friendly output",
-  "Fast upload to result flow",
-  "Touch-friendly comparison",
-]
-
-function SectionTitle({
-  eyebrow,
-  title,
-  description,
-  align = "center",
-}: {
-  eyebrow?: string
-  title: string
-  description?: string
-  align?: "center" | "left"
-}) {
-  const alignment = align === "left" ? "items-start text-left" : "items-center text-center"
+  const handleGetStarted = async () => {
+    trackCTAClick("bottom_cta", "Get Started Free")
+    await logout()
+    router.push("/enhance")
+  }
 
   return (
-    <div className={`flex flex-col gap-3 ${alignment}`}>
-      {eyebrow ? (
-        <p className="text-[10px] uppercase tracking-[0.5em] text-[#c8a46a]/70">{eyebrow}</p>
-      ) : null}
-      <h2 className="max-w-3xl text-2xl font-medium tracking-[0.08em] text-[#f3ecdf] md:text-4xl">
-        {title}
-      </h2>
-      {description ? (
-        <p className="max-w-2xl text-sm leading-6 text-[#b8a58b] md:text-[15px]">{description}</p>
-      ) : null}
-    </div>
-  )
-}
+    <div className="min-h-screen bg-[#050403] text-[#f3ecdf]">
+      <Navbar />
 
-function MiniFeature({ title, description, icon: Icon }: { title: string; description: string; icon: ComponentType<{ className?: string }> }) {
-  return (
-    <div className="border border-white/10 bg-[#11100f] p-6">
-      <Icon className="h-6 w-6 text-[#d3b16f]" />
-      <h3 className="mt-5 text-sm font-medium tracking-[0.18em] text-[#f2eadc]">{title}</h3>
-      <p className="mt-3 text-xs leading-6 text-[#a9977d]">{description}</p>
-    </div>
-  )
-}
-
-export default function HomePage() {
-  return (
-    <main className="bg-[#050403] text-[#f1e7d8]">
-      <header className="border-b border-white/5">
-        <div className="mx-auto flex max-w-[1250px] items-center justify-between px-5 py-5 md:px-8">
-          <Link href="/" className="group flex items-center gap-2">
-            <span className="text-[11px] font-medium tracking-[0.5em] text-[#d4b06c]">CL</span>
-            <span className="text-xl font-medium tracking-[0.35em] text-[#d9c39d]">
-              cl<span className="text-[#d4b06c]">ARITY</span>
+      {/* Hero Section with Storytelling */}
+      <section className="container mx-auto px-4 py-12 md:py-20">
+        <div className="text-center space-y-4 md:space-y-6 mb-12 md:mb-16">
+          <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20 text-xs md:text-sm">
+            ✨ {language === "en" ? "Built for ASEAN Heritage" : "Construido para el Patrimonio de ASEAN"}
+          </Badge>
+          <div className="flex justify-center mb-6">
+            <ClarityLogo className="h-16 md:h-24 lg:h-32 w-auto" />
+          </div>
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-medium text-[#f3ecdf] leading-tight tracking-[0.02em]">
+            {language === "en" ? "Keep Your Stories" : "Mantén Tus Historias"}{" "}
+            <span className="text-[#cfab69]">
+              {language === "en" ? "Alive & Vibrant" : "Vivas y Vibrantes"}
             </span>
-          </Link>
-
-          <nav className="hidden items-center gap-10 text-[10px] uppercase tracking-[0.35em] text-[#8f806b] md:flex">
-            <a href="#upload" className="transition-colors hover:text-[#d6bb7b]">
-              Upload
-            </a>
-            <a href="#presets" className="transition-colors hover:text-[#d6bb7b]">
-              Presets
-            </a>
-            <a href="#secure" className="transition-colors hover:text-[#d6bb7b]">
-              Secure
-            </a>
-          </nav>
-        </div>
-      </header>
-
-      <section className="mx-auto grid max-w-[1250px] grid-cols-1 gap-10 px-5 pb-14 pt-10 md:grid-cols-[1.05fr_0.95fr] md:items-center md:px-8 md:pt-16 lg:gap-16 lg:pt-20">
-        <div className="max-w-xl space-y-7">
-          <p className="text-[10px] uppercase tracking-[0.55em] text-[#a98b54]">Restore Southeast Asia&apos;s visual identity</p>
-          <h1 className="max-w-lg text-[2.25rem] font-medium leading-[1.02] tracking-[0.02em] text-[#f3ecdf] md:text-[4.2rem]">
-            Restore Southeast Asia&apos;s{" "}
-            <span className="block text-[#cfab69]">visual identity</span>
           </h1>
-          <p className="max-w-md text-sm leading-7 text-[#b6a287] md:text-[15px]">
-            Generic AI tools sharpen pixels. Clar1ty preserves context, expression, and warmth while improving the clarity of portraits, archives, and heritage visuals.
+          <p className="text-base md:text-lg text-[#b6a287] max-w-3xl mx-auto px-4">
+            {language === "en"
+              ? "Your family photos tell stories. Faded prints, worn-out memories, and aging heirlooms deserve to shine again. clar1ty brings clarity and color back to the moments that matter most—restoring your heritage with care and precision."
+              : "Tus fotos de familia cuentan historias. Los impresos descoloridos, los recuerdos gastados y las reliquias familiares antiguas merecen brillar de nuevo. clar1ty devuelve la claridad y el color a los momentos más importantes, restaurando tu patrimonio con cuidado y precisión."}
           </p>
-          <div className="flex flex-wrap items-center gap-3 pt-2">
-            <Link
-              href="/enhance"
-              className="inline-flex items-center gap-2 border border-[#9b7c47] bg-[#b78c46] px-5 py-3 text-[11px] font-medium uppercase tracking-[0.3em] text-black transition-colors hover:bg-[#c89a4f]"
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+            <Button
+              size="lg"
+              className="bg-[#c79b4b] hover:bg-[#d1a85d] text-black font-medium px-6 md:px-8 text-sm md:text-base w-full sm:w-auto rounded-none border border-[#8b6b34]"
+              onClick={handleTryEnhancer}
             >
-              Start enhancing
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-            <a
-              href="#upload"
-              className="inline-flex items-center gap-2 border border-white/10 bg-transparent px-5 py-3 text-[11px] font-medium uppercase tracking-[0.3em] text-[#d6c2a0] transition-colors hover:border-[#cfab69]/40 hover:text-[#e5cd96]"
+              Try Enhancer
+              <ArrowRight className="ml-2 w-4 h-4 md:w-5 md:h-5" />
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="border border-[#6f5d49] text-[#d8c4a3] hover:bg-[#1a1612] text-sm md:text-base w-full sm:w-auto bg-transparent rounded-none"
+              onClick={() => {
+                document.getElementById("examples")?.scrollIntoView({ behavior: "smooth" })
+                trackCTAClick("hero", "View Examples")
+              }}
             >
-              View layout
-            </a>
+              {language === "en" ? "View Examples" : "Ver Ejemplos"}
+            </Button>
           </div>
         </div>
 
-        <div className="relative">
-          <div className="absolute -inset-4 bg-[radial-gradient(circle_at_50%_50%,rgba(200,164,106,0.1),transparent_55%)]" />
-          <ImageComparisonHybrid
-            beforeImage="/images/javanese-wedding-faded.png"
-            afterImage="/images/javanese-wedding-restored.png"
-            beforeLabel="Before"
-            afterLabel="After"
-            beforeAlt="Faded portrait before enhancement"
-            afterAlt="Restored portrait after enhancement"
-            className="relative"
-          />
-          <div className="mt-4 flex flex-wrap gap-2 text-[10px] uppercase tracking-[0.32em] text-[#9b8668]">
-            {comparisonPills.map((pill) => (
-              <span key={pill} className="border border-white/8 bg-black/40 px-3 py-2">
-                {pill}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
+        {/* Main Tabs */}
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-3 mb-8 md:mb-12 bg-[#11100f] border border-[#2b241d]">
+            <TabsTrigger value="home" className="text-xs md:text-sm">
+              Home
+            </TabsTrigger>
+            <TabsTrigger value="examples" className="text-xs md:text-sm">
+              Examples
+            </TabsTrigger>
+            <TabsTrigger value="professional" className="text-xs md:text-sm">
+              Professional
+            </TabsTrigger>
+          </TabsList>
 
-      <section id="upload" className="border-y border-black/40 bg-[#8b7b68] text-[#221913]">
-        <div className="mx-auto grid max-w-[1250px] grid-cols-1 md:grid-cols-[0.43fr_0.57fr]">
-          <div className="border-b border-black/15 p-6 md:border-b-0 md:border-r md:p-8 lg:p-10">
-            <p className="text-[10px] uppercase tracking-[0.5em] text-[#f2ebdd]/70">Upload image</p>
-            <h2 className="mt-4 max-w-xs text-3xl font-medium tracking-[0.04em] text-[#f4ede0] md:text-[3rem]">
-              Upload image
-            </h2>
-            <p className="mt-5 max-w-sm text-sm leading-7 text-[#efe2cf]">
-              Drop a photograph, scan, or portrait to start a private restoration workflow built for clarity and restraint.
-            </p>
+          {/* Home Tab - Best Showcases */}
+          <TabsContent value="home" className="space-y-12 md:space-y-16">
+            {/* Hero Comparison Sliders */}
+            <div className="space-y-8 md:space-y-12">
+              <div className="text-center space-y-2 md:space-y-3">
+                <h2 className="text-xl md:text-2xl lg:text-3xl font-medium text-[#f3ecdf] tracking-[0.08em]">See the Difference</h2>
+                <p className="text-sm text-[#b6a287]">Drag the slider to compare before and after</p>
+              </div>
 
-            <div className="mt-8 border border-black/10 bg-[#a2927f] p-4">
-              <div className="border border-black/10 bg-[#d7cab8] p-5 text-center">
-                <Upload className="mx-auto h-10 w-10 text-[#7a5b2c]" />
-                <p className="mt-4 text-[11px] uppercase tracking-[0.35em] text-[#60462a]">Upload or drag file</p>
-                <p className="mt-3 text-xs leading-6 text-[#6d5640]">
-                  PNG, JPG, WebP. Built to keep your files and context private.
+              <div className="space-y-6 md:space-y-8">
+                {/* Main Wedding Showcase */}
+                <ImageComparisonHybrid
+                  beforeImage="/images/wedding-before.png"
+                  afterImage="/images/wedding-after.png"
+                  beforeLabel="Original"
+                  afterLabel="AI Enhanced"
+                  improvements={["↑ 45% sharper", "↑ 30% brighter", "↑ 60% detail"]}
+                />
+
+                {/* Indonesian Heritage */}
+                <ImageComparisonHybrid
+                  beforeImage="/images/javanese-wedding-faded.png"
+                  afterImage="/images/javanese-wedding-restored.png"
+                  beforeLabel="Faded Photo"
+                  afterLabel="Restored Heritage"
+                  improvements={["↑ 50% color accuracy", "↑ 70% contrast", "✓ Heritage preserved"]}
+                />
+
+                {/* Vintage Wedding Clarity */}
+                <ImageComparisonHybrid
+                  beforeImage="/images/vintage-wedding-blur.png"
+                  afterImage="/images/vintage-wedding-clear.jpg"
+                  beforeLabel="Blurred"
+                  afterLabel="Crystal Clear"
+                  improvements={["↑ 80% sharpness", "↑ 40% detail", "✓ Noise reduced"]}
+                />
+              </div>
+            </div>
+
+            {/* Features Grid - ASEAN Focused */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+              <Card className="bg-[#11100f] border border-[#2b241d] border-gray-700 hover:border-amber-500/50 transition-all">
+                <CardContent className="p-4 md:p-6 space-y-3 md:space-y-4">
+                  <div className="w-10 h-10 md:w-12 md:h-12 bg-[#151312] rounded-none border border-[#2b241d] flex items-center justify-center">
+                    <Camera className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
+                  </div>
+                  <h3 className="text-base md:text-lg font-semibold text-white">
+                    {language === "en" ? "Restore Heirlooms" : "Restaurar Reliquias"}
+                  </h3>
+                  <p className="text-xs md:text-sm text-[#b6a287]">
+                    {language === "en"
+                      ? "Bring old family photos back to life with stunning clarity and vibrant colors."
+                      : "Devuelve vida a las fotos familiares antiguas con claridad impresionante y colores vibrantes."}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-[#11100f] border border-[#2b241d] border-gray-700 hover:border-amber-500/50 transition-all">
+                <CardContent className="p-4 md:p-6 space-y-3 md:space-y-4">
+                  <div className="w-10 h-10 md:w-12 md:h-12 bg-[#151312] rounded-none border border-[#2b241d] flex items-center justify-center">
+                    <Zap className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
+                  </div>
+                  <h3 className="text-base md:text-lg font-semibold text-white">
+                    {language === "en" ? "Instant Results" : "Resultados Instantáneos"}
+                  </h3>
+                  <p className="text-xs md:text-sm text-[#b6a287]">
+                    {language === "en"
+                      ? "Get enhanced photos in seconds—no complicated settings or technical knowledge needed."
+                      : "Obtén fotos mejoradas en segundos, sin configuraciones complicadas ni conocimientos técnicos."}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-[#11100f] border border-[#2b241d] border-gray-700 hover:border-amber-500/50 transition-all">
+                <CardContent className="p-4 md:p-6 space-y-3 md:space-y-4">
+                  <div className="w-10 h-10 md:w-12 md:h-12 bg-[#151312] rounded-none border border-[#2b241d] flex items-center justify-center">
+                    <Shield className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
+                  </div>
+                  <h3 className="text-base md:text-lg font-semibold text-white">
+                    {language === "en" ? "Respect & Privacy" : "Respeto y Privacidad"}
+                  </h3>
+                  <p className="text-xs md:text-sm text-[#b6a287]">
+                    {language === "en"
+                      ? "Your memories stay yours. We never save or train on your personal photos."
+                      : "Tus recuerdos son tuyos. Nunca guardamos ni entrenamos con tus fotos personales."}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-[#11100f] border border-[#2b241d] border-gray-700 hover:border-amber-500/50 transition-all">
+                <CardContent className="p-4 md:p-6 space-y-3 md:space-y-4">
+                  <div className="w-10 h-10 md:w-12 md:h-12 bg-[#151312] rounded-none border border-[#2b241d] flex items-center justify-center">
+                    <ImageIcon className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
+                  </div>
+                  <h3 className="text-base md:text-lg font-semibold text-white">
+                    {language === "en" ? "Authentic Beauty" : "Belleza Auténtica"}
+                  </h3>
+                  <p className="text-xs md:text-sm text-[#b6a287]">
+                    {language === "en"
+                      ? "Enhanced photos stay true to their original character and cultural context."
+                      : "Las fotos mejoradas mantienen su carácter original y contexto cultural."}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Story Section */}
+            <div className="space-y-6 md:space-y-8">
+              <div className="text-center space-y-2 md:space-y-3">
+                <h2 className="text-xl md:text-2xl lg:text-3xl font-medium text-[#f3ecdf] tracking-[0.08em]">
+                  {language === "en" ? "More Than Photos" : "Más Que Fotos"}
+                </h2>
+                <p className="text-sm text-[#b6a287]">
+                  {language === "en" ? "Preserving the memories that shape us" : "Preservando los recuerdos que nos moldean"}
                 </p>
               </div>
-              <button className="mt-4 w-full border border-black/20 bg-[#3d3024] px-4 py-3 text-[11px] uppercase tracking-[0.32em] text-[#ead9c0]">
-                Start upload
-              </button>
-            </div>
-          </div>
 
-          <div className="grid grid-cols-1 gap-0 md:grid-cols-2">
-            <div className="border-b border-black/15 p-6 md:border-b-0 md:border-r md:p-8 lg:p-10">
-              <div className="border border-black/10 bg-[#d7cab8] p-6 text-center">
-                <Sparkles className="mx-auto h-9 w-9 text-[#8a672f]" />
-                <h3 className="mt-4 text-[11px] uppercase tracking-[0.38em] text-[#4d3824]">Low effort</h3>
-                <p className="mt-3 text-xs leading-6 text-[#6c5946]">
-                  Upload once, choose a preset, and preview a grounded enhancement path.
-                </p>
-              </div>
-            </div>
-            <div className="p-6 md:p-8 lg:p-10">
-              <div className="border border-black/10 bg-[#c5b19a] p-6 text-center">
-                <Shield className="mx-auto h-9 w-9 text-[#775527]" />
-                <h3 className="mt-4 text-[11px] uppercase tracking-[0.38em] text-[#4d3824]">Private by design</h3>
-                <p className="mt-3 text-xs leading-6 text-[#6c5946]">
-                  The flow is built to feel quiet, secure, and straightforward from start to finish.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-[1250px] px-5 py-20 md:px-8">
-        <SectionTitle
-          title="Generic AI-tools upscale pixels. Clar1ty preserves context."
-          description="The site is designed around proof, restraint, and a clear before / after story."
-        />
-
-        <div className="mt-12 grid grid-cols-1 gap-5 md:grid-cols-3">
-          {[
-            { before: "/images/wedding-before.png", after: "/images/wedding-after.png", label: "Family photo restoration" },
-            { before: "/images/vintage-wedding-blur.png", after: "/images/vintage-wedding-clear.jpg", label: "Vintage clarity repair" },
-            { before: "/images/real-estate-before.png", after: "/images/real-estate-after.png", label: "Content-ready upscaling" },
-          ].map((item) => (
-            <div key={item.label} className="space-y-3">
-              <ImageComparisonHybrid beforeImage={item.before} afterImage={item.after} className="" />
-              <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.28em] text-[#9d8a6f]">
-                <span>{item.label}</span>
-                <span>Proof</span>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-10 border-t border-white/8 pt-6">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div className="flex items-center gap-3 text-sm text-[#b7a489]">
-              <BadgeCheck className="h-4 w-4 text-[#c8a46a]" />
-              Context-aware enhancement
-            </div>
-            <div className="flex items-center gap-3 text-sm text-[#b7a489]">
-              <BadgeCheck className="h-4 w-4 text-[#c8a46a]" />
-              Heritage-first workflow
-            </div>
-            <div className="flex items-center gap-3 text-sm text-[#b7a489]">
-              <BadgeCheck className="h-4 w-4 text-[#c8a46a]" />
-              Low-friction preview and export
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="presets" className="border-y border-white/5 bg-[#080707]">
-        <div className="mx-auto max-w-[1250px] px-5 py-20 md:px-8">
-          <SectionTitle
-            eyebrow="Choose the right enhancement"
-            title="Four clear public presets"
-            description="The landing surfaces the simplified public preset structure while keeping the experience easy to scan."
-          />
-
-          <div className="mt-12 grid grid-cols-1 gap-5 md:grid-cols-2">
-            {enhancementCards.map((card) => {
-              const Icon = card.icon
-              return (
-                <div key={card.title} className="grid grid-cols-1 gap-0 overflow-hidden border border-white/8 bg-[#0e0c0b] lg:grid-cols-[0.9fr_1.1fr]">
-                  <div className="space-y-6 p-6 md:p-8">
-                    <div className="flex h-12 w-12 items-center justify-center border border-[#d0b06d]/30 bg-black/40 text-[#d0b06d]">
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <div className="space-y-3">
-                      <h3 className="text-xl font-medium tracking-[0.06em] text-[#f0e7d8]">{card.title}</h3>
-                      <p className="max-w-sm text-sm leading-7 text-[#a9987d]">{card.description}</p>
-                    </div>
-                    <div className="flex items-center gap-3 text-[10px] uppercase tracking-[0.32em] text-[#9e8a68]">
-                      <Clock3 className="h-4 w-4 text-[#d0b06d]" />
-                      Fast. Simple. Effective.
-                    </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+                <div className="text-center space-y-3 md:space-y-4">
+                  <div className="w-12 h-12 md:w-16 md:h-16 bg-[#c79b4b] rounded-none flex items-center justify-center mx-auto border border-[#8b6b34]">
+                    <Church className="w-6 h-6 md:w-8 md:h-8 text-black" />
                   </div>
-                  <div className="border-t border-white/8 lg:border-l lg:border-t-0">
-                    <ImageComparisonHybrid
-                      beforeImage={card.image}
-                      afterImage={card.accent}
-                      beforeLabel="Before"
-                      afterLabel="After"
-                      beforeAlt={`${card.title} before image`}
-                      afterAlt={`${card.title} after image`}
-                    />
+                  <h3 className="text-base md:text-lg font-semibold text-white">
+                    {language === "en" ? "Family Legacy" : "Legado Familiar"}
+                  </h3>
+                  <p className="text-xs md:text-sm text-[#b6a287]">
+                    {language === "en"
+                      ? "Keep your grandparents' images crystal clear. Celebrate generations of moments that matter."
+                      : "Mantén las imágenes de tus abuelos cristalinas. Celebra generaciones de momentos que importan."}
+                  </p>
+                </div>
+
+                <div className="text-center space-y-3 md:space-y-4">
+                  <div className="w-12 h-12 md:w-16 md:h-16 bg-[#c79b4b] rounded-none flex items-center justify-center mx-auto border border-[#8b6b34]">
+                    <Globe className="w-6 h-6 md:w-8 md:h-8 text-black" />
                   </div>
+                  <h3 className="text-base md:text-lg font-semibold text-white">
+                    {language === "en" ? "Cultural Pride" : "Orgullo Cultural"}
+                  </h3>
+                  <p className="text-xs md:text-sm text-[#b6a287]">
+                    {language === "en"
+                      ? "Honor your heritage with photos that shine. Share your story with authenticity and beauty."
+                      : "Honra tu patrimonio con fotos que brillen. Comparte tu historia con autenticidad y belleza."}
+                  </p>
                 </div>
-              )
-            })}
-          </div>
-        </div>
-      </section>
 
-      <section className="mx-auto max-w-[1250px] px-5 py-20 md:px-8">
-        <SectionTitle
-          eyebrow="Simple. Fast. Effective."
-          title="Simple. Fast. Effective."
-          description="The page should explain the workflow with minimal friction and no decorative clutter."
-        />
-
-        <div className="mt-12 grid grid-cols-1 gap-5 lg:grid-cols-3">
-          <MiniFeature
-            icon={Upload}
-            title="Upload your photo"
-            description="Drop a file and keep the interaction focused on one clear next step."
-          />
-          <MiniFeature
-            icon={Wand2}
-            title="Choose your preset"
-            description="Let the preset define the enhancement path without exposing technical complexity."
-          />
-          <MiniFeature
-            icon={Download}
-            title="Download your result"
-            description="Finish with a crisp output that is ready for sharing, saving, or printing."
-          />
-        </div>
-      </section>
-
-      <section className="bg-[#8b7b68] text-[#221913]">
-        <div className="mx-auto max-w-[1250px] px-5 py-20 md:px-8">
-          <SectionTitle
-            eyebrow="Better quality, same identity"
-            title="Better quality, same identity"
-            description="The reference uses a warm, restrained beige block to signal care, preservation, and control."
-            align="left"
-          />
-
-          <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2">
-            {featureList.map((text, index) => {
-              const icons = [Sparkles, Shield, Camera, Church, Zap, CheckCircle2]
-              const Icon = icons[index]
-              return (
-                <div key={text} className="border border-black/10 bg-[#ad9d89] p-4 md:p-5">
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center border border-black/15 bg-[#efe0ca] text-[#8b632e]">
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium tracking-[0.16em] text-[#20160e]">{text}</h3>
-                      <p className="mt-1 text-xs leading-5 text-[#46382c]">Consistency, clarity, and restrained premium finish.</p>
-                    </div>
+                <div className="text-center space-y-3 md:space-y-4">
+                  <div className="w-12 h-12 md:w-16 md:h-16 bg-[#c79b4b] rounded-none flex items-center justify-center mx-auto border border-[#8b6b34]">
+                    <CheckCircle2 className="w-6 h-6 md:w-8 md:h-8 text-black" />
                   </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto grid max-w-[1250px] grid-cols-1 gap-8 px-5 py-20 md:grid-cols-[1.05fr_0.95fr] md:px-8">
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-2">
-          <ImageComparisonHybrid
-            beforeImage="/images/thai-family-faded.png"
-            afterImage="/images/thai-family-restored.png"
-            className="h-full"
-            beforeLabel="Before"
-            afterLabel="After"
-            beforeAlt="Thai family portrait before enhancement"
-            afterAlt="Thai family portrait after enhancement"
-          />
-          <ImageComparisonHybrid
-            beforeImage="/images/wedding-set1-before.png"
-            afterImage="/images/wedding-set1-after.png"
-            className="h-full"
-            beforeLabel="Before"
-            afterLabel="After"
-            beforeAlt="Wedding portrait before enhancement"
-            afterAlt="Wedding portrait after enhancement"
-          />
-        </div>
-        <div className="flex flex-col justify-center space-y-5">
-          <SectionTitle
-            eyebrow="Beautiful results built for ASEAN faces"
-            title="Identity stays recognizable. Detail comes forward."
-            description="The proof section should feel calm and credible, with a short explanation rather than a long sales pitch."
-            align="left"
-          />
-          <div className="space-y-4 border-l border-[#c8a46a]/30 pl-5">
-            <p className="text-sm leading-7 text-[#b5a387]">
-              Clar1ty is built for portraits, family history, and heritage images where context matters as much as sharpness.
-            </p>
-            <p className="text-sm leading-7 text-[#b5a387]">
-              The goal is not to over-process. It is to restore the visual identity that made the image worth saving.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section className="border-y border-white/5 bg-[#070605]">
-        <div className="mx-auto max-w-[1250px] px-5 py-20 md:px-8">
-          <SectionTitle
-            eyebrow="For people, projects, and purpose"
-            title="For people, projects, and purpose"
-            description="A six-card grid keeps the section compact while still showing the breadth of the use case."
-          />
-
-          <div className="mt-12 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {whoUsesCards.map((card) => {
-              const Icon = card.icon
-              return (
-                <div key={card.title} className="border border-white/10 bg-[#0e0c0b] p-5 shadow-[0_0_0_1px_rgba(208,176,109,0.08)]">
-                  <div className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center border border-[#d0b06d]/30 text-[#d0b06d]">
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <div className="space-y-2">
-                      <h3 className="text-sm font-medium tracking-[0.16em] text-[#efe7da]">{card.title}</h3>
-                      <p className="text-xs leading-6 text-[#a69679]">{card.description}</p>
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-[1250px] px-5 py-20 md:px-8">
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-          <div className="space-y-6">
-            <div className="text-[11px] uppercase tracking-[0.52em] text-[#d0b06d]">clarity</div>
-            <div className="text-5xl font-medium tracking-[0.18em] text-[#d6b15e] md:text-7xl">
-              cl<span className="text-[#e9c56f]">AR</span>ITY
-            </div>
-          </div>
-
-          <div className="max-w-md space-y-4">
-            <p className="text-[10px] uppercase tracking-[0.45em] text-[#a78a59]">Secure, private, and simple</p>
-            <p className="text-sm leading-7 text-[#b8a58b]">
-              The site uses a quiet visual language, a limited gold accent, and a direct path to enhancement.
-            </p>
-            <ul className="space-y-3 text-sm text-[#d7c6ae]">
-              <li className="flex items-center gap-3">
-                <span className="h-2 w-2 bg-[#c8a46a]" />
-                Simple upload and preview flow
-              </li>
-              <li className="flex items-center gap-3">
-                <span className="h-2 w-2 bg-[#c8a46a]" />
-                Compare results without leaving the page
-              </li>
-              <li className="flex items-center gap-3">
-                <span className="h-2 w-2 bg-[#c8a46a]" />
-                Private by default, with no visual clutter
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="mt-12 grid grid-cols-2 gap-3 md:grid-cols-5">
-          {[
-            "/images/clarity-white.png",
-            "/images/clarity-black.png",
-            "/images/wedding-after.png",
-            "/images/javanese-wedding-restored.png",
-            "/images/vintage-wedding-clear.jpg",
-          ].map((src, index) => (
-            <div key={src} className={`relative h-40 overflow-hidden border border-white/8 bg-black ${index % 2 ? "rotate-1" : "-rotate-1"}`}>
-              <Image src={src} alt="Portrait strip image" fill className="object-cover" />
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section id="secure" className="border-t border-white/5 bg-[#0b0908]">
-        <div className="mx-auto max-w-[1250px] px-5 py-16 md:px-8">
-          <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-            <div className="border border-white/10 bg-[#120f0d] p-6 md:p-8">
-              <h2 className="text-xl font-medium tracking-[0.12em] text-[#f0e8da]">Secure, private, and simple</h2>
-              <div className="mt-6 space-y-4 text-sm text-[#b9a78a]">
-                <div className="flex items-start gap-3">
-                  <Shield className="mt-0.5 h-4 w-4 text-[#d0b06d]" />
-                  <p>Safe handling of files and a focused experience with no noisy interface layers.</p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Lock className="mt-0.5 h-4 w-4 text-[#d0b06d]" />
-                  <p>Designed to keep the workflow private, direct, and easy to trust.</p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Clock3 className="mt-0.5 h-4 w-4 text-[#d0b06d]" />
-                  <p>Quick upload, quick preview, quick decision making.</p>
+                  <h3 className="text-base md:text-lg font-semibold text-white">
+                    {language === "en" ? "Simply Done" : "Simplemente Hecho"}
+                  </h3>
+                  <p className="text-xs md:text-sm text-[#b6a287]">
+                    {language === "en"
+                      ? "No experts needed. Just upload, enhance, and download—your memories are ready to treasure."
+                      : "No se necesitan expertos. Solo carga, mejora y descarga, tus recuerdos están listos para atesorar."}
+                  </p>
                 </div>
               </div>
             </div>
+          </TabsContent>
 
-            <div className="border border-[#c8a46a]/20 bg-[#171412] p-6 md:p-8">
-              <p className="text-[10px] uppercase tracking-[0.45em] text-[#c8a46a]">Start enhancing your images today</p>
-              <p className="mt-4 text-sm leading-7 text-[#b9a78a]">
-                The landing ends with a simple action card so the next step stays obvious.
-              </p>
-              <Link
-                href="/enhance"
-                className="mt-6 inline-flex items-center gap-2 border border-[#b98c43] bg-[#d0a04e] px-5 py-3 text-[11px] font-medium uppercase tracking-[0.3em] text-black transition-colors hover:bg-[#dbaf61]"
-              >
-                Upload your file
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <p className="mt-4 text-xs tracking-[0.22em] text-[#8e7b64]">No redesign. Just restoration.</p>
+          {/* Examples Tab - Categorized by Use Case */}
+          <TabsContent value="examples" className="space-y-8 md:space-y-12" id="examples">
+            <div className="text-center space-y-2 md:space-y-3">
+              <h2 className="text-xl md:text-2xl lg:text-3xl font-medium text-[#f3ecdf] tracking-[0.08em]">Real Examples</h2>
+              <p className="text-sm text-[#b6a287]">See the transformation across different types of images</p>
             </div>
-          </div>
 
-          <div className="mt-10 overflow-hidden border border-white/8">
-            <div className="grid grid-cols-2 gap-0 md:grid-cols-5">
-              {[
-                "/images/wedding-set1-after.png",
-                "/images/javanese-wedding-restored.png",
-                "/images/real-estate-after.png",
-                "/images/thai-family-restored.png",
-                "/images/vintage-wedding-clear.jpg",
-              ].map((src, index) => (
-                <div key={src} className={`relative h-44 md:h-64 ${index % 2 ? "-rotate-3" : "rotate-2"}`}>
-                  <Image src={src} alt="Collage print" fill className="object-cover" />
+            <div className="space-y-8 md:space-y-12">
+              {/* Wedding Photography */}
+              <div className="space-y-4 md:space-y-6">
+                <div className="flex items-center gap-2 md:gap-3">
+                  <Camera className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
+                  <h3 className="text-lg md:text-xl font-medium text-[#f3ecdf] tracking-[0.08em]">Wedding Photography</h3>
                 </div>
-              ))}
+                <div className="space-y-4 md:space-y-6">
+                  <ImageComparisonHybrid
+                    beforeImage="/images/wedding-before.png"
+                    afterImage="/images/wedding-after.png"
+                    beforeLabel="Original"
+                    afterLabel="Enhanced"
+                  />
+                  <ImageComparisonHybrid
+                    beforeImage="/images/wedding-set1-before.png"
+                    afterImage="/images/wedding-set1-after.png"
+                    beforeLabel="Before"
+                    afterLabel="After"
+                  />
+                  <ImageComparisonHybrid
+                    beforeImage="/images/vintage-wedding-blur.png"
+                    afterImage="/images/vintage-wedding-clear.jpg"
+                    beforeLabel="Blurred"
+                    afterLabel="Crystal Clear"
+                  />
+                </div>
+              </div>
+
+              {/* Cultural Heritage Restoration */}
+              <div className="space-y-4 md:space-y-6">
+                <div className="flex items-center gap-2 md:gap-3">
+                  <Church className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
+                  <h3 className="text-lg md:text-xl font-medium text-[#f3ecdf] tracking-[0.08em]">Cultural Heritage Restoration</h3>
+                </div>
+                <div className="space-y-4 md:space-y-6">
+                  <ImageComparisonHybrid
+                    beforeImage="/images/javanese-wedding-faded.png"
+                    afterImage="/images/javanese-wedding-restored.png"
+                    beforeLabel="Faded Photo"
+                    afterLabel="Restored"
+                  />
+                  <ImageComparisonHybrid
+                    beforeImage="/images/thai-family-faded.png"
+                    afterImage="/images/thai-family-restored.png"
+                    beforeLabel="Original"
+                    afterLabel="Enhanced"
+                  />
+                </div>
+              </div>
+
+              {/* Real Estate Marketing */}
+              <div className="space-y-4 md:space-y-6">
+                <div className="flex items-center gap-2 md:gap-3">
+                  <Building2 className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
+                  <h3 className="text-lg md:text-xl font-medium text-[#f3ecdf] tracking-[0.08em]">Real Estate Marketing</h3>
+                </div>
+                <ImageComparisonHybrid
+                  beforeImage="/images/real-estate-before.png"
+                  afterImage="/images/real-estate-after.png"
+                  beforeLabel="Dark Interior"
+                  afterLabel="Bright & Inviting"
+                />
+              </div>
             </div>
-          </div>
+          </TabsContent>
+
+          {/* Professional Use Tab */}
+          <TabsContent value="professional" className="space-y-8 md:space-y-12">
+            <div className="text-center space-y-2 md:space-y-3">
+              <h2 className="text-xl md:text-2xl lg:text-3xl font-medium text-[#f3ecdf] tracking-[0.08em]">Professional Applications</h2>
+              <p className="text-sm text-[#b6a287]">Trusted by professionals across industries</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+              {/* Wedding Photography */}
+              <Card className="bg-[#11100f] border border-[#2b241d] border-pink-500/30 hover:border-amber-500 hover:shadow-lg hover:shadow-amber-500/20 transition-all group">
+                <CardContent className="p-6 md:p-8 space-y-4 md:space-y-6">
+                  <div className="w-12 h-12 md:w-16 md:h-16 bg-pink-500/10 group-hover:bg-[#151312] rounded-none border border-[#2b241d] flex items-center justify-center transition-colors">
+                    <Camera className="w-6 h-6 md:w-8 md:h-8 text-pink-400 group-hover:text-amber-400 transition-colors" />
+                  </div>
+                  <div className="space-y-2 md:space-y-3">
+                    <h3 className="text-lg md:text-xl font-medium text-[#f3ecdf] tracking-[0.08em]">Wedding Photography</h3>
+                    <p className="text-xs md:text-sm text-[#b6a287] leading-relaxed">
+                      Professional photographers enhance their wedding portfolios with AI-powered image improvement,
+                      delivering flawless memories to clients.
+                    </p>
+                  </div>
+                  <ul className="space-y-2 md:space-y-3">
+                    <li className="flex items-start gap-2 text-xs md:text-sm text-gray-300">
+                      <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-amber-400 shrink-0 mt-0.5" />
+                      <span>Batch processing for entire events</span>
+                    </li>
+                    <li className="flex items-start gap-2 text-xs md:text-sm text-gray-300">
+                      <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-amber-400 shrink-0 mt-0.5" />
+                      <span>Natural skin tone preservation</span>
+                    </li>
+                    <li className="flex items-start gap-2 text-xs md:text-sm text-gray-300">
+                      <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-amber-400 shrink-0 mt-0.5" />
+                      <span>Low-light photo recovery</span>
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+
+              {/* Cultural Heritage */}
+              <Card className="bg-[#11100f] border border-[#2b241d] border-purple-500/30 hover:border-amber-500 hover:shadow-lg hover:shadow-amber-500/20 transition-all group">
+                <CardContent className="p-6 md:p-8 space-y-4 md:space-y-6">
+                  <div className="w-12 h-12 md:w-16 md:h-16 bg-purple-500/10 group-hover:bg-[#151312] rounded-none border border-[#2b241d] flex items-center justify-center transition-colors">
+                    <Church className="w-6 h-6 md:w-8 md:h-8 text-purple-400 group-hover:text-amber-400 transition-colors" />
+                  </div>
+                  <div className="space-y-2 md:space-y-3">
+                    <h3 className="text-lg md:text-xl font-medium text-[#f3ecdf] tracking-[0.08em]">Cultural Heritage Preservation</h3>
+                    <p className="text-xs md:text-sm text-[#b6a287] leading-relaxed">
+                      Museums and archivists use our AI to restore and preserve historical photographs, maintaining
+                      cultural authenticity while removing age-related damage.
+                    </p>
+                  </div>
+                  <ul className="space-y-2 md:space-y-3">
+                    <li className="flex items-start gap-2 text-xs md:text-sm text-gray-300">
+                      <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-amber-400 shrink-0 mt-0.5" />
+                      <span>ASEAN-optimized face preservation</span>
+                    </li>
+                    <li className="flex items-start gap-2 text-xs md:text-sm text-gray-300">
+                      <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-amber-400 shrink-0 mt-0.5" />
+                      <span>Damage repair and color restoration</span>
+                    </li>
+                    <li className="flex items-start gap-2 text-xs md:text-sm text-gray-300">
+                      <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-amber-400 shrink-0 mt-0.5" />
+                      <span>Museum-quality output</span>
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+
+              {/* Real Estate */}
+              <Card className="bg-[#11100f] border border-[#2b241d] border-blue-500/30 hover:border-amber-500 hover:shadow-lg hover:shadow-amber-500/20 transition-all group">
+                <CardContent className="p-6 md:p-8 space-y-4 md:space-y-6">
+                  <div className="w-12 h-12 md:w-16 md:h-16 bg-blue-500/10 group-hover:bg-[#151312] rounded-none border border-[#2b241d] flex items-center justify-center transition-colors">
+                    <Building2 className="w-6 h-6 md:w-8 md:h-8 text-blue-400 group-hover:text-amber-400 transition-colors" />
+                  </div>
+                  <div className="space-y-2 md:space-y-3">
+                    <h3 className="text-lg md:text-xl font-medium text-[#f3ecdf] tracking-[0.08em]">Real Estate Marketing</h3>
+                    <p className="text-xs md:text-sm text-[#b6a287] leading-relaxed">
+                      Real estate agents transform property photos to attract buyers, turning dim interiors into bright,
+                      inviting spaces that sell faster.
+                    </p>
+                  </div>
+                  <ul className="space-y-2 md:space-y-3">
+                    <li className="flex items-start gap-2 text-xs md:text-sm text-gray-300">
+                      <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-amber-400 shrink-0 mt-0.5" />
+                      <span>Interior lighting enhancement</span>
+                    </li>
+                    <li className="flex items-start gap-2 text-xs md:text-sm text-gray-300">
+                      <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-amber-400 shrink-0 mt-0.5" />
+                      <span>3X faster listing sales</span>
+                    </li>
+                    <li className="flex items-start gap-2 text-xs md:text-sm text-gray-300">
+                      <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-amber-400 shrink-0 mt-0.5" />
+                      <span>Professional-grade results</span>
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+
+              {/* Professional Photography */}
+              <Card className="bg-[#11100f] border border-[#2b241d] border-green-500/30 hover:border-amber-500 hover:shadow-lg hover:shadow-amber-500/20 transition-all group">
+                <CardContent className="p-6 md:p-8 space-y-4 md:space-y-6">
+                  <div className="w-12 h-12 md:w-16 md:h-16 bg-green-500/10 group-hover:bg-[#151312] rounded-none border border-[#2b241d] flex items-center justify-center transition-colors">
+                    <ImageIcon className="w-6 h-6 md:w-8 md:h-8 text-green-400 group-hover:text-amber-400 transition-colors" />
+                  </div>
+                  <div className="space-y-2 md:space-y-3">
+                    <h3 className="text-lg md:text-xl font-medium text-[#f3ecdf] tracking-[0.08em]">Professional Photography</h3>
+                    <p className="text-xs md:text-sm text-[#b6a287] leading-relaxed">
+                      Professional photographers enhance their portfolio work, delivering stunning results for
+                      commercial clients and personal projects.
+                    </p>
+                  </div>
+                  <ul className="space-y-2 md:space-y-3">
+                    <li className="flex items-start gap-2 text-xs md:text-sm text-gray-300">
+                      <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-amber-400 shrink-0 mt-0.5" />
+                      <span>Detail preservation at any scale</span>
+                    </li>
+                    <li className="flex items-start gap-2 text-xs md:text-sm text-gray-300">
+                      <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-amber-400 shrink-0 mt-0.5" />
+                      <span>Print-ready output up to 4K</span>
+                    </li>
+                    <li className="flex items-start gap-2 text-xs md:text-sm text-gray-300">
+                      <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-amber-400 shrink-0 mt-0.5" />
+                      <span>Style-aware enhancement</span>
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        {/* CTA Section */}
+        <div className="mt-16 md:mt-20 text-center space-y-4 md:space-y-6 bg-[#120f0d] border border-[#2b241d] rounded-none p-8 md:p-12">
+          <h2 className="text-xl md:text-2xl lg:text-3xl font-medium text-[#f3ecdf] tracking-[0.08em]">Ready to Transform Your Images?</h2>
+          <p className="text-sm text-[#b6a287] max-w-2xl mx-auto">
+            Join thousands of professionals using clar1ty to enhance their images with AI
+          </p>
+          <Button
+            size="lg"
+            className="bg-[#c79b4b] hover:bg-[#d1a85d] text-black font-medium px-6 md:px-8 text-sm md:text-base rounded-none border border-[#8b6b34]"
+            onClick={handleGetStarted}
+          >
+            Get Started Free
+            <ArrowRight className="ml-2 w-4 h-4 md:w-5 md:h-5" />
+          </Button>
         </div>
       </section>
-    </main>
+
+      <Footer />
+    </div>
   )
 }
