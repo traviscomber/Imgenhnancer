@@ -144,22 +144,6 @@ const useCases = [
   },
 ]
 
-const portraitStrip = [
-  "/images/landing/comparisons/hero-after.jpg",
-  "/images/landing/comparisons/portrait-after-alt.jpg",
-  "/images/landing/comparisons/child-after.jpg",
-  "/images/landing/comparisons/elder-after.jpg",
-  "/images/landing/comparisons/hero-after.jpg",
-]
-
-const finalPrints = [
-  "/images/landing/comparisons/child-after.jpg",
-  "/images/landing/comparisons/heritage-after.jpg",
-  "/images/landing/comparisons/archive-after.png",
-  "/images/landing/comparisons/digital-after.jpg",
-  "/images/landing/comparisons/hero-after.jpg",
-]
-
 const securityItems = [
   { title: "Secure processing", copy: "Your images are encrypted and processed safely.", Icon: Shield },
   { title: "No unnecessary storage", copy: "We save nothing you don't ask us to.", Icon: Lock },
@@ -406,8 +390,8 @@ function FacesSection() {
       <div className="mx-auto grid max-w-[1280px] gap-10 lg:grid-cols-[0.69fr_0.31fr]">
         <div className="grid gap-6 md:grid-cols-2">
           <LiveComparison
-            beforeImage="/images/landing/comparisons/child-before.jpg"
-            afterImage="/images/landing/comparisons/child-after.jpg"
+            beforeImage="/images/landing/comparisons/faces-before.jpg"
+            afterImage="/images/landing/comparisons/faces-after.jpg"
             beforeAlt="Old damaged child portrait"
             afterAlt="Upscaled child portrait"
             className="h-[300px]"
@@ -489,12 +473,14 @@ function PrivacyStrip() {
           <p className="mt-10 text-[13px] font-semibold text-white">You own your images. Always.</p>
         </div>
       </div>
-      <div className="mx-auto mt-20 grid max-w-[1280px] grid-cols-2 gap-2 md:grid-cols-5">
-        {portraitStrip.map((image, index) => (
-          <div key={`${image}-${index}`} className="relative h-[420px] overflow-hidden bg-[#11100f]">
-            <Image src={image} alt={`ASEAN portrait ${index + 1}`} fill sizes="20vw" className="object-cover object-center" />
-          </div>
-        ))}
+      <div className="relative mx-auto mt-20 h-[515px] max-w-[1280px] overflow-hidden bg-[#11100f]">
+        <Image
+          src="/images/landing/closing-portraits.jpg"
+          alt="ASEAN portraits"
+          fill
+          sizes="100vw"
+          className="object-cover object-center"
+        />
       </div>
     </section>
   )
@@ -541,19 +527,13 @@ function FinalCollage() {
   return (
     <section className="bg-black py-32">
       <div className="relative mx-auto h-[560px] max-w-[1280px] overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(214,188,117,0.12),transparent_55%)]" />
-        <div className="absolute inset-x-0 top-14 mx-auto grid max-w-5xl grid-cols-2 items-center gap-4 px-6 md:grid-cols-5">
-          {finalPrints.map((image, index) => (
-            <div
-              key={`${image}-${index}`}
-              className={`relative h-80 overflow-hidden border-[10px] border-[#e9ddc8] bg-[#d4c6ad] shadow-2xl ${
-                index % 2 === 0 ? "-rotate-6" : "rotate-5"
-              }`}
-            >
-              <Image src={image} alt={`Printed result ${index + 1}`} fill sizes="20vw" className="object-cover object-center" />
-            </div>
-          ))}
-        </div>
+        <Image
+          src="/images/landing/closing-collage.jpg"
+          alt="Printed Clar1ty results"
+          fill
+          sizes="100vw"
+          className="object-cover object-center"
+        />
       </div>
     </section>
   )
