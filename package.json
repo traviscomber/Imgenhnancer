@@ -6,6 +6,8 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "next lint",
+    "icons:png": "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File scripts/regenerate-icon-pngs.ps1",
+    "icons:all": "npm run icons:png && npm run icons:svg",
     "icons:svg": "node scripts/regenerate-icon-svgs.mjs",
     "start": "next start",
     "vercel-build": "next build"
