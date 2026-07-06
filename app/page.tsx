@@ -27,19 +27,19 @@ const contextCards = [
   {
     title: "ORIGINAL ARCHIVE",
     subtitle: "Low-quality source",
-    image: "/images/landing/comparisons/archive-before.png",
+    image: "/images/landing/comparisons/generic-original.jpg",
     points: ["Faded & noisy", "Low detail", "Hard to read"],
   },
   {
     title: "GENERIC UPSCALER",
     subtitle: "Changes what matters",
-    image: "/images/landing/comparisons/archive-after.png",
+    image: "/images/landing/comparisons/generic-upscaler.jpg",
     points: ["Altered faces", "Changed details", "Lost authenticity"],
   },
   {
     title: "CLAR1TY ENHANCED",
     subtitle: "Identity-preserved result",
-    image: "/images/landing/comparisons/archive-after.png",
+    image: "/images/landing/comparisons/generic-clar1ty.jpg",
     points: ["True to originals", "Cultural details kept", "Clear & authentic"],
   },
 ]
@@ -122,7 +122,7 @@ const useCases = [
     copy: "Deliver higher-quality results faster with AI-powered enhancement.",
   },
   {
-    icon: { src: `${iconBase}/face-profile.png` },
+    icon: { src: `${iconBase}/creators-digital-artists.png` },
     title: "Creators & digital artists",
     copy: "Enhance references, concepts, and artwork with more detail and clarity.",
   },
@@ -207,17 +207,18 @@ function HeroSection({ onCta }: { onCta: () => void }) {
       </nav>
 
       <div className="absolute inset-y-0 right-0 w-full lg:w-[58vw]">
-        <Image
-          src="/images/landing/comparisons/hero-after.jpg"
-          alt="Enhanced ASEAN portrait"
-          fill
+        <LiveComparison
+          beforeImage="/images/landing/comparisons/hero-before-new.png"
+          afterImage="/images/landing/comparisons/hero-after-new.jpg"
+          beforeAlt="Original ASEAN portrait"
+          afterAlt="Enhanced ASEAN portrait"
+          className="h-full"
           sizes="(min-width: 1024px) 58vw, 100vw"
           priority
-          className="object-cover object-center"
         />
-        <div className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-black via-black/70 to-transparent" />
-        <div className="absolute inset-y-0 right-0 w-1/5 bg-gradient-to-l from-black/80 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-black via-black/70 to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-1/5 bg-gradient-to-l from-black/80 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black to-transparent" />
       </div>
 
       <div className="relative z-10 mx-auto flex min-h-[720px] max-w-[1600px] items-center px-6 pt-28 lg:px-24">
@@ -577,8 +578,9 @@ function LiveComparison({
   beforeAlt,
   afterAlt,
   className = "",
+  sizes = "(min-width: 1024px) 45vw, 100vw",
   priority = false,
-}: CompareImage & { className?: string; priority?: boolean }) {
+}: CompareImage & { className?: string; sizes?: string; priority?: boolean }) {
   const [position, setPosition] = useState(50)
   const [isDragging, setIsDragging] = useState(false)
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -616,9 +618,9 @@ function LiveComparison({
         updatePosition(event.clientX)
       }}
     >
-      <Image src={afterImage} alt={afterAlt} fill sizes="(min-width: 1024px) 45vw, 100vw" priority={priority} className="object-cover object-center" />
+      <Image src={afterImage} alt={afterAlt} fill sizes={sizes} priority={priority} className="object-cover object-center" />
       <div className="absolute inset-0" style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}>
-        <Image src={beforeImage} alt={beforeAlt} fill sizes="(min-width: 1024px) 45vw, 100vw" priority={priority} className="object-cover object-center" />
+        <Image src={beforeImage} alt={beforeAlt} fill sizes={sizes} priority={priority} className="object-cover object-center" />
       </div>
       <div className="absolute inset-y-0 z-20" style={{ left: `${position}%` }}>
         <div className="h-full w-px bg-white/80" />
