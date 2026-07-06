@@ -453,7 +453,7 @@ function UseCasesSection() {
         <div className="mt-20 grid gap-14 lg:grid-cols-3">
           {useCases.map((card) => (
             <article key={card.title} className="grid min-h-[220px] grid-cols-[0.48fr_0.52fr] items-center rounded-xl border border-[#34302a] bg-black p-8 text-left shadow-[0_0_28px_rgba(214,188,117,0.28)]">
-              <IconCrop icon={card.icon} className="h-28 w-28" />
+              <IconCrop icon={card.icon} className="h-28 w-36" />
               <div>
                 <h3 className="text-[14px] font-semibold leading-5 text-white">{card.title}</h3>
                 <p className="mt-8 text-[13px] leading-6 text-[#d8d0c4]">{card.copy}</p>
