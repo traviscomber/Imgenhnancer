@@ -194,7 +194,7 @@ export default function Home() {
 function HeroSection({ onCta }: { onCta: () => void }) {
   return (
     <section className="relative min-h-[720px] overflow-hidden bg-black">
-      <nav className="absolute left-1/2 top-5 z-30 flex h-16 w-[calc(100%-3rem)] max-w-6xl -translate-x-1/2 items-center justify-between rounded-full border border-white/10 bg-black/35 px-6 shadow-[0_18px_60px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+      <nav className="fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-white/10 bg-black/35 px-6 shadow-[0_18px_60px_rgba(0,0,0,0.35)] backdrop-blur-xl lg:px-24">
         <Link href="/" aria-label="clar1ty home">
           <ClarityLogo className="h-9 w-auto drop-shadow-[0_0_10px_rgba(211,155,62,0.45)]" width={130} height={40} />
         </Link>
