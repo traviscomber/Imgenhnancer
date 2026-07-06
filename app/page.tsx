@@ -18,13 +18,10 @@ type CompareImage = {
 }
 
 type IconSpec = {
-  src?: string
-  position: string
-  size?: string
+  src: string
 }
 
-const iconSheet = "/images/landing/icons-grid-square.jpg"
-const wideIconSheet = "/images/landing/icons-grid-wide.jpg"
+const iconBase = "/images/landing/icons"
 
 const contextCards = [
   {
@@ -49,7 +46,7 @@ const contextCards = [
 
 const enhancementComparisons = [
   {
-    icon: { position: "0% 0%" },
+    icon: { src: `${iconBase}/archive-scan.png` },
     title: "ARCHIVE SCAN",
     copy: "Clean scans, reduce scratches, and improve faded printed photos.",
     beforeImage: "/images/landing/comparisons/archive-before.png",
@@ -58,7 +55,7 @@ const enhancementComparisons = [
     afterAlt: "Upscaled archive scan",
   },
   {
-    icon: { position: "60% 33.33%" },
+    icon: { src: `${iconBase}/face-preserve.png` },
     title: "ASEAN PORTRAIT PRESERVE",
     copy: "Enhance portraits while preserving facial identity and natural skin tones.",
     beforeImage: "/images/landing/comparisons/hero-before.jpg",
@@ -67,7 +64,7 @@ const enhancementComparisons = [
     afterAlt: "Upscaled ASEAN portrait",
   },
   {
-    icon: { position: "80% 66.67%" },
+    icon: { src: `${iconBase}/heritage-restore.png` },
     title: "HERITAGE RESTORE",
     copy: "Clar1ty.art restores clarity without erasing who people are.",
     beforeImage: "/images/landing/comparisons/heritage-before.jpg",
@@ -76,7 +73,7 @@ const enhancementComparisons = [
     afterAlt: "Upscaled heritage image",
   },
   {
-    icon: { position: "80% 0%" },
+    icon: { src: `${iconBase}/digital-upscale.png` },
     title: "DIGITAL ART UPSCALE",
     copy: "Upscale digital art, illustrations, and concepts without losing style. Print Ready",
     beforeImage: "/images/landing/comparisons/digital-before.jpg",
@@ -88,59 +85,59 @@ const enhancementComparisons = [
 
 const steps = [
   {
-    icon: { position: "0% 33.33%" },
+    icon: { src: `${iconBase}/upload-cloud.png` },
     title: "Upload your image",
     copy: "Start with a heritage photo, portrait, archive scan, low-resolution file, or digital artwork.",
   },
   {
-    icon: { position: "20% 33.33%" },
+    icon: { src: `${iconBase}/preset-sliders.png` },
     title: "Choose your preset",
     copy: "Select the enhancement mode that matches your image. Clar1ty applies the right treatment automatically.",
   },
   {
-    icon: { position: "40% 33.33%" },
+    icon: { src: `${iconBase}/download-tray.png` },
     title: "Download your result",
     copy: "Receive a cleaner, sharper, higher-resolution image ready for digital use, print, or archive.",
   },
 ]
 
 const qualityItems = [
-  { icon: { position: "60% 33.33%" }, title: "Face Preservation", copy: "Protects facial structure and expressions." },
-  { icon: { position: "80% 33.33%" }, title: "Natural tones", copy: "Keeps skin tones and colors true." },
-  { icon: { position: "100% 33.33%" }, title: "Real detail", copy: "Brings out textures, edges, and fine detail." },
-  { icon: { position: "0% 66.67%" }, title: "Cultural respect", copy: "Enhances without altering cultural elements." },
-  { icon: { position: "20% 66.67%" }, title: "Balanced results", copy: "No over-processing. Just the right touch." },
-  { icon: { position: "40% 66.67%" }, title: "High resolution", copy: "Sharper images for modern use and printing." },
+  { icon: { src: `${iconBase}/face-profile.png` }, title: "Face Preservation", copy: "Protects facial structure and expressions." },
+  { icon: { src: `${iconBase}/natural-tones.png` }, title: "Natural tones", copy: "Keeps skin tones and colors true." },
+  { icon: { src: `${iconBase}/real-detail.png` }, title: "Real detail", copy: "Brings out textures, edges, and fine detail." },
+  { icon: { src: `${iconBase}/cultural-respect.png` }, title: "Cultural respect", copy: "Enhances without altering cultural elements." },
+  { icon: { src: `${iconBase}/balanced-results.png` }, title: "Balanced results", copy: "No over-processing. Just the right touch." },
+  { icon: { src: `${iconBase}/high-resolution.png` }, title: "High resolution", copy: "Sharper images for modern use and printing." },
 ]
 
 const useCases = [
   {
-    icon: { position: "0% 100%" },
+    icon: { src: `${iconBase}/cultural-archives.png` },
     title: "Cultural archives",
     copy: "Restore and preserve historical photographs and documents.",
   },
   {
-    icon: { position: "20% 100%" },
+    icon: { src: `${iconBase}/photo-restoration.png` },
     title: "Photo restoration services",
     copy: "Deliver higher-quality results faster with AI-powered enhancement.",
   },
   {
-    icon: { position: "40% 100%" },
+    icon: { src: `${iconBase}/face-profile.png` },
     title: "Creators & digital artists",
     copy: "Enhance references, concepts, and artwork with more detail and clarity.",
   },
   {
-    icon: { src: wideIconSheet, position: "40% 66.67%", size: "600% 500%" },
+    icon: { src: `${iconBase}/museum-projects.png` },
     title: "Museums & heritage projects",
     copy: "Prepare images for exhibitions, publications, and educational materials.",
   },
   {
-    icon: { src: wideIconSheet, position: "80% 100%", size: "600% 500%" },
+    icon: { src: `${iconBase}/print-shops.png` },
     title: "Print shops & studios",
     copy: "Produce print-ready files with clean detail and balanced contrast.",
   },
   {
-    icon: { src: wideIconSheet, position: "100% 100%", size: "600% 500%" },
+    icon: { src: `${iconBase}/brands-businesses.png` },
     title: "Brands & businesses",
     copy: "Improve visual assets for marketing, storytelling, and brand heritage.",
   },
@@ -196,7 +193,7 @@ export default function Home() {
 
 function HeroSection({ onCta }: { onCta: () => void }) {
   return (
-    <section className="relative overflow-hidden bg-black">
+    <section className="relative min-h-[720px] overflow-hidden bg-black">
       <nav className="absolute left-0 right-0 top-0 z-30 mx-auto flex h-20 max-w-6xl items-center justify-between px-6">
         <Link href="/" aria-label="clar1ty home">
           <ClarityLogo className="h-9 w-auto drop-shadow-[0_0_10px_rgba(211,155,62,0.45)]" width={130} height={40} />
@@ -209,8 +206,22 @@ function HeroSection({ onCta }: { onCta: () => void }) {
         </div>
       </nav>
 
-      <div className="mx-auto grid min-h-[720px] max-w-[1600px] items-center px-6 py-20 pt-28 lg:grid-cols-[0.42fr_0.58fr] lg:px-24">
-        <div className="relative z-10">
+      <div className="absolute inset-y-0 right-0 w-full lg:w-[58vw]">
+        <Image
+          src="/images/landing/comparisons/hero-after.jpg"
+          alt="Enhanced ASEAN portrait"
+          fill
+          sizes="(min-width: 1024px) 58vw, 100vw"
+          priority
+          className="object-cover object-center"
+        />
+        <div className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-black via-black/70 to-transparent" />
+        <div className="absolute inset-y-0 right-0 w-1/5 bg-gradient-to-l from-black/80 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black to-transparent" />
+      </div>
+
+      <div className="relative z-10 mx-auto flex min-h-[720px] max-w-[1600px] items-center px-6 pt-28 lg:px-24">
+        <div className="max-w-[520px] py-20">
           <h1 className="text-5xl font-light leading-[1.13] tracking-[0.01em] text-white md:text-6xl">
             Restore
             <br />
@@ -227,14 +238,6 @@ function HeroSection({ onCta }: { onCta: () => void }) {
             Upload image
           </Button>
         </div>
-        <LiveComparison
-          beforeImage="/images/landing/comparisons/hero-before.jpg"
-          afterImage="/images/landing/comparisons/hero-after.jpg"
-          beforeAlt="Old damaged ASEAN portrait"
-          afterAlt="Upscaled ASEAN portrait"
-          className="h-[560px]"
-          priority
-        />
       </div>
     </section>
   )
@@ -256,7 +259,7 @@ function UploadSection({ onCta }: { onCta: () => void }) {
             onClick={onCta}
             className="mx-auto mt-12 flex h-72 w-full max-w-[330px] flex-col items-center justify-center border border-dashed border-[#5f5446] bg-[#968d7e] text-center transition hover:bg-[#a09788]"
           >
-            <IconCrop icon={{ position: "0% 33.33%" }} className="h-20 w-20 rounded-full bg-[#efe8dc]" />
+            <IconCrop icon={{ src: `${iconBase}/upload-cloud.png` }} className="h-20 w-20 rounded-full bg-[#efe8dc]" />
             <span className="mt-7 text-[13px] font-semibold text-white">Drop or select your image here</span>
             <span className="mt-2 text-[12px] text-[#f3eee5]">Browse PNG, JPG, WebP</span>
             <span className="mt-7 text-[12px] text-[#f3eee5]">Up to 10 MB</span>
@@ -267,7 +270,7 @@ function UploadSection({ onCta }: { onCta: () => void }) {
         </div>
         <div className="flex items-center justify-center px-8 py-16">
           <div className="text-center">
-            <IconCrop icon={{ position: "0% 33.33%" }} className="mx-auto h-20 w-20 rounded-full bg-[#efe8dc]" />
+            <IconCrop icon={{ src: `${iconBase}/upload-cloud.png` }} className="mx-auto h-20 w-20 rounded-full bg-[#efe8dc]" />
             <h3 className="mt-10 text-[15px] font-semibold text-white">No images upscaled yet</h3>
             <p className="mt-8 text-[13px] text-[#eee5d8]">Upload an image to upscale it</p>
           </div>
@@ -557,13 +560,10 @@ function IconCrop({ icon, className = "" }: { icon: IconSpec; className?: string
   return (
     <span
       aria-hidden="true"
-      className={`block bg-black bg-no-repeat ${className}`}
-      style={{
-        backgroundImage: `url(${icon.src ?? iconSheet})`,
-        backgroundPosition: icon.position,
-        backgroundSize: icon.size ?? "600% 400%",
-      }}
-    />
+      className={`relative block overflow-hidden bg-black ${className}`}
+    >
+      <Image src={icon.src} alt="" fill sizes="128px" className="object-contain" />
+    </span>
   )
 }
 
