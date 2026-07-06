@@ -33,13 +33,13 @@ const contextCards = [
   {
     title: "GENERIC UPSCALER",
     subtitle: "Changes what matters",
-    image: "/images/landing/comparisons/generic-upscaler.jpg",
+    image: "/images/landing/comparisons/generic-clar1ty.jpg",
     points: ["Altered faces", "Changed details", "Lost authenticity"],
   },
   {
     title: "CLAR1TY ENHANCED",
     subtitle: "Identity-preserved result",
-    image: "/images/landing/comparisons/generic-clar1ty.jpg",
+    image: "/images/landing/comparisons/generic-upscaler.jpg",
     points: ["True to originals", "Cultural details kept", "Clear & authentic"],
   },
 ]
@@ -194,7 +194,7 @@ export default function Home() {
 function HeroSection({ onCta }: { onCta: () => void }) {
   return (
     <section className="relative min-h-[720px] overflow-hidden bg-black">
-      <nav className="absolute left-0 right-0 top-0 z-30 mx-auto flex h-20 max-w-6xl items-center justify-between px-6">
+      <nav className="absolute left-1/2 top-5 z-30 flex h-16 w-[calc(100%-3rem)] max-w-6xl -translate-x-1/2 items-center justify-between rounded-full border border-white/10 bg-black/35 px-6 shadow-[0_18px_60px_rgba(0,0,0,0.35)] backdrop-blur-xl">
         <Link href="/" aria-label="clar1ty home">
           <ClarityLogo className="h-9 w-auto drop-shadow-[0_0_10px_rgba(211,155,62,0.45)]" width={130} height={40} />
         </Link>
