@@ -204,7 +204,7 @@ function HeroSection({ onCta }: { onCta: () => void }) {
           <a href="#use-cases" className="hover:text-[#d7a957]">Use Cases</a>
           <a href="#how-it-works" className="hover:text-[#d7a957]">How It Works</a>
           <Link href="/pricing" className="hover:text-[#d7a957]">Pricing</Link>
-          <a href="mailto:info@clar1ty.art" className="hover:text-[#d7a957]">info@clar1ty.art</a>
+          <Link href="/support" className="hover:text-[#d7a957]">Support</Link>
           <Link href="/enhance" className="rounded-full border border-[#c9953d]/40 px-4 py-2 text-[#f0d59c] hover:border-[#c9953d] hover:text-white">
             Login
           </Link>
