@@ -209,16 +209,13 @@ function HeroSection({ onCta }: { onCta: () => void }) {
       <div className="absolute inset-y-0 right-0 w-full lg:w-[58vw]">
         <LiveComparison
           beforeImage="/images/landing/comparisons/hero-before-new.png"
-          afterImage="/images/landing/comparisons/hero-after-new.jpg"
+          afterImage="/images/landing/comparisons/hero-after-new.png"
           beforeAlt="Original ASEAN portrait"
           afterAlt="Enhanced ASEAN portrait"
           className="h-full"
           sizes="(min-width: 1024px) 58vw, 100vw"
           priority
         />
-        <div className="pointer-events-none absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-black via-black/70 to-transparent" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-1/5 bg-gradient-to-l from-black/80 to-transparent" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black to-transparent" />
       </div>
 
       <div className="relative z-10 mx-auto flex min-h-[720px] max-w-[1600px] items-center px-6 pt-28 lg:px-24">
