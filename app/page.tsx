@@ -262,7 +262,7 @@ function UploadSection({ onCta }: { onCta: () => void }) {
             onClick={onCta}
             className="mx-auto mt-12 flex h-72 w-full max-w-[330px] flex-col items-center justify-center border border-dashed border-[#5f5446] bg-[#968d7e] text-center transition hover:bg-[#a09788]"
           >
-            <IconCrop icon={{ src: iconSvg("upload-cloud") }} className="h-20 w-20 rounded-full bg-[#efe8dc]" />
+            <IconCrop icon={{ src: iconSvg("upload-cloud") }} className="h-20 w-20" />
             <span className="mt-7 text-[13px] font-semibold text-white">Drop or select your image here</span>
             <span className="mt-2 text-[12px] text-[#f3eee5]">Browse PNG, JPG, WebP</span>
             <span className="mt-7 text-[12px] text-[#f3eee5]">Up to 10 MB</span>
@@ -273,7 +273,7 @@ function UploadSection({ onCta }: { onCta: () => void }) {
         </div>
         <div className="flex items-center justify-center px-8 py-16">
           <div className="text-center">
-            <IconCrop icon={{ src: iconSvg("upload-cloud") }} className="mx-auto h-20 w-20 rounded-full bg-[#efe8dc]" />
+            <IconCrop icon={{ src: iconSvg("upload-cloud") }} className="mx-auto h-20 w-20" />
             <h3 className="mt-10 text-[15px] font-semibold text-white">No images upscaled yet</h3>
             <p className="mt-8 text-[13px] text-[#eee5d8]">Upload an image to upscale it</p>
           </div>
@@ -340,7 +340,7 @@ function EnhancementSection() {
           {enhancementComparisons.map((item) => (
             <article key={item.title} className="grid min-h-[310px] grid-cols-1 bg-[#111111] md:grid-cols-[0.42fr_0.58fr]">
               <div className="p-9">
-                <IconCrop icon={item.icon} className="h-16 w-16 border border-[#ad7d2e]" />
+                <IconCrop icon={item.icon} className="h-16 w-16" />
                 <h3 className="mt-14 text-[13px] font-medium uppercase tracking-[0.06em] text-[#b9822c]">{item.title}</h3>
                 <p className="mt-10 text-[15px] leading-7 text-[#e1d9ce]">{item.copy}</p>
               </div>
@@ -364,7 +364,7 @@ function StepsSection() {
           {steps.map((step, index) => (
             <article key={step.title} className="relative rounded-xl bg-black px-12 py-16 shadow-[0_0_28px_rgba(0,0,0,0.6)]">
               {index < steps.length - 1 ? <ArrowRight className="absolute -right-9 top-1/2 hidden h-6 w-6 text-[#b9822c] lg:block" /> : null}
-              <IconCrop icon={step.icon} className="mx-auto h-24 w-24 rounded-md border border-[#c79b4b]" />
+              <IconCrop icon={step.icon} className="mx-auto h-24 w-24" />
               <h3 className="mt-10 text-lg font-semibold text-white">{step.title}</h3>
               <p className="mt-5 text-[13px] leading-6 text-[#d8d0c4]">{step.copy}</p>
             </article>
@@ -387,7 +387,7 @@ function QualitySection() {
         <div className="mt-16 grid gap-8 lg:grid-cols-2">
           {qualityItems.map((item) => (
             <article key={item.title} className="flex items-center gap-8 rounded-lg bg-[#837763] p-5 shadow-[0_10px_24px_rgba(0,0,0,0.45)]">
-              <IconCrop icon={item.icon} className="h-24 w-24 shrink-0 rounded-full bg-black" />
+              <IconCrop icon={item.icon} className="h-24 w-24 shrink-0" />
               <div>
                 <h3 className="text-lg font-semibold text-white">{item.title}</h3>
                 <p className="mt-5 text-[13px] leading-6 text-[#f1eadf]">{item.copy}</p>
@@ -453,7 +453,7 @@ function UseCasesSection() {
         <div className="mt-20 grid gap-14 lg:grid-cols-3">
           {useCases.map((card) => (
             <article key={card.title} className="grid min-h-[220px] grid-cols-[0.48fr_0.52fr] items-center rounded-xl border border-[#34302a] bg-black p-8 text-left shadow-[0_0_28px_rgba(214,188,117,0.28)]">
-              <IconCrop icon={card.icon} className="h-28 w-28 rounded-md border border-[#b88a32]" />
+              <IconCrop icon={card.icon} className="h-28 w-28" />
               <div>
                 <h3 className="text-[14px] font-semibold leading-5 text-white">{card.title}</h3>
                 <p className="mt-8 text-[13px] leading-6 text-[#d8d0c4]">{card.copy}</p>
@@ -563,7 +563,7 @@ function IconCrop({ icon, className = "" }: { icon: IconSpec; className?: string
   return (
     <span
       aria-hidden="true"
-      className={`relative block overflow-hidden bg-black ${className}`}
+      className={`relative block overflow-hidden ${className}`}
     >
       <img src={icon.src} alt="" className="h-full w-full object-contain" loading="lazy" decoding="async" />
     </span>
