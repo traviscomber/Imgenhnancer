@@ -544,9 +544,18 @@ function IconCrop({ icon, className = "" }: { icon: IconSpec; className?: string
     <span
       aria-hidden="true"
       className={`relative block ${className}`}
-      style={{ mixBlendMode: "screen" }}
     >
-      <img src={icon.src} alt="" className="h-full w-full object-contain" loading="lazy" decoding="async" />
+      <img 
+        src={icon.src} 
+        alt="" 
+        className="h-full w-full object-contain" 
+        loading="lazy" 
+        decoding="async"
+        style={{ 
+          mixBlendMode: "lighten",
+          filter: "drop-shadow(0 0 1px rgba(0,0,0,0))"
+        }}
+      />
     </span>
   )
 }
