@@ -6,6 +6,7 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "next lint",
+    "icons:svg": "node scripts/regenerate-icon-svgs.mjs",
     "start": "next start",
     "vercel-build": "next build"
   },

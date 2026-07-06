@@ -21,7 +21,7 @@ type IconSpec = {
   src: string
 }
 
-const iconBase = "/images/landing/icons"
+const iconBase = "/images/landing/icons-svg"
 
 const contextCards = [
   {
@@ -198,11 +198,15 @@ function HeroSection({ onCta }: { onCta: () => void }) {
         <Link href="/" aria-label="clar1ty home">
           <ClarityLogo className="h-9 w-auto drop-shadow-[0_0_10px_rgba(211,155,62,0.45)]" width={130} height={40} />
         </Link>
-        <div className="hidden items-center gap-10 text-[11px] font-medium text-[#e8dfd0] md:flex">
+        <div className="hidden items-center gap-8 text-[11px] font-medium text-[#e8dfd0] md:flex">
           <a href="#features" className="hover:text-[#d7a957]">Features</a>
           <a href="#use-cases" className="hover:text-[#d7a957]">Use Cases</a>
           <a href="#how-it-works" className="hover:text-[#d7a957]">How It Works</a>
           <Link href="/pricing" className="hover:text-[#d7a957]">Pricing</Link>
+          <a href="mailto:info@clar1ty.art" className="hover:text-[#d7a957]">info@clar1ty.art</a>
+          <Link href="/enhance" className="rounded-full border border-[#c9953d]/40 px-4 py-2 text-[#f0d59c] hover:border-[#c9953d] hover:text-white">
+            Login
+          </Link>
         </div>
       </nav>
 
