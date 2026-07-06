@@ -1,8 +1,10 @@
 "use client"
 
 import Image from "next/image"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
+import { ArrowRight, Lock, Shield, UserRound } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ClarityLogo } from "@/components/clarity-logo"
 import { trackCTAClick } from "@/lib/analytics"
@@ -15,71 +17,39 @@ type CompareImage = {
   afterAlt: string
 }
 
-type ReferenceSectionConfig = {
-  id: string
-  src: string
-  alt: string
-  ratio: number
-  objectFit?: "contain" | "cover"
-  objectPosition?: string
-  cta?: {
-    source: string
-    className: string
-  }
+type IconSpec = {
+  src?: string
+  position: string
+  size?: string
 }
 
-const referenceSections: ReferenceSectionConfig[] = [
+const iconSheet = "/images/landing/icons-grid-square.jpg"
+const wideIconSheet = "/images/landing/icons-grid-wide.jpg"
+
+const contextCards = [
   {
-    id: "upload",
-    src: "/images/landing/upload-reference.jpg",
-    alt: "Upload image section reference",
-    ratio: 1280 / 720,
-    cta: { source: "upload_section", className: "left-[10%] top-[70%] h-[6%] w-[22%]" },
+    title: "ORIGINAL ARCHIVE",
+    subtitle: "Low-quality source",
+    image: "/images/landing/comparisons/archive-before.png",
+    points: ["Faded & noisy", "Low detail", "Hard to read"],
   },
   {
-    id: "features",
-    src: "/images/landing/context-reference.jpg",
-    alt: "Context preservation comparison section reference",
-    ratio: 1280 / 960,
-    cta: { source: "context_section", className: "left-[37%] top-[84%] h-[6%] w-[26%]" },
+    title: "GENERIC UPSCALER",
+    subtitle: "Changes what matters",
+    image: "/images/landing/comparisons/archive-after.png",
+    points: ["Altered faces", "Changed details", "Lost authenticity"],
   },
   {
-    id: "how-it-works",
-    src: "/images/landing/steps-reference.jpg",
-    alt: "Simple fast effective steps section reference",
-    ratio: 1280 / 681,
-  },
-  {
-    id: "quality",
-    src: "/images/landing/quality-reference.jpg",
-    alt: "Better quality same identity section reference",
-    ratio: 1280 / 816,
-  },
-  {
-    id: "use-cases",
-    src: "/images/landing/use-cases-reference.jpg",
-    alt: "For people projects and purpose section reference",
-    ratio: 1280 / 1004,
-  },
-  {
-    id: "privacy",
-    src: "/images/landing/logo-portrait-strip.jpg",
-    alt: "Clar1ty logo, privacy copy, and ASEAN portrait strip reference",
-    ratio: 1280 / 1080,
-  },
-  {
-    id: "cta",
-    src: "/images/landing/cta-and-collage.jpg",
-    alt: "Secure private simple CTA and final photo collage reference",
-    ratio: 1098 / 1280,
-    cta: { source: "bottom_cta", className: "left-[56%] top-[12%] h-[4.5%] w-[22%]" },
+    title: "CLAR1TY ENHANCED",
+    subtitle: "Identity-preserved result",
+    image: "/images/landing/comparisons/archive-after.png",
+    points: ["True to originals", "Cultural details kept", "Clear & authentic"],
   },
 ]
 
 const enhancementComparisons = [
   {
-    icon: "/images/landing/icons-grid-square.jpg",
-    iconPosition: "0% 0%",
+    icon: { position: "0% 0%" },
     title: "ARCHIVE SCAN",
     copy: "Clean scans, reduce scratches, and improve faded printed photos.",
     beforeImage: "/images/landing/comparisons/archive-before.png",
@@ -88,8 +58,7 @@ const enhancementComparisons = [
     afterAlt: "Upscaled archive scan",
   },
   {
-    icon: "/images/landing/icons-grid-square.jpg",
-    iconPosition: "60% 33.33%",
+    icon: { position: "60% 33.33%" },
     title: "ASEAN PORTRAIT PRESERVE",
     copy: "Enhance portraits while preserving facial identity and natural skin tones.",
     beforeImage: "/images/landing/comparisons/hero-before.jpg",
@@ -98,8 +67,7 @@ const enhancementComparisons = [
     afterAlt: "Upscaled ASEAN portrait",
   },
   {
-    icon: "/images/landing/icons-grid-square.jpg",
-    iconPosition: "80% 66.67%",
+    icon: { position: "80% 66.67%" },
     title: "HERITAGE RESTORE",
     copy: "Clar1ty.art restores clarity without erasing who people are.",
     beforeImage: "/images/landing/comparisons/heritage-before.jpg",
@@ -108,8 +76,7 @@ const enhancementComparisons = [
     afterAlt: "Upscaled heritage image",
   },
   {
-    icon: "/images/landing/icons-grid-square.jpg",
-    iconPosition: "80% 0%",
+    icon: { position: "80% 0%" },
     title: "DIGITAL ART UPSCALE",
     copy: "Upscale digital art, illustrations, and concepts without losing style. Print Ready",
     beforeImage: "/images/landing/comparisons/digital-before.jpg",
@@ -117,6 +84,88 @@ const enhancementComparisons = [
     beforeAlt: "Low resolution digital art",
     afterAlt: "Upscaled digital art",
   },
+]
+
+const steps = [
+  {
+    icon: { position: "0% 33.33%" },
+    title: "Upload your image",
+    copy: "Start with a heritage photo, portrait, archive scan, low-resolution file, or digital artwork.",
+  },
+  {
+    icon: { position: "20% 33.33%" },
+    title: "Choose your preset",
+    copy: "Select the enhancement mode that matches your image. Clar1ty applies the right treatment automatically.",
+  },
+  {
+    icon: { position: "40% 33.33%" },
+    title: "Download your result",
+    copy: "Receive a cleaner, sharper, higher-resolution image ready for digital use, print, or archive.",
+  },
+]
+
+const qualityItems = [
+  { icon: { position: "60% 33.33%" }, title: "Face Preservation", copy: "Protects facial structure and expressions." },
+  { icon: { position: "80% 33.33%" }, title: "Natural tones", copy: "Keeps skin tones and colors true." },
+  { icon: { position: "100% 33.33%" }, title: "Real detail", copy: "Brings out textures, edges, and fine detail." },
+  { icon: { position: "0% 66.67%" }, title: "Cultural respect", copy: "Enhances without altering cultural elements." },
+  { icon: { position: "20% 66.67%" }, title: "Balanced results", copy: "No over-processing. Just the right touch." },
+  { icon: { position: "40% 66.67%" }, title: "High resolution", copy: "Sharper images for modern use and printing." },
+]
+
+const useCases = [
+  {
+    icon: { position: "0% 100%" },
+    title: "Cultural archives",
+    copy: "Restore and preserve historical photographs and documents.",
+  },
+  {
+    icon: { position: "20% 100%" },
+    title: "Photo restoration services",
+    copy: "Deliver higher-quality results faster with AI-powered enhancement.",
+  },
+  {
+    icon: { position: "40% 100%" },
+    title: "Creators & digital artists",
+    copy: "Enhance references, concepts, and artwork with more detail and clarity.",
+  },
+  {
+    icon: { src: wideIconSheet, position: "40% 66.67%", size: "600% 500%" },
+    title: "Museums & heritage projects",
+    copy: "Prepare images for exhibitions, publications, and educational materials.",
+  },
+  {
+    icon: { src: wideIconSheet, position: "80% 100%", size: "600% 500%" },
+    title: "Print shops & studios",
+    copy: "Produce print-ready files with clean detail and balanced contrast.",
+  },
+  {
+    icon: { src: wideIconSheet, position: "100% 100%", size: "600% 500%" },
+    title: "Brands & businesses",
+    copy: "Improve visual assets for marketing, storytelling, and brand heritage.",
+  },
+]
+
+const portraitStrip = [
+  "/images/landing/comparisons/hero-after.jpg",
+  "/images/landing/comparisons/portrait-after-alt.jpg",
+  "/images/landing/comparisons/child-after.jpg",
+  "/images/landing/comparisons/elder-after.jpg",
+  "/images/landing/comparisons/hero-after.jpg",
+]
+
+const finalPrints = [
+  "/images/landing/comparisons/child-after.jpg",
+  "/images/landing/comparisons/heritage-after.jpg",
+  "/images/landing/comparisons/archive-after.png",
+  "/images/landing/comparisons/digital-after.jpg",
+  "/images/landing/comparisons/hero-after.jpg",
+]
+
+const securityItems = [
+  { title: "Secure processing", copy: "Your images are encrypted and processed safely.", Icon: Shield },
+  { title: "No unnecessary storage", copy: "We save nothing you don't ask us to.", Icon: Lock },
+  { title: "Your images stay yours", copy: "You own your images. Always.", Icon: UserRound },
 ]
 
 export default function Home() {
@@ -130,34 +179,38 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-black text-[#efe8dc]">
-      <main>
-        <HeroSection onCta={() => openEnhancer("hero")} />
-        <ReferenceSection section={getSection("upload")} onCta={openEnhancer} />
-        <ReferenceSection section={getSection("features")} onCta={openEnhancer} />
-        <EnhancementSection />
-        <ReferenceSection section={getSection("how-it-works")} onCta={openEnhancer} />
-        <ReferenceSection section={getSection("quality")} onCta={openEnhancer} />
-        <FacesSection />
-        <ReferenceSection section={getSection("use-cases")} onCta={openEnhancer} />
-        <ReferenceSection section={getSection("privacy")} onCta={openEnhancer} />
-        <ReferenceSection section={getSection("cta")} onCta={openEnhancer} />
-      </main>
+      <HeroSection onCta={() => openEnhancer("hero")} />
+      <UploadSection onCta={() => openEnhancer("upload_section")} />
+      <ContextSection onCta={() => openEnhancer("context_section")} />
+      <EnhancementSection />
+      <StepsSection />
+      <QualitySection />
+      <FacesSection />
+      <UseCasesSection />
+      <PrivacyStrip />
+      <CtaSection onCta={() => openEnhancer("bottom_cta")} />
+      <FinalCollage />
     </div>
   )
-}
-
-function getSection(id: string) {
-  const section = referenceSections.find((item) => item.id === id)
-  if (!section) throw new Error(`Missing landing section: ${id}`)
-  return section
 }
 
 function HeroSection({ onCta }: { onCta: () => void }) {
   return (
     <section className="relative overflow-hidden bg-black">
-      <div className="mx-auto grid min-h-[720px] max-w-[1600px] items-center px-6 py-20 lg:grid-cols-[0.42fr_0.58fr] lg:px-24">
+      <nav className="absolute left-0 right-0 top-0 z-30 mx-auto flex h-20 max-w-6xl items-center justify-between px-6">
+        <Link href="/" aria-label="clar1ty home">
+          <ClarityLogo className="h-9 w-auto drop-shadow-[0_0_10px_rgba(211,155,62,0.45)]" width={130} height={40} />
+        </Link>
+        <div className="hidden items-center gap-10 text-[11px] font-medium text-[#e8dfd0] md:flex">
+          <a href="#features" className="hover:text-[#d7a957]">Features</a>
+          <a href="#use-cases" className="hover:text-[#d7a957]">Use Cases</a>
+          <a href="#how-it-works" className="hover:text-[#d7a957]">How It Works</a>
+          <Link href="/pricing" className="hover:text-[#d7a957]">Pricing</Link>
+        </div>
+      </nav>
+
+      <div className="mx-auto grid min-h-[720px] max-w-[1600px] items-center px-6 py-20 pt-28 lg:grid-cols-[0.42fr_0.58fr] lg:px-24">
         <div className="relative z-10">
-          <ClarityLogo className="mb-24 h-9 w-auto drop-shadow-[0_0_10px_rgba(211,155,62,0.45)]" width={130} height={40} />
           <h1 className="text-5xl font-light leading-[1.13] tracking-[0.01em] text-white md:text-6xl">
             Restore
             <br />
@@ -187,6 +240,87 @@ function HeroSection({ onCta }: { onCta: () => void }) {
   )
 }
 
+function UploadSection({ onCta }: { onCta: () => void }) {
+  return (
+    <section className="bg-[#7d715f]">
+      <div className="mx-auto grid min-h-[720px] max-w-[1600px] lg:grid-cols-[0.39fr_0.61fr]">
+        <div className="bg-[#8c8374] px-8 py-16 lg:px-28">
+          <h2 className="text-5xl font-light tracking-[0.04em] text-[#e9e0d4]">Upload image</h2>
+          <p className="mt-16 text-center text-[13px] leading-6 text-white">
+            Natural skin tones. Real facial structure.
+            <br />
+            Local visual character. Cultural detail.
+          </p>
+          <button
+            type="button"
+            onClick={onCta}
+            className="mx-auto mt-12 flex h-72 w-full max-w-[330px] flex-col items-center justify-center border border-dashed border-[#5f5446] bg-[#968d7e] text-center transition hover:bg-[#a09788]"
+          >
+            <IconCrop icon={{ position: "0% 33.33%" }} className="h-20 w-20 rounded-full bg-[#efe8dc]" />
+            <span className="mt-7 text-[13px] font-semibold text-white">Drop or select your image here</span>
+            <span className="mt-2 text-[12px] text-[#f3eee5]">Browse PNG, JPG, WebP</span>
+            <span className="mt-7 text-[12px] text-[#f3eee5]">Up to 10 MB</span>
+          </button>
+          <Button onClick={onCta} className="mx-auto mt-10 flex h-12 w-full max-w-[330px] rounded-none bg-[#241b13] text-[12px] text-white hover:bg-[#34271d]">
+            Upscale Image
+          </Button>
+        </div>
+        <div className="flex items-center justify-center px-8 py-16">
+          <div className="text-center">
+            <IconCrop icon={{ position: "0% 33.33%" }} className="mx-auto h-20 w-20 rounded-full bg-[#efe8dc]" />
+            <h3 className="mt-10 text-[15px] font-semibold text-white">No images upscaled yet</h3>
+            <p className="mt-8 text-[13px] text-[#eee5d8]">Upload an image to upscale it</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function ContextSection({ onCta }: { onCta: () => void }) {
+  return (
+    <section id="features" className="bg-black px-6 py-24">
+      <div className="mx-auto max-w-[1280px] text-center">
+        <h2 className="text-4xl font-light leading-tight tracking-[0.08em] text-[#e6ded2] md:text-5xl">
+          Generic AI-tools upscale pixels.
+          <br />
+          Clar1ty preserves context.
+        </h2>
+        <div className="mx-auto mt-12 h-9 w-40 border-y border-[#32291f]" />
+        <p className="mx-auto mt-10 max-w-3xl text-[13px] leading-6 text-[#d8d0c4]">
+          ASEAN images carry faces, skin tones, textiles, architecture, ornaments, symbols, and visual identity.
+          Generic upscalers often alter faces, attire and design. Clar1ty is built to preserve what matters.
+        </p>
+        <div className="mt-16 grid gap-7 lg:grid-cols-3">
+          {contextCards.map((card) => (
+            <article key={card.title} className="text-left">
+              <div className="relative h-[260px] overflow-hidden border border-[#2b241d] bg-[#11100f]">
+                <Image src={card.image} alt={card.title} fill sizes="33vw" className="object-cover object-center" />
+              </div>
+              <div className="border border-[#231d17] bg-[#080706] p-5">
+                <h3 className="text-[13px] font-medium tracking-[0.08em] text-[#d2a450]">{card.title}</h3>
+                <p className="mt-1 text-[12px] text-[#b5aa9a]">{card.subtitle}</p>
+                <div className="mt-5 flex flex-wrap gap-3 text-[11px] text-[#d9d0c2]">
+                  {card.points.map((point) => (
+                    <span key={point} className="flex items-center gap-2">
+                      <CheckDot />
+                      {point}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+        <Button onClick={onCta} className="mt-24 h-12 rounded-none bg-[#8b7d6a] px-20 text-[12px] font-semibold uppercase text-white hover:bg-[#a28f76]">
+          TRY CLAR1TY ON YOUR IMAGE
+        </Button>
+        <p className="mt-5 text-[12px] text-[#8f8678]">Secure, private, and encrypted</p>
+      </div>
+    </section>
+  )
+}
+
 function EnhancementSection() {
   return (
     <section id="enhancement" className="bg-black px-6 py-24">
@@ -198,13 +332,60 @@ function EnhancementSection() {
         </div>
         <div className="mt-20 grid gap-12 lg:grid-cols-2">
           {enhancementComparisons.map((item) => (
-            <article key={item.title} className="grid min-h-[310px] grid-cols-[0.42fr_0.58fr] bg-[#111111]">
+            <article key={item.title} className="grid min-h-[310px] grid-cols-1 bg-[#111111] md:grid-cols-[0.42fr_0.58fr]">
               <div className="p-9">
-                <IconCrop src={item.icon} position={item.iconPosition} className="h-16 w-16 border border-[#ad7d2e]" />
+                <IconCrop icon={item.icon} className="h-16 w-16 border border-[#ad7d2e]" />
                 <h3 className="mt-14 text-[13px] font-medium uppercase tracking-[0.06em] text-[#b9822c]">{item.title}</h3>
                 <p className="mt-10 text-[15px] leading-7 text-[#e1d9ce]">{item.copy}</p>
               </div>
-              <LiveComparison {...item} className="h-full min-h-[310px]" />
+              <LiveComparison {...item} className="h-[310px] md:h-full" />
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function StepsSection() {
+  return (
+    <section id="how-it-works" className="bg-[#151515] px-6 py-24">
+      <div className="mx-auto max-w-[1280px] text-center">
+        <h2 className="text-4xl font-light uppercase tracking-[0.08em] text-[#d7c4a7]">SIMPLE. FAST. EFFECTIVE.</h2>
+        <p className="mt-14 text-[12px] font-semibold text-white">How it works</p>
+        <p className="mt-2 text-[12px] text-[#d8d0c4]">Three easy steps to restore and enhance your images.</p>
+        <div className="mt-20 grid gap-14 lg:grid-cols-3">
+          {steps.map((step, index) => (
+            <article key={step.title} className="relative rounded-xl bg-black px-12 py-16 shadow-[0_0_28px_rgba(0,0,0,0.6)]">
+              {index < steps.length - 1 ? <ArrowRight className="absolute -right-9 top-1/2 hidden h-6 w-6 text-[#b9822c] lg:block" /> : null}
+              <IconCrop icon={step.icon} className="mx-auto h-24 w-24 rounded-md border border-[#c79b4b]" />
+              <h3 className="mt-10 text-lg font-semibold text-white">{step.title}</h3>
+              <p className="mt-5 text-[13px] leading-6 text-[#d8d0c4]">{step.copy}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function QualitySection() {
+  return (
+    <section className="bg-[#33271d] px-6 py-24">
+      <div className="mx-auto max-w-[1280px]">
+        <div className="text-center">
+          <h2 className="text-4xl font-light uppercase tracking-[0.08em] text-[#d2c6b6]">BETTER QUALITY. SAME IDENTITY</h2>
+          <p className="mt-14 text-[12px] font-semibold text-white">How it works</p>
+          <p className="mt-2 text-[12px] text-[#d8d0c4]">Three easy steps to restore and enhance your images.</p>
+        </div>
+        <div className="mt-16 grid gap-8 lg:grid-cols-2">
+          {qualityItems.map((item) => (
+            <article key={item.title} className="flex items-center gap-8 rounded-lg bg-[#837763] p-5 shadow-[0_10px_24px_rgba(0,0,0,0.45)]">
+              <IconCrop icon={item.icon} className="h-24 w-24 shrink-0 rounded-full bg-black" />
+              <div>
+                <h3 className="text-lg font-semibold text-white">{item.title}</h3>
+                <p className="mt-5 text-[13px] leading-6 text-[#f1eadf]">{item.copy}</p>
+              </div>
             </article>
           ))}
         </div>
@@ -215,7 +396,7 @@ function EnhancementSection() {
 
 function FacesSection() {
   return (
-    <section id="faces" className="bg-black px-0 py-28">
+    <section id="faces" className="bg-black px-6 py-28">
       <div className="mx-auto grid max-w-[1280px] gap-10 lg:grid-cols-[0.69fr_0.31fr]">
         <div className="grid gap-6 md:grid-cols-2">
           <LiveComparison
@@ -251,50 +432,143 @@ function FacesSection() {
   )
 }
 
-function ReferenceSection({
-  section,
-  onCta,
-}: {
-  section: ReferenceSectionConfig
-  onCta: (source: string) => void
-}) {
+function UseCasesSection() {
   return (
-    <section id={section.id} className="bg-black">
-      <div className="relative mx-auto w-full max-w-[1600px]" style={{ aspectRatio: String(section.ratio) }}>
-        <Image
-          src={section.src}
-          alt={section.alt}
-          fill
-          sizes="100vw"
-          className={section.objectFit === "cover" ? "object-cover" : "object-contain"}
-          style={{ objectPosition: section.objectPosition ?? "top" }}
-          priority={section.id === "hero"}
-        />
-        {section.cta ? (
-          <button
-            type="button"
-            aria-label="Upload your image"
-            onClick={() => onCta(section.cta.source)}
-            className={`absolute z-10 ${section.cta.className}`}
-          />
-        ) : null}
+    <section id="use-cases" className="bg-black px-6 py-24">
+      <div className="mx-auto max-w-[1280px] text-center">
+        <h2 className="text-4xl font-light uppercase tracking-[0.08em] text-[#c9b493]">FOR PEOPLE, PROJECTS, AND PURPOSE</h2>
+        <p className="mt-16 text-[12px] font-semibold text-white">Who uses Clar1ty?</p>
+        <p className="mx-auto mt-4 max-w-[520px] text-[13px] leading-6 text-[#d8d0c4]">
+          Trusted by individuals, professionals, and institutions across Southeast Asia and beyond.
+          <br />
+          <br />
+          Improve visual assets for marketing, storytelling, and brand heritage.
+        </p>
+        <div className="mt-20 grid gap-14 lg:grid-cols-3">
+          {useCases.map((card) => (
+            <article key={card.title} className="grid min-h-[220px] grid-cols-[0.48fr_0.52fr] items-center rounded-xl border border-[#34302a] bg-black p-8 text-left shadow-[0_0_28px_rgba(214,188,117,0.28)]">
+              <IconCrop icon={card.icon} className="h-28 w-28 rounded-md border border-[#b88a32]" />
+              <div>
+                <h3 className="text-[14px] font-semibold leading-5 text-white">{card.title}</h3>
+                <p className="mt-8 text-[13px] leading-6 text-[#d8d0c4]">{card.copy}</p>
+              </div>
+            </article>
+          ))}
+        </div>
       </div>
     </section>
   )
 }
 
-function IconCrop({ src, position, className = "" }: { src: string; position: string; className?: string }) {
+function PrivacyStrip() {
+  return (
+    <section className="bg-black px-6 py-20">
+      <div className="mx-auto grid max-w-[1280px] items-center gap-16 lg:grid-cols-[0.7fr_0.3fr]">
+        <ClarityLogo className="h-36 w-auto drop-shadow-[0_0_18px_rgba(211,155,62,0.55)]" width={620} height={150} />
+        <div>
+          <h2 className="text-4xl font-light leading-tight text-[#c9a057]">
+            Secure, private,
+            <br />
+            and simple
+          </h2>
+          <p className="mt-16 text-[13px] leading-7 text-[#d8d0c4]">
+            All images are encrypted and processed safely.
+            <br />
+            No unnecessary storage.
+            <br />
+            We save nothing you do not ask us to.
+            <br />
+            Your images stay yours
+          </p>
+          <p className="mt-10 text-[13px] font-semibold text-white">You own your images. Always.</p>
+        </div>
+      </div>
+      <div className="mx-auto mt-20 grid max-w-[1280px] grid-cols-2 gap-2 md:grid-cols-5">
+        {portraitStrip.map((image, index) => (
+          <div key={`${image}-${index}`} className="relative h-[420px] overflow-hidden bg-[#11100f]">
+            <Image src={image} alt={`ASEAN portrait ${index + 1}`} fill sizes="20vw" className="object-cover object-center" />
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function CtaSection({ onCta }: { onCta: () => void }) {
+  return (
+    <section className="relative overflow-hidden bg-black px-6 py-20">
+      <div className="absolute inset-0 opacity-25">
+        <Image src="/images/landing/comparisons/heritage-after.jpg" alt="" fill sizes="100vw" className="object-cover object-center" />
+      </div>
+      <div className="relative mx-auto grid max-w-[960px] items-center gap-14 lg:grid-cols-2">
+        <div>
+          <h2 className="text-3xl font-semibold text-white">Secure, private, and simple</h2>
+          <div className="mt-8 space-y-6">
+            {securityItems.map(({ title, copy, Icon }) => (
+              <div key={title} className="flex gap-5">
+                <Icon className="mt-1 h-8 w-8 shrink-0 text-[#c79b4b]" />
+                <div>
+                  <p className="text-[15px] font-semibold text-white">{title}</p>
+                  <p className="mt-1 text-[13px] text-[#d8d0c4]">{copy}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="mx-auto w-full max-w-[410px] rounded-xl border border-[#6f5d49] bg-[#121212]/90 p-10 text-center">
+          <h2 className="text-3xl font-light leading-tight text-white">
+            Start enhancing
+            <br />
+            your images today
+          </h2>
+          <Button onClick={onCta} className="mt-10 h-14 w-full rounded-md bg-[#d4933a] text-base font-semibold text-white hover:bg-[#e0a552]">
+            Upload your image
+          </Button>
+          <p className="mt-8 text-[13px] text-[#d8d0c4]">No credit card required.</p>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function FinalCollage() {
+  return (
+    <section className="bg-black py-32">
+      <div className="relative mx-auto h-[560px] max-w-[1280px] overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(214,188,117,0.12),transparent_55%)]" />
+        <div className="absolute inset-x-0 top-14 mx-auto grid max-w-5xl grid-cols-2 items-center gap-4 px-6 md:grid-cols-5">
+          {finalPrints.map((image, index) => (
+            <div
+              key={`${image}-${index}`}
+              className={`relative h-80 overflow-hidden border-[10px] border-[#e9ddc8] bg-[#d4c6ad] shadow-2xl ${
+                index % 2 === 0 ? "-rotate-6" : "rotate-5"
+              }`}
+            >
+              <Image src={image} alt={`Printed result ${index + 1}`} fill sizes="20vw" className="object-cover object-center" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function IconCrop({ icon, className = "" }: { icon: IconSpec; className?: string }) {
   return (
     <span
       aria-hidden="true"
       className={`block bg-black bg-no-repeat ${className}`}
       style={{
-        backgroundImage: `url(${src})`,
-        backgroundPosition: position,
-        backgroundSize: "600% 400%",
+        backgroundImage: `url(${icon.src ?? iconSheet})`,
+        backgroundPosition: icon.position,
+        backgroundSize: icon.size ?? "600% 400%",
       }}
     />
   )
+}
+
+function CheckDot() {
+  return <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-[#8a6a36] text-[9px] text-[#c79b4b]">+</span>
 }
 
 function LiveComparison({
