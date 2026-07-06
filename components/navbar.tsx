@@ -67,6 +67,9 @@ export function Navbar() {
             <Link href="/#professional" className="text-gray-300 hover:text-amber-400 transition-colors text-sm">
               Professional Use
             </Link>
+            <Link href="/support" className="text-gray-300 hover:text-amber-400 transition-colors text-sm">
+              Support
+            </Link>
             
             {/* Language Toggle */}
             <div className="flex items-center gap-2 border-l border-gray-700 pl-6">
@@ -138,6 +141,13 @@ export function Navbar() {
               onClick={() => setIsMenuOpen(false)}
             >
               Professional Use
+            </Link>
+            <Link
+              href="/support"
+              className="block text-gray-300 hover:text-amber-400 transition-colors text-sm"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Support
             </Link>
 
             {/* Mobile Language Toggle */}
