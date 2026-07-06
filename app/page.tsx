@@ -22,6 +22,7 @@ type IconSpec = {
 }
 
 const iconBase = "/images/landing/icons-svg"
+const iconSvg = (name: string) => `${iconBase}/${name}.svg`
 
 const contextCards = [
   {
@@ -46,7 +47,7 @@ const contextCards = [
 
 const enhancementComparisons = [
   {
-    icon: { src: `${iconBase}/archive-scan.png` },
+    icon: { src: iconSvg("archive-scan") },
     title: "ARCHIVE SCAN",
     copy: "Clean scans, reduce scratches, and improve faded printed photos.",
     beforeImage: "/images/landing/comparisons/archive-before.png",
@@ -55,7 +56,7 @@ const enhancementComparisons = [
     afterAlt: "Upscaled archive scan",
   },
   {
-    icon: { src: `${iconBase}/face-preserve.png` },
+    icon: { src: iconSvg("face-preserve") },
     title: "ASEAN PORTRAIT PRESERVE",
     copy: "Enhance portraits while preserving facial identity and natural skin tones.",
     beforeImage: "/images/landing/comparisons/hero-before.jpg",
@@ -64,7 +65,7 @@ const enhancementComparisons = [
     afterAlt: "Upscaled ASEAN portrait",
   },
   {
-    icon: { src: `${iconBase}/heritage-restore.png` },
+    icon: { src: iconSvg("heritage-restore") },
     title: "HERITAGE RESTORE",
     copy: "Clar1ty.art restores clarity without erasing who people are.",
     beforeImage: "/images/landing/comparisons/heritage-before.jpg",
@@ -73,7 +74,7 @@ const enhancementComparisons = [
     afterAlt: "Upscaled heritage image",
   },
   {
-    icon: { src: `${iconBase}/digital-upscale.png` },
+    icon: { src: iconSvg("digital-upscale") },
     title: "DIGITAL ART UPSCALE",
     copy: "Upscale digital art, illustrations, and concepts without losing style. Print Ready",
     beforeImage: "/images/landing/comparisons/digital-before.jpg",
@@ -85,59 +86,59 @@ const enhancementComparisons = [
 
 const steps = [
   {
-    icon: { src: `${iconBase}/upload-cloud.png` },
+    icon: { src: iconSvg("upload-cloud") },
     title: "Upload your image",
     copy: "Start with a heritage photo, portrait, archive scan, low-resolution file, or digital artwork.",
   },
   {
-    icon: { src: `${iconBase}/preset-sliders.png` },
+    icon: { src: iconSvg("preset-sliders") },
     title: "Choose your preset",
     copy: "Select the enhancement mode that matches your image. Clar1ty applies the right treatment automatically.",
   },
   {
-    icon: { src: `${iconBase}/download-tray.png` },
+    icon: { src: iconSvg("download-tray") },
     title: "Download your result",
     copy: "Receive a cleaner, sharper, higher-resolution image ready for digital use, print, or archive.",
   },
 ]
 
 const qualityItems = [
-  { icon: { src: `${iconBase}/face-profile.png` }, title: "Face Preservation", copy: "Protects facial structure and expressions." },
-  { icon: { src: `${iconBase}/natural-tones.png` }, title: "Natural tones", copy: "Keeps skin tones and colors true." },
-  { icon: { src: `${iconBase}/real-detail.png` }, title: "Real detail", copy: "Brings out textures, edges, and fine detail." },
-  { icon: { src: `${iconBase}/cultural-respect.png` }, title: "Cultural respect", copy: "Enhances without altering cultural elements." },
-  { icon: { src: `${iconBase}/balanced-results.png` }, title: "Balanced results", copy: "No over-processing. Just the right touch." },
-  { icon: { src: `${iconBase}/high-resolution.png` }, title: "High resolution", copy: "Sharper images for modern use and printing." },
+  { icon: { src: iconSvg("face-profile") }, title: "Face Preservation", copy: "Protects facial structure and expressions." },
+  { icon: { src: iconSvg("natural-tones") }, title: "Natural tones", copy: "Keeps skin tones and colors true." },
+  { icon: { src: iconSvg("real-detail") }, title: "Real detail", copy: "Brings out textures, edges, and fine detail." },
+  { icon: { src: iconSvg("cultural-respect") }, title: "Cultural respect", copy: "Enhances without altering cultural elements." },
+  { icon: { src: iconSvg("balanced-results") }, title: "Balanced results", copy: "No over-processing. Just the right touch." },
+  { icon: { src: iconSvg("high-resolution") }, title: "High resolution", copy: "Sharper images for modern use and printing." },
 ]
 
 const useCases = [
   {
-    icon: { src: `${iconBase}/cultural-archives.png` },
+    icon: { src: iconSvg("cultural-archives") },
     title: "Cultural archives",
     copy: "Restore and preserve historical photographs and documents.",
   },
   {
-    icon: { src: `${iconBase}/photo-restoration.png` },
+    icon: { src: iconSvg("photo-restoration") },
     title: "Photo restoration services",
     copy: "Deliver higher-quality results faster with AI-powered enhancement.",
   },
   {
-    icon: { src: `${iconBase}/creators-digital-artists.png` },
+    icon: { src: iconSvg("creators-digital-artists") },
     title: "Creators & digital artists",
     copy: "Enhance references, concepts, and artwork with more detail and clarity.",
   },
   {
-    icon: { src: `${iconBase}/museum-projects.png` },
+    icon: { src: iconSvg("museum-projects") },
     title: "Museums & heritage projects",
     copy: "Prepare images for exhibitions, publications, and educational materials.",
   },
   {
-    icon: { src: `${iconBase}/print-shops.png` },
+    icon: { src: iconSvg("print-shops") },
     title: "Print shops & studios",
     copy: "Produce print-ready files with clean detail and balanced contrast.",
   },
   {
-    icon: { src: `${iconBase}/brands-businesses.png` },
+    icon: { src: iconSvg("brands-businesses") },
     title: "Brands & businesses",
     copy: "Improve visual assets for marketing, storytelling, and brand heritage.",
   },
@@ -261,7 +262,7 @@ function UploadSection({ onCta }: { onCta: () => void }) {
             onClick={onCta}
             className="mx-auto mt-12 flex h-72 w-full max-w-[330px] flex-col items-center justify-center border border-dashed border-[#5f5446] bg-[#968d7e] text-center transition hover:bg-[#a09788]"
           >
-            <IconCrop icon={{ src: `${iconBase}/upload-cloud.png` }} className="h-20 w-20 rounded-full bg-[#efe8dc]" />
+            <IconCrop icon={{ src: iconSvg("upload-cloud") }} className="h-20 w-20 rounded-full bg-[#efe8dc]" />
             <span className="mt-7 text-[13px] font-semibold text-white">Drop or select your image here</span>
             <span className="mt-2 text-[12px] text-[#f3eee5]">Browse PNG, JPG, WebP</span>
             <span className="mt-7 text-[12px] text-[#f3eee5]">Up to 10 MB</span>
@@ -272,7 +273,7 @@ function UploadSection({ onCta }: { onCta: () => void }) {
         </div>
         <div className="flex items-center justify-center px-8 py-16">
           <div className="text-center">
-            <IconCrop icon={{ src: `${iconBase}/upload-cloud.png` }} className="mx-auto h-20 w-20 rounded-full bg-[#efe8dc]" />
+            <IconCrop icon={{ src: iconSvg("upload-cloud") }} className="mx-auto h-20 w-20 rounded-full bg-[#efe8dc]" />
             <h3 className="mt-10 text-[15px] font-semibold text-white">No images upscaled yet</h3>
             <p className="mt-8 text-[13px] text-[#eee5d8]">Upload an image to upscale it</p>
           </div>
@@ -564,7 +565,7 @@ function IconCrop({ icon, className = "" }: { icon: IconSpec; className?: string
       aria-hidden="true"
       className={`relative block overflow-hidden bg-black ${className}`}
     >
-      <Image src={icon.src} alt="" fill sizes="128px" className="object-contain" />
+      <img src={icon.src} alt="" className="h-full w-full object-contain" loading="lazy" decoding="async" />
     </span>
   )
 }
