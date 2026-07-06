@@ -7,23 +7,11 @@ interface ClarityLogoProps {
   height?: number
 }
 
-export function ClarityLogo({ variant = "gradient", className = "", width = 200, height = 60 }: ClarityLogoProps) {
-  if (variant === "gradient" || variant === "white") {
-    return (
-      <img
-        src="/images/landing/clar1ty-logo.png"
-        alt="Clar1ty"
-        className={className}
-        width={width}
-        height={height}
-      />
-    )
-  }
-
+export function ClarityLogo({ className = "", width = 200, height = 60 }: ClarityLogoProps) {
   return (
     <img
-      src={variant === "white" ? "/images/clarity-white.png" : "/images/clarity-black.png"}
-      alt="Clarity"
+      src="/images/landing/clar1ty-logo.png"
+      alt="Clar1ty"
       className={className}
       width={width}
       height={height}
