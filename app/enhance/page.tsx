@@ -1728,7 +1728,7 @@ export default function EnhancePage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black text-white">
       {/* ADDED CONDITIONAL LOGIN MODAL */}
-      {!isAuth && <LoginModal onSuccess={handleLoginSuccess} onClose={() => setShowLoginModal(false)} />}
+      {!isAuth && showLoginModal && <LoginModal onSuccess={handleLoginSuccess} onClose={() => setShowLoginModal(false)} />}
 
       <div className="sticky top-0 z-50 bg-gray-950/80 backdrop-blur-lg border-b border-gray-800">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
