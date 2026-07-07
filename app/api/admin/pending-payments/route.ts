@@ -3,19 +3,22 @@ import { createClient } from "@supabase/supabase-js"
 
 export const runtime = "nodejs"
 
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-
-const ADMIN_SECRET = process.env.ADMIN_SECRET || "change-me-in-production"
-
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const adminSecret = searchParams.get("adminSecret")
+    const ADMIN_SECRET = process.env.ADMIN_SECRET || "change-me-in-production"
 
     // Verify admin secret
     if (adminSecret !== ADMIN_SECRET) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+
+    // Initialize Supabase client at runtime
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
 
     // Fetch pending transactions
     const { data: transactions, error } = await supabase

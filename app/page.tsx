@@ -212,7 +212,7 @@ function HeroSection({ onCta }: { onCta: () => void }) {
         />
       </div>
 
-      <main id="main-content" className="relative z-10 mx-auto flex min-h-[720px] max-w-[1600px] items-center px-6 pt-28 lg:px-24">
+      <div id="main-content" className="relative z-10 mx-auto flex min-h-[720px] max-w-[1600px] items-center px-6 pt-28 lg:px-24">
         <div className="max-w-[520px] py-20">
           <h1 className="text-5xl font-light leading-[1.13] tracking-[0.01em] text-white md:text-6xl">
             Restore
@@ -231,7 +231,7 @@ function HeroSection({ onCta }: { onCta: () => void }) {
           </Button>
         </div>
       </div>
-    </main>
+    </section>
   )
 }
 
