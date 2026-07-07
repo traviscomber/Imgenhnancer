@@ -60,6 +60,38 @@ export function ImageComparisonSlider({
     handleMove(e.touches[0].clientX)
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!containerRef.current) return
+    
+    const rect = containerRef.current.getBoundingClientRect()
+    const step = 5 // 5% step for arrow keys
+    let newPosition = sliderPosition
+    
+    switch (e.key) {
+      case 'ArrowLeft':
+        newPosition = Math.max(0, sliderPosition - step)
+        e.preventDefault()
+        break
+      case 'ArrowRight':
+        newPosition = Math.min(100, sliderPosition + step)
+        e.preventDefault()
+        break
+      case 'Home':
+        newPosition = 0
+        e.preventDefault()
+        break
+      case 'End':
+        newPosition = 100
+        e.preventDefault()
+        break
+      default:
+        return
+    }
+    
+    setSliderPosition(newPosition)
+    trackSliderInteraction(beforeLabel || "comparison", "homepage")
+  }
+
   const handleImageLoad = useCallback(() => {
     setImagesLoaded(true)
   }, [])
@@ -83,13 +115,21 @@ export function ImageComparisonSlider({
   return (
     <div
       ref={containerRef}
-      className="relative w-full overflow-hidden rounded-xl shadow-2xl cursor-col-resize touch-none select-none bg-gray-900"
+      className="relative w-full overflow-hidden rounded-xl shadow-2xl cursor-col-resize touch-none select-none bg-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-600"
       style={{
         aspectRatio: "16 / 6",
         maxWidth: "100%",
       }}
       onMouseDown={handleMouseDown}
       onTouchStart={handleMouseDown}
+      onKeyDown={handleKeyDown}
+      role="slider"
+      aria-label={`Compare ${beforeLabel} and ${afterLabel} images`}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(sliderPosition)}
+      aria-valuetext={`${Math.round(sliderPosition)}% ${afterLabel}`}
+      tabIndex={0}
     >
       {/* After Image (Background) */}
       <div className="relative w-full h-full flex items-center justify-center">

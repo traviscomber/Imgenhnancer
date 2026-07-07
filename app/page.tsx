@@ -179,17 +179,22 @@ export default function Home() {
 function HeroSection({ onCta }: { onCta: () => void }) {
   return (
     <section className="relative min-h-[720px] overflow-hidden bg-black">
-      <nav className="fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-white/10 bg-black/35 px-6 shadow-[0_18px_60px_rgba(0,0,0,0.35)] backdrop-blur-xl lg:px-24">
-        <Link href="/" aria-label="clar1ty home">
+      {/* Skip to content link for keyboard navigation */}
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-0 focus:left-0 focus:z-50 focus:bg-amber-600 focus:p-2 focus:text-white">
+        Skip to main content
+      </a>
+      
+      <nav className="fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-white/10 bg-black/35 px-6 shadow-[0_18px_60px_rgba(0,0,0,0.35)] backdrop-blur-xl lg:px-24" role="navigation" aria-label="Main navigation">
+        <Link href="/" aria-label="clar1ty - Keep Your Stories Alive & Vibrant">
           <ClarityLogo className="h-9 w-auto drop-shadow-[0_0_10px_rgba(211,155,62,0.45)]" width={130} height={40} />
         </Link>
         <div className="hidden items-center gap-8 text-[11px] font-medium text-[#e8dfd0] md:flex">
-          <a href="#features" className="hover:text-[#d7a957]">Features</a>
-          <a href="#use-cases" className="hover:text-[#d7a957]">Use Cases</a>
-          <a href="#how-it-works" className="hover:text-[#d7a957]">How It Works</a>
-          <Link href="/pricing" className="hover:text-[#d7a957]">Pricing</Link>
-          <Link href="/support" className="hover:text-[#d7a957]">Support</Link>
-          <Link href="/enhance" className="rounded-full border border-[#c9953d]/40 px-4 py-2 text-[#f0d59c] hover:border-[#c9953d] hover:text-white">
+          <a href="#features" className="hover:text-[#d7a957] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black focus:ring-amber-600 rounded px-2 py-1">Features</a>
+          <a href="#use-cases" className="hover:text-[#d7a957] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black focus:ring-amber-600 rounded px-2 py-1">Use Cases</a>
+          <a href="#how-it-works" className="hover:text-[#d7a957] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black focus:ring-amber-600 rounded px-2 py-1">How It Works</a>
+          <Link href="/pricing" className="hover:text-[#d7a957] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black focus:ring-amber-600 rounded px-2 py-1">Pricing</Link>
+          <Link href="/support" className="hover:text-[#d7a957] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black focus:ring-amber-600 rounded px-2 py-1">Support</Link>
+          <Link href="/enhance" className="rounded-full border border-[#c9953d]/40 px-4 py-2 text-[#f0d59c] hover:border-[#c9953d] hover:text-white focus:outline-none focus:ring-2 focus:ring-amber-600">
             Login
           </Link>
         </div>
@@ -207,7 +212,7 @@ function HeroSection({ onCta }: { onCta: () => void }) {
         />
       </div>
 
-      <div className="relative z-10 mx-auto flex min-h-[720px] max-w-[1600px] items-center px-6 pt-28 lg:px-24">
+      <main id="main-content" className="relative z-10 mx-auto flex min-h-[720px] max-w-[1600px] items-center px-6 pt-28 lg:px-24">
         <div className="max-w-[520px] py-20">
           <h1 className="text-5xl font-light leading-[1.13] tracking-[0.01em] text-white md:text-6xl">
             Restore
@@ -226,7 +231,7 @@ function HeroSection({ onCta }: { onCta: () => void }) {
           </Button>
         </div>
       </div>
-    </section>
+    </main>
   )
 }
 
