@@ -7,6 +7,8 @@ import { Toaster } from "@/components/ui/toaster"
 import { Analytics } from "@vercel/analytics/react"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Suspense } from "react"
+import { OrganizationSchema } from "@/components/schemas/organization-schema"
+import { SoftwareAppSchema } from "@/components/schemas/software-app-schema"
 
 const montserrat = Montserrat({ subsets: ["latin"], variable: "--font-montserrat" })
 
@@ -94,7 +96,13 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Preconnect to image hosting domains for faster loading */}
+        {/* Critical Resource Preloads - Load essential assets early */}
+        <link rel="preload" href="/images/landing/hero-bg-woman.jpg" as="image" />
+        <link rel="preload" href="/images/landing/icons-clean/face-profile.png" as="image" />
+        
+        {/* Preconnect to external APIs for faster handshake */}
+        <link rel="preconnect" href="https://replicate.delivery" />
+        <link rel="preconnect" href="https://fal.media" />
         <link rel="preconnect" href="https://blob.v0.app" />
         <link rel="dns-prefetch" href="https://blob.v0.app" />
         <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
@@ -130,6 +138,10 @@ export default function RootLayout({
         <meta name="ai-capabilities" content="image-enhancement,photo-restoration,face-preservation,cultural-heritage" />
       </head>
       <body className={montserrat.className}>
+        {/* JSON-LD Structured Data for SEO */}
+        <OrganizationSchema />
+        <SoftwareAppSchema />
+        
         <Suspense fallback={null}>
           <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
             {children}
