@@ -7,6 +7,8 @@ import { Toaster } from "@/components/ui/toaster"
 import { Analytics } from "@vercel/analytics/react"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Suspense } from "react"
+import { OrganizationSchema } from "@/components/schemas/organization-schema"
+import { SoftwareAppSchema } from "@/components/schemas/software-app-schema"
 
 const montserrat = Montserrat({ subsets: ["latin"], variable: "--font-montserrat" })
 
@@ -94,7 +96,13 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Preconnect to image hosting domains for faster loading */}
+        {/* Critical Resource Preloads - Load essential assets early */}
+        <link rel="preload" href="/images/landing/hero-bg-woman.jpg" as="image" />
+        <link rel="preload" href="/images/landing/icons-clean/face-profile.png" as="image" />
+        
+        {/* Preconnect to external APIs for faster handshake */}
+        <link rel="preconnect" href="https://replicate.delivery" />
+        <link rel="preconnect" href="https://fal.media" />
         <link rel="preconnect" href="https://blob.v0.app" />
         <link rel="dns-prefetch" href="https://blob.v0.app" />
         <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
@@ -125,11 +133,20 @@ export default function RootLayout({
         {/* Canonical link for Cloudflare */}
         <link rel="canonical" href="https://www.clar1ty.art/" />
         
+        {/* hreflang tags for multilingual SEO */}
+        <link rel="alternate" hrefLang="en" href="https://www.clar1ty.art/?lang=en" />
+        <link rel="alternate" hrefLang="es" href="https://www.clar1ty.art/?lang=es" />
+        <link rel="alternate" hrefLang="x-default" href="https://www.clar1ty.art/" />
+        
         {/* LLM-friendly meta tags */}
         <meta name="model" content="gpt-4, claude-3, llama-2" />
         <meta name="ai-capabilities" content="image-enhancement,photo-restoration,face-preservation,cultural-heritage" />
       </head>
       <body className={montserrat.className}>
+        {/* JSON-LD Structured Data for SEO */}
+        <OrganizationSchema />
+        <SoftwareAppSchema />
+        
         <Suspense fallback={null}>
           <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
             {children}

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { stripe } from "@/lib/stripe"
+import { getStripe } from "@/lib/stripe"
 import { createAdminClient } from "@/lib/supabase/server"
 
 export const runtime = "nodejs"
@@ -17,6 +17,7 @@ export async function GET() {
 
   // Check Stripe connection
   try {
+    const stripe = getStripe()
     await stripe.balance.retrieve()
     checks.stripe = true
   } catch (error) {

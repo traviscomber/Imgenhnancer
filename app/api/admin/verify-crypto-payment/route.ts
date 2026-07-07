@@ -4,14 +4,12 @@ import { sendPaymentNotification } from "@/lib/whatsapp"
 
 export const runtime = "nodejs"
 
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-
 const ADMIN_PHONE = "+56940946660"
-const ADMIN_SECRET = process.env.ADMIN_SECRET || "change-me-in-production"
 
 export async function POST(request: NextRequest) {
   try {
     const { adminSecret, userId, packageId, transactionHash, userEmail } = await request.json()
+    const ADMIN_SECRET = process.env.ADMIN_SECRET || "change-me-in-production"
 
     // Verify admin secret
     if (adminSecret !== ADMIN_SECRET) {
@@ -21,6 +19,12 @@ export async function POST(request: NextRequest) {
     if (!userId || !packageId) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
+
+    // Initialize Supabase client at runtime
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
 
     // Get package details
     const { data: packageData, error: packageError } = await supabase
