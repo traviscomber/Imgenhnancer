@@ -152,7 +152,7 @@ export default function EnhancePage() {
   // Added downloadingImages state
   const [downloadingImages, setDownloadingImages] = useState<Set<string>>(new Set())
   // Added showLoginModal state
-  const [showLoginModal, setShowLoginModal] = useState(false)
+  const [showLoginModal, setShowLoginModal] = useState(true)
 
   const [imageAspectRatios, setImageAspectRatios] = useState<Map<number, number>>(new Map())
   const [facialAnalysisResults, setFacialAnalysisResults] = useState(new Map<string, any>()) // Added state for facial analysis results
