@@ -11,10 +11,10 @@ export function MobileMenu() {
 
   const menuItems = [
     { href: "/#features", label: "Features", icon: Sparkles },
-    { href: "/#examples", label: "Examples", icon: ImageIcon },
+    { href: "/#faces", label: "Results", icon: ImageIcon },
     { href: "/#how-it-works", label: "How It Works", icon: BookOpen },
-    { href: "/#pricing", label: "Pricing", icon: DollarSign },
-    { href: "/contact", label: "Contact", icon: Mail },
+    { href: "/pricing", label: "Pricing", icon: DollarSign },
+    { href: "/support", label: "Support", icon: Mail },
   ]
 
   return (

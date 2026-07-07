@@ -1,9 +1,30 @@
 'use client'
 
-import { useState } from 'react'
+import type React from 'react'
 import Link from 'next/link'
+import { useState } from 'react'
+import { ArrowLeft, Clock, HelpCircle, Mail, MessageSquare, Shield } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Mail, MessageSquare, Phone, ArrowLeft } from 'lucide-react'
+import { ClarityLogo } from '@/components/clarity-logo'
+
+const quickLinks = [
+  {
+    href: '/faq',
+    title: 'FAQ',
+    copy: 'Answers about credits, privacy, image types, and enhancement results.',
+  },
+  {
+    href: '/pricing',
+    title: 'Pricing',
+    copy: 'Understand credit packages and enhancement costs before uploading.',
+  },
+  {
+    href: '/privacy',
+    title: 'Privacy',
+    copy: 'Review how Clar1ty handles image processing and storage.',
+  },
+]
 
 export default function SupportPage() {
   const [formData, setFormData] = useState({
@@ -15,13 +36,13 @@ export default function SupportPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = event.target
+    setFormData((current) => ({ ...current, [name]: value }))
   }
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
     setIsSubmitting(true)
     setSubmitStatus('idle')
 
@@ -47,174 +68,165 @@ export default function SupportPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 pt-20">
-      <div className="container mx-auto px-4">
-        {/* Back Button */}
-        <Link href="/" className="inline-flex items-center gap-2 text-gray-400 hover:text-amber-400 transition-colors mb-8">
-          <ArrowLeft className="w-4 h-4" />
-          Back to Home
+    <main className="min-h-screen bg-black px-6 py-10 text-[#efe8dc]">
+      <div className="pointer-events-none fixed inset-0 opacity-25">
+        <div className="absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(circle_at_28%_18%,rgba(201,149,61,0.22),transparent_34%),radial-gradient(circle_at_74%_8%,rgba(122,91,50,0.18),transparent_34%)]" />
+      </div>
+
+      <div className="relative mx-auto max-w-6xl">
+        <nav className="flex items-center justify-between border-b border-white/10 pb-8">
+          <Link href="/" aria-label="clar1ty home">
+            <ClarityLogo className="h-10 w-auto drop-shadow-[0_0_10px_rgba(211,155,62,0.45)]" width={145} height={44} />
+          </Link>
+          <div className="flex items-center gap-5 text-sm text-[#d8d0c4]">
+            <Link href="/pricing" className="hidden hover:text-[#d7a957] sm:inline">
+              Pricing
+            </Link>
+            <Link href="/enhance" className="rounded-full border border-[#c9953d]/40 px-4 py-2 text-[#f0d59c] hover:border-[#c9953d] hover:text-white">
+              Login
+            </Link>
+          </div>
+        </nav>
+
+        <Link href="/" className="mt-10 inline-flex items-center gap-2 text-sm text-[#b9ad9a] transition hover:text-[#d7a957]">
+          <ArrowLeft className="h-4 w-4" />
+          Back to landing
         </Link>
 
-        <div className="max-w-4xl mx-auto">
-          {/* Header */}
-          <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              How Can We Help?
+        <section className="grid gap-12 py-16 lg:grid-cols-[0.44fr_0.56fr] lg:py-24">
+          <div>
+            <p className="text-xs uppercase tracking-[0.35em] text-[#c9953d]">Clar1ty support</p>
+            <h1 className="mt-6 text-5xl font-light leading-tight tracking-[0.02em] text-white md:text-6xl">
+              We help keep your images moving.
             </h1>
-            <p className="text-xl text-gray-400">
-              Get support, ask questions, or share your feedback with our team
+            <p className="mt-8 max-w-xl text-sm leading-7 text-[#d8d0c4]">
+              Ask about credits, image preparation, privacy, restoration expectations, or production use. We keep support
+              simple, private, and close to the product workflow.
             </p>
-          </div>
 
-          <div className="grid md:grid-cols-2 gap-8 mb-12">
-            {/* Contact Methods */}
-            <div className="space-y-4">
-              <h2 className="text-2xl font-bold text-white mb-6">Contact Methods</h2>
-
-              <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6 hover:border-amber-500/50 transition-colors">
-                <div className="flex items-start gap-4">
-                  <Mail className="w-6 h-6 text-amber-400 flex-shrink-0 mt-1" />
-                  <div>
-                    <h3 className="font-semibold text-white mb-1">Email Support</h3>
-                    <p className="text-gray-400 text-sm mb-3">Get a response within 24 hours</p>
-                    <a
-                      href="mailto:info@clar1ty.art"
-                      className="text-amber-400 hover:text-amber-300 transition-colors font-medium"
-                    >
-                      info@clar1ty.art
-                    </a>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6 hover:border-amber-500/50 transition-colors">
-                <div className="flex items-start gap-4">
-                  <MessageSquare className="w-6 h-6 text-amber-400 flex-shrink-0 mt-1" />
-                  <div>
-                    <h3 className="font-semibold text-white mb-1">Direct Message</h3>
-                    <p className="text-gray-400 text-sm mb-3">Use the form below to reach us</p>
-                    <p className="text-sm text-amber-400">Scroll down to the contact form</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6 hover:border-amber-500/50 transition-colors">
-                <div className="flex items-start gap-4">
-                  <Phone className="w-6 h-6 text-amber-400 flex-shrink-0 mt-1" />
-                  <div>
-                    <h3 className="font-semibold text-white mb-1">Response Time</h3>
-                    <p className="text-gray-400 text-sm">We aim to respond to all inquiries within 24-48 business hours</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Quick FAQ */}
-            <div className="space-y-4">
-              <h2 className="text-2xl font-bold text-white mb-6">Quick Help</h2>
-              <div className="space-y-3">
-                <Link href="/faq" className="block bg-gray-800/50 border border-gray-700 rounded-lg p-4 hover:border-amber-500/50 transition-colors">
-                  <h3 className="font-semibold text-white mb-1">FAQ</h3>
-                  <p className="text-gray-400 text-sm">Find answers to common questions</p>
-                </Link>
-                <Link href="/privacy" className="block bg-gray-800/50 border border-gray-700 rounded-lg p-4 hover:border-amber-500/50 transition-colors">
-                  <h3 className="font-semibold text-white mb-1">Privacy Policy</h3>
-                  <p className="text-gray-400 text-sm">Learn how we protect your data</p>
-                </Link>
-                <Link href="/terms" className="block bg-gray-800/50 border border-gray-700 rounded-lg p-4 hover:border-amber-500/50 transition-colors">
-                  <h3 className="font-semibold text-white mb-1">Terms & Conditions</h3>
-                  <p className="text-gray-400 text-sm">Review our terms of service</p>
-                </Link>
-              </div>
+            <div className="mt-12 grid gap-4">
+              <SupportFact Icon={Mail} title="Email support" copy="info@clar1ty.art" />
+              <SupportFact Icon={Clock} title="Response window" copy="Usually within 24-48 business hours." />
+              <SupportFact Icon={Shield} title="Private by default" copy="Do not send sensitive images unless our team specifically asks for them." />
             </div>
           </div>
 
-          {/* Contact Form */}
-          <div className="bg-gray-800/30 border border-gray-700 rounded-xl p-8">
-            <h2 className="text-2xl font-bold text-white mb-6">Send us a Message</h2>
-
-            {submitStatus === 'success' && (
-              <div className="mb-6 p-4 bg-green-900/20 border border-green-800 rounded-lg">
-                <p className="text-green-400">Thank you! Your message has been sent successfully. We'll get back to you soon.</p>
-              </div>
-            )}
-
-            {submitStatus === 'error' && (
-              <div className="mb-6 p-4 bg-red-900/20 border border-red-800 rounded-lg">
-                <p className="text-red-400">There was an error sending your message. Please try again or email us directly.</p>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Name</label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-amber-500 transition-colors"
-                    placeholder="Your name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-amber-500 transition-colors"
-                    placeholder="your@email.com"
-                  />
-                </div>
-              </div>
-
+          <form onSubmit={handleSubmit} className="rounded-2xl border border-[#6f5d49] bg-[#0d0b09]/90 p-7 shadow-[0_0_45px_rgba(214,188,117,0.12)] md:p-10">
+            <div className="mb-8 flex items-center gap-4">
+              <span className="flex h-12 w-12 items-center justify-center rounded-full border border-[#c9953d]/40 bg-[#21170f] text-[#d7a957]">
+                <MessageSquare className="h-5 w-5" />
+              </span>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Subject</label>
-                <select
-                  name="subject"
-                  value={formData.subject}
+                <h2 className="text-2xl font-light text-white">Send a message</h2>
+                <p className="mt-1 text-sm text-[#b9ad9a]">We will route it to the right person.</p>
+              </div>
+            </div>
+
+            {submitStatus === 'success' ? (
+              <div className="mb-6 border border-[#6fa26c]/50 bg-[#193119]/35 p-4 text-sm text-[#bde2ba]">
+                Your message was received. We will get back to you soon.
+              </div>
+            ) : null}
+
+            {submitStatus === 'error' ? (
+              <div className="mb-6 border border-[#a66a50]/50 bg-[#32170f]/50 p-4 text-sm text-[#f0b7a3]">
+                The form could not submit. Please try again or email info@clar1ty.art.
+              </div>
+            ) : null}
+
+            <div className="grid gap-5 md:grid-cols-2">
+              <Field label="Name">
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-amber-500 transition-colors"
-                >
-                  <option value="">Select a subject...</option>
-                  <option value="technical">Technical Support</option>
-                  <option value="billing">Billing & Credits</option>
-                  <option value="feature">Feature Request</option>
-                  <option value="feedback">General Feedback</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Message</label>
-                <textarea
-                  name="message"
-                  value={formData.message}
-                  onChange={handleChange}
-                  required
-                  rows={5}
-                  className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-amber-500 transition-colors resize-none"
-                  placeholder="Tell us how we can help..."
+                  className="clarity-input"
+                  placeholder="Your name"
                 />
-              </div>
+              </Field>
+              <Field label="Email">
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  className="clarity-input"
+                  placeholder="your@email.com"
+                />
+              </Field>
+            </div>
 
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold py-3 rounded-lg transition-all disabled:opacity-50"
-              >
-                {isSubmitting ? 'Sending...' : 'Send Message'}
-              </Button>
-            </form>
-          </div>
-        </div>
+            <Field label="Subject" className="mt-5">
+              <select name="subject" value={formData.subject} onChange={handleChange} required className="clarity-input">
+                <option value="">Select a subject...</option>
+                <option value="technical">Technical support</option>
+                <option value="billing">Billing and credits</option>
+                <option value="feature">Feature request</option>
+                <option value="feedback">General feedback</option>
+                <option value="other">Other</option>
+              </select>
+            </Field>
+
+            <Field label="Message" className="mt-5">
+              <textarea
+                name="message"
+                value={formData.message}
+                onChange={handleChange}
+                required
+                rows={6}
+                className="clarity-input resize-none"
+                placeholder="Tell us how we can help..."
+              />
+            </Field>
+
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="mt-7 h-12 w-full rounded-none bg-[#c9953d] text-sm font-semibold text-black hover:bg-[#e0b365] disabled:opacity-60"
+            >
+              {isSubmitting ? 'Sending...' : 'Send message'}
+            </Button>
+          </form>
+        </section>
+
+        <section className="grid gap-5 pb-20 md:grid-cols-3">
+          {quickLinks.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="group rounded-2xl border border-white/10 bg-white/[0.035] p-7 transition hover:border-[#c9953d]/60 hover:bg-[#160f09]"
+            >
+              <HelpCircle className="h-6 w-6 text-[#c9953d]" />
+              <h3 className="mt-8 text-lg font-semibold text-white group-hover:text-[#f0d59c]">{item.title}</h3>
+              <p className="mt-4 text-sm leading-6 text-[#b9ad9a]">{item.copy}</p>
+            </Link>
+          ))}
+        </section>
+      </div>
+    </main>
+  )
+}
+
+function SupportFact({ Icon, title, copy }: { Icon: LucideIcon; title: string; copy: string }) {
+  return (
+    <div className="flex gap-5 border border-white/10 bg-white/[0.035] p-5">
+      <Icon className="mt-1 h-6 w-6 shrink-0 text-[#c9953d]" />
+      <div>
+        <p className="font-semibold text-white">{title}</p>
+        <p className="mt-1 text-sm leading-6 text-[#d8d0c4]">{copy}</p>
       </div>
     </div>
+  )
+}
+
+function Field({ label, className = '', children }: { label: string; className?: string; children: React.ReactNode }) {
+  return (
+    <label className={`block ${className}`}>
+      <span className="mb-2 block text-sm font-medium text-[#d8d0c4]">{label}</span>
+      {children}
+    </label>
   )
 }

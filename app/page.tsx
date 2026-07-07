@@ -185,7 +185,7 @@ function HeroSection({ onCta }: { onCta: () => void }) {
       </a>
       
       <nav className="fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-white/10 bg-black/35 px-6 shadow-[0_18px_60px_rgba(0,0,0,0.35)] backdrop-blur-xl lg:px-24" role="navigation" aria-label="Main navigation">
-        <Link href="/" aria-label="clar1ty - Keep Your Stories Alive & Vibrant">
+        <Link href="/" aria-label="clar1ty - Restore Southeast Asia's visual identity">
           <ClarityLogo className="h-9 w-auto drop-shadow-[0_0_10px_rgba(211,155,62,0.45)]" width={130} height={40} />
         </Link>
         <div className="hidden items-center gap-8 text-[11px] font-medium text-[#e8dfd0] md:flex">

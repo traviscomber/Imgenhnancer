@@ -11,7 +11,7 @@ export function Footer() {
           {/* Brand */}
           <div className="space-y-4">
             <h3 className="text-xl font-bold text-white">clar1ty</h3>
-            <p className="text-sm text-gray-400">AI-powered image enhancement for professionals and enthusiasts.</p>
+            <p className="text-sm text-gray-400">AI-powered image enhancement for ASEAN heritage, portraits, archives, and digital art.</p>
             <div className="flex gap-4">
               <a
                 href="https://facebook.com"
@@ -58,13 +58,13 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/#examples" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
-                  Examples
+                <Link href="/#faces" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
+                  Results
                 </Link>
               </li>
               <li>
-                <Link href="/#professional" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
-                  Professional Use
+                <Link href="/#use-cases" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
+                  Use Cases
                 </Link>
               </li>
               <li>
@@ -80,23 +80,23 @@ export function Footer() {
             <h4 className="text-sm font-semibold text-white uppercase tracking-wider">Company</h4>
             <ul className="space-y-3">
               <li>
-                <Link href="/about" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
-                  About Us
+                <Link href="/support" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
+                  Support
                 </Link>
               </li>
               <li>
-                <Link href="/blog" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
-                  Blog
+                <Link href="/faq" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
+                  FAQ
                 </Link>
               </li>
               <li>
-                <Link href="/careers" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
-                  Careers
+                <Link href="/pricing" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
+                  Credits
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
-                  Contact
+                <Link href="/enhance" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
+                  Login
                 </Link>
               </li>
             </ul>

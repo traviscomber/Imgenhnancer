@@ -61,11 +61,14 @@ export function Navbar() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6">
-            <Link href="/#examples" className="text-gray-300 hover:text-amber-400 transition-colors text-sm">
-              Examples
+            <Link href="/#features" className="text-gray-300 hover:text-amber-400 transition-colors text-sm">
+              Features
             </Link>
-            <Link href="/#professional" className="text-gray-300 hover:text-amber-400 transition-colors text-sm">
-              Professional Use
+            <Link href="/#use-cases" className="text-gray-300 hover:text-amber-400 transition-colors text-sm">
+              Use Cases
+            </Link>
+            <Link href="/pricing" className="text-gray-300 hover:text-amber-400 transition-colors text-sm">
+              Pricing
             </Link>
             <Link href="/support" className="text-gray-300 hover:text-amber-400 transition-colors text-sm">
               Support
@@ -129,18 +132,25 @@ export function Navbar() {
         {isMenuOpen && (
           <div className="md:hidden py-4 space-y-4 border-t border-gray-800">
             <Link
-              href="/#examples"
+              href="/#features"
               className="block text-gray-300 hover:text-amber-400 transition-colors text-sm"
               onClick={() => setIsMenuOpen(false)}
             >
-              Examples
+              Features
             </Link>
             <Link
-              href="/#professional"
+              href="/#use-cases"
               className="block text-gray-300 hover:text-amber-400 transition-colors text-sm"
               onClick={() => setIsMenuOpen(false)}
             >
-              Professional Use
+              Use Cases
+            </Link>
+            <Link
+              href="/pricing"
+              className="block text-gray-300 hover:text-amber-400 transition-colors text-sm"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Pricing
             </Link>
             <Link
               href="/support"

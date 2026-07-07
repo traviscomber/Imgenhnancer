@@ -13,9 +13,9 @@ import { SoftwareAppSchema } from "@/components/schemas/software-app-schema"
 const montserrat = Montserrat({ subsets: ["latin"], variable: "--font-montserrat" })
 
 export const metadata: Metadata = {
-  title: "clar1ty.art — Keep Your Stories Alive & Vibrant",
+  title: "clar1ty.art - Restore Southeast Asia's Visual Identity",
   description:
-    "Transform your images with AI-powered enhancement and restoration. Professional-grade image upscaling optimized for ASEAN heritage. Built by n3uralia group.",
+    "AI-powered image enhancement for ASEAN portraits, archives, cultural landmarks, and digital artwork. Preserve identity, detail, and visual context with Clar1ty.",
   keywords: [
     "AI image enhancement",
     "photo restoration",
@@ -43,8 +43,8 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "clar1ty.art — Keep Your Stories Alive & Vibrant",
-    description: "Professional AI-powered image enhancement and restoration for ASEAN heritage",
+    title: "clar1ty.art - Restore Southeast Asia's Visual Identity",
+    description: "AI-powered image enhancement built to preserve ASEAN faces, tones, archives, and cultural detail.",
     type: "website",
     locale: "en_US",
     url: "https://www.clar1ty.art/",
@@ -60,8 +60,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "clar1ty.art — Keep Your Stories Alive & Vibrant",
-    description: "Professional AI-powered image enhancement and restoration",
+    title: "clar1ty.art - Restore Southeast Asia's Visual Identity",
+    description: "AI-powered image enhancement built to preserve ASEAN faces, tones, archives, and cultural detail.",
     creator: "@n3uralia",
     images: ["https://www.clar1ty.art/og-image.jpg"],
   },
@@ -97,7 +97,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         {/* Critical Resource Preloads - Load essential assets early */}
-        <link rel="preload" href="/images/landing/hero-bg-woman.jpg" as="image" />
+        <link rel="preload" href="/images/landing/comparisons/hero-after-new.png" as="image" />
         <link rel="preload" href="/images/landing/icons-clean/face-profile.png" as="image" />
         
         {/* Preconnect to external APIs for faster handshake */}
