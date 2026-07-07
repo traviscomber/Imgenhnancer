@@ -21,8 +21,8 @@ type IconSpec = {
   src: string
 }
 
-const iconBase = "/images/landing/icons-svg"
-const iconSvg = (name: string) => `${iconBase}/${name}.svg`
+const iconBase = "/images/landing/icons-clean"
+const iconSvg = (name: string) => `${iconBase}/${name}.png`
 
 const contextCards = [
   {
@@ -545,16 +545,12 @@ function IconCrop({ icon, className = "" }: { icon: IconSpec; className?: string
       aria-hidden="true"
       className={`relative block ${className}`}
     >
-      <img 
-        src={icon.src} 
-        alt="" 
-        className="h-full w-full object-contain" 
-        loading="lazy" 
+      <img
+        src={icon.src}
+        alt=""
+        className="h-full w-full object-contain"
+        loading="lazy"
         decoding="async"
-        style={{ 
-          mixBlendMode: "lighten",
-          filter: "drop-shadow(0 0 1px rgba(0,0,0,0))"
-        }}
       />
     </span>
   )
