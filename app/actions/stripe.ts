@@ -1,9 +1,10 @@
 "use server"
 
-import { stripe } from "@/lib/stripe"
+import { getStripe } from "@/lib/stripe"
 import { CREDIT_PACKAGES } from "@/lib/credits"
 
 export async function startCheckoutSession(packageId: string) {
+  const stripe = getStripe()
   const creditPackage = CREDIT_PACKAGES.find((p) => p.id === packageId)
 
   if (!creditPackage) {
@@ -41,6 +42,7 @@ export async function startCheckoutSession(packageId: string) {
 }
 
 export async function getCheckoutSessionStatus(sessionId: string) {
+  const stripe = getStripe()
   const session = await stripe.checkout.sessions.retrieve(sessionId)
 
   return {

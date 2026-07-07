@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { stripe } from "@/lib/stripe"
+import { getStripe } from "@/lib/stripe"
 import { createAdminClient } from "@/lib/supabase/server"
 import { sendPaymentNotification } from "@/lib/whatsapp"
 
@@ -20,6 +20,7 @@ export async function POST(request: NextRequest) {
   let event
 
   try {
+    const stripe = getStripe()
     event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET!)
   } catch (err) {
     console.error("[STRIPE] Webhook signature verification failed:", err)
