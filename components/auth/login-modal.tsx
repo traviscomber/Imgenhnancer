@@ -7,14 +7,15 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, Lock, Eye, EyeOff, Sparkles, Mail } from "lucide-react"
+import { Loader2, Lock, Eye, EyeOff, Sparkles, Mail, X } from "lucide-react"
 import { login } from "@/lib/auth"
 
 interface LoginModalProps {
   onSuccess: () => void
+  onClose?: () => void
 }
 
-export function LoginModal({ onSuccess }: LoginModalProps) {
+export function LoginModal({ onSuccess, onClose }: LoginModalProps) {
   const [mode, setMode] = useState<"signin" | "signup">("signin")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -136,7 +137,15 @@ export function LoginModal({ onSuccess }: LoginModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-md bg-gray-900/95 backdrop-blur-lg border-amber-500/20 shadow-2xl">
+      <Card className="w-full max-w-md bg-gray-900/95 backdrop-blur-lg border-amber-500/20 shadow-2xl relative">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+          aria-label="Close modal"
+          type="button"
+        >
+          <X className="w-6 h-6" />
+        </button>
         <CardHeader className="text-center space-y-4">
           <div className="w-16 h-16 bg-gradient-to-r from-amber-500 to-amber-600 rounded-2xl flex items-center justify-center mx-auto shadow-lg shadow-amber-500/20">
             <Sparkles className="w-8 h-8 text-black" />
