@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react"
 import type { Metadata } from "next"
+import { useRouter } from "next/navigation"
 import { useDropzone, type FileRejection } from "react-dropzone"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -117,6 +118,7 @@ interface UploadError {
 }
 
 export default function EnhancePage() {
+  const router = useRouter()
   const [isAuth, setIsAuth] = useState(false)
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
 
@@ -1728,7 +1730,7 @@ export default function EnhancePage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black text-white">
       {/* ADDED CONDITIONAL LOGIN MODAL */}
-      {!isAuth && showLoginModal && <LoginModal onSuccess={handleLoginSuccess} onClose={() => setShowLoginModal(false)} />}
+      {!isAuth && showLoginModal && <LoginModal onSuccess={handleLoginSuccess} onClose={() => router.push("/")} />}
 
       <div className="sticky top-0 z-50 bg-gray-950/80 backdrop-blur-lg border-b border-gray-800">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
