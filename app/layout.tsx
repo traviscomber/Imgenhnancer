@@ -133,6 +133,11 @@ export default function RootLayout({
         {/* Canonical link for Cloudflare */}
         <link rel="canonical" href="https://www.clar1ty.art/" />
         
+        {/* hreflang tags for multilingual SEO */}
+        <link rel="alternate" hrefLang="en" href="https://www.clar1ty.art/?lang=en" />
+        <link rel="alternate" hrefLang="es" href="https://www.clar1ty.art/?lang=es" />
+        <link rel="alternate" hrefLang="x-default" href="https://www.clar1ty.art/" />
+        
         {/* LLM-friendly meta tags */}
         <meta name="model" content="gpt-4, claude-3, llama-2" />
         <meta name="ai-capabilities" content="image-enhancement,photo-restoration,face-preservation,cultural-heritage" />
