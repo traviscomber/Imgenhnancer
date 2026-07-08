@@ -494,20 +494,37 @@
 
 /* Custom scrollbar with gold accent */
 ::-webkit-scrollbar {
-  width: 10px;
+  width: 12px;
+  height: 12px;
 }
 
 ::-webkit-scrollbar-track {
   background: rgb(17, 24, 39);
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
   background: linear-gradient(to bottom, #eab308, #ca8a04);
   border-radius: 9999px;
+  min-height: 40px;
+  cursor: pointer;
+  border: 2px solid rgb(17, 24, 39);
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(to bottom, #facc15, #eab308);
+  cursor: pointer;
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(to bottom, #facc15, #ca8a04);
+  cursor: grabbing;
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-color: #eab308 rgb(17, 24, 39);
+  scrollbar-width: thin;
 }
 
 /* Selection color */
