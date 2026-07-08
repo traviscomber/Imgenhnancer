@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { ArrowRight, Lock, Shield, UserRound } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ClarityLogo } from "@/components/clarity-logo"
+import { PricingSection } from "@/components/pricing-section"
 import { trackCTAClick } from "@/lib/analytics"
 import { logout } from "@/lib/auth"
 
@@ -167,6 +168,7 @@ export default function Home() {
       <EnhancementSection />
       <StepsSection />
       <QualitySection />
+      <PricingSection />
       <FacesSection />
       <UseCasesSection />
       <PrivacyStrip />
