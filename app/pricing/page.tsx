@@ -1,8 +1,8 @@
 import Link from "next/link"
-import { CREDIT_COSTS, CREDIT_PACKAGES, SUBSCRIPTION_TIERS, PAYG_CREDIT_PACKS, calculateEnhancementsPerMonth } from "@/lib/credits"
+import { CREDIT_COSTS, SUBSCRIPTION_TIERS, PAYG_CREDIT_PACKS } from "@/lib/credits"
 import { Button } from "@/components/ui/button"
 import { ClarityLogo } from "@/components/clarity-logo"
-import { Check } from "lucide-react"
+import { Check, ChevronDown, ShoppingCart, TrendingUp, Clock } from "lucide-react"
 
 export default function PricingPage() {
   return (
@@ -20,160 +20,235 @@ export default function PricingPage() {
 
         {/* Header */}
         <section className="mb-20 text-center">
-          <p className="text-xs uppercase tracking-[0.35em] text-[#c9953d]">Flexible Plans</p>
-          <h1 className="mt-6 text-5xl font-light tracking-[0.04em] text-white md:text-6xl">Choose Your Plan</h1>
-          <p className="mx-auto mt-6 max-w-2xl text-sm leading-7 text-[#d8d0c4]">
-            Select a monthly subscription for unlimited access or pay-as-you-go for flexibility. Credits are consumed only when processing images.
+          <p className="text-xs uppercase tracking-[0.35em] text-[#c9953d] mb-4">Simple Pricing for Serious Image Restoration</p>
+          <h1 className="text-5xl font-light tracking-tight text-[#d7a957] md:text-6xl mb-6">
+            Simple pricing for
+            <br />
+            serious image restoration.
+          </h1>
+          <p className="mx-auto mt-8 max-w-2xl text-sm leading-7 text-[#c9a882]">
+            Use credits to enhance images in x2, x3, or x4 quality.
+            <br />
+            Higher upscale modes create more pixels and use more credits.
+            <br />
+            You always see the exact cost before processing.
           </p>
         </section>
 
-        {/* Monthly Subscription Tiers */}
-        <section className="mb-20">
-          <h2 className="mb-12 text-center text-3xl font-light text-white">Monthly Subscriptions</h2>
-          <div className="grid gap-6 lg:grid-cols-5">
-            {SUBSCRIPTION_TIERS.map((tier) => (
-              <article
-                key={tier.id}
-                className={`relative flex flex-col rounded-2xl border bg-[#080706] p-8 shadow-[0_0_32px_rgba(214,188,117,0.12)] transition-all ${
-                  tier.id === "creator" ? "border-[#c9953d] lg:ring-2 lg:ring-[#c9953d]/50" : "border-white/10"
-                } hover:border-[#d7a957]`}
-              >
-                {tier.id === "creator" && (
-                  <span className="absolute right-5 top-5 rounded-full bg-[#c9953d] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-black">
-                    Popular
-                  </span>
-                )}
-                
-                <div>
-                  <h3 className="text-xl font-semibold text-white">{tier.name}</h3>
-                  <p className="mt-2 text-xs text-[#b9ad9a]">{tier.description}</p>
-                  
-                  <div className="mt-6">
-                    {tier.price === 0 ? (
-                      <span className="text-4xl font-light text-white">Free</span>
-                    ) : (
-                      <>
-                        <span className="text-4xl font-light text-white">${tier.price}</span>
-                        <span className="ml-2 text-sm text-[#b9ad9a]">/month</span>
-                      </>
-                    )}
-                  </div>
-                  
-                  <p className="mt-4 text-2xl font-light text-[#d7a957]">{tier.monthlyCredits.toLocaleString()}</p>
-                  <p className="text-xs text-[#8f8678]">credits per month</p>
-                  
-                  <p className="mt-3 text-sm text-[#d8d0c4]">
-                    ≈ {calculateEnhancementsPerMonth(tier.monthlyCredits)} 4x enhancements
-                  </p>
-                </div>
-
-                <div className="my-8 flex-1 border-t border-white/10"></div>
-
-                <ul className="space-y-3 text-xs text-[#d8d0c4]">
-                  {tier.features.map((feature, idx) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <Check className="mt-1 h-4 w-4 flex-shrink-0 text-[#c9953d]" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <Button asChild className={`mt-8 h-11 w-full rounded-none ${
-                  tier.id === "creator" 
-                    ? "bg-[#c9953d] text-black hover:bg-[#e0b365]"
-                    : "border border-[#d7a957] bg-transparent text-[#d7a957] hover:bg-[#d7a957]/10"
-                }`}>
-                  <Link href="/enhance">Get Started</Link>
-                </Button>
-              </article>
-            ))}
-          </div>
-        </section>
+        {/* CTA Buttons */}
+        <div className="mb-20 flex flex-col gap-4 sm:flex-row justify-center">
+          <Button asChild className="h-12 bg-[#c9953d] text-black hover:bg-[#d7a957] rounded-sm font-semibold uppercase tracking-[0.1em] text-sm px-12">
+            <Link href="/enhance">Start Free</Link>
+          </Button>
+          <Button asChild className="h-12 border border-[#8b7d6a] bg-[#3d3a36] text-[#d8d0c4] hover:bg-[#4d4a46] rounded-sm font-semibold uppercase tracking-[0.1em] text-sm px-12">
+            <Link href="#payg">Buy Credits</Link>
+          </Button>
+        </div>
 
         {/* How Credits Work */}
-        <section className="mb-20 rounded-2xl border border-white/10 bg-white/[0.04] p-8">
-          <h2 className="text-2xl font-light text-white">How Credits Work</h2>
-          <div className="mt-8 grid gap-8 md:grid-cols-3">
-            <div>
-              <div className="text-4xl font-light text-[#c9953d]">{CREDIT_COSTS.ENHANCE_2X}</div>
-              <p className="mt-2 text-sm font-medium text-white">2x Upscale</p>
-              <p className="mt-1 text-xs text-[#b9ad9a]">Perfect for standard enhancing</p>
+        <section className="mb-20">
+          <h2 className="text-center text-3xl font-light text-[#d7a957] mb-4">How Credits Work</h2>
+          <h3 className="text-center text-2xl font-light text-white mb-12">Choose the right level of restoration.</h3>
+          
+          <div className="grid gap-6 md:grid-cols-3">
+            <div className="flex flex-col items-center space-y-3">
+              <div className="flex h-16 w-16 items-center justify-center rounded-lg border border-[#c9953d]/50 bg-[#1a1614]">
+                <span className="text-2xl font-light text-[#d7a957]">2x</span>
+              </div>
+              <h4 className="text-xs font-semibold uppercase tracking-[0.15em] text-[#c9953d]">x2 Enhance</h4>
+              <p className="text-3xl font-light text-[#d7a957]">{CREDIT_COSTS.ENHANCE_2X}</p>
+              <p className="text-xs uppercase tracking-[0.1em] text-[#8f8678]">Credits</p>
+              <p className="text-xs text-center text-[#8f8678]">Clean digital enhancement</p>
             </div>
-            <div>
-              <div className="text-4xl font-light text-[#c9953d]">{CREDIT_COSTS.ENHANCE_3X}</div>
-              <p className="mt-2 text-sm font-medium text-white">3x Upscale</p>
-              <p className="mt-1 text-xs text-[#b9ad9a]">Better detail and resolution</p>
+            <div className="flex flex-col items-center space-y-3">
+              <div className="flex h-16 w-16 items-center justify-center rounded-lg border border-[#c9953d]/50 bg-[#1a1614]">
+                <span className="text-2xl font-light text-[#d7a957]">3x</span>
+              </div>
+              <h4 className="text-xs font-semibold uppercase tracking-[0.15em] text-[#c9953d]">x3 Restore</h4>
+              <p className="text-3xl font-light text-[#d7a957]">{CREDIT_COSTS.ENHANCE_3X}</p>
+              <p className="text-xs uppercase tracking-[0.1em] text-[#8f8678]">Credits</p>
+              <p className="text-xs text-center text-[#8f8678]">High-detail restoration</p>
             </div>
-            <div>
-              <div className="text-4xl font-light text-[#c9953d]">{CREDIT_COSTS.ENHANCE_4X}</div>
-              <p className="mt-2 text-sm font-medium text-white">4x Upscale</p>
-              <p className="mt-1 text-xs text-[#b9ad9a]">Maximum quality and detail</p>
+            <div className="flex flex-col items-center space-y-3">
+              <div className="flex h-16 w-16 items-center justify-center rounded-lg border border-[#c9953d]/50 bg-[#1a1614]">
+                <span className="text-2xl font-light text-[#d7a957]">4x</span>
+              </div>
+              <h4 className="text-xs font-semibold uppercase tracking-[0.15em] text-[#c9953d]">x4 Pro Restore</h4>
+              <p className="text-3xl font-light text-[#d7a957]">{CREDIT_COSTS.ENHANCE_4X}</p>
+              <p className="text-xs uppercase tracking-[0.1em] text-[#8f8678]">Credits</p>
+              <p className="text-xs text-center text-[#8f8678]">Print and archive quality</p>
             </div>
           </div>
         </section>
 
-        {/* Pay-As-You-Go Packages */}
+        {/* Subscription Plans Table */}
         <section className="mb-20">
-          <h2 className="mb-12 text-center text-3xl font-light text-white">Pay-As-You-Go Packs</h2>
+          <h2 className="text-center text-3xl font-light text-[#d7a957] mb-4">Subscription Plans</h2>
+          <h3 className="text-center text-2xl font-light text-white mb-12">Find the plan that fits your workflow.</h3>
+          
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-white/10">
+                  <th className="px-6 py-4 text-left font-light text-[#d8d0c4]"></th>
+                  {SUBSCRIPTION_TIERS.map((tier) => (
+                    <th key={tier.id} className="px-6 py-4 text-center font-semibold uppercase tracking-[0.1em] text-[#d7a957] text-xs">
+                      {tier.name}
+                      {tier.id === "creator" && (
+                        <div className="mt-1 inline-block rounded-full bg-[#c9953d] px-2 py-1 text-[10px] font-bold text-black">
+                          Most Popular
+                        </div>
+                      )}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { label: "Credits", key: "credits" },
+                  { label: "Max Upload", key: "maxUpload" },
+                  { label: "Batch", key: "batch" },
+                  { label: "Storage", key: "storage" },
+                  { label: "Usage Rights", key: "usage" },
+                ].map((row) => (
+                  <tr key={row.key} className="border-b border-white/10">
+                    <td className="px-6 py-4 text-left font-light text-[#d8d0c4] text-xs uppercase tracking-[0.05em]">
+                      {row.label}
+                    </td>
+                    {SUBSCRIPTION_TIERS.map((tier) => (
+                      <td key={`${tier.id}-${row.key}`} className="px-6 py-4 text-center text-[#d8d0c4] text-xs">
+                        {row.key === "credits" && `${tier.monthlyCredits.toLocaleString()}`}
+                        {row.key === "maxUpload" && `${tier.maxFileSize}MB`}
+                        {row.key === "batch" && (tier.id === "free" ? "No" : tier.id === "starter" ? "No" : tier.id === "creator" ? "Up to 20" : tier.id === "studio" ? "Up to 100" : "Custom")}
+                        {row.key === "storage" && (tier.id === "free" ? "24h" : tier.id === "starter" ? "7 days" : tier.id === "creator" ? "30 days" : tier.id === "studio" ? "90 days" : "Custom")}
+                        {row.key === "usage" && (tier.id === "free" ? "Non-commercial" : tier.id === "starter" ? "Personal" : tier.id === "creator" ? "Small business" : tier.id === "studio" ? "Full commercial" : "Institutional")}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+                <tr>
+                  <td className="px-6 py-4"></td>
+                  {SUBSCRIPTION_TIERS.map((tier) => (
+                    <td key={`cta-${tier.id}`} className="px-6 py-4 text-center">
+                      <Button asChild className={`h-10 w-full rounded-sm uppercase tracking-[0.08em] text-xs font-semibold ${
+                        tier.id === "creator"
+                          ? "bg-[#c9953d] text-black hover:bg-[#d7a957]"
+                          : "border border-[#d7a957] bg-transparent text-[#d7a957] hover:bg-[#d7a957]/10"
+                      }`}>
+                        <Link href="/enhance">{tier.id === "free" ? "Start Free" : `Choose ${tier.name}`}</Link>
+                      </Button>
+                    </td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <p className="mt-6 flex items-center justify-center gap-2 text-xs text-[#8f8678]">
+            <Check className="h-4 w-4 text-[#c9953d]" strokeWidth={3} />
+            No hidden formulas. You always see the credit cost before processing.
+          </p>
+        </section>
+
+        {/* PAYG Section */}
+        <section id="payg" className="mb-20">
+          <h2 className="text-center text-3xl font-light text-[#d7a957] mb-4">Pay-As-You-Go</h2>
+          <h3 className="text-center text-2xl font-light text-white mb-12">Need credits without a subscription?</h3>
+          
           <div className="grid gap-6 md:grid-cols-4">
-            {PAYG_CREDIT_PACKS.map((pkg) => (
-              <article
-                key={pkg.id}
-                className={`relative flex flex-col rounded-2xl border bg-[#080706] p-6 shadow-[0_0_32px_rgba(214,188,117,0.12)] ${
-                  pkg.popular ? "border-[#c9953d]" : "border-white/10"
-                }`}
-              >
-                {pkg.popular && (
-                  <span className="absolute right-4 top-4 rounded-full bg-[#c9953d] px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-black">
+            {PAYG_CREDIT_PACKS.map((pack) => (
+              <div key={pack.id} className="relative flex flex-col items-center rounded-lg border border-white/10 bg-[#1a1614] p-6">
+                {pack.popular && (
+                  <div className="absolute right-4 top-4 rounded-full bg-[#c9953d] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.1em] text-black">
                     Best Value
-                  </span>
+                  </div>
                 )}
-                <h3 className="text-lg font-semibold text-white">{pkg.name}</h3>
-                <div className="mt-4">
-                  <span className="text-3xl font-light text-white">${pkg.price}</span>
-                  <span className="ml-2 text-xs text-[#b9ad9a]">one-time</span>
-                </div>
-                <p className="mt-2 text-xs text-[#8f8678]">${pkg.pricePerCredit.toFixed(3)} per credit</p>
-                <p className="mt-3 text-xs text-[#d8d0c4]">Expires in {pkg.expiryDays} days</p>
-                <Button asChild className="mt-auto pt-6 h-10 w-full rounded-none border border-[#d7a957] bg-transparent text-xs text-[#d7a957] hover:bg-[#d7a957]/10">
+                <ShoppingCart className="h-10 w-10 text-[#d7a957] mb-4" strokeWidth={1.5} />
+                <h4 className="text-xs font-semibold uppercase tracking-[0.15em] text-[#c9953d] text-center">{pack.name}</h4>
+                <p className="mt-4 text-3xl font-light text-[#d7a957]">${pack.price}</p>
+                <p className="text-xs text-[#8f8678] mt-1">{pack.credits.toLocaleString()} credits</p>
+                <p className="text-xs text-[#8f8678] mt-4">Expires in {pack.expiryDays} days</p>
+                <Button asChild className="mt-6 w-full h-10 rounded-sm border border-[#d7a957] bg-transparent text-[#d7a957] hover:bg-[#d7a957]/10 uppercase tracking-[0.08em] text-xs font-semibold">
                   <Link href="/enhance">Buy Credits</Link>
                 </Button>
-              </article>
+              </div>
             ))}
           </div>
+          
+          <p className="mt-6 text-center text-xs text-[#8f8678]">
+            🎁 PAYG credits are valid for 12 months. No subscription required.
+          </p>
+        </section>
+
+        {/* What Happens When Credits Run Out */}
+        <section className="mb-20 rounded-lg border border-white/10 bg-white/5 p-8">
+          <h2 className="text-center text-2xl font-light text-white mb-12">What happens when credits run out</h2>
+          
+          <div className="grid gap-8 md:grid-cols-3">
+            <div className="flex flex-col items-center text-center">
+              <ShoppingCart className="h-12 w-12 text-[#d7a957] mb-4" strokeWidth={1.5} />
+              <h4 className="text-sm font-semibold uppercase tracking-[0.1em] text-white mb-2">Buy Pay-As-You-Go Credits</h4>
+              <p className="text-xs text-[#8f8678]">One-time packs. Use when you need them.</p>
+            </div>
+            <div className="flex flex-col items-center text-center">
+              <TrendingUp className="h-12 w-12 text-[#d7a957] mb-4" strokeWidth={1.5} />
+              <h4 className="text-sm font-semibold uppercase tracking-[0.1em] text-white mb-2">Upgrade Your Plan</h4>
+              <p className="text-xs text-[#8f8678]">More monthly credits and higher limits.</p>
+            </div>
+            <div className="flex flex-col items-center text-center">
+              <Clock className="h-12 w-12 text-[#d7a957] mb-4" strokeWidth={1.5} />
+              <h4 className="text-sm font-semibold uppercase tracking-[0.1em] text-white mb-2">Wait Until Next Reset Date</h4>
+              <p className="text-xs text-[#8f8678]">Monthly credits refresh au/automatically.</p>
+            </div>
+          </div>
+          
+          <p className="mt-8 text-center text-xs text-[#8f8678]">
+            👤 Your account remains active.
+          </p>
         </section>
 
         {/* FAQ */}
-        <section className="mb-20 max-w-3xl">
-          <h2 className="mb-8 text-2xl font-light text-white">Frequently Asked Questions</h2>
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-sm font-semibold text-white">Can I mix subscriptions and pay-as-you-go?</h3>
-              <p className="mt-2 text-sm text-[#d8d0c4]">Yes. Your monthly credits are used first, then pay-as-you-go credits top up when needed.</p>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-white">Do unused credits roll over?</h3>
-              <p className="mt-2 text-sm text-[#d8d0c4]">Monthly subscription credits refresh each month. Pay-as-you-go credits expire in 12 months.</p>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-white">Can I upgrade or downgrade?</h3>
-              <p className="mt-2 text-sm text-[#d8d0c4]">Yes. Changes take effect at the start of your next billing cycle.</p>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-white">What file sizes are supported?</h3>
-              <p className="mt-2 text-sm text-[#d8d0c4]">Max file sizes vary by plan: Free (2MB), Starter (10MB), Creator (15MB), Studio (30MB), Business (50MB+).</p>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-white">Are there discounts for annual billing?</h3>
-              <p className="mt-2 text-sm text-[#d8d0c4]">Contact our team at info@clar1ty.art for volume or annual pricing.</p>
-            </div>
+        <section className="mb-20">
+          <h2 className="text-center text-2xl font-light text-white mb-12">Frequently Asked Questions</h2>
+          
+          <div className="space-y-4">
+            {[
+              { q: "What is a credit?", a: "A credit is the unit of payment for image enhancement. Different upscale levels cost different amounts." },
+              { q: "How many credits does each mode use?", a: "2x uses 4 credits, 3x uses 9 credits, and 4x uses 16 credits." },
+              { q: "Why does 4x use 16 credits?", a: "4x upscaling creates 16x more pixels (4x width × 4x height), requiring significantly more processing." },
+              { q: "Can I use 4x on any plan?", a: "Yes. All plans support 2x, 3x, and 4x upscaling. Only file size limits vary by plan." },
+              { q: "Do monthly credits roll over?", a: "No. Monthly subscription credits reset each month. Pay-as-you-go credits expire after 12 months." },
+              { q: "Do PAYG credits expire?", a: "Yes. Pay-as-you-go credits expire 12 months after purchase. Monthly credits never expire until the month ends." },
+            ].map((item, idx) => (
+              <details key={idx} className="group rounded-lg border border-white/10 bg-white/5 p-4">
+                <summary className="flex cursor-pointer items-center justify-between font-light text-sm text-white hover:text-[#d7a957]">
+                  {item.q}
+                  <ChevronDown className="h-4 w-4 transition group-open:rotate-180" />
+                </summary>
+                <p className="mt-3 text-xs text-[#8f8678]">{item.a}</p>
+              </details>
+            ))}
           </div>
         </section>
 
-        {/* Footer CTA */}
-        <p className="text-center text-sm text-[#8f8678]">
-          Questions? <a href="mailto:info@clar1ty.art" className="text-[#d7a957] hover:text-white">Email us</a> or <Link href="/support" className="text-[#d7a957] hover:text-white">visit support</Link>
-        </p>
+        {/* Final CTA */}
+        <section className="text-center border-t border-white/10 pt-12">
+          <h2 className="text-3xl font-light text-[#d7a957] mb-6">Restore More Detail.
+            <br />
+            Keep Full Control.
+          </h2>
+          <div className="flex flex-col gap-4 sm:flex-row justify-center">
+            <Button asChild className="h-12 bg-[#c9953d] text-black hover:bg-[#d7a957] rounded-sm font-semibold uppercase tracking-[0.1em] text-sm px-12">
+              <Link href="/enhance">Start Free</Link>
+            </Button>
+            <Button asChild className="h-12 border border-[#8b7d6a] bg-[#3d3a36] text-[#d8d0c4] hover:bg-[#4d4a46] rounded-sm font-semibold uppercase tracking-[0.1em] text-sm px-12">
+              <Link href="#payg">View Pay-As-You-Go</Link>
+            </Button>
+          </div>
+          <p className="mt-8 text-xs text-[#8f8678]">
+            🔒 Secure processing. Your images stay private.
+          </p>
+        </section>
       </div>
     </main>
   )
