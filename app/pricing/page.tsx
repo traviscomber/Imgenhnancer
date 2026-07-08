@@ -6,8 +6,16 @@ import { Check, ChevronDown, ShoppingCart, TrendingUp, Clock } from "lucide-reac
 
 export default function PricingPage() {
   return (
-    <main className="min-h-screen bg-black px-6 py-24 text-[#efe8dc]">
-      <div className="mx-auto max-w-7xl">
+    <main className="relative min-h-screen px-6 py-24 text-[#efe8dc]" style={{
+      backgroundImage: 'url("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/981623f7-fb48-4682-9e94-2a634b2d76fc.jfif-T6WrpT4U6kCvX5PSOrzbNuXFY2es8d.jpeg")',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundAttachment: 'fixed',
+    }}>
+      {/* Dark overlay for text readability */}
+      <div className="absolute inset-0 bg-black/70"></div>
+      
+      <div className="relative mx-auto max-w-7xl z-10">
         {/* Navigation */}
         <nav className="mb-20 flex items-center justify-between">
           <Link href="/" aria-label="clar1ty home">
