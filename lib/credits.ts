@@ -1,12 +1,12 @@
 // Credit system configuration and utilities
-// Based on Topaz pricing but 20% less cost for users
+// Updated cost structure: 2x=4cr, 3x=9cr, 4x=16cr (quadratic scaling)
 
 export const CREDIT_COSTS = {
-  // Image enhancement costs (20% less than Topaz's 8 credits)
-  ENHANCE_BASE: 6,
-  ENHANCE_2X: 6,
-  ENHANCE_3X: 8,
-  ENHANCE_4X: 10,
+  // Image enhancement costs (quadratic scaling)
+  ENHANCE_BASE: 4,
+  ENHANCE_2X: 4,
+  ENHANCE_3X: 9,
+  ENHANCE_4X: 16,
 
   // Face swap operations
   FACE_SWAP: 8,
@@ -15,33 +15,104 @@ export const CREDIT_COSTS = {
   ANALYZE: 0,
 } as const
 
-export const CREDIT_PACKAGES = [
+// Subscription tiers with monthly allowances
+export const SUBSCRIPTION_TIERS = [
+  {
+    id: "free",
+    name: "Free",
+    monthlyCredits: 10,
+    price: 0,
+    maxFileSize: 2, // MB
+    description: "Get started with basic enhancements",
+    features: ["10 credits/month", "2MB max file size", "Basic enhancements"],
+  },
   {
     id: "starter",
     name: "Starter",
-    credits: 100,
-    price: 9.99,
-    description: "Perfect for trying out the service",
-    pricePerCredit: 0.1,
+    monthlyCredits: 240,
+    price: 9,
+    maxFileSize: 10,
+    description: "Perfect for casual users",
+    features: ["240 credits/month (~60 4x enhances)", "10MB max file size", "All enhancements"],
   },
   {
-    id: "pro",
-    name: "Pro",
-    credits: 500,
-    price: 39.99,
-    description: "Best value for regular users",
-    pricePerCredit: 0.08,
-    popular: true,
+    id: "creator",
+    name: "Creator",
+    monthlyCredits: 600,
+    price: 19,
+    maxFileSize: 15,
+    description: "Great for content creators",
+    features: ["600 credits/month (~150 4x enhances)", "15MB max file size", "Priority processing"],
+  },
+  {
+    id: "studio",
+    name: "Studio",
+    monthlyCredits: 1500,
+    price: 39,
+    maxFileSize: 30,
+    description: "For professional studios",
+    features: ["1500 credits/month (~375 4x enhances)", "30MB max file size", "Priority support"],
   },
   {
     id: "business",
     name: "Business",
-    credits: 1500,
-    price: 99.99,
-    description: "For professional use",
-    pricePerCredit: 0.067,
+    monthlyCredits: 3000,
+    price: 99,
+    maxFileSize: 50,
+    description: "Enterprise solution",
+    features: ["3000+ credits/month (~750 4x enhances)", "50MB+ max file size", "Dedicated support"],
   },
 ]
+
+// PAYG credit packs
+export const PAYG_CREDIT_PACKS = [
+  {
+    id: "payg-50",
+    name: "50 Credits",
+    credits: 50,
+    price: 5,
+    expiryDays: 365,
+    pricePerCredit: 0.1,
+  },
+  {
+    id: "payg-150",
+    name: "150 Credits",
+    credits: 150,
+    price: 12,
+    expiryDays: 365,
+    pricePerCredit: 0.08,
+    popular: true,
+  },
+  {
+    id: "payg-450",
+    name: "450 Credits",
+    credits: 450,
+    price: 29,
+    expiryDays: 365,
+    pricePerCredit: 0.064,
+  },
+  {
+    id: "payg-1500",
+    name: "1500 Credits",
+    credits: 1500,
+    price: 79,
+    expiryDays: 365,
+    pricePerCredit: 0.053,
+  },
+]
+
+// Legacy: Monthly subscription packages (kept for backward compatibility)
+export const CREDIT_PACKAGES = SUBSCRIPTION_TIERS.filter(
+  (tier) => tier.price > 0 && tier.id !== "free"
+).map((tier) => ({
+  id: tier.id,
+  name: tier.name,
+  credits: tier.monthlyCredits,
+  price: tier.price,
+  description: tier.description,
+  pricePerCredit: tier.price / tier.monthlyCredits,
+  popular: tier.id === "creator",
+}))
 
 export function calculateCreditsNeeded(operation: keyof typeof CREDIT_COSTS, upscaleFactor?: number): number {
   if (operation === "ANALYZE") return 0
@@ -68,4 +139,17 @@ export function formatCredits(credits: number): string {
 
 export function getPackageByCredits(credits: number) {
   return CREDIT_PACKAGES.find((pkg) => pkg.credits === credits)
+}
+
+export function getSubscriptionTierById(tierId: string) {
+  return SUBSCRIPTION_TIERS.find((tier) => tier.id === tierId)
+}
+
+export function getPaygPackageById(packageId: string) {
+  return PAYG_CREDIT_PACKS.find((pkg) => pkg.id === packageId)
+}
+
+export function calculateEnhancementsPerMonth(credits: number, upscaleFactor: 4 = 4): number {
+  const costPer4x = CREDIT_COSTS.ENHANCE_4X
+  return Math.floor(credits / costPer4x)
 }
