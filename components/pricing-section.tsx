@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { CREDIT_COSTS } from "@/lib/credits"
 import { Button } from "@/components/ui/button"
-import { Check, Copy, Search, Star, Gift } from "lucide-react"
+import { Check, Wand2, Sparkles, Zap, Gift } from "lucide-react"
 
 export function PricingSection() {
   return (
@@ -27,7 +27,7 @@ export function PricingSection() {
           {/* x2 Enhance */}
           <div className="flex flex-col items-center space-y-4">
             <div className="flex h-20 w-20 items-center justify-center rounded-xl border border-[#c9953d]/60 bg-[#1a1614]">
-              <Copy className="h-10 w-10 text-[#d7a957]" strokeWidth={1.5} />
+              <Wand2 className="h-10 w-10 text-[#d7a957]" strokeWidth={1.5} />
             </div>
             <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-[#c9953d]">
               x2 Enhance
@@ -40,7 +40,7 @@ export function PricingSection() {
           {/* x3 Restore */}
           <div className="flex flex-col items-center space-y-4">
             <div className="flex h-20 w-20 items-center justify-center rounded-xl border border-[#c9953d]/60 bg-[#1a1614]">
-              <Search className="h-10 w-10 text-[#d7a957]" strokeWidth={1.5} />
+              <Sparkles className="h-10 w-10 text-[#d7a957]" strokeWidth={1.5} />
             </div>
             <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-[#c9953d]">
               x3 Restore
@@ -53,7 +53,7 @@ export function PricingSection() {
           {/* x4 Pro Restore */}
           <div className="flex flex-col items-center space-y-4">
             <div className="flex h-20 w-20 items-center justify-center rounded-xl border border-[#c9953d]/60 bg-[#1a1614]">
-              <Star className="h-10 w-10 text-[#d7a957]" strokeWidth={1.5} fill="#d7a957" />
+              <Zap className="h-10 w-10 text-[#d7a957]" strokeWidth={1.5} fill="#d7a957" />
             </div>
             <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-[#c9953d]">
               x4 Pro Restore
