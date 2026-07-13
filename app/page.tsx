@@ -29,6 +29,7 @@ type InfoCard = {
 
 type UseCaseCard = InfoCard & {
   icon: typeof Archive
+  bgPosition: string
 }
 
 const contextCards: ComparisonCard[] = [
@@ -140,44 +141,50 @@ const useCaseCards: UseCaseCard[] = [
   {
     title: "Cultural archives",
     copy: "Restore and preserve historical photographs and documents.",
-    image: "/images/landing/comparisons/archive-before.png",
+    image: "/images/landing/use-cases-bg.jpeg",
     alt: "Cultural archives workspace",
     icon: Archive,
+    bgPosition: "0% 0%",
   },
   {
     title: "Photo restoration services",
     copy: "Deliver higher-quality results faster with AI-powered enhancement.",
-    image: "/images/landing/comparisons/faces-before.jpg",
+    image: "/images/landing/use-cases-bg.jpeg",
     alt: "Photo restoration workspace",
     icon: Camera,
+    bgPosition: "50% 0%",
   },
   {
     title: "Creators & digital artists",
     copy: "Enhance references, concepts, and artwork with more detail and clarity.",
-    image: "/images/landing/comparisons/digital-before.jpg",
+    image: "/images/landing/use-cases-bg.jpeg",
     alt: "Creators and digital artists workspace",
     icon: Palette,
+    bgPosition: "100% 0%",
   },
   {
     title: "Museums & heritage projects",
     copy: "Prepare images for exhibitions, publications, and educational materials.",
-    image: "/images/landing/comparisons/heritage-before.jpg",
+    image: "/images/landing/use-cases-bg.jpeg",
     alt: "Museums and heritage workspace",
     icon: Landmark,
+    bgPosition: "0% 100%",
   },
   {
     title: "Print shops & studios",
     copy: "Produce print-ready files with clean detail and balanced contrast.",
-    image: "/images/landing/comparisons/generic-upscaler.jpg",
+    image: "/images/landing/use-cases-bg.jpeg",
     alt: "Print shops and studios workspace",
     icon: Printer,
+    bgPosition: "50% 100%",
   },
   {
     title: "Brands & businesses",
     copy: "Improve visual assets for marketing, storytelling, and brand heritage.",
-    image: "/images/landing/comparisons/generic-clar1ty.jpg",
+    image: "/images/landing/use-cases-bg.jpeg",
     alt: "Brands and businesses workspace",
     icon: Briefcase,
+    bgPosition: "100% 100%",
   },
 ]
 
@@ -480,12 +487,18 @@ function UseCasesSection() {
         </div>
 
         <div className="mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {useCaseCards.map(({ icon: Icon, ...card }) => (
+          {useCaseCards.map(({ icon: Icon, bgPosition, ...card }) => (
             <article key={card.title} className="overflow-hidden rounded-[1.6rem] bg-[#0d0c0b] shadow-[0_22px_60px_rgba(0,0,0,0.55)] ring-1 ring-white/5">
               <div className="grid min-h-[288px] grid-cols-[0.98fr_1.02fr]">
-                <div className="relative">
-                  <Image src={card.image} alt={card.alt} fill sizes="(min-width: 1280px) 16vw, (min-width: 768px) 24vw, 90vw" className="object-cover object-center" />
-                  <div className="absolute inset-0 bg-gradient-to-r from-black/25 via-transparent to-transparent" />
+                <div
+                  className="relative"
+                  style={{
+                    backgroundImage: `url(${card.image})`,
+                    backgroundPosition: bgPosition,
+                    backgroundSize: "300% 200%",
+                  }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-transparent" />
                 </div>
                 <div className="flex flex-col justify-center bg-[#11100e] px-6 py-8 text-left sm:px-7">
                   <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-[#6d5a41] bg-black/40 text-[#d7a957] shadow-[0_0_0_1px_rgba(255,255,255,0.04)]">
