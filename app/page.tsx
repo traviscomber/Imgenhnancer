@@ -502,13 +502,13 @@ function UseCasesSection() {
             <article
               key={card.title}
               className="relative overflow-hidden rounded-[1.8rem] bg-[#11100e] shadow-[0_22px_60px_rgba(0,0,0,0.58)] ring-1 ring-white/5"
-              style={{ minHeight: 292 }}
+              style={{ minHeight: 330 }}
             >
-              <div style={{ display: "grid", gridTemplateColumns: "1.24fr 0.76fr", minHeight: 292 }}>
-                <div className="relative overflow-hidden" style={{ height: 292 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1.38fr 0.62fr", minHeight: 330 }}>
+                <div className="relative overflow-hidden" style={{ height: 330 }}>
                   <Image src={card.image} alt={card.alt} fill sizes="(min-width: 1280px) 22vw, (min-width: 768px) 44vw, 100vw" className="object-cover" />
                 </div>
-                <div className="relative flex items-center bg-[linear-gradient(90deg,rgba(0,0,0,0.58)_0%,rgba(0,0,0,0.82)_24%,rgba(0,0,0,0.96)_100%)] px-6 py-8 sm:px-7" style={{ minHeight: 292 }}>
+                <div className="relative flex items-center bg-[linear-gradient(90deg,rgba(0,0,0,0.54)_0%,rgba(0,0,0,0.8)_24%,rgba(0,0,0,0.96)_100%)] px-6 py-8 sm:px-7" style={{ minHeight: 330 }}>
                   <div>
                     <h3 className="max-w-44 text-xl font-semibold leading-tight text-[#f5ece0]">{card.title}</h3>
                     <p className="mt-6 max-w-44 text-sm leading-7 text-[#f2e7d9]">{card.copy}</p>
