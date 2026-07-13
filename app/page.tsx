@@ -191,14 +191,6 @@ const collageImages = [
   { src: "/images/landing/comparisons/heritage-after.jpg", alt: "Heritage enhancement" },
 ]
 
-const faqQuestions = [
-  "Is clar1ty only for old photos?",
-  "Is clar1ty good for Asian faces?",
-  "What is Cultural Detail?",
-  "What is the difference between x2 and x4?",
-  "Which preset should I choose?",
-]
-
 export default function Home() {
   const router = useRouter()
 
@@ -219,7 +211,6 @@ export default function Home() {
       <UseCasesSection />
       <PricingPreview />
       <CollageSection />
-      <FAQSection />
       <FinalCTA onTryFree={() => openStudio("final_cta")} />
     </div>
   )
@@ -538,40 +529,6 @@ function CollageSection() {
   )
 }
 
-function FAQSection() {
-  const answers = {
-    "Is clar1ty only for old photos?":
-      "No. clar1ty works with modern digital photos, portraits, product images, creative assets, artwork, scans and old photographs. Heritage restoration is part of the product, not the only use case.",
-    "Is clar1ty good for Asian faces?":
-      "Yes. clar1ty is designed with special care for Asian portraits, facial detail, skin texture, traditional clothing and cultural visual elements.",
-    "What is Cultural Detail?":
-      "Cultural Detail helps preserve architecture, traditional clothing, ornaments, patterns, fabrics and cultural textures during enhancement.",
-    "What is the difference between x2 and x4?":
-      "x2 is more conservative and usually stays closer to the original appearance. x4 applies stronger one-step enhancement and may introduce more AI-generated detail.",
-    "Which preset should I choose?":
-      "Use Clean Enhance for general work, Old Photo Restore for damaged photos, Face Detail for portraits and Cultural Detail for heritage or culturally specific images.",
-  } as const
-
-  return (
-    <section id="faq" className="bg-[#090705] px-6 py-24 lg:px-16">
-      <div className="mx-auto max-w-5xl">
-        <div className="text-center">
-          <p className="text-xs uppercase tracking-[0.35em] text-[#c9953d]">Common questions</p>
-          <h2 className="mt-6 text-4xl font-light leading-tight text-[#f1e5d3] md:text-5xl">Questions people ask before they start.</h2>
-        </div>
-        <div className="mt-12 grid gap-4">
-          {faqQuestions.map((question) => (
-            <details key={question} className="rounded-2xl bg-white/[0.03] p-6">
-              <summary className="cursor-pointer list-none text-base font-medium text-[#f6ebdd]">{question}</summary>
-              <p className="mt-4 text-sm leading-7 text-[#d1c3b1]">{answers[question]}</p>
-            </details>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
 function FinalCTA({ onTryFree }: { onTryFree: () => void }) {
   const securityItems = [
     { title: "Secure processing", copy: "Your images are encrypted and processed safely.", Icon: Shield },
@@ -582,8 +539,20 @@ function FinalCTA({ onTryFree }: { onTryFree: () => void }) {
   return (
     <section className="bg-black px-6 py-24 lg:px-16">
       <div className="mx-auto max-w-7xl">
-        <div className="grid gap-12 rounded-3xl bg-white/[0.03] p-8 lg:grid-cols-[0.95fr_0.85fr] lg:p-12">
-          <div>
+        <div className="grid gap-12 rounded-3xl bg-white/[0.03] p-8 lg:grid-cols-[0.9fr_1.1fr] lg:p-12">
+          <div className="space-y-5">
+            {securityItems.map(({ title, copy, Icon }) => (
+              <div key={title} className="flex gap-4 rounded-2xl bg-black/30 p-4">
+                <Icon className="mt-1 h-5 w-5 shrink-0 text-[#d7a957]" />
+                <div>
+                  <p className="text-sm font-semibold text-[#f6ebdd]">{title}</p>
+                  <p className="mt-1 text-sm leading-7 text-[#d1c3b1]">{copy}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="rounded-3xl border border-white/8 bg-[#1a1612] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.03)]">
             <p className="text-xs uppercase tracking-[0.35em] text-[#c9953d]">Restore more detail. Keep full control.</p>
             <h2 className="mt-6 text-4xl font-light leading-tight text-[#f1e5d3] md:text-5xl">Start enhancing your images today.</h2>
             <p className="mt-6 max-w-xl text-sm leading-7 text-[#d4c7b6]">
@@ -597,18 +566,6 @@ function FinalCTA({ onTryFree }: { onTryFree: () => void }) {
                 <Link href="/pricing">View pricing</Link>
               </Button>
             </div>
-          </div>
-
-          <div className="space-y-5">
-            {securityItems.map(({ title, copy, Icon }) => (
-              <div key={title} className="flex gap-4 rounded-2xl bg-black/30 p-4">
-                <Icon className="mt-1 h-5 w-5 shrink-0 text-[#d7a957]" />
-                <div>
-                  <p className="text-sm font-semibold text-[#f6ebdd]">{title}</p>
-                  <p className="mt-1 text-sm leading-7 text-[#d1c3b1]">{copy}</p>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </div>
