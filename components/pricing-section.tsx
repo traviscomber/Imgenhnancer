@@ -11,12 +11,10 @@ export function PricingSection() {
     <section id="pricing" className="relative bg-black px-6 py-28 text-[#efe8dc]">
       <div className="mx-auto max-w-6xl">
         <div className="text-center">
-          <p className="text-xs uppercase tracking-[0.35em] text-[#c9953d]">Simple credits. Full control.</p>
-          <h2 className="mt-6 text-4xl font-light leading-tight text-[#f1e5d3] md:text-5xl">
-            Transparent pricing for serious image enhancement.
-          </h2>
+          <p className="text-xs uppercase tracking-[0.35em] text-[#c9953d]">Simple credits.</p>
+          <h2 className="mt-6 text-4xl font-light leading-tight text-[#f1e5d3] md:text-5xl">Serious restoration.</h2>
           <p className="mx-auto mt-6 max-w-2xl text-sm leading-7 text-[#c9a882]">
-            Use credits every time you enhance an image. You always see the exact cost before processing.
+            Choose the enhancement level that fits the image and see the exact cost before processing.
           </p>
         </div>
 
