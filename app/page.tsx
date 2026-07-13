@@ -188,7 +188,7 @@ const useCaseCards: UseCaseCard[] = [
   },
 ]
 
-const collageImage = "/images/landing/logo-portrait-strip.jpg"
+const collageImage = "/images/landing/closing-collage.jpg"
 
 export default function Home() {
   const router = useRouter()
@@ -535,9 +535,9 @@ function CollageSection() {
   return (
     <section className="bg-black px-6 py-16 lg:px-16">
       <div className="mx-auto max-w-7xl">
-        <div className="relative overflow-hidden rounded-[2rem]">
-          <div className="relative min-h-[300px]">
-            <Image src={collageImage} alt="Clar1ty portrait strip" fill sizes="100vw" className="object-cover object-center" />
+        <div className="relative overflow-hidden rounded-[2rem] bg-black">
+          <div className="relative w-full">
+            <Image src={collageImage} alt="Clar1ty portrait strip" width={1280} height={1080} sizes="100vw" className="h-auto w-full object-contain" />
           </div>
         </div>
       </div>
