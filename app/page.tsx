@@ -556,10 +556,11 @@ function FinalCTA({ onTryFree }: { onTryFree: () => void }) {
   return (
     <section className="bg-black px-6 py-24 lg:px-16">
       <div className="mx-auto max-w-7xl">
-        <div className="grid gap-12 rounded-3xl bg-white/[0.03] p-8 lg:grid-cols-[0.9fr_1.1fr] lg:p-12">
+        <div className="grid gap-12 rounded-3xl bg-white/[0.03] p-8 lg:grid-cols-[0.95fr_1.05fr] lg:p-12">
           <div className="space-y-5">
+            <p className="text-xs uppercase tracking-[0.35em] text-[#c9953d]">Secure, private, and simple</p>
             {securityItems.map(({ title, copy, Icon }) => (
-              <div key={title} className="flex gap-4 rounded-2xl bg-black/30 p-4">
+              <div key={title} className="flex gap-4 rounded-2xl bg-black/28 p-4">
                 <Icon className="mt-1 h-5 w-5 shrink-0 text-[#d7a957]" />
                 <div>
                   <p className="text-sm font-semibold text-[#f6ebdd]">{title}</p>
@@ -569,19 +570,21 @@ function FinalCTA({ onTryFree }: { onTryFree: () => void }) {
             ))}
           </div>
 
-          <div className="rounded-3xl border border-white/8 bg-[#1a1612] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.03)]">
-            <p className="text-xs uppercase tracking-[0.35em] text-[#c9953d]">Restore more detail. Keep full control.</p>
-            <h2 className="mt-6 text-4xl font-light leading-tight text-[#f1e5d3] md:text-5xl">Start enhancing your images today.</h2>
-            <p className="mt-6 max-w-xl text-sm leading-7 text-[#d4c7b6]">
+          <div className="flex items-center justify-center rounded-3xl border border-white/8 bg-[#1a1612] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.03)]">
+            <div className="max-w-lg text-center">
+              <p className="text-xs uppercase tracking-[0.35em] text-[#c9953d]">Restore more detail. Keep full control.</p>
+              <h2 className="mt-6 text-4xl font-light leading-tight text-[#f1e5d3] md:text-5xl">Start enhancing your images today.</h2>
+              <p className="mt-6 text-sm leading-7 text-[#d4c7b6]">
               Preserve the details that matter and keep the workflow simple.
-            </p>
-            <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-              <Button onClick={onTryFree} className="h-12 rounded-none bg-[#c9953d] px-8 text-[12px] font-semibold uppercase tracking-[0.12em] text-black hover:bg-[#d7a957]">
-                Try clar1ty free
-              </Button>
-              <Button asChild className="h-12 rounded-none border border-[#6f5d49] bg-[#17120f] px-8 text-[12px] font-semibold uppercase tracking-[0.12em] text-[#f0e2cf] hover:bg-[#221913]">
-                <Link href="/pricing">View pricing</Link>
-              </Button>
+              </p>
+              <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:justify-center">
+                <Button onClick={onTryFree} className="h-12 rounded-none bg-[#c9953d] px-8 text-[12px] font-semibold uppercase tracking-[0.12em] text-black hover:bg-[#d7a957]">
+                  Try clar1ty free
+                </Button>
+                <Button asChild className="h-12 rounded-none border border-[#6f5d49] bg-[#17120f] px-8 text-[12px] font-semibold uppercase tracking-[0.12em] text-[#f0e2cf] hover:bg-[#221913]">
+                  <Link href="/pricing">View pricing</Link>
+                </Button>
+              </div>
             </div>
           </div>
         </div>
