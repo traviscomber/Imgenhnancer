@@ -4,7 +4,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
-import { ArrowRight, ImagePlus, Lock, Shield, Sparkles, Upload, UserRound, Zap } from "lucide-react"
+import { Archive, ArrowRight, Briefcase, Camera, ImagePlus, Landmark, Lock, Palette, Printer, Shield, Sparkles, Upload, UserRound, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ClarityLogo } from "@/components/clarity-logo"
 import { PricingSection } from "@/components/pricing-section"
@@ -25,6 +25,10 @@ type InfoCard = {
   copy: string
   image: string
   alt: string
+}
+
+type UseCaseCard = InfoCard & {
+  icon: typeof Archive
 }
 
 const contextCards: ComparisonCard[] = [
@@ -74,40 +78,28 @@ const stepCards = [
 
 const oneClickCards: InfoCard[] = [
   {
-    title: "Asian portrait",
-    copy: "Keep expression, face structure and skin tone intact.",
+    title: "Clean Enhance",
+    copy: "Improve clarity, contrast and overall image quality. Best for digital photos, product visuals, brand assets, social content and general image cleanup.",
     image: "/images/landing/comparisons/hero-after-new.png",
-    alt: "Enhanced portrait",
+    alt: "Clean enhancement example",
   },
   {
-    title: "Old family photo",
-    copy: "Recover memories from faded and damaged images.",
+    title: "Old Photo Restore",
+    copy: "Restore old, faded, scratched or damaged photographs. Best for family archives, vintage portraits, scanned prints and memory preservation.",
     image: "/images/landing/comparisons/faces-after.jpg",
-    alt: "Restored family photo",
+    alt: "Old photo restoration example",
   },
   {
-    title: "Heritage detail",
-    copy: "Preserve architecture, ornaments and local texture.",
-    image: "/images/landing/comparisons/heritage-after.jpg",
-    alt: "Heritage restoration",
-  },
-  {
-    title: "Brand portrait",
-    copy: "Sharpen founder photos and campaign visuals.",
+    title: "Face Detail",
+    copy: "Enhance facial features while keeping a natural appearance. Best for portraits, wedding photos, fashion, beauty, family images and Asian faces.",
     image: "/images/landing/comparisons/portrait-after-alt.jpg",
-    alt: "Brand portrait enhancement",
+    alt: "Face detail enhancement example",
   },
   {
-    title: "Creative artwork",
-    copy: "Upscale references without losing the look that matters.",
-    image: "/images/landing/comparisons/digital-after.jpg",
-    alt: "Creative artwork enhancement",
-  },
-  {
-    title: "Archival scan",
-    copy: "Clean up scans for documentation and publication.",
+    title: "Cultural Detail",
+    copy: "Preserve architecture, traditional ornaments and cultural textures. Best for heritage buildings, jewelry, artifacts, traditional costumes and historical visuals.",
     image: "/images/landing/comparisons/archive-after.png",
-    alt: "Archival scan enhancement",
+    alt: "Cultural detail enhancement example",
   },
 ]
 
@@ -144,42 +136,48 @@ const qualityItems = [
   },
 ]
 
-const useCaseCards: InfoCard[] = [
+const useCaseCards: UseCaseCard[] = [
   {
-    title: "Photographers",
-    copy: "Restore portraits, prep client deliveries and clean up old photo collections.",
-    image: "/images/landing/comparisons/faces-after.jpg",
-    alt: "Photography use case",
-  },
-  {
-    title: "Designers",
-    copy: "Enhance references, scans and concept art while keeping texture and intent.",
-    image: "/images/landing/comparisons/digital-after.jpg",
-    alt: "Design use case",
-  },
-  {
-    title: "Brands",
-    copy: "Improve founder portraits, product visuals and campaign assets.",
-    image: "/images/landing/comparisons/portrait-after-alt.jpg",
-    alt: "Brand use case",
-  },
-  {
-    title: "Families",
-    copy: "Bring old memories, wedding photos and heirlooms back into focus.",
-    image: "/images/landing/comparisons/archive-after.png",
-    alt: "Family use case",
-  },
-  {
-    title: "Archives",
-    copy: "Prepare historical material and cultural collections for long-term use.",
+    title: "Cultural archives",
+    copy: "Restore and preserve historical photographs and documents.",
     image: "/images/landing/comparisons/archive-before.png",
-    alt: "Archive use case",
+    alt: "Cultural archives workspace",
+    icon: Archive,
   },
   {
-    title: "Print shops",
-    copy: "Create cleaner source files for printing, framing and publishing.",
-    image: "/images/landing/comparisons/hero-after-new.png",
-    alt: "Print shop use case",
+    title: "Photo restoration services",
+    copy: "Deliver higher-quality results faster with AI-powered enhancement.",
+    image: "/images/landing/comparisons/faces-before.jpg",
+    alt: "Photo restoration workspace",
+    icon: Camera,
+  },
+  {
+    title: "Creators & digital artists",
+    copy: "Enhance references, concepts, and artwork with more detail and clarity.",
+    image: "/images/landing/comparisons/digital-before.jpg",
+    alt: "Creators and digital artists workspace",
+    icon: Palette,
+  },
+  {
+    title: "Museums & heritage projects",
+    copy: "Prepare images for exhibitions, publications, and educational materials.",
+    image: "/images/landing/comparisons/heritage-before.jpg",
+    alt: "Museums and heritage workspace",
+    icon: Landmark,
+  },
+  {
+    title: "Print shops & studios",
+    copy: "Produce print-ready files with clean detail and balanced contrast.",
+    image: "/images/landing/comparisons/generic-upscaler.jpg",
+    alt: "Print shops and studios workspace",
+    icon: Printer,
+  },
+  {
+    title: "Brands & businesses",
+    copy: "Improve visual assets for marketing, storytelling, and brand heritage.",
+    image: "/images/landing/comparisons/generic-clar1ty.jpg",
+    alt: "Brands and businesses workspace",
+    icon: Briefcase,
   },
 ]
 
@@ -408,7 +406,7 @@ function OneClickSection() {
         <div className="text-center">
           <h2 className="text-3xl font-light tracking-[0.01em] text-[#f1e5d3] md:text-5xl">One click. The right enhancement.</h2>
           <p className="mx-auto mt-6 max-w-3xl text-sm leading-7 text-[#d4c7b6]">
-            Every preset is tuned for a specific kind of image so the output stays useful instead of over-processed.
+            Different images need different care. Our presets are tuned for specific image types and results.
           </p>
         </div>
 
@@ -477,19 +475,25 @@ function UseCasesSection() {
         <div className="text-center">
           <h2 className="text-3xl font-light tracking-[0.01em] text-[#f1e5d3] md:text-5xl">For people, projects, and purpose.</h2>
           <p className="mx-auto mt-6 max-w-3xl text-sm leading-7 text-[#d4c7b6]">
-            Clar1ty is useful wherever an image needs to feel cleaner, more present and still recognizable.
+            Improve visual assets for marketing, storytelling, and brand heritage. For individuals, professionals, and institutions across Southeast Asia and beyond.
           </p>
         </div>
 
         <div className="mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {useCaseCards.map((card) => (
-            <article key={card.title} className="card-gold-accent overflow-hidden rounded-2xl">
-              <div className="relative h-44">
-                <Image src={card.image} alt={card.alt} fill sizes="(min-width: 1280px) 20vw, (min-width: 768px) 30vw, 90vw" className="object-cover object-center" />
-              </div>
-              <div className="p-6">
-                <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-[#d7a957]">{card.title}</h3>
-                <p className="mt-3 text-sm leading-7 text-[#d7ccba]">{card.copy}</p>
+          {useCaseCards.map(({ icon: Icon, ...card }) => (
+            <article key={card.title} className="overflow-hidden rounded-[1.6rem] bg-[#0d0c0b] shadow-[0_22px_60px_rgba(0,0,0,0.55)] ring-1 ring-white/5">
+              <div className="grid min-h-[288px] grid-cols-[0.98fr_1.02fr]">
+                <div className="relative">
+                  <Image src={card.image} alt={card.alt} fill sizes="(min-width: 1280px) 16vw, (min-width: 768px) 24vw, 90vw" className="object-cover object-center" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-black/25 via-transparent to-transparent" />
+                </div>
+                <div className="flex flex-col justify-center bg-[#11100e] px-6 py-8 text-left sm:px-7">
+                  <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-[#6d5a41] bg-black/40 text-[#d7a957] shadow-[0_0_0_1px_rgba(255,255,255,0.04)]">
+                    <Icon className="h-8 w-8" strokeWidth={1.6} />
+                  </div>
+                  <h3 className="max-w-40 text-xl font-medium leading-tight text-[#f5ece0]">{card.title}</h3>
+                  <p className="mt-6 max-w-44 text-sm leading-7 text-[#d3c5b2]">{card.copy}</p>
+                </div>
               </div>
             </article>
           ))}
