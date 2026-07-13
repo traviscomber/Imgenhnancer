@@ -70,7 +70,7 @@ export function Navbar() {
             <Link href="/presets" className="text-gray-300 hover:text-amber-400 transition-colors text-sm">
               Presets
             </Link>
-            <Link href="/pricing" className="text-gray-300 hover:text-amber-400 transition-colors text-sm">
+            <Link href="/#pricing" className="text-gray-300 hover:text-amber-400 transition-colors text-sm">
               Pricing
             </Link>
             <Link href="/examples" className="text-gray-300 hover:text-amber-400 transition-colors text-sm">
@@ -162,7 +162,7 @@ export function Navbar() {
               Presets
             </Link>
             <Link
-              href="/pricing"
+              href="/#pricing"
               className="block text-gray-300 hover:text-amber-400 transition-colors text-sm"
               onClick={() => setIsMenuOpen(false)}
             >

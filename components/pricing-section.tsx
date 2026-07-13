@@ -60,7 +60,7 @@ export function PricingSection() {
             <Link href="/sign-in">Try Free</Link>
           </Button>
           <Button asChild className="h-12 rounded-none border border-[#6f5d49] bg-[#17120f] px-10 text-sm font-semibold uppercase tracking-[0.1em] text-[#e9dcc7] hover:bg-[#221913]">
-            <Link href="/pricing" className="inline-flex items-center gap-2">
+            <Link href="/#pricing" className="inline-flex items-center gap-2">
               View all pricing
               <ArrowRight className="h-4 w-4" />
             </Link>

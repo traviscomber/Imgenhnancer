@@ -68,7 +68,7 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/pricing" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
+                <Link href="/#pricing" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
                   Pricing
                 </Link>
               </li>
@@ -105,7 +105,7 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/pricing" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
+                <Link href="/#pricing" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
                   Credits
                 </Link>
               </li>

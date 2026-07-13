@@ -15,7 +15,7 @@ const quickLinks = [
     copy: 'Answers about credits, privacy, image types, and enhancement results.',
   },
   {
-    href: '/pricing',
+    href: '/#pricing',
     title: 'Pricing',
     copy: 'Understand credit packages and enhancement costs before uploading.',
   },
@@ -79,7 +79,7 @@ export default function SupportPage() {
             <ClarityLogo className="h-10 w-auto drop-shadow-[0_0_10px_rgba(211,155,62,0.45)]" width={145} height={44} />
           </Link>
           <div className="flex items-center gap-5 text-sm text-[#d8d0c4]">
-            <Link href="/pricing" className="hidden hover:text-[#d7a957] sm:inline">
+            <Link href="/#pricing" className="hidden hover:text-[#d7a957] sm:inline">
               Pricing
             </Link>
             <Link href="/enhance" className="rounded-full border border-[#c9953d]/40 px-4 py-2 text-[#f0d59c] hover:border-[#c9953d] hover:text-white">

@@ -4,7 +4,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
-import { Archive, ArrowRight, Briefcase, Camera, ImagePlus, Landmark, Lock, Palette, Printer, Shield, Sparkles, Upload, UserRound, Zap } from "lucide-react"
+import { ArrowRight, Lock, Shield, UserRound } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ClarityLogo } from "@/components/clarity-logo"
 import { PricingSection } from "@/components/pricing-section"
@@ -27,8 +27,17 @@ type InfoCard = {
   alt: string
 }
 
-type UseCaseCard = InfoCard & {
-  icon: typeof Archive
+type AssetCard = {
+  title: string
+  copy: string
+  icon: string
+}
+
+type UseCaseCard = {
+  title: string
+  copy: string
+  image: string
+  alt: string
   bgPosition: string
 }
 
@@ -62,78 +71,82 @@ const contextCards: ComparisonCard[] = [
 const stepCards = [
   {
     title: "Upload your image",
-    copy: "Start with a portrait, scan or creative asset. Clar1ty handles low resolution and damaged files with care.",
-    icon: Upload,
+    copy: "Start with a heritage photo, portrait, archive scan, low-resolution file, or digital artwork.",
+    icon: "/images/landing/icons-clean/upload-cloud.png",
   },
   {
     title: "Choose your preset",
-    copy: "Pick the treatment that fits the image: general enhancement, restoration, portrait detail or cultural detail.",
-    icon: ImagePlus,
+    copy: "Select the enhancement mode that matches your image. Clar1ty applies the right treatment automatically.",
+    icon: "/images/landing/icons-clean/preset-sliders.png",
   },
   {
     title: "Download your result",
-    copy: "Preview the credit cost, process the image and export the enhanced version when it is ready.",
-    icon: Zap,
+    copy: "Receive a cleaner, sharper, higher-resolution image ready for digital use, print, or archive.",
+    icon: "/images/landing/icons-clean/download-tray.png",
   },
 ]
 
-const oneClickCards: InfoCard[] = [
+const oneClickCards: (InfoCard & { icon: string })[] = [
   {
     title: "Clean Enhance",
     copy: "Improve clarity, contrast and overall image quality. Best for digital photos, product visuals, brand assets, social content and general image cleanup.",
-    image: "/images/landing/comparisons/hero-after-new.png",
+    image: "/images/landing/comparisons/digital-after.jpg",
     alt: "Clean enhancement example",
+    icon: "/images/landing/icons-clean/digital-upscale.png",
   },
   {
     title: "Old Photo Restore",
     copy: "Restore old, faded, scratched or damaged photographs. Best for family archives, vintage portraits, scanned prints and memory preservation.",
     image: "/images/landing/comparisons/faces-after.jpg",
     alt: "Old photo restoration example",
+    icon: "/images/landing/icons-clean/photo-restoration.png",
   },
   {
     title: "Face Detail",
     copy: "Enhance facial features while keeping a natural appearance. Best for portraits, wedding photos, fashion, beauty, family images and Asian faces.",
-    image: "/images/landing/comparisons/portrait-after-alt.jpg",
+    image: "/images/landing/comparisons/hero-after-new.png",
     alt: "Face detail enhancement example",
+    icon: "/images/landing/icons-clean/face-profile.png",
   },
   {
     title: "Cultural Detail",
     copy: "Preserve architecture, traditional ornaments and cultural textures. Best for heritage buildings, jewelry, artifacts, traditional costumes and historical visuals.",
-    image: "/images/landing/comparisons/archive-after.png",
+    image: "/images/landing/comparisons/heritage-after.jpg",
     alt: "Cultural detail enhancement example",
+    icon: "/images/landing/icons-clean/heritage-restore.png",
   },
 ]
 
-const qualityItems = [
+const qualityItems: AssetCard[] = [
   {
     title: "Face preservation",
-    copy: "Keep structure, expression and identity stable.",
-    icon: UserRound,
+    copy: "Protects facial structure and expressions.",
+    icon: "/images/landing/icons-clean/face-preserve.png",
   },
   {
     title: "Natural tones",
-    copy: "Avoid overcooked smoothing and plastic skin.",
-    icon: Sparkles,
+    copy: "Keeps skin tones and colors true.",
+    icon: "/images/landing/icons-clean/natural-tones.png",
+  },
+  {
+    title: "Real detail",
+    copy: "Brings out textures, edges, and fine detail.",
+    icon: "/images/landing/icons-clean/real-detail.png",
   },
   {
     title: "Cultural respect",
-    copy: "Preserve clothing, ornaments and architecture.",
-    icon: Shield,
+    copy: "Enhances without altering cultural elements.",
+    icon: "/images/landing/icons-clean/cultural-respect.png",
   },
   {
     title: "Balanced results",
-    copy: "Improve clarity without drifting too far from source.",
-    icon: Lock,
+    copy: "No over-processing. Just the right touch.",
+    icon: "/images/landing/icons-clean/balanced-results.png",
   },
   {
     title: "High resolution",
-    copy: "Recover usable detail for print and presentation.",
-    icon: Zap,
-  },
-  {
-    title: "Fast workflow",
-    copy: "Simple upload, preset choice and download flow.",
-    icon: Upload,
+    copy: "Sharper images for modern use and printing.",
+    icon: "/images/landing/icons-clean/high-resolution.png",
   },
 ]
 
@@ -143,7 +156,6 @@ const useCaseCards: UseCaseCard[] = [
     copy: "Restore and preserve historical photographs and documents.",
     image: "/images/landing/use-cases-bg.jpeg",
     alt: "Cultural archives workspace",
-    icon: Archive,
     bgPosition: "0% 0%",
   },
   {
@@ -151,7 +163,6 @@ const useCaseCards: UseCaseCard[] = [
     copy: "Deliver higher-quality results faster with AI-powered enhancement.",
     image: "/images/landing/use-cases-bg.jpeg",
     alt: "Photo restoration workspace",
-    icon: Camera,
     bgPosition: "50% 0%",
   },
   {
@@ -159,7 +170,6 @@ const useCaseCards: UseCaseCard[] = [
     copy: "Enhance references, concepts, and artwork with more detail and clarity.",
     image: "/images/landing/use-cases-bg.jpeg",
     alt: "Creators and digital artists workspace",
-    icon: Palette,
     bgPosition: "100% 0%",
   },
   {
@@ -167,7 +177,6 @@ const useCaseCards: UseCaseCard[] = [
     copy: "Prepare images for exhibitions, publications, and educational materials.",
     image: "/images/landing/use-cases-bg.jpeg",
     alt: "Museums and heritage workspace",
-    icon: Landmark,
     bgPosition: "0% 100%",
   },
   {
@@ -175,7 +184,6 @@ const useCaseCards: UseCaseCard[] = [
     copy: "Produce print-ready files with clean detail and balanced contrast.",
     image: "/images/landing/use-cases-bg.jpeg",
     alt: "Print shops and studios workspace",
-    icon: Printer,
     bgPosition: "50% 100%",
   },
   {
@@ -183,18 +191,11 @@ const useCaseCards: UseCaseCard[] = [
     copy: "Improve visual assets for marketing, storytelling, and brand heritage.",
     image: "/images/landing/use-cases-bg.jpeg",
     alt: "Brands and businesses workspace",
-    icon: Briefcase,
     bgPosition: "100% 100%",
   },
 ]
 
-const collageImages = [
-  { src: "/images/landing/comparisons/hero-after-new.png", alt: "Enhanced portrait" },
-  { src: "/images/landing/comparisons/faces-after.jpg", alt: "Restored portrait" },
-  { src: "/images/landing/comparisons/child-after.jpg", alt: "Enhanced child portrait" },
-  { src: "/images/landing/comparisons/elder-after.jpg", alt: "Restored elder portrait" },
-  { src: "/images/landing/comparisons/heritage-after.jpg", alt: "Heritage enhancement" },
-]
+const collageImage = "/images/landing/logo-portrait-strip.jpg"
 
 export default function Home() {
   const router = useRouter()
@@ -238,7 +239,7 @@ function Hero({ onTryFree }: { onTryFree: () => void }) {
             <a href="#presets" className="transition hover:text-[#d7a957]">
               Presets
             </a>
-            <Link href="/pricing" className="transition hover:text-[#d7a957]">
+            <Link href="/#pricing" className="transition hover:text-[#d7a957]">
               Pricing
             </Link>
             <Link href="/examples" className="transition hover:text-[#d7a957]">
@@ -251,7 +252,7 @@ function Hero({ onTryFree }: { onTryFree: () => void }) {
               Sign in
             </Link>
             <Button onClick={onTryFree} className="h-10 rounded-none bg-[#c9953d] px-5 text-[11px] font-semibold uppercase tracking-[0.16em] text-black hover:bg-[#d7a957]">
-              Try free
+              Upload image
             </Button>
           </div>
         </div>
@@ -272,10 +273,10 @@ function Hero({ onTryFree }: { onTryFree: () => void }) {
           </p>
           <div className="mt-10 flex flex-col gap-4 sm:flex-row">
             <Button onClick={onTryFree} className="h-12 rounded-none bg-[#c9953d] px-8 text-[12px] font-semibold uppercase tracking-[0.12em] text-black hover:bg-[#d7a957]">
-              Try clar1ty free
+              Upload image
             </Button>
             <Button asChild className="h-12 rounded-none border border-[#6f5d49] bg-[#17120f] px-8 text-[12px] font-semibold uppercase tracking-[0.12em] text-[#f0e2cf] hover:bg-[#221913]">
-              <Link href="/pricing">View pricing</Link>
+              <Link href="/sign-in">Login</Link>
             </Button>
           </div>
           <p className="mt-5 text-xs text-[#a8977c]">10 free credits. No credit card required. Secure and private processing.</p>
@@ -305,6 +306,9 @@ function UploadSection({ onTryFree }: { onTryFree: () => void }) {
       <div className="mx-auto grid max-w-7xl gap-0 lg:grid-cols-[0.44fr_0.56fr]">
         <div className="border-b border-black/10 bg-[#a29377] px-6 py-10 lg:border-b-0 lg:border-r lg:px-8 lg:py-12">
           <p className="text-3xl font-light tracking-[0.01em] text-[#e7dece] md:text-4xl">Upload image</p>
+          <p className="mt-8 max-w-sm text-sm leading-7 text-[#efe8dc]/80">
+            Natural skin tones. Real facial structure. Local visual character. Cultural detail.
+          </p>
           <div className="mt-6 rounded-sm bg-[#d4c7b0] p-4 text-black shadow-[0_18px_50px_rgba(0,0,0,0.16)]">
             <div className="flex items-center justify-between border-b border-black/10 pb-3 text-[10px] uppercase tracking-[0.22em] text-black/60">
               <span>Upload workspace</span>
@@ -312,13 +316,13 @@ function UploadSection({ onTryFree }: { onTryFree: () => void }) {
             </div>
             <div className="mt-4 rounded-sm border border-dashed border-black/25 bg-[#bcae95] px-5 py-8 text-center">
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-black/20 bg-[#efe6d6]">
-                <Upload className="h-7 w-7 text-[#7d6b56]" strokeWidth={1.7} />
+                <Image src="/images/landing/icons-clean/upload-cloud.png" alt="" width={56} height={56} aria-hidden="true" className="h-7 w-7 object-contain" />
               </div>
               <p className="mt-4 text-sm text-black/85">Drop a photo or scan here</p>
               <p className="mt-2 text-xs leading-6 text-black/55">JPEG, PNG and supported scans</p>
             </div>
-            <Button className="mt-4 h-11 w-full rounded-none bg-[#efe8dc] text-[11px] font-semibold uppercase tracking-[0.14em] text-black hover:bg-white">
-              Choose file
+            <Button onClick={onTryFree} className="mt-4 h-11 w-full rounded-none bg-[#efe8dc] text-[11px] font-semibold uppercase tracking-[0.14em] text-black hover:bg-white">
+              Upscale Image
             </Button>
           </div>
         </div>
@@ -328,12 +332,10 @@ function UploadSection({ onTryFree }: { onTryFree: () => void }) {
             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-white/15 bg-black/25">
               <ClarityLogo className="h-12 w-auto" width={120} height={48} />
             </div>
-            <p className="mt-5 text-sm uppercase tracking-[0.24em] text-[#efe0c1]">clar1ty upload studio</p>
-            <p className="mt-4 text-sm leading-7 text-[#efe8dc]/80">
-              Upload a portrait or heritage image, preview the enhancement cost and move into a focused workflow designed to preserve context.
-            </p>
+            <p className="mt-5 text-sm font-semibold text-[#efe0c1]">No images upscaled yet</p>
+            <p className="mt-4 text-sm leading-7 text-[#efe8dc]/80">Upload an image to upscale it</p>
             <Button onClick={onTryFree} className="mt-8 h-12 rounded-none bg-[#efe8dc] px-8 text-[12px] font-semibold uppercase tracking-[0.12em] text-black hover:bg-white">
-              Start with 10 free credits
+              Upload image
             </Button>
           </div>
         </div>
@@ -347,6 +349,7 @@ function ContextSection() {
     <section className="bg-black px-6 py-24 lg:px-16">
       <div className="mx-auto max-w-7xl">
         <div className="text-center">
+          <p className="text-xs uppercase tracking-[0.35em] text-[#c9953d]">Generic AI-tools upscale pixels.</p>
           <h2 className="text-3xl font-light tracking-[0.01em] text-[#f1e5d3] md:text-5xl">Clar1ty preserves context.</h2>
           <p className="mx-auto mt-6 max-w-3xl text-sm leading-7 text-[#d4c7b6]">
             The model is tuned to improve detail without deleting the cues that identify a person, a place or a cultural object.
@@ -381,16 +384,17 @@ function StepsSection() {
         <div className="text-center">
           <h2 className="text-3xl font-light tracking-[0.01em] text-[#f1e5d3] md:text-5xl">Simple. Fast. Effective.</h2>
           <p className="mx-auto mt-6 max-w-2xl text-sm leading-7 text-[#d4c7b6]">
-            The flow stays intentionally simple so the result feels controlled, not generic.
+            How it works
+            <span className="block">Three easy steps to restore and enhance your images.</span>
           </p>
         </div>
 
         <div className="mt-12 grid gap-6 md:grid-cols-3">
-          {stepCards.map(({ title, copy, icon: Icon }, index) => (
+          {stepCards.map(({ title, copy, icon }, index) => (
             <div key={title} className="relative">
               <article className="h-full rounded-2xl bg-black/70 p-8 text-center shadow-[0_0_0_1px_rgba(255,255,255,0.04)]">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-[#4a3e31] bg-[#17120f]">
-                  <Icon className="h-8 w-8 text-[#d7a957]" strokeWidth={1.6} />
+                <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-2xl border border-[#8a6a40]/60 bg-black/75 p-4 shadow-[0_0_22px_rgba(201,149,61,0.14)]">
+                  <Image src={icon} alt="" width={96} height={96} aria-hidden="true" className="h-16 w-16 object-contain" />
                 </div>
                 <h3 className="mt-6 text-lg font-medium text-[#f6ebdd]">{title}</h3>
                 <p className="mt-4 text-sm leading-7 text-[#d1c3b1]">{copy}</p>
@@ -425,13 +429,30 @@ function OneClickSection() {
             >
               <div className={`flex items-center p-5 ${index % 2 === 1 ? "md:order-2" : ""}`}>
                 <div>
-                  <p className="text-[10px] uppercase tracking-[0.22em] text-[#8f8678]">Preset</p>
+                  <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-[#8a6a40]/60 bg-black/75 p-3 shadow-[0_0_22px_rgba(201,149,61,0.12)]">
+                    <Image src={card.icon} alt="" width={72} height={72} aria-hidden="true" className="h-12 w-12 object-contain" />
+                  </div>
                   <h3 className="mt-3 text-lg font-medium text-[#f6ebdd]">{card.title}</h3>
                   <p className="mt-3 text-sm leading-7 text-[#d1c3b1]">{card.copy}</p>
                 </div>
               </div>
               <div className={`relative min-h-[220px] ${index % 2 === 1 ? "md:order-1" : ""}`}>
-                <Image src={card.image} alt={card.alt} fill sizes="(min-width: 768px) 40vw, 92vw" className="object-cover object-center" />
+                <LiveComparison
+                  beforeImage={
+                    card.title === "Clean Enhance"
+                      ? "/images/landing/comparisons/generic-original.jpg"
+                      : card.title === "Old Photo Restore"
+                        ? "/images/landing/comparisons/faces-before.jpg"
+                        : card.title === "Face Detail"
+                          ? "/images/landing/comparisons/hero-before-new.png"
+                          : "/images/landing/comparisons/heritage-before.jpg"
+                  }
+                  afterImage={card.image}
+                  beforeAlt={`${card.title} before image`}
+                  afterAlt={card.alt}
+                  className="h-[220px] rounded-none md:h-full"
+                  sizes="(min-width: 768px) 40vw, 92vw"
+                />
               </div>
             </article>
           ))}
@@ -443,28 +464,25 @@ function OneClickSection() {
 
 function QualitySection() {
   return (
-    <section className="relative overflow-hidden bg-[#090705] px-6 py-24 lg:px-16">
+    <section className="relative overflow-hidden bg-[#3b3124] px-6 py-24 lg:px-16">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_8%_30%,rgba(201,149,61,0.12),transparent_22%),radial-gradient(circle_at_92%_36%,rgba(201,149,61,0.1),transparent_22%)]" />
       <div className="relative mx-auto max-w-7xl">
         <div className="text-center">
           <h2 className="text-3xl font-light tracking-[0.01em] text-[#f1e5d3] md:text-5xl">Better quality. Same identity.</h2>
-          <p className="mx-auto mt-6 max-w-3xl text-sm leading-7 text-[#d4c7b6]">
-            Clar1ty improves the image while holding onto the cues that make it feel like the original.
-          </p>
+          <p className="mx-auto mt-6 max-w-3xl text-sm leading-7 text-[#d4c7b6]">How it works</p>
+          <p className="mx-auto text-sm leading-7 text-[#d4c7b6]">Three easy steps to restore and enhance your images.</p>
         </div>
 
-        <div className="relative mt-12 overflow-hidden rounded-[2rem] border border-white/6 bg-black/60 p-6 shadow-[0_30px_100px_rgba(0,0,0,0.4)]">
-          <div className="pointer-events-none absolute left-0 top-0 hidden h-full w-64 bg-[url('/images/landing/comparisons/faces-after.jpg')] bg-cover bg-center opacity-35 blur-[1px] lg:block" />
-          <div className="pointer-events-none absolute right-0 top-0 hidden h-full w-64 bg-[url('/images/landing/comparisons/heritage-after.jpg')] bg-cover bg-center opacity-30 blur-[1px] lg:block" />
+        <div className="relative mt-12 overflow-hidden rounded-[2rem] border border-black/20 bg-[#7d6f5b] p-6 shadow-[0_30px_100px_rgba(0,0,0,0.35)]">
           <div className="relative grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {qualityItems.map(({ title, copy, icon: Icon }) => (
-              <article key={title} className="flex items-start gap-4 rounded-2xl bg-white/[0.05] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.03)]">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[#4a3e31] bg-[#17120f]">
-                  <Icon className="h-6 w-6 text-[#d7a957]" strokeWidth={1.6} />
+            {qualityItems.map(({ title, copy, icon }) => (
+              <article key={title} className="flex items-center gap-5 rounded-2xl bg-[#a29482] px-5 py-4 shadow-[0_0_0_1px_rgba(0,0,0,0.08)]">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#0b0a08] p-2">
+                  <Image src={icon} alt="" width={64} height={64} aria-hidden="true" className="h-12 w-12 object-contain" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-[#d7a957]">{title}</h3>
-                  <p className="mt-3 text-sm leading-7 text-[#d4c7b6]">{copy}</p>
+                  <h3 className="text-sm font-semibold text-[#f7ede0]">{title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-[#f2e7d9]/90">{copy}</p>
                 </div>
               </article>
             ))}
@@ -487,25 +505,24 @@ function UseCasesSection() {
         </div>
 
         <div className="mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {useCaseCards.map(({ icon: Icon, bgPosition, ...card }) => (
-            <article key={card.title} className="overflow-hidden rounded-[1.6rem] bg-[#0d0c0b] shadow-[0_22px_60px_rgba(0,0,0,0.55)] ring-1 ring-white/5">
-              <div className="grid min-h-[288px] grid-cols-[0.98fr_1.02fr]">
-                <div
-                  className="relative"
-                  style={{
-                    backgroundImage: `url(${card.image})`,
-                    backgroundPosition: bgPosition,
-                    backgroundSize: "300% 200%",
-                  }}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-transparent" />
-                </div>
-                <div className="flex flex-col justify-center bg-[#11100e] px-6 py-8 text-left sm:px-7">
-                  <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-[#6d5a41] bg-black/40 text-[#d7a957] shadow-[0_0_0_1px_rgba(255,255,255,0.04)]">
-                    <Icon className="h-8 w-8" strokeWidth={1.6} />
-                  </div>
-                  <h3 className="max-w-40 text-xl font-medium leading-tight text-[#f5ece0]">{card.title}</h3>
-                  <p className="mt-6 max-w-44 text-sm leading-7 text-[#d3c5b2]">{card.copy}</p>
+          {useCaseCards.map((card) => (
+            <article
+              key={card.title}
+              className="relative overflow-hidden rounded-[1.8rem] bg-[#11100e] shadow-[0_22px_60px_rgba(0,0,0,0.58)] ring-1 ring-white/5"
+            >
+              <div
+                className="absolute inset-0 bg-cover bg-center"
+                style={{
+                  backgroundImage: `url(${card.image})`,
+                  backgroundPosition: card.bgPosition,
+                  backgroundSize: "300% 200%",
+                }}
+              />
+              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.34)_0%,rgba(0,0,0,0.38)_42%,rgba(0,0,0,0.72)_100%)]" />
+              <div className="relative flex min-h-[288px] items-center">
+                <div className="ml-auto flex h-full w-[42%] flex-col justify-center px-6 py-8 text-left sm:px-7">
+                  <h3 className="max-w-40 text-xl font-semibold leading-tight text-[#f5ece0]">{card.title}</h3>
+                  <p className="mt-6 max-w-44 text-sm leading-7 text-[#f2e7d9]">{card.copy}</p>
                 </div>
               </div>
             </article>
@@ -529,16 +546,8 @@ function CollageSection() {
     <section className="bg-black px-6 py-16 lg:px-16">
       <div className="mx-auto max-w-7xl">
         <div className="relative overflow-hidden rounded-[2rem]">
-          <div className="grid grid-cols-2 gap-0 md:grid-cols-5">
-            {collageImages.map((image) => (
-              <div key={image.alt} className="relative min-h-[220px]">
-                <Image src={image.src} alt={image.alt} fill sizes="(min-width: 768px) 20vw, 50vw" className="object-cover object-center" />
-              </div>
-            ))}
-          </div>
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/10" />
-          <div className="absolute inset-x-0 bottom-3 flex justify-center">
-            <ClarityLogo className="h-14 w-auto opacity-95 md:h-20" width={220} height={72} />
+          <div className="relative min-h-[300px]">
+            <Image src={collageImage} alt="Clar1ty portrait strip" fill sizes="100vw" className="object-cover object-center" />
           </div>
         </div>
       </div>
@@ -548,8 +557,8 @@ function CollageSection() {
 
 function FinalCTA({ onTryFree }: { onTryFree: () => void }) {
   const securityItems = [
-    { title: "Secure processing", copy: "Your images are encrypted and processed safely.", Icon: Shield },
-    { title: "No unnecessary storage", copy: "We save nothing you don't ask us to.", Icon: Lock },
+    { title: "Secure processing", copy: "All images are encrypted and processed safely.", Icon: Shield },
+    { title: "No unnecessary storage", copy: "We save nothing you do not ask us to.", Icon: Lock },
     { title: "Your images stay yours", copy: "You own your images. Always.", Icon: UserRound },
   ]
 
@@ -579,10 +588,7 @@ function FinalCTA({ onTryFree }: { onTryFree: () => void }) {
               </p>
               <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:justify-center">
                 <Button onClick={onTryFree} className="h-12 rounded-none bg-[#c9953d] px-8 text-[12px] font-semibold uppercase tracking-[0.12em] text-black hover:bg-[#d7a957]">
-                  Try clar1ty free
-                </Button>
-                <Button asChild className="h-12 rounded-none border border-[#6f5d49] bg-[#17120f] px-8 text-[12px] font-semibold uppercase tracking-[0.12em] text-[#f0e2cf] hover:bg-[#221913]">
-                  <Link href="/pricing">View pricing</Link>
+                  Upload your image
                 </Button>
               </div>
             </div>

@@ -13,7 +13,7 @@ export function MobileMenu() {
     { href: "/#features", label: "Features", icon: Sparkles },
     { href: "/#faces", label: "Results", icon: ImageIcon },
     { href: "/#how-it-works", label: "How It Works", icon: BookOpen },
-    { href: "/pricing", label: "Pricing", icon: DollarSign },
+    { href: "/#pricing", label: "Pricing", icon: DollarSign },
     { href: "/support", label: "Support", icon: Mail },
   ]
 
