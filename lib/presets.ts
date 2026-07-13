@@ -69,26 +69,26 @@ export const PUBLIC_PRESET_DETAILS: Record<
   }
 > = {
   archive_scan: {
-    title: "Archive Scan",
-    description: "Restore faded scans and old prints with restrained cleanup.",
+    title: "Clean Enhance",
+    description: "Improve clarity, contrast and overall image quality for modern files and brand assets.",
     category: "faces",
     recommendedPresetId: "quality-boost",
   },
   asean_portrait_preserve: {
-    title: "ASEAN Portrait Preserve",
-    description: "Keep identity, expression, and skin tone intact while improving clarity.",
+    title: "Old Photo Restore",
+    description: "Restore faded, scratched or damaged photographs with careful, natural cleanup.",
     category: "faces",
     recommendedPresetId: "indonesian-wedding",
   },
   heritage_restore: {
-    title: "Heritage Restore",
-    description: "Recover aged cultural images with stronger tonal repair and detail retention.",
+    title: "Face Detail",
+    description: "Enhance facial features while keeping a natural appearance for portraits and wedding photos.",
     category: "abstract",
     recommendedPresetId: "landscape-hdr",
   },
   digital_art_upscale: {
-    title: "Digital Art Upscale",
-    description: "Prepare art and creative work for print-ready output.",
+    title: "Cultural Detail",
+    description: "Preserve architecture, clothing, ornaments and cultural textures during enhancement.",
     category: "experimental",
     recommendedPresetId: "artistic-enhancement",
   },

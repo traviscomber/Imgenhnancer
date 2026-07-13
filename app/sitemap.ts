@@ -12,15 +12,45 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1.0,
     },
     {
-      url: `${baseUrl}/enhance`,
+      url: `${baseUrl}/sign-in`,
       lastModified: now,
       changeFrequency: 'weekly',
       priority: 0.9,
     },
     {
+      url: `${baseUrl}/sign-up`,
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/use-cases`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/presets`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/examples`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
       url: `${baseUrl}/pricing`,
       lastModified: now,
       changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/app/studio`,
+      lastModified: now,
+      changeFrequency: 'weekly',
       priority: 0.8,
     },
     {

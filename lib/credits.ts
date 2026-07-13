@@ -1,12 +1,12 @@
 // Credit system configuration and utilities
-// Updated cost structure: 2x=4cr, 3x=9cr, 4x=16cr (quadratic scaling)
+// Final cost structure: 2x=6cr, 3x=8cr, 4x=10cr
 
 export const CREDIT_COSTS = {
-  // Image enhancement costs (quadratic scaling)
-  ENHANCE_BASE: 4,
-  ENHANCE_2X: 4,
-  ENHANCE_3X: 9,
-  ENHANCE_4X: 16,
+  // Image enhancement costs
+  ENHANCE_BASE: 6,
+  ENHANCE_2X: 6,
+  ENHANCE_3X: 8,
+  ENHANCE_4X: 10,
 
   // Face swap operations
   FACE_SWAP: 8,
@@ -55,11 +55,11 @@ export const SUBSCRIPTION_TIERS = [
   },
   {
     id: "business",
-    name: "Business",
+    name: "Archive / Business",
     monthlyCredits: 3000,
     price: 99,
     maxFileSize: 50,
-    description: "Enterprise solution",
+    description: "For institutional and high-volume professional work",
     features: ["3000+ credits/month (~750 4x enhances)", "50MB+ max file size", "Dedicated support"],
   },
 ]

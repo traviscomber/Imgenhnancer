@@ -4,34 +4,29 @@ import { ClarityLogo } from "@/components/clarity-logo"
 
 const faqs = [
   {
-    question: "What kind of images is Clar1ty built for?",
+    question: "Is clar1ty only for old photos?",
     answer:
-      "Clar1ty is tuned for heritage portraits, archive scans, cultural landmarks, printed photos, low-resolution files, and digital artwork where identity and visual context matter.",
+      "No. clar1ty works with modern digital photos, portraits, product images, creative assets, artwork, scans and old photographs.",
   },
   {
-    question: "Will enhancement change faces or cultural details?",
+    question: "Is clar1ty good for Asian faces?",
     answer:
-      "The goal is preservation first: natural tones, facial structure, textiles, ornaments, and local visual character should remain recognizable instead of being replaced by generic AI detail.",
+      "Yes. clar1ty is designed with special care for Asian portraits, facial detail, skin texture, traditional clothing and cultural visual elements.",
   },
   {
-    question: "How do credits work?",
+    question: "What is Cultural Detail?",
     answer:
-      "Credits are consumed only when an image is processed. Higher-resolution enhancement uses more credits because it requires more compute.",
+      "Cultural Detail helps preserve architecture, traditional clothing, ornaments, patterns, fabrics and cultural textures during enhancement.",
   },
   {
-    question: "Do you store uploaded images?",
+    question: "What is the difference between x2 and x4?",
     answer:
-      "Images are processed securely. Clar1ty is designed around minimal storage: we save nothing unnecessary and treat your images as yours.",
+      "x2 is more conservative and usually stays closer to the original appearance. x4 applies stronger one-step enhancement and may introduce more AI-generated detail.",
   },
   {
-    question: "What should I upload for best results?",
+    question: "Which preset should I choose?",
     answer:
-      "Use the clearest available source, avoid screenshots when possible, and choose the preset that matches the image type: archive scan, portrait preserve, heritage restore, or digital art upscale.",
-  },
-  {
-    question: "Where do I ask about billing or technical issues?",
-    answer:
-      "Use the support form or email info@clar1ty.art. Include the account email, approximate time of the issue, and any relevant transaction or upload details.",
+      "Choose Clean Enhance for general work, Old Photo Restore for damaged photos, Face Detail for portraits and Cultural Detail for heritage or culturally specific images.",
   },
 ]
 
@@ -61,7 +56,7 @@ export default function FAQPage() {
           <p className="text-xs uppercase tracking-[0.35em] text-[#c9953d]">Clar1ty help</p>
           <h1 className="mt-6 text-5xl font-light tracking-[0.04em] text-white md:text-6xl">FAQ</h1>
           <p className="mx-auto mt-6 max-w-2xl text-sm leading-7 text-[#d8d0c4]">
-            Practical answers for image preparation, privacy, credits, and preservation-focused enhancement.
+            Practical answers for image preparation, privacy, credits and preservation-focused enhancement.
           </p>
         </section>
 

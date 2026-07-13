@@ -19,7 +19,7 @@ export function Navbar() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const authenticated = isAuthenticated()
+      const authenticated = await isAuthenticated()
       setIsAuth(authenticated)
 
       if (authenticated) {
@@ -61,17 +61,26 @@ export function Navbar() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6">
-            <Link href="/#features" className="text-gray-300 hover:text-amber-400 transition-colors text-sm">
-              Features
+            <Link href="/" className="text-gray-300 hover:text-amber-400 transition-colors text-sm">
+              Home
             </Link>
             <Link href="/#use-cases" className="text-gray-300 hover:text-amber-400 transition-colors text-sm">
               Use Cases
             </Link>
+            <Link href="/presets" className="text-gray-300 hover:text-amber-400 transition-colors text-sm">
+              Presets
+            </Link>
             <Link href="/pricing" className="text-gray-300 hover:text-amber-400 transition-colors text-sm">
               Pricing
             </Link>
-            <Link href="/support" className="text-gray-300 hover:text-amber-400 transition-colors text-sm">
-              Support
+            <Link href="/examples" className="text-gray-300 hover:text-amber-400 transition-colors text-sm">
+              Examples
+            </Link>
+            <Link href="/faq" className="text-gray-300 hover:text-amber-400 transition-colors text-sm">
+              FAQ
+            </Link>
+            <Link href="/sign-in" className="text-gray-300 hover:text-amber-400 transition-colors text-sm">
+              Sign in
             </Link>
             
             {/* Language Toggle */}
@@ -108,12 +117,12 @@ export function Navbar() {
             </div>
 
             {isAuth && <CreditDisplay credits={userCredits} />}
-            <Link href="/enhance">
+            <Link href="/sign-in">
               <Button
                 size="sm"
                 className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold"
               >
-                Try Enhancer
+                Try free
               </Button>
             </Link>
           </div>
@@ -132,11 +141,11 @@ export function Navbar() {
         {isMenuOpen && (
           <div className="md:hidden py-4 space-y-4 border-t border-gray-800">
             <Link
-              href="/#features"
+              href="/"
               className="block text-gray-300 hover:text-amber-400 transition-colors text-sm"
               onClick={() => setIsMenuOpen(false)}
             >
-              Features
+              Home
             </Link>
             <Link
               href="/#use-cases"
@@ -146,6 +155,13 @@ export function Navbar() {
               Use Cases
             </Link>
             <Link
+              href="/presets"
+              className="block text-gray-300 hover:text-amber-400 transition-colors text-sm"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Presets
+            </Link>
+            <Link
               href="/pricing"
               className="block text-gray-300 hover:text-amber-400 transition-colors text-sm"
               onClick={() => setIsMenuOpen(false)}
@@ -153,11 +169,25 @@ export function Navbar() {
               Pricing
             </Link>
             <Link
-              href="/support"
+              href="/examples"
               className="block text-gray-300 hover:text-amber-400 transition-colors text-sm"
               onClick={() => setIsMenuOpen(false)}
             >
-              Support
+              Examples
+            </Link>
+            <Link
+              href="/faq"
+              className="block text-gray-300 hover:text-amber-400 transition-colors text-sm"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              FAQ
+            </Link>
+            <Link
+              href="/sign-in"
+              className="block text-gray-300 hover:text-amber-400 transition-colors text-sm"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Sign in
             </Link>
 
             {/* Mobile Language Toggle */}
@@ -206,12 +236,12 @@ export function Navbar() {
                 </Button>
               </Link>
             )}
-            <Link href="/enhance" onClick={() => setIsMenuOpen(false)}>
+            <Link href="/sign-in" onClick={() => setIsMenuOpen(false)}>
               <Button
                 size="sm"
                 className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold"
               >
-                Try Enhancer
+                Try free
               </Button>
             </Link>
           </div>

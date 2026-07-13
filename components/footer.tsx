@@ -11,7 +11,7 @@ export function Footer() {
           {/* Brand */}
           <div className="space-y-4">
             <h3 className="text-xl font-bold text-white">clar1ty</h3>
-            <p className="text-sm text-gray-400">AI-powered image enhancement for ASEAN heritage, portraits, archives, and digital art.</p>
+            <p className="text-sm text-gray-400">AI image enhancement for portraits, creators, brands, families and heritage restoration.</p>
             <div className="flex gap-4">
               <a
                 href="https://facebook.com"
@@ -53,23 +53,28 @@ export function Footer() {
             <h4 className="text-sm font-semibold text-white uppercase tracking-wider">Product</h4>
             <ul className="space-y-3">
               <li>
-                <Link href="/enhance" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
-                  Enhancer
+                <Link href="/app/studio" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
+                  Studio
                 </Link>
               </li>
               <li>
-                <Link href="/#faces" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
-                  Results
+                <Link href="/presets" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
+                  Presets
                 </Link>
               </li>
               <li>
-                <Link href="/#use-cases" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
-                  Use Cases
+                <Link href="/examples" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
+                  Examples
                 </Link>
               </li>
               <li>
                 <Link href="/pricing" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
                   Pricing
+                </Link>
+              </li>
+              <li>
+                <Link href="/faq" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
+                  FAQ
                 </Link>
               </li>
             </ul>
@@ -79,6 +84,16 @@ export function Footer() {
           <div className="space-y-4">
             <h4 className="text-sm font-semibold text-white uppercase tracking-wider">Company</h4>
             <ul className="space-y-3">
+              <li>
+                <Link href="/use-cases" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
+                  Use Cases
+                </Link>
+              </li>
+              <li>
+                <Link href="/sign-in" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
+                  Sign in
+                </Link>
+              </li>
               <li>
                 <Link href="/support" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
                   Support
@@ -95,8 +110,8 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/enhance" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
-                  Login
+                <Link href="/sign-up" className="text-sm text-gray-400 hover:text-amber-400 transition-colors">
+                  Sign up
                 </Link>
               </li>
             </ul>

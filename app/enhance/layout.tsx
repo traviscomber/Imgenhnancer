@@ -1,21 +1,20 @@
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "AI Image Enhancement - Professional Upscaling Tool | clar1ty",
+  title: "clar1ty Studio - AI Image Enhancement Workspace",
   description:
-    "Enhance your images with AI-powered upscaling. Supports 2x-4x upscaling with facial preservation and restoration. Perfect for photos, art, and heritage images.",
+    "Upload, enhance and compare images with clar1ty Studio. Built for portraits, creative visuals, product images and heritage restoration.",
   keywords: [
+    "AI image enhancement",
     "image upscaling",
-    "AI enhancement",
     "photo restoration",
-    "image quality improvement",
-    "upscale 4x",
-    "face enhancement",
-    "professional image editor",
+    "portrait enhancer",
+    "creative image enhancer",
+    "heritage restoration",
   ],
   openGraph: {
-    title: "AI Image Enhancement - clar1ty",
-    description: "Transform your images with professional AI upscaling",
+    title: "clar1ty Studio - AI Image Enhancement Workspace",
+    description: "Upload, enhance and compare images with clar1ty Studio.",
     type: "website",
     url: "https://www.clar1ty.art/enhance",
   },

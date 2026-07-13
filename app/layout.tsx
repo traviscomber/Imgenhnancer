@@ -13,21 +13,21 @@ import { SoftwareAppSchema } from "@/components/schemas/software-app-schema"
 const montserrat = Montserrat({ subsets: ["latin"], variable: "--font-montserrat" })
 
 export const metadata: Metadata = {
-  title: "clar1ty.art - Restore Southeast Asia's Visual Identity",
+  title: "clar1ty.art - AI Image Enhancer for Asian Portraits, Creators and Heritage Photos",
   description:
-    "AI-powered image enhancement for ASEAN portraits, archives, cultural landmarks, and digital artwork. Preserve identity, detail, and visual context with Clar1ty.",
+    "Enhance, restore and upscale images with AI. clar1ty is built for portraits, creative visuals, product images, old photos and heritage restoration, with special care for Asian faces and cultural detail.",
   keywords: [
-    "AI image enhancement",
-    "photo restoration",
-    "image upscaling",
-    "face preservation",
-    "ASEAN photography",
-    "n3uralia",
-    "cultural heritage restoration",
-    "LoRA image enhancement",
-    "AI-powered photo restoration",
+    "AI image enhancer",
+    "AI image upscaler",
+    "AI photo enhancer",
+    "AI portrait enhancer",
+    "AI enhancer for Asian faces",
+    "AI old photo restoration",
+    "AI upscaler for designers",
+    "AI image enhancer for photographers",
+    "AI product photo enhancer",
     "heritage photo restoration",
-    "family photo restoration",
+    "cultural detail restoration",
   ],
   authors: [{ name: "n3uralia group", url: "https://n3uralia.com" }],
   creator: "n3uralia group",
@@ -43,8 +43,9 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "clar1ty.art - Restore Southeast Asia's Visual Identity",
-    description: "AI-powered image enhancement built to preserve ASEAN faces, tones, archives, and cultural detail.",
+    title: "clar1ty.art - AI Image Enhancer for Asian Portraits, Creators and Heritage Photos",
+    description:
+      "Enhance, restore and upscale images with AI. clar1ty is built for portraits, creative visuals, product images, old photos and heritage restoration.",
     type: "website",
     locale: "en_US",
     url: "https://www.clar1ty.art/",
@@ -60,8 +61,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "clar1ty.art - Restore Southeast Asia's Visual Identity",
-    description: "AI-powered image enhancement built to preserve ASEAN faces, tones, archives, and cultural detail.",
+    title: "clar1ty.art - AI Image Enhancer for Asian Portraits, Creators and Heritage Photos",
+    description:
+      "Enhance, restore and upscale images with AI. clar1ty is built for portraits, creative visuals, product images, old photos and heritage restoration.",
     creator: "@n3uralia",
     images: ["https://www.clar1ty.art/og-image.jpg"],
   },
