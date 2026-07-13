@@ -38,7 +38,6 @@ type UseCaseCard = {
   copy: string
   image: string
   alt: string
-  bgPosition: string
 }
 
 const contextCards: ComparisonCard[] = [
@@ -154,44 +153,38 @@ const useCaseCards: UseCaseCard[] = [
   {
     title: "Cultural archives",
     copy: "Restore and preserve historical photographs and documents.",
-    image: "/images/landing/use-cases-bg.jpeg",
+    image: "/images/landing/use-cases-crops/cultural-archives.jpg",
     alt: "Cultural archives workspace",
-    bgPosition: "0% 0%",
   },
   {
     title: "Photo restoration services",
     copy: "Deliver higher-quality results faster with AI-powered enhancement.",
-    image: "/images/landing/use-cases-bg.jpeg",
+    image: "/images/landing/use-cases-crops/photo-restoration.jpg",
     alt: "Photo restoration workspace",
-    bgPosition: "50% 0%",
   },
   {
     title: "Creators & digital artists",
     copy: "Enhance references, concepts, and artwork with more detail and clarity.",
-    image: "/images/landing/use-cases-bg.jpeg",
+    image: "/images/landing/use-cases-crops/creators-digital-artists.jpg",
     alt: "Creators and digital artists workspace",
-    bgPosition: "100% 0%",
   },
   {
     title: "Museums & heritage projects",
     copy: "Prepare images for exhibitions, publications, and educational materials.",
-    image: "/images/landing/use-cases-bg.jpeg",
+    image: "/images/landing/use-cases-crops/museums-heritage-projects.jpg",
     alt: "Museums and heritage workspace",
-    bgPosition: "0% 100%",
   },
   {
     title: "Print shops & studios",
     copy: "Produce print-ready files with clean detail and balanced contrast.",
-    image: "/images/landing/use-cases-bg.jpeg",
+    image: "/images/landing/use-cases-crops/print-shops-studios.jpg",
     alt: "Print shops and studios workspace",
-    bgPosition: "50% 100%",
   },
   {
     title: "Brands & businesses",
     copy: "Improve visual assets for marketing, storytelling, and brand heritage.",
-    image: "/images/landing/use-cases-bg.jpeg",
+    image: "/images/landing/use-cases-crops/brands-businesses.jpg",
     alt: "Brands and businesses workspace",
-    bgPosition: "100% 100%",
   },
 ]
 
@@ -509,20 +502,17 @@ function UseCasesSection() {
             <article
               key={card.title}
               className="relative overflow-hidden rounded-[1.8rem] bg-[#11100e] shadow-[0_22px_60px_rgba(0,0,0,0.58)] ring-1 ring-white/5"
+              style={{ minHeight: 292 }}
             >
-              <div
-                className="absolute inset-0 bg-cover bg-center"
-                style={{
-                  backgroundImage: `url(${card.image})`,
-                  backgroundPosition: card.bgPosition,
-                  backgroundSize: "300% 200%",
-                }}
-              />
-              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.34)_0%,rgba(0,0,0,0.38)_42%,rgba(0,0,0,0.72)_100%)]" />
-              <div className="relative flex min-h-[288px] items-center">
-                <div className="ml-auto flex h-full w-[42%] flex-col justify-center px-6 py-8 text-left sm:px-7">
-                  <h3 className="max-w-40 text-xl font-semibold leading-tight text-[#f5ece0]">{card.title}</h3>
-                  <p className="mt-6 max-w-44 text-sm leading-7 text-[#f2e7d9]">{card.copy}</p>
+              <div style={{ display: "grid", gridTemplateColumns: "1.24fr 0.76fr", minHeight: 292 }}>
+                <div className="relative overflow-hidden" style={{ height: 292 }}>
+                  <Image src={card.image} alt={card.alt} fill sizes="(min-width: 1280px) 22vw, (min-width: 768px) 44vw, 100vw" className="object-cover" />
+                </div>
+                <div className="relative flex items-center bg-[linear-gradient(90deg,rgba(0,0,0,0.58)_0%,rgba(0,0,0,0.82)_24%,rgba(0,0,0,0.96)_100%)] px-6 py-8 sm:px-7" style={{ minHeight: 292 }}>
+                  <div>
+                    <h3 className="max-w-44 text-xl font-semibold leading-tight text-[#f5ece0]">{card.title}</h3>
+                    <p className="mt-6 max-w-44 text-sm leading-7 text-[#f2e7d9]">{card.copy}</p>
+                  </div>
                 </div>
               </div>
             </article>
