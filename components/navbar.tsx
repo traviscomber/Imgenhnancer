@@ -1,249 +1,84 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Menu, X, Globe } from "lucide-react"
-import { CreditDisplay } from "@/components/credits/credit-display"
-import { isAuthenticated } from "@/lib/auth"
+import { Menu, X } from "lucide-react"
 import { ClarityLogo } from "@/components/clarity-logo"
-import { useLanguage, type Language } from "@/hooks/use-language"
-import { trackLanguageSwitch } from "@/lib/analytics"
+
+const desktopLinks = [
+  { href: "/pricing", label: "Pricing" },
+  { href: "/about", label: "About" },
+  { href: "/faq", label: "FAQ" },
+  { href: "/support", label: "Support" },
+] as const
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isAuth, setIsAuth] = useState(false)
-  const [userCredits, setUserCredits] = useState<number>(0)
-  const [language, setLanguage] = useLanguage()
-  const [previousLanguage, setPreviousLanguage] = useState<Language | null>(null)
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const authenticated = await isAuthenticated()
-      setIsAuth(authenticated)
-
-      if (authenticated) {
-        try {
-          const response = await fetch("/api/credits/check", {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-          })
-
-          if (!response.ok) {
-            console.warn(`[v0] Credits check failed with status ${response.status}`)
-            setUserCredits(0)
-            return
-          }
-
-          const data = await response.json()
-          if (data.success && typeof data.credits === "number") {
-            setUserCredits(data.credits)
-          } else {
-            setUserCredits(0)
-          }
-        } catch (error) {
-          console.error("[v0] Failed to fetch credits:", error)
-          setUserCredits(0)
-        }
-      }
-    }
-
-    checkAuth()
-  }, [])
 
   return (
-    <nav className="sticky top-0 z-50 bg-gray-950/80 backdrop-blur-lg border-b border-gray-800">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          <Link href="/" className="flex items-center group">
-            <ClarityLogo className="h-8 w-auto group-hover:scale-105 transition-transform" />
+    <nav className="sticky top-0 z-50 border-b border-white/10 bg-black/80 backdrop-blur-xl">
+      <div className="mx-auto max-w-7xl px-4 lg:px-6">
+        <div className="flex h-20 items-center justify-between gap-6">
+          <Link href="/" className="flex items-center group" aria-label="clar1ty home">
+            <ClarityLogo className="h-8 w-auto transition-transform group-hover:scale-105" width={130} height={40} />
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-6">
-            <Link href="/" className="text-gray-300 hover:text-amber-400 transition-colors text-sm">
-              Home
-            </Link>
-            <Link href="/#use-cases" className="text-gray-300 hover:text-amber-400 transition-colors text-sm">
-              Use Cases
-            </Link>
-            <Link href="/presets" className="text-gray-300 hover:text-amber-400 transition-colors text-sm">
-              Presets
-            </Link>
-            <Link href="/#pricing" className="text-gray-300 hover:text-amber-400 transition-colors text-sm">
-              Pricing
-            </Link>
-            <Link href="/examples" className="text-gray-300 hover:text-amber-400 transition-colors text-sm">
-              Examples
-            </Link>
-            <Link href="/faq" className="text-gray-300 hover:text-amber-400 transition-colors text-sm">
-              FAQ
-            </Link>
-            <Link href="/sign-in" className="text-gray-300 hover:text-amber-400 transition-colors text-sm">
-              Sign in
-            </Link>
-            
-            {/* Language Toggle */}
-            <div className="flex items-center gap-2 border-l border-gray-700 pl-6">
-              <button
-                onClick={() => {
-                  if (language !== "en") {
-                    trackLanguageSwitch("en", language)
-                    setPreviousLanguage(language)
-                  }
-                  setLanguage("en")
-                }}
-                className={`text-xs font-medium transition-colors ${
-                  language === "en" ? "text-amber-400" : "text-gray-400 hover:text-gray-300"
-                }`}
+          <div className="hidden items-center gap-8 md:flex">
+            {desktopLinks.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="text-sm tracking-[0.08em] text-[#efe8dc] transition hover:text-[#d7a957]"
               >
-                EN
-              </button>
-              <span className="text-gray-600">/</span>
-              <button
-                onClick={() => {
-                  if (language !== "es") {
-                    trackLanguageSwitch("es", language)
-                    setPreviousLanguage(language)
-                  }
-                  setLanguage("es")
-                }}
-                className={`text-xs font-medium transition-colors ${
-                  language === "es" ? "text-amber-400" : "text-gray-400 hover:text-gray-300"
-                }`}
-              >
-                ES
-              </button>
-            </div>
-
-            {isAuth && <CreditDisplay credits={userCredits} />}
-            <Link href="/sign-in">
-              <Button
-                size="sm"
-                className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold"
-              >
-                Try free
-              </Button>
-            </Link>
+                {item.label}
+              </Link>
+            ))}
+            <Button asChild className="h-11 rounded-none border border-[#c9953d]/70 bg-transparent px-6 text-sm font-medium text-[#efe8dc] hover:bg-[#c9953d]/10 hover:text-white">
+              <Link href="/enhance">Upscale</Link>
+            </Button>
+            <Button asChild className="h-11 rounded-none bg-[#c9953d] px-6 text-sm font-medium text-black hover:bg-[#d7a957]">
+              <Link href="/sign-in">Log in</Link>
+            </Button>
           </div>
 
-          {/* Mobile Menu Button */}
           <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden text-gray-300 hover:text-amber-400 transition-colors"
+            onClick={() => setIsMenuOpen((current) => !current)}
+            className="md:hidden text-[#efe8dc] transition hover:text-[#d7a957]"
             aria-label="Toggle menu"
+            aria-expanded={isMenuOpen}
           >
-            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
 
-        {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="md:hidden py-4 space-y-4 border-t border-gray-800">
-            <Link
-              href="/"
-              className="block text-gray-300 hover:text-amber-400 transition-colors text-sm"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Home
-            </Link>
-            <Link
-              href="/#use-cases"
-              className="block text-gray-300 hover:text-amber-400 transition-colors text-sm"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Use Cases
-            </Link>
-            <Link
-              href="/presets"
-              className="block text-gray-300 hover:text-amber-400 transition-colors text-sm"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Presets
-            </Link>
-            <Link
-              href="/#pricing"
-              className="block text-gray-300 hover:text-amber-400 transition-colors text-sm"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Pricing
-            </Link>
-            <Link
-              href="/examples"
-              className="block text-gray-300 hover:text-amber-400 transition-colors text-sm"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Examples
-            </Link>
-            <Link
-              href="/faq"
-              className="block text-gray-300 hover:text-amber-400 transition-colors text-sm"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              FAQ
-            </Link>
-            <Link
-              href="/sign-in"
-              className="block text-gray-300 hover:text-amber-400 transition-colors text-sm"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Sign in
-            </Link>
-
-            {/* Mobile Language Toggle */}
-            <div className="flex items-center gap-2 border-y border-gray-700 py-3">
-              <Globe className="w-4 h-4 text-gray-400" />
-              <button
-                onClick={() => {
-                  if (language !== "en") {
-                    trackLanguageSwitch("en", language)
-                    setPreviousLanguage(language)
-                  }
-                  setLanguage("en")
-                  setIsMenuOpen(false)
-                }}
-                className={`text-xs font-medium transition-colors ${
-                  language === "en" ? "text-amber-400" : "text-gray-400 hover:text-gray-300"
-                }`}
-              >
-                English
-              </button>
-              <span className="text-gray-600">|</span>
-              <button
-                onClick={() => {
-                  if (language !== "es") {
-                    trackLanguageSwitch("es", language)
-                    setPreviousLanguage(language)
-                  }
-                  setLanguage("es")
-                  setIsMenuOpen(false)
-                }}
-                className={`text-xs font-medium transition-colors ${
-                  language === "es" ? "text-amber-400" : "text-gray-400 hover:text-gray-300"
-                }`}
-              >
-                Español
-              </button>
+          <div className="border-t border-white/10 py-4 md:hidden">
+            <div className="flex flex-col gap-2">
+              {desktopLinks.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setIsMenuOpen(false)}
+                  className="rounded-xl px-3 py-3 text-sm text-[#efe8dc] transition hover:bg-white/5 hover:text-[#d7a957]"
+                >
+                  {item.label}
+                </Link>
+              ))}
             </div>
 
-            {isAuth && (
-              <Link href="/credits" onClick={() => setIsMenuOpen(false)}>
-                <Button
-                  size="sm"
-                  className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold"
-                >
-                  Credits: {userCredits}
-                </Button>
-              </Link>
-            )}
-            <Link href="/sign-in" onClick={() => setIsMenuOpen(false)}>
-              <Button
-                size="sm"
-                className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold"
-              >
-                Try free
+            <div className="mt-4 grid gap-3">
+              <Button asChild className="h-11 rounded-none border border-[#c9953d]/70 bg-transparent text-sm font-medium text-[#efe8dc] hover:bg-[#c9953d]/10 hover:text-white">
+                <Link href="/enhance" onClick={() => setIsMenuOpen(false)}>
+                  Upscale
+                </Link>
               </Button>
-            </Link>
+              <Button asChild className="h-11 rounded-none bg-[#c9953d] text-sm font-medium text-black hover:bg-[#d7a957]">
+                <Link href="/sign-in" onClick={() => setIsMenuOpen(false)}>
+                  Log in
+                </Link>
+              </Button>
+            </div>
           </div>
         )}
       </div>

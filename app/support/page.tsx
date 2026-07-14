@@ -1,40 +1,39 @@
-'use client'
+"use client"
 
-import type React from 'react'
-import Link from 'next/link'
-import { useState } from 'react'
-import { ArrowLeft, Clock, HelpCircle, Mail, MessageSquare, Shield } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { ClarityLogo } from '@/components/clarity-logo'
+import type React from "react"
+import Link from "next/link"
+import { useState } from "react"
+import { Clock, HelpCircle, Mail, MessageSquare, Shield } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 const quickLinks = [
   {
-    href: '/faq',
-    title: 'FAQ',
-    copy: 'Answers about credits, privacy, image types, and enhancement results.',
+    href: "/faq",
+    title: "FAQ",
+    copy: "Answers about credits, privacy, image types, and enhancement results.",
   },
   {
-    href: '/#pricing',
-    title: 'Pricing',
-    copy: 'Understand credit packages and enhancement costs before uploading.',
+    href: "/pricing",
+    title: "Pricing",
+    copy: "Understand credit packages and enhancement costs before uploading.",
   },
   {
-    href: '/privacy',
-    title: 'Privacy',
-    copy: 'Review how Clar1ty handles image processing and storage.',
+    href: "/about",
+    title: "About",
+    copy: "Read the project overview and product focus behind clar1ty.",
   },
 ]
 
 export default function SupportPage() {
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    subject: '',
-    message: '',
+    name: "",
+    email: "",
+    subject: "",
+    message: "",
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle")
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = event.target
@@ -44,56 +43,33 @@ export default function SupportPage() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setIsSubmitting(true)
-    setSubmitStatus('idle')
+    setSubmitStatus("idle")
 
     try {
-      const response = await fetch('/api/support/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/support/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       })
 
       if (response.ok) {
-        setSubmitStatus('success')
-        setFormData({ name: '', email: '', subject: '', message: '' })
+        setSubmitStatus("success")
+        setFormData({ name: "", email: "", subject: "", message: "" })
       } else {
-        setSubmitStatus('error')
+        setSubmitStatus("error")
       }
     } catch (error) {
-      console.error('Error submitting form:', error)
-      setSubmitStatus('error')
+      console.error("Error submitting form:", error)
+      setSubmitStatus("error")
     } finally {
       setIsSubmitting(false)
     }
   }
 
   return (
-    <main className="min-h-screen bg-black px-6 py-10 text-[#efe8dc]">
-      <div className="pointer-events-none fixed inset-0 opacity-25">
-        <div className="absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(circle_at_28%_18%,rgba(201,149,61,0.22),transparent_34%),radial-gradient(circle_at_74%_8%,rgba(122,91,50,0.18),transparent_34%)]" />
-      </div>
-
-      <div className="relative mx-auto max-w-6xl">
-        <nav className="flex items-center justify-between border-b border-white/10 pb-8">
-          <Link href="/" aria-label="clar1ty home">
-            <ClarityLogo className="h-10 w-auto drop-shadow-[0_0_10px_rgba(211,155,62,0.45)]" width={145} height={44} />
-          </Link>
-          <div className="flex items-center gap-5 text-sm text-[#d8d0c4]">
-            <Link href="/#pricing" className="hidden hover:text-[#d7a957] sm:inline">
-              Pricing
-            </Link>
-            <Link href="/enhance" className="rounded-full border border-[#c9953d]/40 px-4 py-2 text-[#f0d59c] hover:border-[#c9953d] hover:text-white">
-              Login
-            </Link>
-          </div>
-        </nav>
-
-        <Link href="/" className="mt-10 inline-flex items-center gap-2 text-sm text-[#b9ad9a] transition hover:text-[#d7a957]">
-          <ArrowLeft className="h-4 w-4" />
-          Back to landing
-        </Link>
-
-        <section className="grid gap-12 py-16 lg:grid-cols-[0.44fr_0.56fr] lg:py-24">
+    <main className="min-h-screen bg-black px-6 pb-24 pt-16 text-[#efe8dc] lg:px-16 lg:pt-20">
+      <div className="mx-auto max-w-6xl">
+        <section className="grid gap-12 lg:grid-cols-[0.44fr_0.56fr] lg:py-10">
           <div>
             <p className="text-xs uppercase tracking-[0.35em] text-[#c9953d]">Clar1ty support</p>
             <h1 className="mt-6 text-5xl font-light leading-tight tracking-[0.02em] text-white md:text-6xl">
@@ -122,13 +98,13 @@ export default function SupportPage() {
               </div>
             </div>
 
-            {submitStatus === 'success' ? (
+            {submitStatus === "success" ? (
               <div className="mb-6 border border-[#6fa26c]/50 bg-[#193119]/35 p-4 text-sm text-[#bde2ba]">
                 Your message was received. We will get back to you soon.
               </div>
             ) : null}
 
-            {submitStatus === 'error' ? (
+            {submitStatus === "error" ? (
               <div className="mb-6 border border-[#a66a50]/50 bg-[#32170f]/50 p-4 text-sm text-[#f0b7a3]">
                 The form could not submit. Please try again or email info@clar1ty.art.
               </div>
@@ -187,12 +163,12 @@ export default function SupportPage() {
               disabled={isSubmitting}
               className="mt-7 h-12 w-full rounded-none bg-[#c9953d] text-sm font-semibold text-black hover:bg-[#e0b365] disabled:opacity-60"
             >
-              {isSubmitting ? 'Sending...' : 'Send message'}
+              {isSubmitting ? "Sending..." : "Send message"}
             </Button>
           </form>
         </section>
 
-        <section className="grid gap-5 pb-20 md:grid-cols-3">
+        <section className="mt-16 grid gap-5 md:grid-cols-3">
           {quickLinks.map((item) => (
             <Link
               key={item.href}
@@ -222,7 +198,7 @@ function SupportFact({ Icon, title, copy }: { Icon: LucideIcon; title: string; c
   )
 }
 
-function Field({ label, className = '', children }: { label: string; className?: string; children: React.ReactNode }) {
+function Field({ label, className = "", children }: { label: string; className?: string; children: React.ReactNode }) {
   return (
     <label className={`block ${className}`}>
       <span className="mb-2 block text-sm font-medium text-[#d8d0c4]">{label}</span>

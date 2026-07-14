@@ -9,6 +9,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Suspense } from "react"
 import { OrganizationSchema } from "@/components/schemas/organization-schema"
 import { SoftwareAppSchema } from "@/components/schemas/software-app-schema"
+import { Navbar } from "@/components/navbar"
 
 const montserrat = Montserrat({ subsets: ["latin"], variable: "--font-montserrat" })
 
@@ -151,6 +152,7 @@ export default function RootLayout({
         
         <Suspense fallback={null}>
           <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+            <Navbar />
             {children}
             <Toaster />
             <Analytics />

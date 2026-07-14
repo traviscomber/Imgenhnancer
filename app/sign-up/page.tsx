@@ -45,7 +45,7 @@ export default function SignUpPage() {
       return
     }
 
-    router.push("/app/studio?welcome=1")
+    router.push("/enhance?welcome=1")
     router.refresh()
   }
 

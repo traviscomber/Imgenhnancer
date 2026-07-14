@@ -196,7 +196,7 @@ export default function Home() {
   const openStudio = async (source: string) => {
     trackCTAClick(source, "Try clar1ty free")
     const authenticated = await isAuthenticated()
-    router.push(authenticated ? "/app/studio" : "/sign-in")
+    router.push(authenticated ? "/enhance" : "/sign-in")
   }
 
   return (
@@ -220,38 +220,7 @@ function Hero({ onTryFree }: { onTryFree: () => void }) {
     <section className="relative overflow-hidden bg-black">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_16%_12%,rgba(201,149,61,0.12),transparent_28%),radial-gradient(circle_at_84%_12%,rgba(124,96,61,0.12),transparent_28%)]" />
 
-      <nav className="fixed inset-x-0 top-0 z-50 border-b border-white/8 bg-black/55 px-6 py-4 backdrop-blur-xl lg:px-16">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-6">
-          <Link href="/" aria-label="clar1ty home">
-            <ClarityLogo className="h-8 w-auto" width={130} height={40} />
-          </Link>
-          <div className="hidden items-center gap-6 text-[11px] uppercase tracking-[0.18em] text-[#d9ccb6] md:flex">
-            <a href="#use-cases" className="transition hover:text-[#d7a957]">
-              Use Cases
-            </a>
-            <a href="#presets" className="transition hover:text-[#d7a957]">
-              Presets
-            </a>
-            <Link href="/#pricing" className="transition hover:text-[#d7a957]">
-              Pricing
-            </Link>
-            <Link href="/examples" className="transition hover:text-[#d7a957]">
-              Examples
-            </Link>
-            <Link href="/faq" className="transition hover:text-[#d7a957]">
-              FAQ
-            </Link>
-            <Link href="/sign-in" className="transition hover:text-[#d7a957]">
-              Sign in
-            </Link>
-            <Button onClick={onTryFree} className="h-10 rounded-none bg-[#c9953d] px-5 text-[11px] font-semibold uppercase tracking-[0.16em] text-black hover:bg-[#d7a957]">
-              Upload image
-            </Button>
-          </div>
-        </div>
-      </nav>
-
-      <div className="relative mx-auto grid min-h-[820px] max-w-7xl gap-14 px-6 pb-16 pt-28 lg:grid-cols-[0.92fr_1.08fr] lg:items-center lg:px-16 lg:pt-32">
+      <div className="relative mx-auto grid min-h-[820px] max-w-7xl gap-14 px-6 pb-16 pt-16 lg:grid-cols-[0.92fr_1.08fr] lg:items-center lg:px-16 lg:pt-20">
         <div className="max-w-2xl">
           <p className="text-xs uppercase tracking-[0.35em] text-[#c9953d]">AI image enhancement for portraits, creators and heritage restoration</p>
           <h1 className="mt-6 text-5xl font-light leading-[1.04] tracking-[0.01em] text-white md:text-7xl">

@@ -2,20 +2,19 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Menu, Sparkles, ImageIcon, BookOpen, DollarSign, Mail } from "lucide-react"
+import { Menu, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 
+const menuItems = [
+  { href: "/pricing", label: "Pricing" },
+  { href: "/about", label: "About" },
+  { href: "/faq", label: "FAQ" },
+  { href: "/support", label: "Support" },
+] as const
+
 export function MobileMenu() {
   const [open, setOpen] = useState(false)
-
-  const menuItems = [
-    { href: "/#features", label: "Features", icon: Sparkles },
-    { href: "/#faces", label: "Results", icon: ImageIcon },
-    { href: "/#how-it-works", label: "How It Works", icon: BookOpen },
-    { href: "/#pricing", label: "Pricing", icon: DollarSign },
-    { href: "/support", label: "Support", icon: Mail },
-  ]
 
   return (
     <div className="md:hidden">
@@ -24,50 +23,46 @@ export function MobileMenu() {
           <Button
             variant="ghost"
             size="icon"
-            className="text-white hover:text-amber-400 hover:bg-amber-500/10"
+            className="text-white hover:bg-amber-500/10 hover:text-amber-400"
             aria-label="Open menu"
           >
-            <Menu className="w-6 h-6" />
+            <Menu className="h-6 w-6" />
           </Button>
         </SheetTrigger>
-        <SheetContent side="right" className="w-[300px] bg-gray-900 border-white/10">
-          <SheetHeader className="text-left mb-8">
+        <SheetContent side="right" className="w-[300px] border-white/10 bg-gray-900">
+          <SheetHeader className="mb-8 text-left">
             <SheetTitle className="flex items-center space-x-2">
-              <Sparkles className="w-6 h-6 text-amber-400" />
+              <Sparkles className="h-6 w-6 text-amber-400" />
               <span className="text-xl font-bold text-white">clar1ty</span>
             </SheetTitle>
-            <SheetDescription className="text-gray-400">AI Image Enhancement</SheetDescription>
+            <SheetDescription className="text-gray-400">AI image enhancement</SheetDescription>
           </SheetHeader>
 
           <nav className="flex flex-col space-y-4">
-            {menuItems.map((item) => {
-              const Icon = item.icon
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setOpen(false)}
-                  className="flex items-center space-x-3 px-4 py-3 rounded-lg text-white hover:bg-amber-500/10 hover:text-amber-400 transition-all"
-                >
-                  <Icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
-                </Link>
-              )
-            })}
+            {menuItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setOpen(false)}
+                className="rounded-lg px-4 py-3 font-medium text-white transition hover:bg-amber-500/10 hover:text-amber-400"
+              >
+                {item.label}
+              </Link>
+            ))}
           </nav>
 
-          <div className="mt-8 pt-8 border-t border-white/10">
+          <div className="mt-8 border-t border-white/10 pt-8">
             <Link href="/enhance" onClick={() => setOpen(false)}>
               <Button className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700">
-                <Sparkles className="w-4 h-4 mr-2" />
-                Try Free
+                <Sparkles className="mr-2 h-4 w-4" />
+                Upscale
               </Button>
             </Link>
           </div>
 
-          <div className="mt-6 pt-6 border-t border-white/10">
-            <p className="text-xs text-gray-500 text-center">
-              Powered by <span className="text-amber-400 font-semibold">n3uralia group</span>
+          <div className="mt-6 border-t border-white/10 pt-6">
+            <p className="text-center text-xs text-gray-500">
+              Powered by <span className="font-semibold text-amber-400">n3uralia group</span>
             </p>
           </div>
         </SheetContent>

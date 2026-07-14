@@ -25,7 +25,7 @@ export default function SignInPage() {
       return
     }
 
-    router.push("/app/studio")
+    router.push("/enhance")
     router.refresh()
   }
 
