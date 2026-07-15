@@ -467,10 +467,23 @@ function QualitySection() {
 
 function UseCasesSection() {
   return (
-    <section id="use-cases" className="bg-black px-6 py-24 lg:px-16">
-      <div className="mx-auto max-w-7xl">
+    <section id="use-cases" className="relative overflow-hidden bg-black px-6 py-24 lg:px-16">
+      <div className="pointer-events-none absolute inset-0">
+        <Image
+          src="/images/landing/use-cases-bg.jpeg"
+          alt=""
+          fill
+          sizes="100vw"
+          aria-hidden="true"
+          className="object-cover object-center opacity-25"
+        />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.95)_0%,rgba(0,0,0,0.72)_22%,rgba(0,0,0,0.88)_100%)]" />
+      </div>
+      <div className="relative mx-auto max-w-7xl">
         <div className="text-center">
-          <h2 className="text-3xl font-light tracking-[0.01em] text-[#f1e5d3] md:text-5xl">For people, projects, and purpose.</h2>
+          <h2 className="text-3xl font-light tracking-[0.01em] text-[#f1e5d3] md:text-5xl">
+            For people, projects, and purpose.
+          </h2>
           <p className="mx-auto mt-6 max-w-3xl text-sm leading-7 text-[#d4c7b6]">
             Improve visual assets for marketing, storytelling, and brand heritage. For individuals, professionals, and institutions across Southeast Asia and beyond.
           </p>
@@ -480,14 +493,24 @@ function UseCasesSection() {
           {useCaseCards.map((card) => (
             <article
               key={card.title}
-              className="relative overflow-hidden rounded-[1.8rem] bg-[#11100e] shadow-[0_22px_60px_rgba(0,0,0,0.58)] ring-1 ring-white/5"
+              className="relative overflow-hidden rounded-[1.8rem] border border-white/8 bg-[#0b0a08]/90 shadow-[0_24px_70px_rgba(0,0,0,0.72)]"
               style={{ minHeight: 330 }}
             >
-              <div style={{ display: "grid", gridTemplateColumns: "1.38fr 0.62fr", minHeight: 330 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1.35fr 0.65fr", minHeight: 330 }}>
                 <div className="relative overflow-hidden" style={{ height: 330 }}>
-                  <Image src={card.image} alt={card.alt} fill sizes="(min-width: 1280px) 22vw, (min-width: 768px) 44vw, 100vw" className="object-cover" />
+                  <Image
+                    src={card.image}
+                    alt={card.alt}
+                    fill
+                    sizes="(min-width: 1280px) 22vw, (min-width: 768px) 44vw, 100vw"
+                    className="object-cover object-center"
+                  />
+                  <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.08)_0%,rgba(0,0,0,0.12)_62%,rgba(0,0,0,0.3)_100%)]" />
                 </div>
-                <div className="relative flex items-center bg-[linear-gradient(90deg,rgba(0,0,0,0.54)_0%,rgba(0,0,0,0.8)_24%,rgba(0,0,0,0.96)_100%)] px-6 py-8 sm:px-7" style={{ minHeight: 330 }}>
+                <div
+                  className="relative flex items-center bg-[linear-gradient(90deg,rgba(0,0,0,0.62)_0%,rgba(0,0,0,0.82)_34%,rgba(0,0,0,0.96)_100%)] px-6 py-8 sm:px-7"
+                  style={{ minHeight: 330 }}
+                >
                   <div>
                     <h3 className="max-w-44 text-xl font-semibold leading-tight text-[#f5ece0]">{card.title}</h3>
                     <p className="mt-6 max-w-44 text-sm leading-7 text-[#f2e7d9]">{card.copy}</p>
