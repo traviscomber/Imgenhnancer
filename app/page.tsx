@@ -599,13 +599,13 @@ function UseCasesSection() {
               key={card.title}
               className="group relative h-80 overflow-hidden rounded-2xl shadow-[0_24px_70px_rgba(0,0,0,0.72)]"
             >
-              {/* Background Image - use object-contain to prevent clipping */}
+              {/* Background Image - fill entire card */}
               <Image
                 src={card.image}
                 alt={card.alt}
                 fill
                 sizes="(min-width: 1280px) 22vw, (min-width: 768px) 44vw, 100vw"
-                className="object-contain object-center transition-transform duration-300 group-hover:scale-105 bg-black"
+                className="object-cover object-center transition-transform duration-300 group-hover:scale-105"
               />
 
               {/* Left-side Black Gradient Overlay */}
