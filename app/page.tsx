@@ -426,8 +426,18 @@ function OneClickSection() {
 
 function QualitySection() {
   return (
-    <section className="relative overflow-hidden bg-[#3b3124] px-6 py-24 lg:px-16">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_8%_30%,rgba(201,149,61,0.12),transparent_22%),radial-gradient(circle_at_92%_36%,rgba(201,149,61,0.1),transparent_22%)]" />
+    <section className="relative overflow-hidden bg-black px-6 py-24 lg:px-16">
+      <div className="pointer-events-none absolute inset-0">
+        <Image
+          src="/images/landing/quality-reference.jpg"
+          alt=""
+          fill
+          sizes="100vw"
+          aria-hidden="true"
+          className="object-cover object-center opacity-45 blur-[1px]"
+        />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_8%_30%,rgba(201,149,61,0.16),transparent_22%),radial-gradient(circle_at_92%_36%,rgba(201,149,61,0.14),transparent_22%),linear-gradient(180deg,rgba(0,0,0,0.35)_0%,rgba(0,0,0,0.68)_58%,rgba(0,0,0,0.9)_100%)]" />
+      </div>
       <div className="relative mx-auto max-w-7xl">
         <div className="text-center">
           <h2 className="text-3xl font-light tracking-[0.01em] text-[#f1e5d3] md:text-5xl">Better quality. Same identity.</h2>
@@ -435,10 +445,10 @@ function QualitySection() {
           <p className="mx-auto text-sm leading-7 text-[#d4c7b6]">Three easy steps to restore and enhance your images.</p>
         </div>
 
-        <div className="relative mt-12 overflow-hidden rounded-[2rem] border border-black/20 bg-[#7d6f5b] p-6 shadow-[0_30px_100px_rgba(0,0,0,0.35)]">
+        <div className="relative mt-12 overflow-hidden rounded-[2rem] border border-white/8 bg-white/[0.03] p-6 shadow-[0_30px_100px_rgba(0,0,0,0.35)] backdrop-blur-sm">
           <div className="relative grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {qualityItems.map(({ title, copy, icon }) => (
-              <article key={title} className="flex items-center gap-5 rounded-2xl bg-[#a29482] px-5 py-4 shadow-[0_0_0_1px_rgba(0,0,0,0.08)]">
+              <article key={title} className="flex items-center gap-5 rounded-2xl border border-white/8 bg-black/35 px-5 py-4 shadow-[0_0_0_1px_rgba(0,0,0,0.08)]">
                 <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#0b0a08] p-2">
                   <Image src={icon} alt="" width={64} height={64} aria-hidden="true" className="h-12 w-12 object-contain" />
                 </div>
