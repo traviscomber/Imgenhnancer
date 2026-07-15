@@ -188,7 +188,7 @@ const useCaseCards: UseCaseCard[] = [
   },
 ]
 
-const collageImage = "/images/landing/closing-collage.jpg"
+const collageImage = "/images/landing/closing-portraits.jpg"
 
 export default function Home() {
   const router = useRouter()
@@ -535,11 +535,26 @@ function PricingPreview() {
 
 function CollageSection() {
   return (
-    <section className="bg-black px-6 py-16 lg:px-16">
+    <section className="bg-black px-6 pt-10 lg:px-16 lg:pt-12">
       <div className="mx-auto max-w-7xl">
-        <div className="relative overflow-hidden rounded-[2rem] bg-black">
-          <div className="relative w-full">
-            <Image src={collageImage} alt="Clar1ty portrait strip" width={1280} height={1080} sizes="100vw" className="h-auto w-full object-contain" />
+        <div className="relative overflow-visible">
+          <Image
+            src={collageImage}
+            alt="Clar1ty portrait strip"
+            width={1680}
+            height={960}
+            sizes="100vw"
+            className="h-auto w-full object-contain"
+          />
+          <div className="pointer-events-none absolute inset-x-0 bottom-[-4.75rem] flex justify-center">
+            <Image
+              src="/images/landing/clar1ty-logo.png"
+              alt=""
+              width={540}
+              height={220}
+              aria-hidden="true"
+              className="h-28 w-auto opacity-95 drop-shadow-[0_0_26px_rgba(201,149,61,0.28)] md:h-32"
+            />
           </div>
         </div>
       </div>
@@ -555,7 +570,7 @@ function FinalCTA({ onTryFree }: { onTryFree: () => void }) {
   ]
 
   return (
-    <section className="bg-black px-6 py-24 lg:px-16">
+    <section className="bg-black px-6 pb-24 pt-32 lg:px-16 lg:pb-28 lg:pt-36">
       <div className="mx-auto max-w-7xl">
         <div className="grid gap-12 rounded-3xl bg-white/[0.03] p-8 lg:grid-cols-[0.95fr_1.05fr] lg:p-12">
           <div className="space-y-5">
