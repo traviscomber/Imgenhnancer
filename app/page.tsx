@@ -85,32 +85,36 @@ const stepCards = [
   },
 ]
 
-const oneClickCards: (InfoCard & { icon: string })[] = [
+const oneClickCards: (InfoCard & { icon: string; beforeImage: string })[] = [
   {
     title: "Clean Enhance",
     copy: "Improve clarity, contrast and overall image quality. Best for digital photos, product visuals, brand assets, social content and general image cleanup.",
-    image: "/images/landing/comparisons/digital-after.jpg",
+    beforeImage: "/images/landing/L5-clean-before.png",
+    image: "/images/landing/L5-clean-after.png",
     alt: "Clean enhancement example",
     icon: "/images/landing/icons-clean/digital-upscale.png",
   },
   {
     title: "Old Photo Restore",
     copy: "Restore old, faded, scratched or damaged photographs. Best for family archives, vintage portraits, scanned prints and memory preservation.",
-    image: "/images/landing/comparisons/faces-after.jpg",
+    beforeImage: "/images/landing/L5-restore-before.png",
+    image: "/images/landing/L5-restore-after.png",
     alt: "Old photo restoration example",
     icon: "/images/landing/icons-clean/photo-restoration.png",
   },
   {
     title: "Face Detail",
     copy: "Enhance facial features while keeping a natural appearance. Best for portraits, wedding photos, fashion, beauty, family images and Asian faces.",
-    image: "/images/landing/comparisons/hero-after-new.png",
+    beforeImage: "/images/landing/L5-face-before.png",
+    image: "/images/landing/L5-face-after.png",
     alt: "Face detail enhancement example",
     icon: "/images/landing/icons-clean/face-profile.png",
   },
   {
     title: "Cultural Detail",
     copy: "Preserve architecture, traditional ornaments and cultural textures. Best for heritage buildings, jewelry, artifacts, traditional costumes and historical visuals.",
-    image: "/images/landing/comparisons/heritage-after.jpg",
+    beforeImage: "/images/landing/L5-cultural-before.png",
+    image: "/images/landing/L5-cultural-after.png",
     alt: "Cultural detail enhancement example",
     icon: "/images/landing/icons-clean/heritage-restore.png",
   },
@@ -507,15 +511,7 @@ function OneClickSection() {
               </div>
               <div className={`relative min-h-[220px] ${index % 2 === 1 ? "md:order-1" : ""}`}>
                 <LiveComparison
-                  beforeImage={
-                    card.title === "Clean Enhance"
-                      ? "/images/landing/comparisons/generic-original.jpg"
-                      : card.title === "Old Photo Restore"
-                        ? "/images/landing/comparisons/faces-before.jpg"
-                        : card.title === "Face Detail"
-                          ? "/images/landing/comparisons/hero-before-new.png"
-                          : "/images/landing/comparisons/heritage-before.jpg"
-                  }
+                  beforeImage={card.beforeImage}
                   afterImage={card.image}
                   beforeAlt={`${card.title} before image`}
                   afterAlt={card.alt}
