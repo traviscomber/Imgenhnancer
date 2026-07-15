@@ -231,17 +231,17 @@ function Hero({ onTryFree }: { onTryFree: () => void }) {
             <span className="text-[#d7a957]">visual identity</span>
           </h1>
           <p className="mt-8 max-w-xl text-sm leading-7 text-[#d6cabc] md:text-base">
-            Clar1ty enhances portraits, restores old photos and improves creative assets while preserving the details, textures and context that make them meaningful.
+            Enhance portraits, restore old photos, upscale creative assets and improve images for professional use — with special care for Asian faces and cultural detail.
           </p>
-          <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+          <p className="mt-4 text-sm text-[#d7a957]">Upload. Enhance. Preserve identity.</p>
+          <div className="mt-8 flex flex-col gap-4 sm:flex-row">
             <Button onClick={onTryFree} className="h-12 rounded-none bg-[#c9953d] px-8 text-[12px] font-semibold uppercase tracking-[0.12em] text-black hover:bg-[#d7a957]">
-              Upload image
+              Try Free
             </Button>
             <Button asChild className="h-12 rounded-none border border-[#6f5d49] bg-[#17120f] px-8 text-[12px] font-semibold uppercase tracking-[0.12em] text-[#f0e2cf] hover:bg-[#221913]">
-              <Link href="/sign-in">Login</Link>
+              <Link href="/sign-in">Log In</Link>
             </Button>
           </div>
-          <p className="mt-5 text-xs text-[#a8977c]">10 free credits. No credit card required. Secure and private processing.</p>
         </div>
 
         <div className="relative">
@@ -306,30 +306,131 @@ function UploadSection({ onTryFree }: { onTryFree: () => void }) {
   )
 }
 
+function OrnamentalDivider() {
+  return (
+    <div className="mx-auto my-8 flex w-48 items-center gap-3">
+      <div className="h-px flex-1 bg-gradient-to-r from-transparent to-[#c9953d]/60" />
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+        <path d="M7 0L8.5 5.5L14 7L8.5 8.5L7 14L5.5 8.5L0 7L5.5 5.5Z" fill="#c9953d" />
+      </svg>
+      <div className="h-px flex-1 bg-gradient-to-l from-transparent to-[#c9953d]/60" />
+    </div>
+  )
+}
+
 function ContextSection() {
+  const panels = [
+    {
+      label: "Original Archive",
+      sublabel: "Low-quality source",
+      image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/L3left-FhfogQBMDGlB1XvlFicyTjQ4YrXJrv.png",
+      alt: "Original low-quality archive photograph of two Balinese dancers",
+      badge: "bad" as const,
+      tags: ["Faded & noisy", "Low detail", "Hard to read"],
+    },
+    {
+      label: "Generic Upscaler",
+      sublabel: "Changes what matters",
+      image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/L3center-Kb1uWscaSkyu1xHCgfkiL8A1attoQQ.png",
+      alt: "Generic AI upscaler result — altered faces and cultural details",
+      badge: "bad" as const,
+      tags: ["Altered faces", "Changed details", "Lost authenticity"],
+    },
+    {
+      label: "Clar1ty Enhanced",
+      sublabel: "Identity-preserved result",
+      image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/L3right-8bxznNVscXHTCTtV8CU0wkZn5zcii8.png",
+      alt: "Clar1ty enhanced result — sharp detail with cultural identity preserved",
+      badge: "good" as const,
+      tags: ["True to originals", "Cultural details kept", "Clear & authentic"],
+    },
+  ]
+
   return (
     <section className="bg-black px-6 py-24 lg:px-16">
       <div className="mx-auto max-w-7xl">
         <div className="text-center">
-          <p className="text-xs uppercase tracking-[0.35em] text-[#c9953d]">Generic AI-tools upscale pixels.</p>
-          <h2 className="text-3xl font-light tracking-[0.01em] text-[#f1e5d3] md:text-5xl">Clar1ty preserves context.</h2>
-          <p className="mx-auto mt-6 max-w-3xl text-sm leading-7 text-[#d4c7b6]">
-            The model is tuned to improve detail without deleting the cues that identify a person, a place or a cultural object.
+          <h2 className="text-3xl font-light tracking-[0.01em] text-[#f1e5d3] md:text-5xl">
+            Clar1ty <span className="text-[#d7a957]">preserves context.</span>
+          </h2>
+          <OrnamentalDivider />
+          <p className="mx-auto mt-2 max-w-3xl text-sm leading-7 text-[#d4c7b6]">
+            ASEAN images carry faces, skin tones, textiles, architecture, ornaments, symbols, and visual identity.
+            <br />
+            Generic upscalers often alter faces, attire and design. Clar1ty is built to{" "}
+            <span className="text-[#d7a957]">preserve what matters.</span>
           </p>
         </div>
+
         <div className="mt-12 grid gap-5 xl:grid-cols-3">
-          {contextCards.map((card) => (
-            <article key={card.title} className="rounded-2xl bg-white/[0.03] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.03)]">
-              <LiveComparison
-                beforeImage={card.beforeImage}
-                afterImage={card.afterImage}
-                beforeAlt={card.beforeAlt}
-                afterAlt={card.afterAlt}
-                className="h-72 rounded-xl"
-              />
-              <div className="px-1 pb-2 pt-4">
-                <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-[#d7a957]">{card.title}</h3>
-                <p className="mt-3 text-sm leading-7 text-[#d4c7b6]">{card.copy}</p>
+          {panels.map((panel) => (
+            <article key={panel.label} className="overflow-hidden rounded-2xl bg-white/[0.03] shadow-[0_0_0_1px_rgba(255,255,255,0.04)]">
+              <div className="relative h-72 w-full overflow-hidden">
+                <Image
+                  src={panel.image}
+                  alt={panel.alt}
+                  fill
+                  sizes="(min-width: 1280px) 30vw, (min-width: 768px) 44vw, 92vw"
+                  className="object-cover object-center"
+                />
+                {panel.badge === "good" && (
+                  <div className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-[#c9953d]">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                      <path d="M7 0L8.5 5.5L14 7L8.5 8.5L7 14L5.5 8.5L0 7L5.5 5.5Z" fill="black" />
+                    </svg>
+                  </div>
+                )}
+              </div>
+
+              {/* Label row */}
+              <div className="flex items-center gap-3 px-4 pt-4">
+                {panel.badge === "bad" ? (
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/8">
+                    {panel.label === "Original Archive" ? (
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#9ca3af" strokeWidth="1.5" aria-hidden="true">
+                        <rect x="1" y="1" width="12" height="12" rx="1" />
+                        <path d="M1 10l3-3 2 2 3-4 4 5" />
+                      </svg>
+                    ) : (
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#9ca3af" strokeWidth="1.5" aria-hidden="true">
+                        <path d="M1 1l10 10M11 1L1 11" />
+                      </svg>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#c9953d]/40 bg-[#c9953d]/10">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                      <path d="M7 0L8.5 5.5L14 7L8.5 8.5L7 14L5.5 8.5L0 7L5.5 5.5Z" fill="#c9953d" />
+                    </svg>
+                  </div>
+                )}
+                <div>
+                  <p className={`text-xs font-semibold uppercase tracking-[0.18em] ${panel.badge === "good" ? "text-[#d7a957]" : "text-[#9ca3af]"}`}>
+                    {panel.label}
+                  </p>
+                  <p className="text-[11px] text-[#8f8678]">{panel.sublabel}</p>
+                </div>
+              </div>
+
+              {/* Tag pills */}
+              <div className="flex flex-wrap gap-2 px-4 pb-4 pt-3">
+                {panel.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium ${
+                      panel.badge === "good"
+                        ? "border border-[#c9953d]/25 bg-[#c9953d]/10 text-[#d7a957]"
+                        : "border border-white/8 bg-white/5 text-[#9ca3af]"
+                    }`}
+                  >
+                    {panel.badge === "good" && (
+                      <svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                        <path d="M1 4l2 2 4-3" />
+                      </svg>
+                    )}
+                    {tag}
+                  </span>
+                ))}
               </div>
             </article>
           ))}
@@ -345,9 +446,9 @@ function StepsSection() {
       <div className="mx-auto max-w-7xl">
         <div className="text-center">
           <h2 className="text-3xl font-light tracking-[0.01em] text-[#f1e5d3] md:text-5xl">Simple. Fast. Effective.</h2>
-          <p className="mx-auto mt-6 max-w-2xl text-sm leading-7 text-[#d4c7b6]">
-            How it works
-            <span className="block">Three easy steps to restore and enhance your images.</span>
+          <OrnamentalDivider />
+          <p className="mx-auto max-w-2xl text-sm leading-7 text-[#d4c7b6]">
+            Three easy steps to restore and enhance your images.
           </p>
         </div>
 
@@ -377,8 +478,14 @@ function OneClickSection() {
     <section id="presets" className="bg-black px-6 py-24 lg:px-16">
       <div className="mx-auto max-w-7xl">
         <div className="text-center">
-          <h2 className="text-3xl font-light tracking-[0.01em] text-[#f1e5d3] md:text-5xl">One click. The right enhancement.</h2>
-          <p className="mx-auto mt-6 max-w-3xl text-sm leading-7 text-[#d4c7b6]">
+          <p className="text-xs uppercase tracking-[0.35em] text-[#c9953d]">Presets for every image type</p>
+          <h2 className="mt-4 text-3xl font-light tracking-[0.01em] text-[#f1e5d3] md:text-5xl">
+            One click. <span className="text-[#d7a957]">The right</span>
+            <br />
+            <span className="text-[#d7a957]">enhancement.</span>
+          </h2>
+          <OrnamentalDivider />
+          <p className="mx-auto text-sm leading-7 text-[#d4c7b6]">
             Different images need different care. Our presets are tuned for specific image types and results.
           </p>
         </div>
@@ -429,20 +536,21 @@ function QualitySection() {
     <section className="relative overflow-hidden bg-black px-6 py-24 lg:px-16">
       <div className="pointer-events-none absolute inset-0">
         <Image
-          src="/images/landing/quality-reference.jpg"
+          src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/L6bd-JxDIAJijkvPYiMPGHV2fd8IFLNim8p.png"
           alt=""
           fill
           sizes="100vw"
           aria-hidden="true"
-          className="object-cover object-center opacity-45 blur-[1px]"
+          className="object-cover object-center opacity-50"
         />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_8%_30%,rgba(201,149,61,0.16),transparent_22%),radial-gradient(circle_at_92%_36%,rgba(201,149,61,0.14),transparent_22%),linear-gradient(180deg,rgba(0,0,0,0.35)_0%,rgba(0,0,0,0.68)_58%,rgba(0,0,0,0.9)_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.55)_0%,rgba(0,0,0,0.72)_50%,rgba(0,0,0,0.92)_100%)]" />
       </div>
       <div className="relative mx-auto max-w-7xl">
         <div className="text-center">
-          <h2 className="text-3xl font-light tracking-[0.01em] text-[#f1e5d3] md:text-5xl">Better quality. Same identity.</h2>
-          <p className="mx-auto mt-6 max-w-3xl text-sm leading-7 text-[#d4c7b6]">How it works</p>
-          <p className="mx-auto text-sm leading-7 text-[#d4c7b6]">Three easy steps to restore and enhance your images.</p>
+          <h2 className="text-3xl font-light tracking-[0.01em] text-[#f1e5d3] md:text-5xl">
+            Better quality. <span className="text-[#d7a957]">Same identity.</span>
+          </h2>
+          <OrnamentalDivider />
         </div>
 
         <div className="relative mt-12 overflow-hidden rounded-[2rem] border border-white/8 bg-white/[0.03] p-6 shadow-[0_30px_100px_rgba(0,0,0,0.35)] backdrop-blur-sm">

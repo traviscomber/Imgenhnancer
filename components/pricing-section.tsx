@@ -12,12 +12,15 @@ export function PricingSection() {
       <div className="mx-auto max-w-7xl">
         <div className="grid gap-12 lg:grid-cols-[0.86fr_1.14fr] lg:items-start">
           <div className="max-w-xl">
-            <p className="text-xs uppercase tracking-[0.35em] text-[#c9953d]">Simple credits.</p>
-            <h2 className="mt-6 max-w-xl text-4xl font-light leading-tight text-[#f1e5d3] md:text-5xl">Serious restoration.</h2>
-            <p className="mt-6 max-w-xl text-sm leading-7 text-[#c9a882]">
-              Choose the enhancement level that fits the image and see the exact cost before processing.
+            <h2 className="max-w-xl text-4xl font-light leading-tight text-[#f1e5d3] md:text-5xl">
+              Simple credits.
+              <br />
+              <span className="text-[#d7a957]">Serious restoration.</span>
+            </h2>
+            <p className="mt-6 max-w-xs text-sm font-semibold leading-snug text-[#f1e5d3]">
+              Register now to get free credits!
             </p>
-            <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+            <div className="mt-8 flex flex-col gap-4 sm:flex-row">
               <Button asChild className="h-12 rounded-none bg-[#c9953d] px-8 text-[12px] font-semibold uppercase tracking-[0.12em] text-black hover:bg-[#d7a957]">
                 <Link href="/sign-in">Try Free</Link>
               </Button>
@@ -102,16 +105,36 @@ function PlanCard({
   badge?: string
 }) {
   return (
-    <article className="relative rounded-2xl bg-white/[0.03] p-7">
-      {badge ? <div className="absolute right-6 top-6 rounded-full bg-[#c9953d] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-black">{badge}</div> : null}
-      <p className="text-xs uppercase tracking-[0.2em] text-[#c9953d]">Plan</p>
-      <h3 className="mt-4 text-2xl font-light text-[#f1e5d3]">{title}</h3>
-      <p className="mt-3 text-3xl font-light text-[#f2d18a]">{price}</p>
-      <p className="mt-4 text-sm leading-7 text-[#c9b89a]">{description}</p>
-      <ul className="mt-6 space-y-3 text-sm text-[#ddd2c2]">
+    <article className={`relative rounded-2xl p-5 ${badge ? "border border-[#c9953d]/50 bg-[#1a160f]" : "bg-white/[0.03]"}`}>
+      {badge ? (
+        <div className="mb-3 inline-block rounded-sm bg-[#c9953d] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-black">
+          {badge}
+        </div>
+      ) : null}
+      <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5">
+        {title === "Starter" && (
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#c9953d" strokeWidth="1.5" aria-hidden="true">
+            <circle cx="7" cy="4" r="2.5" /><path d="M2 13c0-2.76 2.24-5 5-5s5 2.24 5 5" />
+          </svg>
+        )}
+        {title === "Creator" && (
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#c9953d" strokeWidth="1.5" aria-hidden="true">
+            <path d="M7 1l1.8 3.6L13 5.5l-3 2.9.7 4.1L7 10.4l-3.7 2.1.7-4.1L1 5.5l4.2-.9z" />
+          </svg>
+        )}
+        {title === "Studio" && (
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#c9953d" strokeWidth="1.5" aria-hidden="true">
+            <rect x="1" y="1" width="12" height="12" rx="1.5" /><path d="M4 4h6M4 7h6M4 10h4" />
+          </svg>
+        )}
+      </div>
+      <h3 className="mt-3 text-lg font-light text-[#f1e5d3]">{title}</h3>
+      <p className="mt-2 text-2xl font-light text-[#f2d18a]">{price}</p>
+      <div className="my-3 h-px bg-white/8" />
+      <ul className="space-y-2 text-[11px] text-[#d4c7b6]">
         {benefits.map((item) => (
-          <li key={item} className="flex items-center gap-2">
-            <Check className="h-4 w-4 text-[#c9953d]" strokeWidth={3} />
+          <li key={item} className="flex items-center gap-1.5">
+            <Check className="h-3.5 w-3.5 text-[#c9953d]" strokeWidth={3} />
             {item}
           </li>
         ))}
