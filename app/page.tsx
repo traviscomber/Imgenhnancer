@@ -597,28 +597,29 @@ function UseCasesSection() {
           {useCaseCards.map((card) => (
             <article
               key={card.title}
-              className="relative overflow-hidden rounded-[1.8rem] border border-white/8 bg-[#0b0a08]/90 shadow-[0_24px_70px_rgba(0,0,0,0.72)]"
-              style={{ minHeight: 330 }}
+              className="group relative h-80 overflow-hidden rounded-2xl shadow-[0_24px_70px_rgba(0,0,0,0.72)]"
             >
-              <div style={{ display: "grid", gridTemplateColumns: "1.35fr 0.65fr", minHeight: 330 }}>
-                <div className="relative overflow-hidden" style={{ height: 330 }}>
-                  <Image
-                    src={card.image}
-                    alt={card.alt}
-                    fill
-                    sizes="(min-width: 1280px) 22vw, (min-width: 768px) 44vw, 100vw"
-                    className="object-cover object-center"
-                  />
-                  <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.08)_0%,rgba(0,0,0,0.12)_62%,rgba(0,0,0,0.3)_100%)]" />
-                </div>
-                <div
-                  className="relative flex items-center bg-[linear-gradient(90deg,rgba(0,0,0,0.62)_0%,rgba(0,0,0,0.82)_34%,rgba(0,0,0,0.96)_100%)] px-6 py-8 sm:px-7"
-                  style={{ minHeight: 330 }}
-                >
-                  <div>
-                    <h3 className="max-w-44 text-xl font-semibold leading-tight text-[#f5ece0]">{card.title}</h3>
-                    <p className="mt-6 max-w-44 text-sm leading-7 text-[#f2e7d9]">{card.copy}</p>
-                  </div>
+              {/* Background Image */}
+              <Image
+                src={card.image}
+                alt={card.alt}
+                fill
+                sizes="(min-width: 1280px) 22vw, (min-width: 768px) 44vw, 100vw"
+                className="object-cover object-center transition-transform duration-300 group-hover:scale-105"
+              />
+
+              {/* Left-side Black Gradient Overlay */}
+              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.8)_0%,rgba(0,0,0,0.65)_35%,rgba(0,0,0,0.15)_70%,rgba(0,0,0,0)_100%)]" />
+
+              {/* Text Content - Overlaid on Image */}
+              <div className="absolute inset-0 flex items-end p-6 sm:p-7">
+                <div className="relative z-10">
+                  <h3 className="max-w-sm text-xl font-semibold leading-tight text-[#f5ece0]">
+                    {card.title}
+                  </h3>
+                  <p className="mt-4 max-w-sm text-sm leading-7 text-[#f2e7d9]">
+                    {card.copy}
+                  </p>
                 </div>
               </div>
             </article>
