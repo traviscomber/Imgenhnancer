@@ -323,7 +323,7 @@ function ContextSection() {
     {
       label: "Original Archive",
       sublabel: "Low-quality source",
-      image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/L3left-FhfogQBMDGlB1XvlFicyTjQ4YrXJrv.png",
+      image: "/images/landing/L3-original.png",
       alt: "Original low-quality archive photograph of two Balinese dancers",
       badge: "bad" as const,
       tags: ["Faded & noisy", "Low detail", "Hard to read"],
@@ -331,7 +331,7 @@ function ContextSection() {
     {
       label: "Generic Upscaler",
       sublabel: "Changes what matters",
-      image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/L3center-Kb1uWscaSkyu1xHCgfkiL8A1attoQQ.png",
+      image: "/images/landing/L3-generic.png",
       alt: "Generic AI upscaler result — altered faces and cultural details",
       badge: "bad" as const,
       tags: ["Altered faces", "Changed details", "Lost authenticity"],
@@ -339,7 +339,7 @@ function ContextSection() {
     {
       label: "Clar1ty Enhanced",
       sublabel: "Identity-preserved result",
-      image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/L3right-8bxznNVscXHTCTtV8CU0wkZn5zcii8.png",
+      image: "/images/landing/L3-clarity.png",
       alt: "Clar1ty enhanced result — sharp detail with cultural identity preserved",
       badge: "good" as const,
       tags: ["True to originals", "Cultural details kept", "Clear & authentic"],
@@ -536,7 +536,7 @@ function QualitySection() {
     <section className="relative overflow-hidden bg-black px-6 py-24 lg:px-16">
       <div className="pointer-events-none absolute inset-0">
         <Image
-          src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/L6bd-JxDIAJijkvPYiMPGHV2fd8IFLNim8p.png"
+          src="/images/landing/L6-background.png"
           alt=""
           fill
           sizes="100vw"
