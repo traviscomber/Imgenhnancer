@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
+import { login } from "@/lib/auth"
 
 export default function SignInPage() {
   const router = useRouter()
@@ -17,32 +18,19 @@ export default function SignInPage() {
     setError("")
     setLoading(true)
 
-    try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: email.trim(),
-          password: password.trim(),
-        }),
-      })
+    // Sign in on the client so the browser Supabase client owns the session.
+    // This keeps it in sync with useAuth() and persists inside the v0 iframe.
+    const { user, error: loginError } = await login(email.trim(), password.trim())
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        setError(data.error || "Login failed")
-        setLoading(false)
-        return
-      }
-
-      console.log("[v0] Login successful, redirecting...")
-      router.push("/enhance")
-      router.refresh()
-    } catch (err) {
-      console.error("[v0] Login error:", err)
-      setError("An error occurred during login")
+    if (loginError || !user) {
+      setError(loginError || "Login failed")
       setLoading(false)
+      return
     }
+
+    console.log("[v0] Login successful, redirecting...")
+    router.push("/enhance")
+    router.refresh()
   }
 
   return (
