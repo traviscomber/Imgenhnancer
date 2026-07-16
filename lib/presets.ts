@@ -76,31 +76,56 @@ export const PUBLIC_PRESET_DETAILS: Record<
   {
     title: string
     description: string
+    bestFor: string[]
     category: PresetCategory
     recommendedPresetId: string
   }
 > = {
   archive_scan: {
     title: "Clean Enhance",
-    description: "Improve clarity, contrast and overall image quality for modern files and brand assets.",
+    description: "Improve clarity, sharpness and overall quality without altering the original image.",
+    bestFor: [
+      "Digital photos and modern files",
+      "Product visuals and brand assets",
+      "Social content and marketing images",
+      "General image cleanup",
+    ],
     category: "faces",
     recommendedPresetId: "quality-boost",
   },
   asean_portrait_preserve: {
     title: "Old Photo Restore",
     description: "Restore faded, scratched or damaged photographs with careful, natural cleanup.",
+    bestFor: [
+      "Family archives and vintage portraits",
+      "Scanned prints and memory preservation",
+      "Black and white restorations",
+      "Aged or water-damaged photos",
+    ],
     category: "faces",
     recommendedPresetId: "vintage-restoration",
   },
   heritage_restore: {
     title: "Face Detail",
-    description: "Enhance facial features while keeping a natural appearance for portraits and wedding photos.",
+    description: "Enhance facial features while keeping a natural appearance and full identity preservation.",
+    bestFor: [
+      "Portraits and wedding photos",
+      "Fashion and beauty images",
+      "Family images and Asian faces",
+      "Professional headshots",
+    ],
     category: "faces",
     recommendedPresetId: "detail-enhancement-face",
   },
   digital_art_upscale: {
     title: "Cultural Detail",
     description: "Preserve architecture, clothing, ornaments and cultural textures during enhancement.",
+    bestFor: [
+      "Heritage buildings and temples",
+      "Jewelry, artifacts and traditional costumes",
+      "Historical and archival visuals",
+      "Cultural and documentary photography",
+    ],
     category: "abstract",
     recommendedPresetId: "cultural-detail-asean",
   },
