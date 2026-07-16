@@ -895,12 +895,21 @@ export default function EnhancePage() {
       const upscaleFactor = settings.upscaleFactor ?? 2
       formData.append("scale_factor", upscaleFactor.toString())
       formData.append("model", settings.model || "philz1337x/clarity-upscaler")
-      // Note: "dynamic" is NOT sent — the API derives dynamicSteps from creativity internally
 
-      const creativity = settings.creativity ?? 0.35
-      const resemblance = settings.resemblance ?? 0.6
+      const creativity = settings.creativity ?? -4
+      const resemblance = settings.resemblance ?? 9
       formData.append("creativity", creativity.toString())
       formData.append("resemblance", resemblance.toString())
+
+      // Dynamic and fractality — locked to spec values per preset
+      const dynamic = settings.dynamic ?? 1
+      const fractality = settings.fractality ?? 5
+      formData.append("dynamic", dynamic.toString())
+      formData.append("fractality", fractality.toString())
+
+      // Style — "portrait" for Face Detail, "default" for all others
+      const style = settings.style ?? "default"
+      formData.append("style", style)
 
       const hdr = settings.hdr ?? 0.0
       const tilingWidth = settings.tilingWidth ?? 112

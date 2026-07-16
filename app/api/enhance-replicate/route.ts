@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { checkFreeUpscaleAvailability, useFreeUpscale } from "@/lib/free-upscale"
+import { GLOBAL_RESTORATION_PROMPT } from "@/lib/presets"
 
 export async function POST(req: NextRequest) {
   try {
@@ -33,12 +34,20 @@ export async function POST(req: NextRequest) {
 
     // Get settings from form data
     const scaleFactor = Number.parseInt(formData.get("scale_factor") as string) || 2
-    const creativity = Number.parseFloat(formData.get("creativity") as string) || 0.35
-    const resemblance = Number.parseFloat(formData.get("resemblance") as string) || 0.75
+    // creativity: spec uses -4 (strongly negative = max fidelity). Range: -10 to 10.
+    const creativityRaw = formData.get("creativity")
+    const creativity = creativityRaw !== null && creativityRaw !== "" ? Number.parseFloat(creativityRaw as string) : -4
+    // resemblance: spec uses 9 (strongly locked to original). Range: 0 to 10.
+    const resemblanceRaw = formData.get("resemblance")
+    const resemblance = resemblanceRaw !== null && resemblanceRaw !== "" ? Number.parseFloat(resemblanceRaw as string) : 9
+    const dynamic = Number.parseInt(formData.get("dynamic") as string) || 1
+    const fractality = Number.parseInt(formData.get("fractality") as string) || 5
+    const style = (formData.get("style") as string) || "default"
     const hdr = Number.parseFloat(formData.get("hdr") as string) || 0
     const tilingWidth = Number.parseInt(formData.get("tiling_width") as string) || 112
     const tilingHeight = Number.parseInt(formData.get("tiling_height") as string) || 144
-    const prompt = formData.get("prompt") as string | null
+    // Layer 3: preset-specific prompt from client
+    const presetPrompt = formData.get("prompt") as string | null
 
     // Check if using free upscale
     let usedFreeUpscale = false
@@ -64,24 +73,36 @@ export async function POST(req: NextRequest) {
     }
 
     const validScaleFactor = Math.max(1, Math.min(4, scaleFactor))
-    const validCreativity = Math.max(0, Math.min(1, creativity))
-    const validResemblance = Math.max(0.3, Math.min(3, resemblance))
+    // creativity range: -10 to 10 (spec default: -4)
+    const validCreativity = Math.max(-10, Math.min(10, creativity))
+    // resemblance range: 0 to 10 (spec default: 9)
+    const validResemblance = Math.max(0, Math.min(10, resemblance))
+    const validDynamic = Math.max(1, Math.min(50, dynamic))
+    const validFractality = Math.max(1, Math.min(10, fractality))
     const validHdr = Math.max(0, Math.min(1, hdr))
     const validTilingWidth = Math.max(16, Math.min(256, Math.round(tilingWidth / 16) * 16))
     const validTilingHeight = Math.max(16, Math.min(256, Math.round(tilingHeight / 16) * 16))
 
-    // Creativity 0.35 → dynamic 2 (optimal for faces)
-    const dynamicSteps = Math.max(1, Math.min(50, Math.round(creativity * 6)))
+    // 4-layer prompt assembly:
+    // Layer 1: Clarity API params (above)
+    // Layer 2: Global Restoration Prompt (universal ASEAN restoration philosophy)
+    // Layer 3: Preset-specific prompt (what client sends as "prompt")
+    // Layer 4: User prompt (not yet implemented — reserved for future)
+    const finalPrompt = presetPrompt
+      ? `${GLOBAL_RESTORATION_PROMPT} ${presetPrompt}`
+      : GLOBAL_RESTORATION_PROMPT
 
     console.log("⚙️ Enhancement settings:", {
       scaleFactor: validScaleFactor,
       creativity: validCreativity,
       resemblance: validResemblance,
+      dynamic: validDynamic,
+      fractality: validFractality,
+      style,
       hdr: validHdr,
-      dynamicSteps,
       tilingWidth: validTilingWidth,
       tilingHeight: validTilingHeight,
-      prompt,
+      promptLength: finalPrompt.length,
       usedFreeUpscale,
       freeUpscaleType,
     })
@@ -108,23 +129,28 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         version: "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
-        input: {
-          image: dataUrl,
-          prompt: prompt || "masterpiece, best quality, highres",
-          negative_prompt: "(worst quality, low quality, normal quality:2) JuggernautNegative-neg",
-          scale_factor: validScaleFactor,
-          dynamic: dynamicSteps,
-          creativity: validCreativity,
-          resemblance: validResemblance,
-          tiling_width: validTilingWidth,
-          tiling_height: validTilingHeight,
-          sharpen: 0,
-          sd_model: "juggernaut_reborn.safetensors [338b85bc4f]",
-          scheduler: "DPM++ 3M SDE Karras",
-          num_inference_steps: 18,
-          downscaling: false,
-          output_format: "png",
-        },
+          input: {
+            image: dataUrl,
+            // Layer 2 + Layer 3 combined prompt (Global Restoration + Preset-specific)
+            prompt: finalPrompt,
+            negative_prompt: "(worst quality, low quality, normal quality:2) JuggernautNegative-neg",
+            scale_factor: validScaleFactor,
+            // Spec: Dynamic = 1 (minimal hallucination)
+            dynamic: validDynamic,
+            creativity: validCreativity,
+            resemblance: validResemblance,
+            fractality: validFractality,
+            // Style: "portrait" for Face Detail, "default" for all others
+            style,
+            tiling_width: validTilingWidth,
+            tiling_height: validTilingHeight,
+            sharpen: 0,
+            sd_model: "juggernaut_reborn.safetensors [338b85bc4f]",
+            scheduler: "DPM++ 3M SDE Karras",
+            num_inference_steps: 18,
+            downscaling: false,
+            output_format: "png",
+          },
       }),
     })
 
@@ -240,11 +266,12 @@ export async function POST(req: NextRequest) {
         scaleFactor: validScaleFactor,
         creativity: validCreativity,
         resemblance: validResemblance,
+        dynamic: validDynamic,
+        fractality: validFractality,
+        style,
         hdr: validHdr,
-        dynamicSteps,
         tilingWidth: validTilingWidth,
         tilingHeight: validTilingHeight,
-        prompt,
       },
     })
   } catch (error: any) {
