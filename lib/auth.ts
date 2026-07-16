@@ -115,18 +115,23 @@ export async function logout(): Promise<void> {
 export async function getUser(): Promise<User | null> {
   const supabase = createClient()
 
+  // getSession() reads from local storage — no network call, instant
   const {
-    data: { user },
-  } = await supabase.auth.getUser()
+    data: { session },
+  } = await supabase.auth.getSession()
 
-  if (!user) return null
+  if (!session?.user) return null
 
-  const { data: userData } = await supabase.from("users").select("role").eq("id", user.id).single()
+  const { data: userData } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", session.user.id)
+    .maybeSingle()
 
   return {
-    id: user.id,
-    email: user.email!,
-    role: userData?.role || "user",
+    id: session.user.id,
+    email: session.user.email!,
+    role: userData?.role || (session.user.email === "admin@clarity.art" ? "admin" : "user"),
   }
 }
 
@@ -135,70 +140,55 @@ export async function isAuthenticated(): Promise<boolean> {
   return user !== null
 }
 
+function userFromSession(session: { user: { id: string; email?: string } }): User {
+  return {
+    id: session.user.id,
+    email: session.user.email!,
+    role: session.user.email === "admin@clarity.art" ? "admin" : "user",
+  }
+}
+
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let isMounted = true
-    let timeoutId: ReturnType<typeof setTimeout>
+    const supabase = createClient()
 
-    // Get initial user with timeout
-    const getInitialUser = async () => {
-      try {
-        console.log("[v0] Fetching initial user...")
-        const user = await getUser()
-        if (isMounted) {
-          console.log("[v0] Initial user fetched:", user?.email)
-          setUser(user)
-          setLoading(false)
-        }
-      } catch (error) {
-        console.error("[v0] Error fetching initial user:", error)
-        if (isMounted) {
-          setLoading(false)
-        }
+    const applySession = (session: { user: { id: string; email?: string } } | null) => {
+      if (!isMounted) return
+      if (session?.user) {
+        setUser(userFromSession(session))
+        // Enrich role from DB in the background (non-blocking)
+        supabase
+          .from("users")
+          .select("role")
+          .eq("id", session.user.id)
+          .maybeSingle()
+          .then(({ data }) => {
+            if (isMounted && data?.role) {
+              setUser((prev) => (prev ? { ...prev, role: data.role } : prev))
+            }
+          })
+      } else {
+        setUser(null)
       }
+      setLoading(false)
     }
 
-    // Set timeout for initial user fetch
-    timeoutId = setTimeout(() => {
-      if (isMounted && loading) {
-        console.warn("[v0] Initial user fetch timed out after 5s, stopping loading...")
-        setLoading(false)
-      }
-    }, 5000)
+    // 1) Read the session from the cookie immediately — this is synchronous
+    //    storage access, so it resolves the logged-in state without waiting
+    //    for any network token refresh.
+    supabase.auth.getSession().then(({ data }) => applySession(data.session))
 
-    getInitialUser()
-
-    // Listen for auth changes
-    const supabase = createClient()
+    // 2) Keep listening for future changes (login, logout, token refresh).
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("[v0] Auth state changed:", event)
-      if (session?.user) {
-        try {
-          const user = await getUser()
-          if (isMounted) {
-            setUser(user)
-          }
-        } catch (error) {
-          console.error("[v0] Error getting user on auth change:", error)
-        }
-      } else {
-        if (isMounted) {
-          setUser(null)
-        }
-      }
-      if (isMounted) {
-        setLoading(false)
-      }
-    })
+    } = supabase.auth.onAuthStateChange((_event, session) => applySession(session))
 
     return () => {
       isMounted = false
-      clearTimeout(timeoutId)
       subscription.unsubscribe()
     }
   }, [])
