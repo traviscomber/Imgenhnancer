@@ -1,7 +1,16 @@
 export type PresetCategory = "faces" | "abstract" | "experimental" | "avatar"
 
-// Shared base prompt prepended to all enhancement presets
-export const ASEAN_BASE_PROMPT = `Preserve the original image, composition, proportions, perspective, lighting and emotional atmosphere. Restore only missing information while keeping the original identity. Intensify clarity, sharpness and high-frequency detail while transforming soft, noisy or unclear regions into deep crystalline structure with luminous gold texture. Enhance flat or plain surfaces using refined crystal facets, subtle sacred geometry, radiant mineral depth and elegant golden highlights. Increase micro-detail, depth, texture richness and dimensional realism without changing the original design. The final image should feel clean, majestic, ethereal and visually transcendent while remaining faithful to the original photograph. If image content is ambiguous because of damage or blur, infer missing details using Southeast Asian (ASEAN) cultural priors rather than Western visual assumptions.`
+// ── Base prompt for FACE presets ───────────────────────────────────────────
+// Conservative: identity lock, no beautify, no hallucination.
+// Do NOT include crystal/gold/sacred-geometry language — that distorts faces.
+export const ASEAN_BASE_PROMPT_FACE = `Preserve the original image, composition, proportions, perspective, lighting and emotional atmosphere exactly as captured. Restore only information that is provably missing because of physical damage, blur or noise. Increase micro-detail, skin texture, pore detail and high-frequency sharpness without modifying facial proportions, age, ethnicity, skin tone or expression. Do not beautify. Do not slim or reshape the face. Do not whiten or alter skin color. Do not alter eye shape or size. If facial information is ambiguous, reconstruct conservatively using Southeast Asian (ASEAN) anatomical and cultural priors unless a different ethnicity is clearly evident in the source. Priority order: Identity preservation > Damage restoration > Clarity enhancement.`
+
+// ── Base prompt for SCENE / cultural / landscape presets ──────────────────
+// Allows crystalline texture and depth enhancement for non-face content.
+export const ASEAN_BASE_PROMPT_SCENE = `Preserve the original image, composition, proportions, perspective, lighting and emotional atmosphere. Restore only missing information while keeping the original scene faithful. Intensify clarity, sharpness and high-frequency detail. Increase micro-detail, depth, texture richness and dimensional realism without changing the original design or introducing new objects. The final image should feel clean and visually rich while remaining faithful to the original photograph. If scene content is ambiguous because of damage or blur, infer missing details using Southeast Asian (ASEAN) cultural and visual priors rather than Western assumptions.`
+
+// Legacy alias kept for any external references — maps to SCENE variant
+export const ASEAN_BASE_PROMPT = ASEAN_BASE_PROMPT_SCENE
 
 export interface PresetSettings {
   model: string
@@ -135,7 +144,7 @@ export const FACE_PRESETS: Record<string, Preset> = {
       creativity: 0.15,
       resemblance: 0.95,
       hdr: 0,
-      prompt: `${ASEAN_BASE_PROMPT} Maximum fidelity. Minimal hallucination. Crystal-sharp enhancement. Preserve original identity and composition.`,
+      prompt: `${ASEAN_BASE_PROMPT_FACE} Maximum fidelity. Minimal hallucination. Preserve original identity and composition entirely.`,
     },
     features: ["No Face Changes", "Pure Quality", "Max Preservation", "Safe Enhancement"],
     icon: "⚡",
@@ -151,7 +160,7 @@ export const FACE_PRESETS: Record<string, Preset> = {
       creativity: 0.2,
       resemblance: 0.92,
       hdr: 0.1,
-      prompt: `${ASEAN_BASE_PROMPT} Preserve facial identity with extremely high accuracy. Improve skin texture, pores, eyelashes, eyebrows, lips and eyes without changing age, ethnicity, expression or facial proportions. Do not beautify. Do not stylize. Do not modify the face. If facial information is missing because of blur or image damage, reconstruct conservatively using Southeast Asian anatomical priors unless another ethnicity is clearly visible in the original. Priority: Identity preservation above Enhancement above Beauty.`,
+      prompt: `${ASEAN_BASE_PROMPT_FACE} Improve skin texture, pores, eyelashes, eyebrows, lips and eyes without changing age, ethnicity, expression or facial proportions. Do not beautify. Do not stylize. Do not modify the face structure in any way.`,
     },
     features: ["Identity Lock", "Skin Texture", "ASEAN-Aware", "No Beautify"],
     icon: "👁",
@@ -167,7 +176,7 @@ export const FACE_PRESETS: Record<string, Preset> = {
       creativity: 0.35,
       resemblance: 0.75,
       hdr: 0,
-      prompt: `${ASEAN_BASE_PROMPT} Professional photo, Indonesian wedding, traditional attire. Preserve kebaya fabric patterns, batik details, traditional jewelry, headdress ornaments and floral decorations with extreme fidelity. Enhance faces naturally without changing ethnic features, skin tone or expression.`,
+      prompt: `${ASEAN_BASE_PROMPT_FACE} Professional photo, Indonesian wedding, traditional attire. Preserve kebaya fabric patterns, batik details, traditional jewelry, headdress ornaments and floral decorations with extreme fidelity. Enhance faces naturally without changing ethnic features, skin tone or expression.`,
     },
     features: ["Kebaya Detail", "Batik Preservation", "Face Protection", "Rich Colors"],
     icon: "🤵👰",
@@ -183,7 +192,7 @@ export const FACE_PRESETS: Record<string, Preset> = {
       creativity: 0.35,
       resemblance: 0.8,
       hdr: 0,
-      prompt: `${ASEAN_BASE_PROMPT} Professional portrait, natural lighting, Southeast Asian features. Preserve natural skin tone, facial proportions and expression. Enhance micro-detail in hair, eyes and skin without whitening, slimming or otherwise modifying the face.`,
+      prompt: `${ASEAN_BASE_PROMPT_FACE} Professional portrait, natural lighting, Southeast Asian features. Enhance micro-detail in hair, eyes and skin without whitening, slimming or otherwise modifying the face.`,
     },
     features: ["Natural Skin", "Sharp Details", "Face Safe", "Studio Quality"],
     icon: "📸",
@@ -199,7 +208,7 @@ export const FACE_PRESETS: Record<string, Preset> = {
       creativity: 0.25,
       resemblance: 0.85,
       hdr: 0,
-      prompt: `${ASEAN_BASE_PROMPT} When reconstructing damaged people, prioritize authentic Southeast Asian historical appearance. Restore traditional ASEAN clothing, hairstyles, jewelry, fabrics and accessories whenever original information is missing. Preserve historical authenticity and avoid replacing people with generic modern Western faces. Restore aged photographic paper naturally while maintaining realistic film grain, scratches and photographic imperfections. Primary cultural references: Indonesia, Bali, Java, Malaysia, Thailand, Vietnam, Philippines. Do not modernize historical clothing or hairstyles unless explicitly visible in the source.`,
+      prompt: `${ASEAN_BASE_PROMPT_FACE} When reconstructing damaged people, prioritize authentic Southeast Asian historical appearance. Restore traditional ASEAN clothing, hairstyles, jewelry, fabrics and accessories only where original information is provably missing. Preserve historical authenticity and avoid replacing people with generic modern Western faces. Restore aged photographic paper naturally while maintaining realistic film grain, scratches and photographic imperfections. Primary cultural references: Indonesia, Bali, Java, Malaysia, Thailand, Vietnam, Philippines. Do not modernize historical clothing or hairstyles.`,
     },
     features: ["High Fidelity", "Damage Repair", "Feature Lock", "Authentic Look"],
     icon: "🕰️",
@@ -215,7 +224,7 @@ export const FACE_PRESETS: Record<string, Preset> = {
       creativity: 0.3,
       resemblance: 0.8,
       hdr: 0,
-      prompt: `${ASEAN_BASE_PROMPT} Group photograph, multiple people, event photography. Enhance all faces equally without modifying individual features. Preserve natural expressions, cultural attire and diverse Southeast Asian appearances.`,
+      prompt: `${ASEAN_BASE_PROMPT_FACE} Group photograph, multiple people, event photography. Enhance all faces equally without modifying individual features. Preserve natural expressions, cultural attire and diverse Southeast Asian appearances.`,
     },
     features: ["Multi-Face", "Balanced Detail", "Event Ready", "Natural Tones"],
     icon: "👨‍👩‍👧‍👦",
@@ -231,7 +240,7 @@ export const FACE_PRESETS: Record<string, Preset> = {
       creativity: 0.4,
       resemblance: 0.75,
       hdr: 0.1,
-      prompt: `${ASEAN_BASE_PROMPT} Professional headshot, business portrait, corporate photography, sharp focus. Preserve natural facial features and skin tone. Do not alter ethnicity, age or expression.`,
+      prompt: `${ASEAN_BASE_PROMPT_FACE} Professional headshot, business portrait, corporate photography, sharp focus. Preserve natural facial features and skin tone. Do not alter ethnicity, age or expression.`,
     },
     features: ["Corporate Ready", "Sharp Focus", "Professional Look", "Clean Background"],
     icon: "💼",
@@ -768,4 +777,71 @@ export function getPublicPresetIds(key: PublicPresetKey): Preset[] {
   return PUBLIC_PRESET_MAP[key]
     .map((id) => ALL_PRESETS[id])
     .filter((preset): preset is Preset => Boolean(preset))
+}
+
+// ── Per-factor parameter adjustments per public preset ───────────────────
+// These tables define how creativity / resemblance / hdr shift when the user
+// picks a different upscale factor (x2 / x3 / x4) for a given preset.
+// Rule of thumb:
+//   - Higher factor → slightly more creativity to fill in new pixels
+//   - Higher factor → slightly lower resemblance to avoid artefacts
+//   - Face presets stay very conservative even at x4 to protect identity
+const PRESET_MODE_OVERRIDES: Record<
+  PublicPresetKey,
+  Record<2 | 3 | 4, { creativity: number; resemblance: number; hdr: number; promptSuffix: string }>
+> = {
+  // Clean Enhance — minimal creativity at all scales, pure clarity focus
+  archive_scan: {
+    2: { creativity: 0.15, resemblance: 0.95, hdr: 0.0, promptSuffix: "2x upscale, balanced fidelity enhancement." },
+    3: { creativity: 0.20, resemblance: 0.90, hdr: 0.0, promptSuffix: "3x upscale, enhanced micro-detail recovery." },
+    4: { creativity: 0.25, resemblance: 0.88, hdr: 0.05, promptSuffix: "4x pro upscale, maximum resolution and clarity." },
+  },
+  // Old Photo Restore — moderate creativity needed to fill missing emulsion
+  asean_portrait_preserve: {
+    2: { creativity: 0.20, resemblance: 0.90, hdr: 0.0, promptSuffix: "2x restoration, gentle damage repair." },
+    3: { creativity: 0.28, resemblance: 0.85, hdr: 0.05, promptSuffix: "3x restoration, enhanced damage and grain recovery." },
+    4: { creativity: 0.33, resemblance: 0.80, hdr: 0.08, promptSuffix: "4x pro restoration, maximum historical detail recovery." },
+  },
+  // Face Detail — very conservative across all modes, identity above all
+  heritage_restore: {
+    2: { creativity: 0.18, resemblance: 0.93, hdr: 0.08, promptSuffix: "2x face enhancement, maximum identity preservation." },
+    3: { creativity: 0.22, resemblance: 0.90, hdr: 0.10, promptSuffix: "3x face detail, enhanced skin texture and micro-detail." },
+    4: { creativity: 0.26, resemblance: 0.87, hdr: 0.12, promptSuffix: "4x pro face detail, ultra-high resolution skin and feature fidelity." },
+  },
+  // Cultural Detail — strict no-hallucination, low creativity always
+  digital_art_upscale: {
+    2: { creativity: 0.12, resemblance: 0.93, hdr: 0.08, promptSuffix: "2x cultural enhancement, conservative scene fidelity." },
+    3: { creativity: 0.15, resemblance: 0.90, hdr: 0.10, promptSuffix: "3x cultural restore, enhanced architectural and textile detail." },
+    4: { creativity: 0.18, resemblance: 0.88, hdr: 0.12, promptSuffix: "4x pro cultural detail, maximum resolution with zero hallucination." },
+  },
+}
+
+/**
+ * Returns the full PresetSettings for a given public preset + upscale factor.
+ * Call this when the user clicks a mode button (x2 / x3 / x4) so that all
+ * parameters (creativity, resemblance, hdr, prompt) are mode-appropriate,
+ * not just the upscaleFactor.
+ */
+export function getSettingsForMode(
+  publicPresetKey: PublicPresetKey,
+  factor: 2 | 3 | 4,
+): PresetSettings {
+  const presetId = PUBLIC_PRESET_SETTINGS[publicPresetKey].presetId
+  const base = ALL_PRESETS[presetId]?.settings
+
+  if (!base) {
+    // Fallback — should never happen if preset IDs are in sync
+    return { model: "philz1337x/clarity-upscaler", upscaleFactor: factor, creativity: 0.2, resemblance: 0.9, hdr: 0 }
+  }
+
+  const overrides = PRESET_MODE_OVERRIDES[publicPresetKey][factor]
+
+  return {
+    ...base,
+    upscaleFactor: factor,
+    creativity: overrides.creativity,
+    resemblance: overrides.resemblance,
+    hdr: overrides.hdr,
+    prompt: base.prompt ? `${base.prompt} ${overrides.promptSuffix}` : overrides.promptSuffix,
+  }
 }

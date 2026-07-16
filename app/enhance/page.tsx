@@ -39,6 +39,7 @@ import {
   PUBLIC_PRESET_ORDER,
   PUBLIC_PRESET_SETTINGS,
   getPresetsByCategory,
+  getSettingsForMode,
   type PresetCategory,
   type PublicPresetKey,
 } from "@/lib/presets"
@@ -891,9 +892,10 @@ export default function EnhancePage() {
       const formData = new FormData()
       formData.append("image", compressedFile)
 
-      formData.append("scale_factor", (settings.upscaleFactor ?? 2).toString())
+      const upscaleFactor = settings.upscaleFactor ?? 2
+      formData.append("scale_factor", upscaleFactor.toString())
       formData.append("model", settings.model || "philz1337x/clarity-upscaler")
-      formData.append("dynamic", "6")
+      // Note: "dynamic" is NOT sent — the API derives dynamicSteps from creativity internally
 
       const creativity = settings.creativity ?? 0.35
       const resemblance = settings.resemblance ?? 0.6
@@ -974,10 +976,8 @@ export default function EnhancePage() {
       }
 
       try {
-        // Determine credit cost based on upscale factor: x2=6, x3=8, x4=10
-        let creditCost = 6
-        if (settings.upscaleFactor === 3) creditCost = 8
-        else if (settings.upscaleFactor === 4) creditCost = 10
+        // Derive credit cost from ENHANCEMENT_MODES to keep definitions in sync
+        const creditCost = ENHANCEMENT_MODES.find((m) => m.factor === settings.upscaleFactor)?.credits ?? 6
 
         const deductResponse = await fetch("/api/credits/deduct", {
           method: "POST",
@@ -1789,7 +1789,9 @@ export default function EnhancePage() {
                   onClick={() => {
                     setSelectedPublicPreset(presetKey)
                     setSelectedCategory(PUBLIC_PRESET_SETTINGS[presetKey].category)
-                    applyPreset(PUBLIC_PRESET_SETTINGS[presetKey].presetId)
+                    // Apply full mode-aware settings (factor from current selection or default x2)
+                    const currentFactor = ([2, 3, 4].includes(settings.upscaleFactor) ? settings.upscaleFactor : 2) as 2 | 3 | 4
+                    setSettings(getSettingsForMode(presetKey, currentFactor))
                   }}
                   className={`flex gap-0 border text-left transition-colors overflow-hidden ${
                     isActive
@@ -1833,7 +1835,13 @@ export default function EnhancePage() {
               return (
                 <button
                   key={mode.factor}
-                  onClick={() => setSettings((prev) => ({ ...prev, upscaleFactor: mode.factor }))}
+                  onClick={() => {
+                    if (selectedPublicPreset) {
+                      setSettings(getSettingsForMode(selectedPublicPreset, mode.factor as 2 | 3 | 4))
+                    } else {
+                      setSettings((prev) => ({ ...prev, upscaleFactor: mode.factor }))
+                    }
+                  }}
                   className={`relative p-6 border text-left transition-colors ${
                     isActive
                       ? "border-[#c8963e] bg-[#c8963e]/5"
