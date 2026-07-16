@@ -23,12 +23,10 @@ export const ASEAN_BASE_PROMPT = GLOBAL_RESTORATION_PROMPT
 export interface PresetSettings {
   model: string
   upscaleFactor: number
-  creativity: number
-  resemblance: number
+  creativity: number  // Replicate range: 0–1. Use 0 for max fidelity.
+  resemblance: number // Replicate range: 0–3. Use 3 for max fidelity.
   hdr: number
-  dynamic?: number
-  fractality?: number
-  style?: string
+  dynamic?: number    // Replicate range: 1–50. Use 1 for minimal hallucination.
   prompt?: string
 }
 
@@ -177,12 +175,10 @@ export const FACE_PRESETS: Record<string, Preset> = {
     settings: {
       model: "philz1337x/clarity-upscaler",
       upscaleFactor: 2,
-      creativity: -4,
-      resemblance: 9,
+      creativity: 0,
+      resemblance: 3,
       dynamic: 1,
-      fractality: 5,
       hdr: 0,
-      style: "default",
       prompt: PRESET_PROMPT_CLEAN_ENHANCE,
     },
     features: ["No Face Changes", "Pure Quality", "Max Preservation", "Safe Enhancement"],
@@ -196,12 +192,10 @@ export const FACE_PRESETS: Record<string, Preset> = {
     settings: {
       model: "philz1337x/clarity-upscaler",
       upscaleFactor: 2,
-      creativity: -4,
-      resemblance: 9,
+      creativity: 0,
+      resemblance: 3,
       dynamic: 1,
-      fractality: 5,
       hdr: 0,
-      style: "portrait",
       prompt: PRESET_PROMPT_FACE_DETAIL,
     },
     features: ["Identity Lock", "Skin Texture", "ASEAN-Aware", "No Beautify"],
@@ -247,12 +241,10 @@ export const FACE_PRESETS: Record<string, Preset> = {
     settings: {
       model: "philz1337x/clarity-upscaler",
       upscaleFactor: 2,
-      creativity: -4,
-      resemblance: 9,
+      creativity: 0,
+      resemblance: 3,
       dynamic: 1,
-      fractality: 5,
       hdr: 0,
-      style: "default",
       prompt: PRESET_PROMPT_OLD_PHOTO_RESTORE,
     },
     features: ["High Fidelity", "Damage Repair", "Feature Lock", "Authentic Look"],
@@ -302,12 +294,10 @@ export const ABSTRACT_PRESETS: Record<string, Preset> = {
     settings: {
       model: "philz1337x/clarity-upscaler",
       upscaleFactor: 2,
-      creativity: -4,
-      resemblance: 9,
+      creativity: 0,
+      resemblance: 3,
       dynamic: 1,
-      fractality: 5,
       hdr: 0,
-      style: "default",
       prompt: PRESET_PROMPT_CULTURAL_DETAIL,
     },
     features: ["Cultural Fidelity", "No Hallucination", "ASEAN-First", "Conservative Restore"],

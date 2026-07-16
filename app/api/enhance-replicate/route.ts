@@ -33,16 +33,16 @@ export async function POST(req: NextRequest) {
     })
 
     // Get settings from form data
+    // Replicate clarity-upscaler real ranges (confirmed from API schema):
+    //   creativity: 0–1    (0 = max fidelity, default 0.35)
+    //   resemblance: 0–3   (3 = max locked to original, default 0.6)
+    //   dynamic: 1–50      (1 = minimal hallucination, default 6)
     const scaleFactor = Number.parseInt(formData.get("scale_factor") as string) || 2
-    // creativity: spec uses -4 (strongly negative = max fidelity). Range: -10 to 10.
     const creativityRaw = formData.get("creativity")
-    const creativity = creativityRaw !== null && creativityRaw !== "" ? Number.parseFloat(creativityRaw as string) : -4
-    // resemblance: spec uses 9 (strongly locked to original). Range: 0 to 10.
+    const creativity = creativityRaw !== null && creativityRaw !== "" ? Number.parseFloat(creativityRaw as string) : 0
     const resemblanceRaw = formData.get("resemblance")
-    const resemblance = resemblanceRaw !== null && resemblanceRaw !== "" ? Number.parseFloat(resemblanceRaw as string) : 9
+    const resemblance = resemblanceRaw !== null && resemblanceRaw !== "" ? Number.parseFloat(resemblanceRaw as string) : 3
     const dynamic = Number.parseInt(formData.get("dynamic") as string) || 1
-    const fractality = Number.parseInt(formData.get("fractality") as string) || 5
-    const style = (formData.get("style") as string) || "default"
     const hdr = Number.parseFloat(formData.get("hdr") as string) || 0
     const tilingWidth = Number.parseInt(formData.get("tiling_width") as string) || 112
     const tilingHeight = Number.parseInt(formData.get("tiling_height") as string) || 144
@@ -73,12 +73,9 @@ export async function POST(req: NextRequest) {
     }
 
     const validScaleFactor = Math.max(1, Math.min(4, scaleFactor))
-    // creativity range: -10 to 10 (spec default: -4)
-    const validCreativity = Math.max(-10, Math.min(10, creativity))
-    // resemblance range: 0 to 10 (spec default: 9)
-    const validResemblance = Math.max(0, Math.min(10, resemblance))
+    const validCreativity = Math.max(0, Math.min(1, creativity))
+    const validResemblance = Math.max(0, Math.min(3, resemblance))
     const validDynamic = Math.max(1, Math.min(50, dynamic))
-    const validFractality = Math.max(1, Math.min(10, fractality))
     const validHdr = Math.max(0, Math.min(1, hdr))
     const validTilingWidth = Math.max(16, Math.min(256, Math.round(tilingWidth / 16) * 16))
     const validTilingHeight = Math.max(16, Math.min(256, Math.round(tilingHeight / 16) * 16))
@@ -97,8 +94,6 @@ export async function POST(req: NextRequest) {
       creativity: validCreativity,
       resemblance: validResemblance,
       dynamic: validDynamic,
-      fractality: validFractality,
-      style,
       hdr: validHdr,
       tilingWidth: validTilingWidth,
       tilingHeight: validTilingHeight,
@@ -135,13 +130,9 @@ export async function POST(req: NextRequest) {
             prompt: finalPrompt,
             negative_prompt: "(worst quality, low quality, normal quality:2) JuggernautNegative-neg",
             scale_factor: validScaleFactor,
-            // Spec: Dynamic = 1 (minimal hallucination)
             dynamic: validDynamic,
             creativity: validCreativity,
             resemblance: validResemblance,
-            fractality: validFractality,
-            // Style: "portrait" for Face Detail, "default" for all others
-            style,
             tiling_width: validTilingWidth,
             tiling_height: validTilingHeight,
             sharpen: 0,
@@ -267,8 +258,6 @@ export async function POST(req: NextRequest) {
         creativity: validCreativity,
         resemblance: validResemblance,
         dynamic: validDynamic,
-        fractality: validFractality,
-        style,
         hdr: validHdr,
         tilingWidth: validTilingWidth,
         tilingHeight: validTilingHeight,
