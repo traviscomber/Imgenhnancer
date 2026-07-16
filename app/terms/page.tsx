@@ -1,186 +1,99 @@
 "use client"
 
-import { useEffect } from "react"
+import Link from "next/link"
 
 export default function TermsPage() {
-  useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [])
   return (
-    <div className="min-h-screen bg-gray-900">
-      <div className="container mx-auto px-4 py-16 md:py-24 max-w-4xl">
-        <div className="space-y-8">
-          <div>
-            <h1 className="text-4xl font-bold text-white mb-2">Terms of Service</h1>
-            <p className="text-gray-400">Last updated: February 14, 2026</p>
-          </div>
+    <main className="min-h-screen bg-black px-6 pb-24 pt-16 text-[#efe8dc] lg:px-16 lg:pt-20">
+      <div className="mx-auto max-w-4xl">
+        <section className="mb-12">
+          <p className="text-xs uppercase tracking-[0.35em] text-[#c9953d]">Legal</p>
+          <h1 className="mt-4 text-4xl font-light text-[#f1e5d3] md:text-5xl">Terms of Service</h1>
+          <p className="mt-4 text-sm text-[#d4c7b6]">Last updated: July 2026</p>
+        </section>
 
-          <div className="prose prose-invert max-w-none space-y-6">
-            {/* Acceptance */}
-            <section className="space-y-3">
-              <h2 className="text-2xl font-bold text-white">1. Acceptance of Terms</h2>
-              <p className="text-gray-300">
-                By accessing and using clar1ty, you agree to be bound by these Terms of Service. If you do not agree, do not use the service. These terms are governed by Chilean law.
-              </p>
-            </section>
+        <section className="space-y-8">
+          <LegalSection
+            title="1. Agreement"
+            copy="By using clar1ty, you agree to these terms. If you don't agree, don't use the service. We may update terms anytime. Continued use means acceptance."
+          />
 
-            {/* Service Description */}
-            <section className="space-y-3">
-              <h2 className="text-2xl font-bold text-white">2. Service Description</h2>
-              <p className="text-gray-300">
-                clar1ty provides image enhancement and restoration services. The service processes uploaded images and returns enhanced versions. We make no guarantees about output quality, and results may vary based on input image quality and content.
-              </p>
-            </section>
+          <LegalSection
+            title="2. Eligibility"
+            copy="You must be 13+ to use clar1ty. You are responsible for account security and all activity. Don't share credentials. You are liable for unauthorized use."
+          />
 
-            {/* User Responsibilities */}
-            <section className="space-y-3">
-              <h2 className="text-2xl font-bold text-white">3. User Responsibilities</h2>
-              <div className="space-y-3 text-gray-300">
-                <p>You agree that you will:</p>
-                <ul className="space-y-2 list-disc list-inside">
-                  <li>Only upload images you own or have permission to use</li>
-                  <li>Not use the service for illegal, harmful, or unethical purposes</li>
-                  <li>Not attempt to reverse-engineer, hack, or abuse the service</li>
-                  <li>Not upload images containing hate speech, violence, or illegal content</li>
-                  <li>Not violate anyone's intellectual property or privacy rights</li>
-                  <li>Download your enhanced images within 7 days of enhancement</li>
-                </ul>
-              </div>
-            </section>
+          <LegalSection
+            title="3. Acceptable Use"
+            copy="Don't upload illegal, copyrighted (without permission), or harmful content. Don't hack, reverse-engineer, or abuse the service. Violations result in termination without refund."
+          />
 
-            {/* Intellectual Property */}
-            <section className="space-y-3">
-              <h2 className="text-2xl font-bold text-white">4. Intellectual Property</h2>
-              <div className="space-y-4 text-gray-300">
-                <p>
-                  <strong>Your Images:</strong> You retain all ownership and rights to images you upload. By using our service, you grant us a limited license to process your images for enhancement purposes only.
-                </p>
-                <p>
-                  <strong>Our Service:</strong> All clar1ty software, algorithms, interface design, and documentation remain our intellectual property.
-                </p>
-                <p>
-                  <strong>License Grant:</strong> We grant you a non-exclusive, non-transferable license to use the service for personal use. Commercial use requires a paid plan.
-                </p>
-              </div>
-            </section>
+          <LegalSection
+            title="4. Your Content"
+            copy="You retain ownership of your images. By uploading, you grant us license to process them only. We don't claim rights. We don't train AI on your images. You own enhanced versions."
+          />
 
-            {/* Data Responsibility */}
-            <section className="space-y-3">
-              <h2 className="text-2xl font-bold text-white">5. 7-Day Data Retention & Download Requirement</h2>
-              <div className="space-y-3 text-gray-300 bg-amber-500/10 border border-amber-500/30 p-4 rounded-lg">
-                <p className="font-semibold text-amber-400">CRITICAL: Images are automatically deleted after 7 days</p>
-                <ul className="space-y-2 list-disc list-inside">
-                  <li>Uploaded images are deleted after 7 days from upload</li>
-                  <li>Enhanced images are deleted after 7 days from enhancement</li>
-                  <li>You are responsible for downloading your enhanced images within this window</li>
-                  <li>We are NOT liable for lost images after the 7-day retention period</li>
-                  <li>Deleted images cannot be recovered</li>
-                </ul>
-              </div>
-            </section>
+          <LegalSection
+            title="5. Credits"
+            copy="Credits are non-refundable. Monthly credits reset on your billing date and don't roll over. PAYG credits expire after 12 months. Unused credits are lost."
+          />
 
-            {/* Limitation of Liability */}
-            <section className="space-y-3">
-              <h2 className="text-2xl font-bold text-white">6. Limitation of Liability</h2>
-              <div className="space-y-3 text-gray-300 bg-red-500/10 border border-red-500/30 p-4 rounded-lg">
-                <p className="font-semibold text-red-400">DISCLAIMER OF WARRANTIES</p>
-                <ul className="space-y-2 list-disc list-inside">
-                  <li>The service is provided "AS IS" without warranties of any kind</li>
-                  <li>We do not guarantee specific output quality or results</li>
-                  <li>We are not liable for lost, corrupted, or deleted images</li>
-                  <li>We are not liable for service interruptions or downtime</li>
-                  <li>We are not liable for damages resulting from your use of the service</li>
-                  <li>We are not liable for third-party actions or copyright claims related to your images</li>
-                </ul>
-              </div>
-            </section>
+          <LegalSection
+            title="6. File Deletion (IMPORTANT)"
+            copy="Enhanced images are deleted after 7 days. Download immediately. We cannot recover deleted files. We are not liable for lost data. Backup your files."
+          />
 
-            {/* Indemnification */}
-            <section className="space-y-3">
-              <h2 className="text-2xl font-bold text-white">7. Indemnification</h2>
-              <p className="text-gray-300">
-                You agree to indemnify and hold harmless clar1ty, n3uralia group, and their officers from any claims, damages, or costs arising from: (a) your use of the service, (b) violation of these terms, (c) infringement of third-party rights related to your uploaded images, or (d) illegal content you upload.
-              </p>
-            </section>
+          <LegalSection
+            title="7. Service As-Is"
+            copy="clar1ty is provided as-is. We make no guarantees about results. We are not liable for downtime, data loss, or damages from your use beyond the amount you paid in past 12 months."
+          />
 
-            {/* Acceptable Use Policy */}
-            <section className="space-y-3">
-              <h2 className="text-2xl font-bold text-white">8. Acceptable Use Policy</h2>
-              <p className="text-gray-300 mb-3">You may NOT use the service to:</p>
-              <ul className="space-y-2 list-disc list-inside text-gray-300">
-                <li>Generate deepfakes or manipulated content for deception</li>
-                <li>Create non-consensual intimate imagery</li>
-                <li>Violate anyone's privacy, likeness, or image rights</li>
-                <li>Facilitate illegal activities</li>
-                <li>Spam, phish, or distribute malware</li>
-                <li>Reverse-engineer or copy our algorithms</li>
-                <li>Interfere with service operation or security</li>
-              </ul>
-              <p className="text-gray-300 mt-4">
-                Violation of these terms will result in immediate account suspension and potential legal action.
-              </p>
-            </section>
+          <LegalSection
+            title="8. Indemnification"
+            copy="You agree to indemnify clar1ty against claims arising from your use, content, or violation of these terms."
+          />
 
-            {/* Content Moderation */}
-            <section className="space-y-3">
-              <h2 className="text-2xl font-bold text-white">9. Content Moderation & Removal</h2>
-              <p className="text-gray-300">
-                We reserve the right to refuse service, suspend accounts, or delete content that violates these terms, including but not limited to illegal content, hate speech, violence, or exploitative material.
-              </p>
-            </section>
+          <LegalSection
+            title="9. Termination"
+            copy="We may terminate your account for violations. Upon termination, all files are deleted. You lose access. Refunds follow our refund policy."
+          />
 
-            {/* Service Availability */}
-            <section className="space-y-3">
-              <h2 className="text-2xl font-bold text-white">10. Service Availability & Uptime</h2>
-              <p className="text-gray-300">
-                While we strive to maintain continuous service, we do not guarantee 100% uptime. We are not liable for service interruptions, scheduled maintenance, or force majeure events.
-              </p>
-            </section>
+          <LegalSection
+            title="10. Disputes"
+            copy="These terms are governed by Chilean law. Disputes are resolved through Chilean courts."
+          />
 
-            {/* Pricing & Payment */}
-            <section className="space-y-3">
-              <h2 className="text-2xl font-bold text-white">11. Pricing & Payment</h2>
-              <div className="space-y-3 text-gray-300">
-                <p>
-                  Pricing is displayed at time of purchase. By purchasing, you authorize payment via Stripe. Refunds are subject to our refund policy. Free credits expire after 30 days of inactivity.
-                </p>
-              </div>
-            </section>
+          <LegalSection
+            title="11. Contact"
+            copy="Questions? Email support@clar1ty.art."
+          />
+        </section>
 
-            {/* Dispute Resolution */}
-            <section className="space-y-3">
-              <h2 className="text-2xl font-bold text-white">12. Dispute Resolution</h2>
-              <p className="text-gray-300">
-                Any disputes arising from these terms shall be resolved according to Chilean law, and you consent to jurisdiction in Chilean courts.
-              </p>
-            </section>
-
-            {/* Termination */}
-            <section className="space-y-3">
-              <h2 className="text-2xl font-bold text-white">13. Termination</h2>
-              <p className="text-gray-300">
-                We may terminate or suspend your account at any time for violation of these terms or illegal activity. Upon termination, all data will be deleted per our retention policy.
-              </p>
-            </section>
-
-            {/* Contact */}
-            <section className="space-y-3">
-              <h2 className="text-2xl font-bold text-white">14. Contact & Support</h2>
-              <p className="text-gray-300">
-                For questions or disputes, contact: <a href="mailto:legal@clar1ty.art" className="text-amber-400 hover:text-amber-300">legal@clar1ty.art</a>
-              </p>
-            </section>
-
-            {/* Changes to Terms */}
-            <section className="space-y-3">
-              <h2 className="text-2xl font-bold text-white">15. Changes to Terms</h2>
-              <p className="text-gray-300">
-                We may update these terms periodically. Continued use of the service constitutes acceptance of updated terms.
-              </p>
-            </section>
-          </div>
-        </div>
+        <section className="mt-12 rounded-2xl border border-white/8 bg-white/[0.03] p-6 text-center">
+          <p className="text-sm text-[#d4c7b6]">
+            <Link href="/privacy" className="font-semibold text-[#d7a957] hover:text-[#f1e5d3]">
+              Privacy Policy
+            </Link>
+            {" / "}
+            <Link href="/refund-policy" className="font-semibold text-[#d7a957] hover:text-[#f1e5d3]">
+              Refund Policy
+            </Link>
+            {" / "}
+            <Link href="/support" className="font-semibold text-[#d7a957] hover:text-[#f1e5d3]">
+              Support
+            </Link>
+          </p>
+        </section>
       </div>
+    </main>
+  )
+}
+
+function LegalSection({ title, copy }: { title: string; copy: string }) {
+  return (
+    <div>
+      <h2 className="text-lg font-semibold text-[#f1e5d3]">{title}</h2>
+      <p className="mt-3 text-sm leading-7 text-[#d4c7b6]">{copy}</p>
     </div>
   )
 }
