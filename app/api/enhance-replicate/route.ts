@@ -73,7 +73,10 @@ export async function POST(req: NextRequest) {
     }
 
     const validScaleFactor = Math.max(1, Math.min(4, scaleFactor))
-    const validCreativity = Math.max(0, Math.min(1, creativity))
+    // IMPORTANT: creativity MUST be >= 0.1. A value of 0 crashes the DPM++ 3M SDE
+    // sampler with "local variable 'h' referenced before assignment". 0.1 is the
+    // lowest safe value and still gives maximum-fidelity, near-zero-hallucination results.
+    const validCreativity = Math.max(0.1, Math.min(1, creativity))
     const validResemblance = Math.max(0, Math.min(3, resemblance))
     const validDynamic = Math.max(1, Math.min(50, dynamic))
     const validHdr = Math.max(0, Math.min(1, hdr))
