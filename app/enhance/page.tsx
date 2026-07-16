@@ -39,6 +39,7 @@ import {
   PUBLIC_PRESET_ORDER,
   PUBLIC_PRESET_SETTINGS,
   getPresetsByCategory,
+  getSettingsForMode,
   type PresetCategory,
   type PublicPresetKey,
 } from "@/lib/presets"
@@ -891,14 +892,24 @@ export default function EnhancePage() {
       const formData = new FormData()
       formData.append("image", compressedFile)
 
-      formData.append("scale_factor", (settings.upscaleFactor ?? 2).toString())
+      const upscaleFactor = settings.upscaleFactor ?? 2
+      formData.append("scale_factor", upscaleFactor.toString())
       formData.append("model", settings.model || "philz1337x/clarity-upscaler")
-      formData.append("dynamic", "6")
 
-      const creativity = settings.creativity ?? 0.35
-      const resemblance = settings.resemblance ?? 0.6
+      const creativity = settings.creativity ?? -4
+      const resemblance = settings.resemblance ?? 9
       formData.append("creativity", creativity.toString())
       formData.append("resemblance", resemblance.toString())
+
+      // Dynamic and fractality — locked to spec values per preset
+      const dynamic = settings.dynamic ?? 1
+      const fractality = settings.fractality ?? 5
+      formData.append("dynamic", dynamic.toString())
+      formData.append("fractality", fractality.toString())
+
+      // Style — "portrait" for Face Detail, "default" for all others
+      const style = settings.style ?? "default"
+      formData.append("style", style)
 
       const hdr = settings.hdr ?? 0.0
       const tilingWidth = settings.tilingWidth ?? 112
@@ -974,10 +985,8 @@ export default function EnhancePage() {
       }
 
       try {
-        // Determine credit cost based on upscale factor: x2=6, x3=8, x4=10
-        let creditCost = 6
-        if (settings.upscaleFactor === 3) creditCost = 8
-        else if (settings.upscaleFactor === 4) creditCost = 10
+        // Derive credit cost from ENHANCEMENT_MODES to keep definitions in sync
+        const creditCost = ENHANCEMENT_MODES.find((m) => m.factor === settings.upscaleFactor)?.credits ?? 6
 
         const deductResponse = await fetch("/api/credits/deduct", {
           method: "POST",
@@ -1728,19 +1737,19 @@ export default function EnhancePage() {
       label: "x2 Enhance",
       factor: 2,
       credits: 6,
-      description: "Balanced enhancement for everyday use.",
+      description: "Balanced enhancement. Closest to the original. Best for clean, modern images.",
     },
     {
       label: "x3 Restore",
       factor: 3,
       credits: 8,
-      description: "Stronger restoration with improved detail recovery.",
+      description: "Stronger restoration with improved detail and damage recovery.",
     },
     {
       label: "x4 Pro Restore",
       factor: 4,
       credits: 10,
-      description: "Maximum detail & clarity for highly detailed or damaged images.",
+      description: "Maximum detail and clarity. Best for highly damaged or degraded images.",
     },
   ]
 
@@ -1769,19 +1778,11 @@ export default function EnhancePage() {
             {PUBLIC_PRESET_ORDER.map((presetKey) => {
               const preset = PUBLIC_PRESET_DETAILS[presetKey]
               const isActive = selectedPublicPreset === presetKey
-              // Map preset keys to available images
               const presetImages: Record<string, string> = {
                 archive_scan: "/images/landing/L5-clean-before.png",
                 asean_portrait_preserve: "/images/landing/L5-restore-before.png",
                 heritage_restore: "/images/landing/L5-face-before.png",
                 digital_art_upscale: "/images/landing/L5-cultural-before.png",
-              }
-              // Extra description lines for the reference layout
-              const presetSubtext: Record<string, string> = {
-                archive_scan: "Best for digital photos, product visuals, brand assets, social content and general image cleanup.",
-                asean_portrait_preserve: "Best for family archives, vintage portraits, scanned prints and memory preservation.",
-                heritage_restore: "Best for portraits, wedding photos, fashion, beauty, family images and Asian faces.",
-                digital_art_upscale: "Best for heritage buildings, jewelry, artifacts, traditional costumes and historical visuals.",
               }
               return (
                 <button
@@ -1789,7 +1790,8 @@ export default function EnhancePage() {
                   onClick={() => {
                     setSelectedPublicPreset(presetKey)
                     setSelectedCategory(PUBLIC_PRESET_SETTINGS[presetKey].category)
-                    applyPreset(PUBLIC_PRESET_SETTINGS[presetKey].presetId)
+                    const currentFactor = ([2, 3, 4].includes(settings.upscaleFactor) ? settings.upscaleFactor : 2) as 2 | 3 | 4
+                    setSettings(getSettingsForMode(presetKey, currentFactor))
                   }}
                   className={`flex gap-0 border text-left transition-colors overflow-hidden ${
                     isActive
@@ -1800,21 +1802,28 @@ export default function EnhancePage() {
                   {/* Image panel */}
                   <div className="relative w-32 shrink-0 bg-black overflow-hidden">
                     <img
-                      src={presetImages[presetKey] || "/images/L5-clean-before.png"}
+                      src={presetImages[presetKey] || "/images/landing/L5-clean-before.png"}
                       alt={preset.title}
                       className="absolute inset-0 w-full h-full object-cover"
                     />
                   </div>
                   {/* Text panel */}
-                  <div className="flex-1 p-5 space-y-2 relative">
+                  <div className="flex-1 p-5 relative">
                     {isActive && (
                       <div className="absolute top-4 right-4">
                         <CheckCircle2 className="w-5 h-5 text-[#c8963e]" />
                       </div>
                     )}
-                    <h3 className="text-base font-semibold text-foreground">{preset.title}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{preset.description}</p>
-                    <p className="text-sm text-muted-foreground/70 leading-relaxed">{presetSubtext[presetKey]}</p>
+                    <h3 className="text-base font-semibold text-foreground mb-1">{preset.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed mb-3">{preset.description}</p>
+                    <ul className="space-y-1">
+                      {preset.bestFor.map((item) => (
+                        <li key={item} className="flex items-start gap-1.5 text-xs text-muted-foreground/70">
+                          <span className="text-[#c8963e] shrink-0 mt-0.5">—</span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 </button>
               )
@@ -1833,7 +1842,13 @@ export default function EnhancePage() {
               return (
                 <button
                   key={mode.factor}
-                  onClick={() => setSettings((prev) => ({ ...prev, upscaleFactor: mode.factor }))}
+                  onClick={() => {
+                    if (selectedPublicPreset) {
+                      setSettings(getSettingsForMode(selectedPublicPreset, mode.factor as 2 | 3 | 4))
+                    } else {
+                      setSettings((prev) => ({ ...prev, upscaleFactor: mode.factor }))
+                    }
+                  }}
                   className={`relative p-6 border text-left transition-colors ${
                     isActive
                       ? "border-[#c8963e] bg-[#c8963e]/5"
@@ -1858,8 +1873,7 @@ export default function EnhancePage() {
           <div className="mt-4 flex items-start gap-3 border border-white/10 bg-white/[0.02] px-4 py-3">
             <Info className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Two x2 passes usually stay closer to the original appearance.
-              x4 applies stronger one-step enhancement and may introduce more AI-generated detail.
+              Two x2 passes usually stay closer to the original appearance and preserve a more natural look. A single x4 pass applies a stronger enhancement in one step and may introduce more AI-generated detail, while still remaining visually close to the original image.
             </p>
           </div>
         </section>
