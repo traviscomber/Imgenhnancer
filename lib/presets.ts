@@ -3,13 +3,13 @@ export type PresetCategory = "faces" | "abstract" | "experimental" | "avatar"
 // ── Layer 2: Global Restoration Prompt ────────────────────────────────────
 // Used by ALL presets. Defines the universal restoration philosophy.
 // Preset-specific prompts (Layer 3) are appended AFTER this.
-export const GLOBAL_RESTORATION_PROMPT = `Preserve the original image, composition, proportions, perspective, lighting, atmosphere and emotional feeling. Preserve identity, age, ethnicity, clothing, architecture and all existing objects. Restore only missing information. Never redesign the original scene. Intensify clarity, sharpness and high-frequency detail while transforming soft, noisy or unclear areas into deep crystalline structure with luminous gold texture. Enhance flat or plain surfaces with refined crystal facets, subtle sacred geometry, radiant mineral depth and elegant golden highlights. Increase micro-detail, texture richness and dimensional realism without changing the original design. The final image should feel clean, majestic, refined, visually transcendent and extremely detailed while remaining faithful to the original photograph. If information is missing because of severe blur or image degradation, reconstruct it conservatively using Southeast Asian (ASEAN) anatomical and cultural priors rather than Western assumptions. Never invent new people. Never replace ethnicity. Never westernize ambiguous faces. Never modernize historical photographs.`
+export const GLOBAL_RESTORATION_PROMPT = `Preserve the original image, composition, proportions, perspective, lighting, atmosphere and emotional feeling exactly as captured. Preserve identity, age, ethnicity, clothing, architecture and all existing objects without modification. Restore ONLY missing information caused by damage, blur or degradation. Never redesign the original scene. Never invent objects. Never add background elements. Never create decorative elements. Intensify clarity, sharpness and high-frequency detail. Increase micro-detail and texture richness without changing the original design or introducing artificial enhancements. The final image should feel clean, clear and faithful to the original photograph. If information is provably missing because of severe blur or image degradation, reconstruct it conservatively using Southeast Asian (ASEAN) anatomical and cultural priors rather than Western assumptions. Never invent new people. Never replace ethnicity. Never westernize ambiguous faces. Never modernize historical photographs.`
 
 // ── Layer 3: Preset-specific prompts ──────────────────────────────────────
 // These describe ONLY the preset's specialization. Global prompt is prepended by the API.
 export const PRESET_PROMPT_CLEAN_ENHANCE = `Remove blur. Reduce compression artifacts. Improve sharpness. Increase fine texture detail. Preserve every object exactly as it appears. Do not reconstruct objects unless absolutely necessary. Do not change colors or composition.`
 
-export const PRESET_PROMPT_OLD_PHOTO_RESTORE = `Repair scratches. Repair cracks. Repair faded areas. Restore damaged faces conservatively. Maintain authentic photographic aging. Preserve historical appearance. When information is missing, reconstruct traditional Southeast Asian clothing, hairstyles, jewelry and materials using historically accurate references. Never modernize people or clothing.`
+export const PRESET_PROMPT_OLD_PHOTO_RESTORE = `Repair scratches. Repair cracks. Repair faded areas. Restore damaged faces conservatively. Maintain authentic photographic aging. Preserve historical appearance. Never invent objects. Never add background elements that aren't in the original photo. Never create decorative elements. Only repair what is provably damaged or missing. When information is missing, reconstruct traditional Southeast Asian clothing, hairstyles, jewelry and materials using historically accurate references. Never modernize people or clothing. Absolute priority: Never hallucinate.`
 
 export const PRESET_PROMPT_FACE_DETAIL = `Preserve facial identity with maximum accuracy. Improve skin texture, pores, eyelashes, eyebrows, lips, eyes and hair detail. Never beautify. Never change facial proportions. Never modify age. Never alter ethnicity. Identity preservation is always more important than beauty enhancement.`
 
@@ -241,10 +241,10 @@ export const FACE_PRESETS: Record<string, Preset> = {
     settings: {
       model: "philz1337x/clarity-upscaler",
       upscaleFactor: 2,
-      creativity: 0.1,
-      resemblance: 3,
-      dynamic: 1,
-      hdr: 0,
+      creativity: 0.1, // Min safe value (0 crashes sampler). Ultra-conservative for no hallucination.
+      resemblance: 3, // Max fidelity, fully locked to original
+      dynamic: 1, // Minimal hallucination
+      hdr: 0, // No HDR enhancement — preserve authentic aging
       prompt: PRESET_PROMPT_OLD_PHOTO_RESTORE,
     },
     features: ["High Fidelity", "Damage Repair", "Feature Lock", "Authentic Look"],
