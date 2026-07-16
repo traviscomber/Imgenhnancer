@@ -1,5 +1,8 @@
 export type PresetCategory = "faces" | "abstract" | "experimental" | "avatar"
 
+// Shared base prompt prepended to all enhancement presets
+export const ASEAN_BASE_PROMPT = `Preserve the original image, composition, proportions, perspective, lighting and emotional atmosphere. Restore only missing information while keeping the original identity. Intensify clarity, sharpness and high-frequency detail while transforming soft, noisy or unclear regions into deep crystalline structure with luminous gold texture. Enhance flat or plain surfaces using refined crystal facets, subtle sacred geometry, radiant mineral depth and elegant golden highlights. Increase micro-detail, depth, texture richness and dimensional realism without changing the original design. The final image should feel clean, majestic, ethereal and visually transcendent while remaining faithful to the original photograph. If image content is ambiguous because of damage or blur, infer missing details using Southeast Asian (ASEAN) cultural priors rather than Western visual assumptions.`
+
 export interface PresetSettings {
   model: string
   upscaleFactor: number
@@ -24,31 +27,31 @@ export type PublicPresetKey = "archive_scan" | "asean_portrait_preserve" | "heri
 export const PUBLIC_PRESET_MAP: Record<PublicPresetKey, string[]> = {
   archive_scan: [
     "quality-boost",
-    "vintage-restoration",
     "detail-enhancement",
     "group-photo",
     "architecture-detail",
+    "product-photography",
   ],
   asean_portrait_preserve: [
+    "vintage-restoration",
     "indonesian-wedding",
     "modern-portrait",
     "professional-headshot",
-    "hyper-realistic",
-    "business-professional",
+    "group-photo",
   ],
   heritage_restore: [
-    "landscape-hdr",
-    "landscape-scenery",
-    "architecture-sharp",
-    "cinematic-grade",
-    "architecture-detail",
+    "detail-enhancement-face",
+    "indonesian-wedding",
+    "modern-portrait",
+    "professional-headshot",
+    "vintage-restoration",
   ],
   digital_art_upscale: [
-    "artistic-enhancement",
-    "abstract-art",
-    "ai-imagination",
-    "ultra-sharp",
-    "neon-pop",
+    "cultural-detail-asean",
+    "landscape-hdr",
+    "architecture-sharp",
+    "architecture-detail",
+    "landscape-scenery",
   ],
 }
 
@@ -78,19 +81,19 @@ export const PUBLIC_PRESET_DETAILS: Record<
     title: "Old Photo Restore",
     description: "Restore faded, scratched or damaged photographs with careful, natural cleanup.",
     category: "faces",
-    recommendedPresetId: "indonesian-wedding",
+    recommendedPresetId: "vintage-restoration",
   },
   heritage_restore: {
     title: "Face Detail",
     description: "Enhance facial features while keeping a natural appearance for portraits and wedding photos.",
-    category: "abstract",
-    recommendedPresetId: "landscape-hdr",
+    category: "faces",
+    recommendedPresetId: "detail-enhancement-face",
   },
   digital_art_upscale: {
     title: "Cultural Detail",
     description: "Preserve architecture, clothing, ornaments and cultural textures during enhancement.",
-    category: "experimental",
-    recommendedPresetId: "artistic-enhancement",
+    category: "abstract",
+    recommendedPresetId: "cultural-detail-asean",
   },
 }
 
@@ -107,15 +110,15 @@ export const PUBLIC_PRESET_SETTINGS: Record<
   },
   asean_portrait_preserve: {
     category: "faces",
-    presetId: "indonesian-wedding",
+    presetId: "vintage-restoration",
   },
   heritage_restore: {
-    category: "abstract",
-    presetId: "landscape-hdr",
+    category: "faces",
+    presetId: "detail-enhancement-face",
   },
   digital_art_upscale: {
-    category: "experimental",
-    presetId: "artistic-enhancement",
+    category: "abstract",
+    presetId: "cultural-detail-asean",
   },
 }
 
@@ -132,10 +135,26 @@ export const FACE_PRESETS: Record<string, Preset> = {
       creativity: 0.15,
       resemblance: 0.95,
       hdr: 0,
-      prompt: "high quality photo, sharp details, natural enhancement, preserve original features",
+      prompt: `${ASEAN_BASE_PROMPT} Maximum fidelity. Minimal hallucination. Crystal-sharp enhancement. Preserve original identity and composition.`,
     },
     features: ["No Face Changes", "Pure Quality", "Max Preservation", "Safe Enhancement"],
     icon: "⚡",
+  },
+  "detail-enhancement-face": {
+    id: "detail-enhancement-face",
+    name: "Face Detail",
+    category: "faces",
+    description: "Enhance facial features with maximum fidelity and ASEAN-aware identity preservation",
+    settings: {
+      model: "philz1337x/clarity-upscaler",
+      upscaleFactor: 2,
+      creativity: 0.2,
+      resemblance: 0.92,
+      hdr: 0.1,
+      prompt: `${ASEAN_BASE_PROMPT} Preserve facial identity with extremely high accuracy. Improve skin texture, pores, eyelashes, eyebrows, lips and eyes without changing age, ethnicity, expression or facial proportions. Do not beautify. Do not stylize. Do not modify the face. If facial information is missing because of blur or image damage, reconstruct conservatively using Southeast Asian anatomical priors unless another ethnicity is clearly visible in the original. Priority: Identity preservation above Enhancement above Beauty.`,
+    },
+    features: ["Identity Lock", "Skin Texture", "ASEAN-Aware", "No Beautify"],
+    icon: "👁",
   },
   "indonesian-wedding": {
     id: "indonesian-wedding",
@@ -148,7 +167,7 @@ export const FACE_PRESETS: Record<string, Preset> = {
       creativity: 0.35,
       resemblance: 0.75,
       hdr: 0,
-      prompt: "professional photo, Indonesian wedding, traditional attire, cultural preservation",
+      prompt: `${ASEAN_BASE_PROMPT} Professional photo, Indonesian wedding, traditional attire. Preserve kebaya fabric patterns, batik details, traditional jewelry, headdress ornaments and floral decorations with extreme fidelity. Enhance faces naturally without changing ethnic features, skin tone or expression.`,
     },
     features: ["Kebaya Detail", "Batik Preservation", "Face Protection", "Rich Colors"],
     icon: "🤵👰",
@@ -164,7 +183,7 @@ export const FACE_PRESETS: Record<string, Preset> = {
       creativity: 0.35,
       resemblance: 0.8,
       hdr: 0,
-      prompt: "professional portrait photo, natural lighting, Asian features",
+      prompt: `${ASEAN_BASE_PROMPT} Professional portrait, natural lighting, Southeast Asian features. Preserve natural skin tone, facial proportions and expression. Enhance micro-detail in hair, eyes and skin without whitening, slimming or otherwise modifying the face.`,
     },
     features: ["Natural Skin", "Sharp Details", "Face Safe", "Studio Quality"],
     icon: "📸",
@@ -180,7 +199,7 @@ export const FACE_PRESETS: Record<string, Preset> = {
       creativity: 0.25,
       resemblance: 0.85,
       hdr: 0,
-      prompt: "vintage photograph restoration, historical photo, authentic preservation",
+      prompt: `${ASEAN_BASE_PROMPT} When reconstructing damaged people, prioritize authentic Southeast Asian historical appearance. Restore traditional ASEAN clothing, hairstyles, jewelry, fabrics and accessories whenever original information is missing. Preserve historical authenticity and avoid replacing people with generic modern Western faces. Restore aged photographic paper naturally while maintaining realistic film grain, scratches and photographic imperfections. Primary cultural references: Indonesia, Bali, Java, Malaysia, Thailand, Vietnam, Philippines. Do not modernize historical clothing or hairstyles unless explicitly visible in the source.`,
     },
     features: ["High Fidelity", "Damage Repair", "Feature Lock", "Authentic Look"],
     icon: "🕰️",
@@ -196,7 +215,7 @@ export const FACE_PRESETS: Record<string, Preset> = {
       creativity: 0.3,
       resemblance: 0.8,
       hdr: 0,
-      prompt: "group photograph, multiple people, event photography, natural expressions",
+      prompt: `${ASEAN_BASE_PROMPT} Group photograph, multiple people, event photography. Enhance all faces equally without modifying individual features. Preserve natural expressions, cultural attire and diverse Southeast Asian appearances.`,
     },
     features: ["Multi-Face", "Balanced Detail", "Event Ready", "Natural Tones"],
     icon: "👨‍👩‍👧‍👦",
@@ -212,7 +231,7 @@ export const FACE_PRESETS: Record<string, Preset> = {
       creativity: 0.4,
       resemblance: 0.75,
       hdr: 0.1,
-      prompt: "professional headshot, business portrait, corporate photography, sharp focus",
+      prompt: `${ASEAN_BASE_PROMPT} Professional headshot, business portrait, corporate photography, sharp focus. Preserve natural facial features and skin tone. Do not alter ethnicity, age or expression.`,
     },
     features: ["Corporate Ready", "Sharp Focus", "Professional Look", "Clean Background"],
     icon: "💼",
@@ -221,6 +240,22 @@ export const FACE_PRESETS: Record<string, Preset> = {
 
 // 6 Abstract/Artistic Enhancement Presets
 export const ABSTRACT_PRESETS: Record<string, Preset> = {
+  "cultural-detail-asean": {
+    id: "cultural-detail-asean",
+    name: "Cultural Detail",
+    category: "abstract",
+    description: "Preserve and enrich ASEAN cultural textures, architecture, ornaments and traditional clothing",
+    settings: {
+      model: "philz1337x/clarity-upscaler",
+      upscaleFactor: 2,
+      creativity: 0.15,
+      resemblance: 0.92,
+      hdr: 0.1,
+      prompt: `Preserve the original photograph completely. Only enrich cultural details already suggested by the image. Do not introduce new people. Do not replace ethnicity. Do not invent architecture. Do not create fantasy objects. Do not reinterpret the scene artistically. If details are missing because of image degradation, reconstruct them conservatively using Southeast Asian (ASEAN) cultural references. Enhance carvings, textiles, ornaments, temples, traditional houses, vegetation, local materials and craftsmanship only when naturally implied by the source image. Favor realism over creativity. The final image should appear as if the original scene had simply been photographed using a much higher-quality camera. Never invent new people. Never replace ethnicity. Never change gender. Never change age. Never add decorative objects. Never add architecture. Never invent landscapes. Never modernize historical images. Never westernize ambiguous faces. Never add fantasy elements.`,
+    },
+    features: ["Cultural Fidelity", "No Hallucination", "ASEAN-First", "Conservative Restore"],
+    icon: "🏛",
+  },
   "detail-enhancement": {
     id: "detail-enhancement",
     name: "Detail Enhancement",
@@ -232,7 +267,7 @@ export const ABSTRACT_PRESETS: Record<string, Preset> = {
       creativity: 0.2,
       resemblance: 0.9,
       hdr: 0.1,
-      prompt: "high resolution, enhanced details, sharp clarity, no face generation",
+      prompt: `${ASEAN_BASE_PROMPT} High resolution, enhanced details, sharp clarity, no face generation.`,
     },
     features: ["No Face Gen", "Pure Clarity", "3x Upscale", "Detail Focus"],
     icon: "🔍",
@@ -248,7 +283,7 @@ export const ABSTRACT_PRESETS: Record<string, Preset> = {
       creativity: 0.05,
       resemblance: 0.95,
       hdr: 0.9,
-      prompt: "landscape photography, natural scenery, HDR enhancement, vivid colors, dramatic sky, enhanced depth",
+      prompt: `${ASEAN_BASE_PROMPT} Landscape photography, natural scenery, HDR enhancement, vivid colors, dramatic sky, enhanced depth.`,
     },
     features: ["4x Upscale", "Max HDR", "Sky Enhancement", "Natural Colors"],
     icon: "🏔️",
@@ -264,8 +299,7 @@ export const ABSTRACT_PRESETS: Record<string, Preset> = {
       creativity: 0.0,
       resemblance: 0.95,
       hdr: 0.8,
-      prompt:
-        "architectural photography, building details, ultra sharp, geometric precision, clean lines, structural clarity",
+      prompt: `${ASEAN_BASE_PROMPT} Architectural photography, building details, ultra sharp, geometric precision, clean lines, structural clarity.`,
     },
     features: ["4x Upscale", "Ultra Sharp", "Zero Creativity", "Geometric Precision"],
     icon: "🏗️",
@@ -297,7 +331,7 @@ export const ABSTRACT_PRESETS: Record<string, Preset> = {
       creativity: 0.5,
       resemblance: 0.6,
       hdr: 0.5,
-      prompt: "landscape photography, natural scenery, enhanced depth, vivid colors",
+      prompt: `${ASEAN_BASE_PROMPT} Landscape photography, natural Southeast Asian scenery, enhanced depth, vivid tropical colors.`,
     },
     features: ["HDR Depth", "Sky Enhancement", "Natural Colors", "3x Upscale"],
     icon: "🏞️",
@@ -313,7 +347,7 @@ export const ABSTRACT_PRESETS: Record<string, Preset> = {
       creativity: 0.4,
       resemblance: 0.7,
       hdr: 0.2,
-      prompt: "architectural photography, building details, geometric precision, sharp lines",
+      prompt: `${ASEAN_BASE_PROMPT} Architectural photography, building details, geometric precision, sharp lines. Favor traditional ASEAN architectural elements when ambiguous.`,
     },
     features: ["4x Upscale", "Sharp Lines", "Geometric Precision", "Texture Detail"],
     icon: "🏛️",

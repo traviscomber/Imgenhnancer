@@ -974,11 +974,16 @@ export default function EnhancePage() {
       }
 
       try {
+        // Determine credit cost based on upscale factor: x2=6, x3=8, x4=10
+        let creditCost = 6
+        if (settings.upscaleFactor === 3) creditCost = 8
+        else if (settings.upscaleFactor === 4) creditCost = 10
+
         const deductResponse = await fetch("/api/credits/deduct", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            amount: 6,
+            amount: creditCost,
             description: `Enhanced ${file.name}`,
             metadata: {
               fileName: file.name,
@@ -2095,6 +2100,7 @@ export default function EnhancePage() {
                           )}
                         </Button>
                         <Button
+                          onClick={() => window.open(img.imageUrl, "_blank")}
                           size="sm"
                           variant="outline"
                           className="h-8 text-xs border-white/15 bg-transparent text-foreground hover:bg-white/5 gap-1.5 px-3"
