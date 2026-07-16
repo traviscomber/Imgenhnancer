@@ -53,7 +53,7 @@ import {
   trackAdvancedSettings,
 } from "@/lib/analytics"
 import { FacialAnalysisCard } from "@/components/facial-analysis-card"
-import { isAuthenticated, logout } from "@/lib/auth" // Added for authentication
+import { useAuth, logout } from "@/lib/auth" // Added for authentication
 import { LoginModal } from "@/components/auth/login-modal" // Added for login modal
 import { CreditDisplay } from "@/components/credits/credit-display" // Added for credit display
 import { ClarityLogo } from "@/components/clarity-logo"
@@ -119,8 +119,8 @@ interface UploadError {
 
 export default function EnhancePage() {
   const router = useRouter()
-  const [isAuth, setIsAuth] = useState(false)
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
+  const { user: authUser, loading: isCheckingAuth } = useAuth()
+  const isAuth = !!authUser
 
   const [uploadedFiles, setUploadedFiles] = useState<FileWithPreview[]>([])
   const [selectedFiles, setSelectedFiles] = useState<Set<number>>(new Set())
@@ -165,16 +165,7 @@ export default function EnhancePage() {
 
   const isPaidUser = userCredits > 0
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const authenticated = await isAuthenticated()
-      console.log("[v0] Authentication check:", authenticated)
-      setIsAuth(authenticated)
-      setIsCheckingAuth(false)
-    }
 
-    checkAuth()
-  }, [])
 
   useEffect(() => {
     const fetchCredits = async () => {
@@ -1682,18 +1673,17 @@ export default function EnhancePage() {
   }, [settings.creativity, selectedFiles, uploadedFilesWithAnalysis, selectedCategory, selectedPresetId, setSettings])
 
   const handleLoginSuccess = useCallback(() => {
-    console.log("[v0] Login successful, updating state")
-    setIsAuth(true)
+    // useAuth() reacts to Supabase onAuthStateChange automatically
+    setShowLoginModal(false)
   }, [])
 
-  // ADDED HANDLER:
   const handleShowLogin = useCallback(() => {
-    setIsAuth(false) // This will trigger the !isAuth check and show the modal
+    setShowLoginModal(true)
   }, [])
 
-  const handleLogout = useCallback(() => {
-    logout()
-    setIsAuth(false)
+  const handleLogout = useCallback(async () => {
+    await logout()
+    window.location.href = "/"
   }, [])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -1910,7 +1900,7 @@ export default function EnhancePage() {
                 </div>
                 {uploadedFiles.length > 0 && (
                   <Button
-                    onClick={handleProcessSelected}
+                    onClick={handleEnhance}
                     disabled={selectedFiles.size === 0 || isProcessing}
                     size="sm"
                     className="bg-foreground text-background hover:bg-foreground/90 text-xs h-7 gap-1.5"
