@@ -140,6 +140,14 @@ export async function isAuthenticated(): Promise<boolean> {
   return user !== null
 }
 
+function userFromSession(session: { user: { id: string; email?: string } }): User {
+  return {
+    id: session.user.id,
+    email: session.user.email!,
+    role: session.user.email === "admin@clarity.art" ? "admin" : "user",
+  }
+}
+
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
@@ -148,23 +156,11 @@ export function useAuth() {
     let isMounted = true
     const supabase = createClient()
 
-    // onAuthStateChange fires immediately with the current session
-    // (INITIAL_SESSION event) — no need for a separate getUser() call
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const applySession = (session: { user: { id: string; email?: string } } | null) => {
       if (!isMounted) return
-
       if (session?.user) {
-        // Build user from session directly (no extra DB round-trip for identity)
-        const baseUser: User = {
-          id: session.user.id,
-          email: session.user.email!,
-          role: session.user.email === "admin@clarity.art" ? "admin" : "user",
-        }
-        setUser(baseUser)
-
-        // Enrich with DB role in the background
+        setUser(userFromSession(session))
+        // Enrich role from DB in the background (non-blocking)
         supabase
           .from("users")
           .select("role")
@@ -178,9 +174,18 @@ export function useAuth() {
       } else {
         setUser(null)
       }
-
       setLoading(false)
-    })
+    }
+
+    // 1) Read the session from the cookie immediately — this is synchronous
+    //    storage access, so it resolves the logged-in state without waiting
+    //    for any network token refresh.
+    supabase.auth.getSession().then(({ data }) => applySession(data.session))
+
+    // 2) Keep listening for future changes (login, logout, token refresh).
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => applySession(session))
 
     return () => {
       isMounted = false
