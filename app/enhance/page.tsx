@@ -135,8 +135,8 @@ export default function EnhancePage() {
   const [settings, setSettings] = useState<EnhancementSettings>({
     model: "philz1337x/clarity-upscaler",
     upscaleFactor: 2,
-    creativity: 0.35,
-    resemblance: 0.6,
+    creativity: 0,
+    resemblance: 3,
     hdr: 0.0,
     tilingWidth: 112,
     tilingHeight: 144,
@@ -896,20 +896,13 @@ export default function EnhancePage() {
       formData.append("scale_factor", upscaleFactor.toString())
       formData.append("model", settings.model || "philz1337x/clarity-upscaler")
 
-      const creativity = settings.creativity ?? -4
-      const resemblance = settings.resemblance ?? 9
+      const creativity = settings.creativity ?? 0
+      const resemblance = settings.resemblance ?? 3
       formData.append("creativity", creativity.toString())
       formData.append("resemblance", resemblance.toString())
 
-      // Dynamic and fractality — locked to spec values per preset
       const dynamic = settings.dynamic ?? 1
-      const fractality = settings.fractality ?? 5
       formData.append("dynamic", dynamic.toString())
-      formData.append("fractality", fractality.toString())
-
-      // Style — "portrait" for Face Detail, "default" for all others
-      const style = settings.style ?? "default"
-      formData.append("style", style)
 
       const hdr = settings.hdr ?? 0.0
       const tilingWidth = settings.tilingWidth ?? 112
