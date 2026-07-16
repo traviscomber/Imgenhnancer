@@ -133,6 +133,7 @@ export async function POST(req: NextRequest) {
             dynamic: validDynamic,
             creativity: validCreativity,
             resemblance: validResemblance,
+            hdr: validHdr,
             tiling_width: validTilingWidth,
             tiling_height: validTilingHeight,
             sharpen: 0,
