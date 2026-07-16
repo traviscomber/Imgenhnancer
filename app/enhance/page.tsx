@@ -2100,7 +2100,7 @@ export default function EnhancePage() {
                           )}
                         </Button>
                         <Button
-                          onClick={() => window.open(img.imageUrl, "_blank")}
+                          onClick={() => window.open(img.enhanced, "_blank", "noopener,noreferrer")}
                           size="sm"
                           variant="outline"
                           className="h-8 text-xs border-white/15 bg-transparent text-foreground hover:bg-white/5 gap-1.5 px-3"
