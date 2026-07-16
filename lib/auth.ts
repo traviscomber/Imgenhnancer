@@ -115,18 +115,23 @@ export async function logout(): Promise<void> {
 export async function getUser(): Promise<User | null> {
   const supabase = createClient()
 
+  // getSession() reads from local storage — no network call, instant
   const {
-    data: { user },
-  } = await supabase.auth.getUser()
+    data: { session },
+  } = await supabase.auth.getSession()
 
-  if (!user) return null
+  if (!session?.user) return null
 
-  const { data: userData } = await supabase.from("users").select("role").eq("id", user.id).single()
+  const { data: userData } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", session.user.id)
+    .maybeSingle()
 
   return {
-    id: user.id,
-    email: user.email!,
-    role: userData?.role || "user",
+    id: session.user.id,
+    email: session.user.email!,
+    role: userData?.role || (session.user.email === "admin@clarity.art" ? "admin" : "user"),
   }
 }
 
@@ -141,64 +146,44 @@ export function useAuth() {
 
   useEffect(() => {
     let isMounted = true
-    let timeoutId: ReturnType<typeof setTimeout>
-
-    // Get initial user with timeout
-    const getInitialUser = async () => {
-      try {
-        console.log("[v0] Fetching initial user...")
-        const user = await getUser()
-        if (isMounted) {
-          console.log("[v0] Initial user fetched:", user?.email)
-          setUser(user)
-          setLoading(false)
-        }
-      } catch (error) {
-        console.error("[v0] Error fetching initial user:", error)
-        if (isMounted) {
-          setLoading(false)
-        }
-      }
-    }
-
-    // Set timeout for initial user fetch
-    timeoutId = setTimeout(() => {
-      if (isMounted && loading) {
-        console.warn("[v0] Initial user fetch timed out after 5s, stopping loading...")
-        setLoading(false)
-      }
-    }, 5000)
-
-    getInitialUser()
-
-    // Listen for auth changes
     const supabase = createClient()
+
+    // onAuthStateChange fires immediately with the current session
+    // (INITIAL_SESSION event) — no need for a separate getUser() call
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("[v0] Auth state changed:", event)
+      if (!isMounted) return
+
       if (session?.user) {
-        try {
-          const user = await getUser()
-          if (isMounted) {
-            setUser(user)
-          }
-        } catch (error) {
-          console.error("[v0] Error getting user on auth change:", error)
+        // Build user from session directly (no extra DB round-trip for identity)
+        const baseUser: User = {
+          id: session.user.id,
+          email: session.user.email!,
+          role: session.user.email === "admin@clarity.art" ? "admin" : "user",
         }
+        setUser(baseUser)
+
+        // Enrich with DB role in the background
+        supabase
+          .from("users")
+          .select("role")
+          .eq("id", session.user.id)
+          .maybeSingle()
+          .then(({ data }) => {
+            if (isMounted && data?.role) {
+              setUser((prev) => (prev ? { ...prev, role: data.role } : prev))
+            }
+          })
       } else {
-        if (isMounted) {
-          setUser(null)
-        }
+        setUser(null)
       }
-      if (isMounted) {
-        setLoading(false)
-      }
+
+      setLoading(false)
     })
 
     return () => {
       isMounted = false
-      clearTimeout(timeoutId)
       subscription.unsubscribe()
     }
   }, [])

@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import { Menu, X, LogOut, User } from "lucide-react"
 import { ClarityLogo } from "@/components/clarity-logo"
 import { useAuth } from "@/lib/auth"
-import { createClient } from "@/lib/supabase/client"
 
 const desktopLinks = [
   { href: "/pricing", label: "Pricing" },
