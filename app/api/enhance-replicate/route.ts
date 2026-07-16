@@ -84,10 +84,14 @@ export async function POST(req: NextRequest) {
     // Layer 1: Clarity API params (above)
     // Layer 2: Global Restoration Prompt (universal ASEAN restoration philosophy)
     // Layer 3: Preset-specific prompt (what client sends as "prompt")
-    // Layer 4: User prompt (not yet implemented — reserved for future)
-    const finalPrompt = presetPrompt
+    // Layer 4: Required LoRA tags — the model's internal code expects these to be present
+    //          in the prompt string. Omitting them causes "local variable referenced before
+    //          assignment" errors in Replicate's Python runner.
+    const LORA_TAGS = "<lora:more_details:0.5> <lora:SDXLrender_v2.0:1>"
+    const basePrompt = presetPrompt
       ? `${GLOBAL_RESTORATION_PROMPT} ${presetPrompt}`
       : GLOBAL_RESTORATION_PROMPT
+    const finalPrompt = `${basePrompt} ${LORA_TAGS}`
 
     console.log("⚙️ Enhancement settings:", {
       scaleFactor: validScaleFactor,
