@@ -15,13 +15,15 @@ export async function POST() {
     })
 
     if (authError) {
-      console.error("[v0] Error creating admin auth user:", authError)
-      if (authError.message.includes("already registered")) {
-        const { data: existingUser } = await supabase.auth.admin.listUsers()
-        const adminUser = existingUser?.users.find((u) => u.email === "admin@clarity.art")
+      console.error("[v0] Error creating admin auth user:", authError.message)
+      const errorMsg = authError.message.toLowerCase()
+      if (errorMsg.includes("already") || errorMsg.includes("registered")) {
+        console.log("[v0] Admin user already exists, checking database records...")
+        const { data: users } = await supabase.auth.admin.listUsers()
+        const adminUser = users?.users.find((u) => u.email === "admin@clarity.art")
 
         if (adminUser) {
-          console.log("[v0] Admin auth user already exists, setting up database records...")
+          console.log("[v0] Setting up database records for existing admin user...")
           // Continue with database setup using existing user ID
           await setupDatabaseRecords(supabase, adminUser.id)
           return NextResponse.json({

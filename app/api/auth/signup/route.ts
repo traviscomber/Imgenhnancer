@@ -38,12 +38,11 @@ export async function POST(request: Request) {
 
     console.log("[v0] Auth user created:", authData.user.id)
 
-    // Create user record in database with 5 free upscales
+    // Create user record in database
     const { error: userError } = await adminClient.from("users").insert({
       id: authData.user.id,
       email: authData.user.email,
       role: "user",
-      free_upscales_available: 5, // New users get 5 free upscales
     })
 
     if (userError) {
