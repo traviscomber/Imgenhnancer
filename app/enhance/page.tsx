@@ -135,7 +135,7 @@ export default function EnhancePage() {
   const [settings, setSettings] = useState<EnhancementSettings>({
     model: "philz1337x/clarity-upscaler",
     upscaleFactor: 2,
-    creativity: 0,
+    creativity: 0.1,
     resemblance: 3,
     hdr: 0.0,
     tilingWidth: 112,

@@ -175,7 +175,7 @@ export const FACE_PRESETS: Record<string, Preset> = {
     settings: {
       model: "philz1337x/clarity-upscaler",
       upscaleFactor: 2,
-      creativity: 0,
+      creativity: 0.1,
       resemblance: 3,
       dynamic: 1,
       hdr: 0,
@@ -192,7 +192,7 @@ export const FACE_PRESETS: Record<string, Preset> = {
     settings: {
       model: "philz1337x/clarity-upscaler",
       upscaleFactor: 2,
-      creativity: 0,
+      creativity: 0.1,
       resemblance: 3,
       dynamic: 1,
       hdr: 0,
@@ -241,7 +241,7 @@ export const FACE_PRESETS: Record<string, Preset> = {
     settings: {
       model: "philz1337x/clarity-upscaler",
       upscaleFactor: 2,
-      creativity: 0,
+      creativity: 0.1,
       resemblance: 3,
       dynamic: 1,
       hdr: 0,
@@ -294,7 +294,7 @@ export const ABSTRACT_PRESETS: Record<string, Preset> = {
     settings: {
       model: "philz1337x/clarity-upscaler",
       upscaleFactor: 2,
-      creativity: 0,
+      creativity: 0.1,
       resemblance: 3,
       dynamic: 1,
       hdr: 0,
