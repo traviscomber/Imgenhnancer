@@ -21,6 +21,7 @@ export async function login(email: string, password: string): Promise<{ user: Us
 
   if (error) {
     console.error("[v0] Supabase auth error:", error)
+    console.error("[v0] Error details - status:", error.status, "code:", error.code, "message:", error.message)
     return { user: null, error: error.message }
   }
 
