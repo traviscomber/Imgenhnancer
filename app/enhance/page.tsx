@@ -152,7 +152,7 @@ export default function EnhancePage() {
   // Added downloadingImages state
   const [downloadingImages, setDownloadingImages] = useState<Set<string>>(new Set())
   // Added showLoginModal state
-  const [showLoginModal, setShowLoginModal] = useState(true)
+  const [showLoginModal, setShowLoginModal] = useState(false)
 
   const [imageAspectRatios, setImageAspectRatios] = useState<Map<number, number>>(new Map())
   const [facialAnalysisResults, setFacialAnalysisResults] = useState(new Map<string, any>()) // Added state for facial analysis results
@@ -1754,56 +1754,6 @@ export default function EnhancePage() {
       {/* ADDED CONDITIONAL LOGIN MODAL */}
       {!isAuth && showLoginModal && <LoginModal onSuccess={handleLoginSuccess} onClose={() => router.push("/")} />}
 
-      {/* Navbar */}
-      <nav className="sticky top-0 z-50 border-b border-white/10 bg-black/80 backdrop-blur-xl">
-        <div className="mx-auto max-w-7xl px-4 lg:px-6">
-          <div className="flex h-16 items-center justify-between gap-4">
-            <ClarityLogo className="h-8 w-auto" />
-            {/* Nav links */}
-            <div className="hidden items-center gap-6 md:flex">
-              <a href="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
-              <a href="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">About</a>
-              <a href="/faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">FAQ</a>
-              <a href="/support" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Support</a>
-            </div>
-            <div className="flex items-center gap-3">
-              {!isLoadingCredits && isAuth && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span className="text-foreground font-medium">{userCredits}</span>
-                  <span>Credits</span>
-                </div>
-              )}
-              <Button
-                onClick={() => router.push("/enhance")}
-                size="sm"
-                className="bg-foreground text-background hover:bg-foreground/90 font-medium"
-              >
-                Upscale
-              </Button>
-              {isAuth ? (
-                <Button
-                  onClick={handleLogout}
-                  variant="outline"
-                  size="sm"
-                  className="bg-transparent border-white/20 text-foreground hover:bg-white/5"
-                >
-                  Sign out
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleShowLogin}
-                  variant="outline"
-                  size="sm"
-                  className="bg-transparent border-white/20 text-foreground hover:bg-white/5"
-                >
-                  Sign in
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-      </nav>
-
       <main className="mx-auto max-w-7xl px-4 lg:px-6 py-10">
         {/* Page header */}
         <div className="mb-10">
@@ -1826,10 +1776,10 @@ export default function EnhancePage() {
               const isActive = selectedPublicPreset === presetKey
               // Map preset keys to available images
               const presetImages: Record<string, string> = {
-                archive_scan: "/images/L5-clean-before.png",
-                asean_portrait_preserve: "/images/thai-family-faded.png",
-                heritage_restore: "/images/L5-face-before.png",
-                digital_art_upscale: "/images/L5-cultural-before.png",
+                archive_scan: "/images/landing/L5-clean-before.png",
+                asean_portrait_preserve: "/images/landing/L5-restore-before.png",
+                heritage_restore: "/images/landing/L5-face-before.png",
+                digital_art_upscale: "/images/landing/L5-cultural-before.png",
               }
               // Extra description lines for the reference layout
               const presetSubtext: Record<string, string> = {
