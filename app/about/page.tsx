@@ -89,17 +89,64 @@ export default function AboutPage() {
       </section>
 
       <section className="px-6 pb-24 lg:px-16">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-12">
+            <p className="text-xs uppercase tracking-[0.35em] text-[#c9953d]">Who uses clar1ty</p>
+            <h2 className="mt-4 text-3xl font-light text-[#f1e5d3]">Built for specific workflows.</h2>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <UseCase
+              title="Photographers"
+              copy="Client images, softer portraits, cleaner delivery. Professional enhancement that respects the original."
+            />
+            <UseCase
+              title="Designers"
+              copy="References, scanned visuals, campaign materials. Enhance sources while keeping authentic character."
+            />
+            <UseCase
+              title="Brands"
+              copy="Product imagery, founder portraits, editorial assets. Improve visual assets for modern marketing."
+            />
+            <UseCase
+              title="Families"
+              copy="Old memories with care. When face, clothing and mood matter, not just sharpness."
+            />
+            <UseCase
+              title="Archives & Historians"
+              copy="Preservation plus context. Clarity and authenticity for research and exhibition."
+            />
+            <UseCase
+              title="Print Shops & Studios"
+              copy="Clearer print files, client delivery, restoration workflows. Production-ready enhancement."
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="px-6 pb-24 lg:px-16">
         <div className="mx-auto max-w-7xl rounded-[2rem] border border-white/8 bg-black/40 p-8 lg:p-10">
           <div className="flex items-center gap-3 text-[#c9953d]">
             <Wand2 className="h-5 w-5" />
-            <span className="text-xs uppercase tracking-[0.35em]">Built for clarity</span>
+            <span className="text-xs uppercase tracking-[0.35em]">Our standard</span>
           </div>
           <p className="mt-6 max-w-4xl text-2xl font-light leading-relaxed text-[#f1e5d3] md:text-4xl">
-            The project exists to help images stay legible, culturally specific and visually strong as they move from old
-            source material to modern use.
+            The image should still feel like itself.
+          </p>
+          <p className="mt-4 max-w-2xl text-sm leading-7 text-[#d4c7b6]">
+            The project exists to help images stay legible, culturally specific and visually strong as they move from old source material to modern use. Enhancement means clarity and detail, not transformation.
           </p>
         </div>
       </section>
     </main>
+  )
+}
+
+function UseCase({ title, copy }: { title: string; copy: string }) {
+  return (
+    <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-6">
+      <h3 className="font-semibold text-[#f1e5d3]">{title}</h3>
+      <p className="mt-3 text-sm leading-7 text-[#d4c7b6]">{copy}</p>
+    </div>
   )
 }

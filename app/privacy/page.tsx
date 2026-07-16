@@ -1,175 +1,99 @@
 "use client"
 
-import { useEffect } from "react"
+import Link from "next/link"
 
 export default function PrivacyPage() {
-  useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [])
   return (
-    <div className="min-h-screen bg-gray-900">
-      <div className="container mx-auto px-4 py-16 md:py-24 max-w-4xl">
-        <div className="space-y-8">
-          <div>
-            <h1 className="text-4xl font-bold text-white mb-2">Privacy Policy</h1>
-            <p className="text-gray-400">Last updated: February 14, 2026</p>
-          </div>
+    <main className="min-h-screen bg-black px-6 pb-24 pt-16 text-[#efe8dc] lg:px-16 lg:pt-20">
+      <div className="mx-auto max-w-4xl">
+        <section className="mb-12">
+          <p className="text-xs uppercase tracking-[0.35em] text-[#c9953d]">Legal</p>
+          <h1 className="mt-4 text-4xl font-light text-[#f1e5d3] md:text-5xl">Privacy Policy</h1>
+          <p className="mt-4 text-sm text-[#d4c7b6]">Last updated: July 2026</p>
+        </section>
 
-          <div className="prose prose-invert max-w-none space-y-6">
-            {/* Introduction */}
-            <section className="space-y-3">
-              <h2 className="text-2xl font-bold text-white">1. Introduction</h2>
-              <p className="text-gray-300">
-                clar1ty ("Service") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your personal data when using our image enhancement service. This policy complies with Chilean Law 19.628 on Personal Data Protection and international standards.
-              </p>
-            </section>
+        <section className="space-y-8">
+          <LegalSection
+            title="Images are private"
+            copy="Images you upload are processed temporarily and deleted after 7 days. We do not permanently store, train on, or use images for any purpose other than your enhancement request. No images are shared with third parties."
+          />
 
-            {/* Data Collection */}
-            <section className="space-y-3">
-              <h2 className="text-2xl font-bold text-white">2. Data We Collect</h2>
-              <div className="space-y-4 text-gray-300">
-                <div>
-                  <h3 className="font-semibold text-amber-400 mb-2">2.1 Images You Upload</h3>
-                  <p>
-                    When you use our service, you upload images for enhancement. These images are processed and stored temporarily on our servers for the purpose of enhancement and quality assurance.
-                  </p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-amber-400 mb-2">2.2 Account Information</h3>
-                  <p>
-                    If you create an account, we collect: email address, username, password (encrypted), account preferences, and usage history.
-                  </p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-amber-400 mb-2">2.3 Technical Data</h3>
-                  <p>
-                    IP address, browser type, device information, pages visited, time spent, referring website, and enhancement parameters used.
-                  </p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-amber-400 mb-2">2.4 Payment Information</h3>
-                  <p>
-                    Payment processing is handled by Stripe. We do not store full credit card details. See Stripe's privacy policy for payment data handling.
-                  </p>
-                </div>
-              </div>
-            </section>
+          <LegalSection
+            title="Job metadata only"
+            copy="We store: filename, preset used, enhancement mode, file size, date, and status. This is for your account history and support only. Metadata is deleted when you delete your account."
+          />
 
-            {/* Data Retention */}
-            <section className="space-y-3">
-              <h2 className="text-2xl font-bold text-white">3. Data Retention & Deletion</h2>
-              <div className="space-y-4 text-gray-300">
-                <div>
-                  <h3 className="font-semibold text-amber-400 mb-2">3.1 Image Storage (7-Day Retention)</h3>
-                  <p>
-                    <strong>Uploaded images and enhanced images are automatically deleted after 7 days</strong> from upload/enhancement date. You must download your enhanced images within this 7-day window. After deletion, we cannot recover these files.
-                  </p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-amber-400 mb-2">3.2 Account Data</h3>
-                  <p>
-                    Account information is retained for as long as your account is active. If you delete your account, personal data is removed within 30 days, except where legally required to maintain records.
-                  </p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-amber-400 mb-2">3.3 Analytics & Logs</h3>
-                  <p>
-                    Technical logs and analytics data are retained for 12 months for service improvement and security purposes.
-                  </p>
-                </div>
-              </div>
-            </section>
+          <LegalSection
+            title="Account data"
+            copy="We collect email, encrypted password, subscription tier, credit balance, and billing info (via Stripe). This manages your account, payments, and support. Your name is optional."
+          />
 
-            {/* Use of Data */}
-            <section className="space-y-3">
-              <h2 className="text-2xl font-bold text-white">4. How We Use Your Data</h2>
-              <ul className="space-y-2 text-gray-300 list-disc list-inside">
-                <li>Process and enhance your images</li>
-                <li>Provide customer support</li>
-                <li>Send service-related notifications</li>
-                <li>Improve our algorithms and service quality</li>
-                <li>Detect and prevent fraud</li>
-                <li>Comply with legal obligations</li>
-              </ul>
-              <p className="text-gray-300 mt-4">
-                <strong>We do NOT:</strong> Use your images for training AI models, sell your data, share your images with third parties, or use your data for marketing without consent.
-              </p>
-            </section>
+          <LegalSection
+            title="Usage analytics"
+            copy="We collect anonymous usage data: pages viewed, features accessed, processing volumes. This helps us improve. We do not track individual behavior or use third-party tracking cookies."
+          />
 
-            {/* Data Sharing */}
-            <section className="space-y-3">
-              <h2 className="text-2xl font-bold text-white">5. Data Sharing & Third Parties</h2>
-              <div className="space-y-4 text-gray-300">
-                <p>We may share data with:</p>
-                <ul className="space-y-2 list-disc list-inside">
-                  <li><strong>Replicate</strong> - For image processing (as contractually required)</li>
-                  <li><strong>Stripe</strong> - For payment processing</li>
-                  <li><strong>Vercel</strong> - For hosting and analytics</li>
-                  <li><strong>Legal authorities</strong> - When required by law</li>
-                </ul>
-                <p className="mt-4">
-                  All third parties are bound by confidentiality agreements and process data only as instructed.
-                </p>
-              </div>
-            </section>
+          <LegalSection
+            title="Communications"
+            copy="Service emails are mandatory (security, billing). Marketing emails are optional. You can unsubscribe anytime in your account settings. We never spam or share your email."
+          />
 
-            {/* User Rights */}
-            <section className="space-y-3">
-              <h2 className="text-2xl font-bold text-white">6. Your Rights (Chilean Law 19.628)</h2>
-              <div className="space-y-3 text-gray-300">
-                <p>You have the right to:</p>
-                <ul className="space-y-2 list-disc list-inside">
-                  <li><strong>Access:</strong> Request what personal data we hold</li>
-                  <li><strong>Correction:</strong> Update or correct inaccurate data</li>
-                  <li><strong>Deletion:</strong> Request removal of your data (where applicable)</li>
-                  <li><strong>Opposition:</strong> Object to processing of your data</li>
-                  <li><strong>Withdraw Consent:</strong> Revoke consent at any time</li>
-                </ul>
-                <p className="mt-4">
-                  To exercise these rights, contact: <a href="mailto:privacy@clar1ty.art" className="text-amber-400 hover:text-amber-300">privacy@clar1ty.art</a>
-                </p>
-              </div>
-            </section>
+          <LegalSection
+            title="Security"
+            copy="Data is encrypted in transit (TLS 1.3) and at rest. Passwords use bcrypt hashing. We perform regular security audits. Report security issues to support@clar1ty.art."
+          />
 
-            {/* Security */}
-            <section className="space-y-3">
-              <h2 className="text-2xl font-bold text-white">7. Data Security</h2>
-              <p className="text-gray-300">
-                We implement industry-standard security measures including encryption (TLS/SSL), secure data centers, regular security audits, and access controls. However, no system is 100% secure. We are not liable for unauthorized access beyond our reasonable control.
-              </p>
-            </section>
+          <LegalSection
+            title="Third parties"
+            copy="Stripe handles payments. Supabase hosts our database. Both have their own privacy policies. Image processing happens on our infrastructure only—no external processing services."
+          />
 
-            {/* Cookies */}
-            <section className="space-y-3">
-              <h2 className="text-2xl font-bold text-white">8. Cookies & Tracking</h2>
-              <p className="text-gray-300">
-                We use cookies for authentication, preferences, and analytics. You can disable cookies in your browser settings, though some functionality may be limited.
-              </p>
-            </section>
+          <LegalSection
+            title="Your rights"
+            copy="You can access, correct, or delete your personal data anytime. Contact support@clar1ty.art. We respond within 30 days. You can download your data from your account."
+          />
 
-            {/* Contact */}
-            <section className="space-y-3">
-              <h2 className="text-2xl font-bold text-white">9. Contact Information</h2>
-              <p className="text-gray-300">
-                For privacy inquiries, contact:
-              </p>
-              <div className="bg-gray-800 p-4 rounded-lg mt-2 text-gray-300">
-                <p><strong>Email:</strong> privacy@clar1ty.art</p>
-                <p><strong>Service:</strong> clar1ty</p>
-                <p><strong>Jurisdiction:</strong> Chile</p>
-              </div>
-            </section>
+          <LegalSection
+            title="Children"
+            copy="clar1ty is for users 13+. We do not knowingly collect data from children. If we discover such collection, we delete it immediately."
+          />
 
-            {/* Changes */}
-            <section className="space-y-3">
-              <h2 className="text-2xl font-bold text-white">10. Policy Changes</h2>
-              <p className="text-gray-300">
-                We may update this policy periodically. Continued use of the service after changes constitutes acceptance of the updated policy.
-              </p>
-            </section>
-          </div>
-        </div>
+          <LegalSection
+            title="Changes"
+            copy="We may update this policy. We will notify you of material changes via email. Continued use means you accept the new policy."
+          />
+
+          <LegalSection
+            title="Contact"
+            copy="Questions? Email support@clar1ty.art or visit our support page."
+          />
+        </section>
+
+        <section className="mt-12 rounded-2xl border border-white/8 bg-white/[0.03] p-6 text-center">
+          <p className="text-sm text-[#d4c7b6]">
+            <Link href="/terms" className="font-semibold text-[#d7a957] hover:text-[#f1e5d3]">
+              Terms of Service
+            </Link>
+            {" / "}
+            <Link href="/refund-policy" className="font-semibold text-[#d7a957] hover:text-[#f1e5d3]">
+              Refund Policy
+            </Link>
+            {" / "}
+            <Link href="/support" className="font-semibold text-[#d7a957] hover:text-[#f1e5d3]">
+              Support
+            </Link>
+          </p>
+        </section>
       </div>
+    </main>
+  )
+}
+
+function LegalSection({ title, copy }: { title: string; copy: string }) {
+  return (
+    <div>
+      <h2 className="text-lg font-semibold text-[#f1e5d3]">{title}</h2>
+      <p className="mt-3 text-sm leading-7 text-[#d4c7b6]">{copy}</p>
     </div>
   )
 }

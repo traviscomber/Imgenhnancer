@@ -152,7 +152,7 @@ export default function EnhancePage() {
   // Added downloadingImages state
   const [downloadingImages, setDownloadingImages] = useState<Set<string>>(new Set())
   // Added showLoginModal state
-  const [showLoginModal, setShowLoginModal] = useState(true)
+  const [showLoginModal, setShowLoginModal] = useState(false)
 
   const [imageAspectRatios, setImageAspectRatios] = useState<Map<number, number>>(new Map())
   const [facialAnalysisResults, setFacialAnalysisResults] = useState(new Map<string, any>()) // Added state for facial analysis results
@@ -1727,1109 +1727,438 @@ export default function EnhancePage() {
   //   )
   // }
 
+  // Enhancement mode options (x2, x3, x4) mapped to upscaleFactor
+  const ENHANCEMENT_MODES = [
+    {
+      label: "x2 Enhance",
+      factor: 2,
+      credits: 6,
+      description: "Balanced enhancement for everyday use.",
+    },
+    {
+      label: "x3 Restore",
+      factor: 3,
+      credits: 8,
+      description: "Stronger restoration with improved detail recovery.",
+    },
+    {
+      label: "x4 Pro Restore",
+      factor: 4,
+      credits: 10,
+      description: "Maximum detail & clarity for highly detailed or damaged images.",
+    },
+  ]
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black text-white">
+    <div className="min-h-screen bg-background text-foreground">
       {/* ADDED CONDITIONAL LOGIN MODAL */}
       {!isAuth && showLoginModal && <LoginModal onSuccess={handleLoginSuccess} onClose={() => router.push("/")} />}
 
-      <div className="sticky top-0 z-50 bg-gray-950/80 backdrop-blur-lg border-b border-gray-800">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <ClarityLogo className="h-8 w-auto" />
-          <div className="flex items-center gap-4">
-            {!isLoadingCredits && <CreditDisplay credits={userCredits} />}
-            {/* CHANGED: Show Login button when not authenticated, Logout when authenticated */}
-            {isAuth ? (
-              <Button
-                onClick={handleLogout}
-                variant="outline"
-                size="sm"
-                className="bg-transparent border-gray-700 text-gray-300 hover:bg-gray-800"
-              >
-                Logout
-              </Button>
-            ) : (
-              <Button
-                onClick={handleShowLogin} // Use the new handler here
-                variant="outline"
-                size="sm"
-                className="bg-transparent border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
-              >
-                <Lock className="w-4 h-4 mr-2" /> {/* Added Lock icon */}
-                Login
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <main className="container mx-auto px-4 py-8 md:py-12">
-        {/* Header */}
-        <div className="text-center space-y-4 mb-8 md:mb-12">
-          <div className="flex justify-end mb-4">
-            {/* CHANGED: Show Login button when not authenticated, Logout when authenticated */}
-            {isAuth ? (
-              <Button
-                onClick={handleLogout}
-                variant="outline"
-                size="sm"
-                className="bg-transparent border-gray-700 text-gray-400 hover:border-red-500/50 hover:text-red-400"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </Button>
-            ) : (
-              <Button
-                onClick={handleShowLogin} // Use the new handler here
-                variant="outline"
-                size="sm"
-                className="bg-transparent border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
-              >
-                <Lock className="w-4 h-4 mr-2" /> {/* Added Lock icon */}
-                Login
-              </Button>
-            )}
-          </div>
-          <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20">
-            <Sparkles className="w-4 h-4 mr-2 inline" />
-            AI-Powered Enhancement
-          </Badge>
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white">Enhance Your Images</h1>
-          <p className="text-base md:text-lg text-gray-400 max-w-2xl mx-auto">
-            Choose between face-preserving, creative enhancement, experimental, or avatar generation modes
+      <main className="mx-auto max-w-7xl px-4 lg:px-6 py-10">
+        {/* Page header */}
+        <div className="mb-10">
+          <h1 className="text-4xl md:text-5xl font-bold text-foreground leading-tight">
+            Enhance <span className="text-[#c8963e]">Studio</span>
+          </h1>
+          <p className="mt-2 text-muted-foreground text-base">
+            Professional AI enhancement for your most important images.
           </p>
         </div>
 
-        {/* Category Selection */}
-        <Card className="mb-6 hidden bg-gray-900/50 border-gray-800">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-center gap-4 flex-wrap">
-              <Button
-                onClick={() => switchCategory("faces")}
-                variant={selectedCategory === "faces" ? "default" : "outline"}
-                className={
-                  selectedCategory === "faces"
-                    ? "bg-gradient-to-r from-amber-500 to-amber-600 text-black"
-                    : "bg-transparent border-gray-700 text-gray-300 hover:border-amber-500/50"
-                }
-              >
-                👤 Face Enhancement
-              </Button>
-              <Button
-                onClick={() => switchCategory("abstract")}
-                variant={selectedCategory === "abstract" ? "default" : "outline"}
-                className={
-                  selectedCategory === "abstract"
-                    ? "bg-gradient-to-r from-purple-500 to-pink-600 text-white"
-                    : "bg-transparent border-gray-700 text-gray-300 hover:border-purple-500/50"
-                }
-              >
-                🎨 Creative Enhancement
-              </Button>
-              <Button
-                onClick={() => switchCategory("experimental")}
-                variant={selectedCategory === "experimental" ? "default" : "outline"}
-                className={
-                  selectedCategory === "experimental"
-                    ? "bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-600 text-white"
-                    : "bg-transparent border-gray-700 text-gray-300 hover:border-cyan-500/50"
-                }
-              >
-                🧪 Experimental
-              </Button>
-              <Button
-                onClick={() => switchCategory("avatar")}
-                variant={selectedCategory === "avatar" ? "default" : "outline"}
-                className={
-                  selectedCategory === "avatar"
-                    ? "bg-gradient-to-r from-pink-500 via-rose-500 to-orange-500 text-white"
-                    : "bg-transparent border-gray-700 text-gray-300 hover:border-pink-500/50"
-                }
-              >
-                🎭 Avatar Generator
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Advanced Settings */}
-        {showAdvanced && (
-          <Card className="mb-8 bg-[#0f0e0d] border border-[#2a241d]">
-            <CardHeader className="space-y-3">
-              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <CardTitle className="text-white flex items-center gap-2 text-base md:text-lg">
-                  <Zap className="w-5 h-5 text-amber-400" />
-                  Advanced Settings
-                </CardTitle>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full md:w-auto bg-transparent border-[#6f5d49] text-[#d8c4a3] hover:bg-[#1a1612] rounded-none"
-                  onClick={() => {
-                    setShowAdvanced(!showAdvanced)
-                    trackAdvancedSettings(!showAdvanced)
-                  }}
-                >
-                  {showAdvanced ? "Hide Advanced" : "Show Advanced"}
-                </Button>
-              </div>
-              <p className="text-sm text-gray-400">Fine-tune the enhancement parameters</p>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-3">
-                  <label className="text-sm font-medium text-gray-300 flex items-center justify-between">
-                    <span className="flex items-center gap-2">
-                      Upscale Factor
-                      {!isPaidUser && (
-                        <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30 flex items-center gap-1">
-                          <Lock className="w-3 h-3" />
-                          PRO
-                        </span>
-                      )}
-                    </span>
-                    <span className="text-amber-400">{settings.upscaleFactor}x</span>
-                  </label>
-                  <Slider
-                    value={[settings.upscaleFactor]}
-                    onValueChange={(value) => {
-                      if (!isPaidUser) {
-                        setError("Higher upscale factors (3x, 4x) require credits. Please purchase credits to unlock.")
-                        return
-                      }
-                      setSettings((prev) => ({ ...prev, upscaleFactor: value[0] }))
-                    }}
-                    min={2}
-                    max={isPaidUser ? 4 : 2}
-                    step={1}
-                    className={`w-full ${!isPaidUser ? "opacity-50 cursor-not-allowed" : ""}`}
-                    disabled={!isPaidUser}
-                  />
-                  <div className="flex items-center justify-between text-xs">
-                    {!isPaidUser ? (
-                      <span className="text-amber-400">Purchase credits to unlock 3x and 4x upscaling</span>
-                    ) : (
-                      <span className="text-gray-500">Higher = larger output (slower)</span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <label className="text-sm font-medium text-gray-300 flex items-center justify-between">
-                    <span>Creativity</span>
-                    <span className="text-amber-400">{settings.creativity.toFixed(2)}</span>
-                  </label>
-                  <Slider
-                    value={[settings.creativity]}
-                    onValueChange={(value) => setSettings((prev) => ({ ...prev, creativity: value[0] }))}
-                    min={0}
-                    max={1}
-                    step={0.05}
-                    className="w-full"
-                  />
-                  <p className="text-xs text-gray-500">
-                    {selectedCategory === "faces"
-                      ? "0.25-0.4 for faces"
-                      : selectedCategory === "abstract"
-                        ? "0.5-0.85 for creative"
-                        : selectedCategory === "avatar"
-                          ? "0.6-0.8 for avatars"
-                          : "0.7-1.0 for experimental"}
-                  </p>
-                </div>
-
-                <div className="space-y-3">
-                  <label className="text-sm font-medium text-gray-300 flex items-center justify-between">
-                    <span>Resemblance</span>
-                    <span className="text-amber-400">{settings.resemblance.toFixed(2)}</span>
-                  </label>
-                  <Slider
-                    value={[settings.resemblance]}
-                    onValueChange={(value) => setSettings((prev) => ({ ...prev, resemblance: value[0] }))}
-                    min={0}
-                    max={1}
-                    step={0.05}
-                    className="w-full"
-                  />
-                  <p className="text-xs text-gray-500">
-                    {selectedCategory === "faces"
-                      ? "0.75-0.85 preserves features"
-                      : selectedCategory === "abstract"
-                        ? "0.4-0.7 for creativity"
-                        : selectedCategory === "avatar"
-                          ? "0.7-0.9 for avatars"
-                          : "0.5-0.8 for experimental"}
-                  </p>
-                </div>
-
-                <div className="space-y-3">
-                  <label className="text-sm font-medium text-gray-300 flex items-center justify-between">
-                    <span>HDR Strength</span>
-                    <span className="text-amber-400">{settings.hdr.toFixed(1)}</span>
-                  </label>
-                  <Slider
-                    value={[settings.hdr]}
-                    onValueChange={(value) => setSettings((prev) => ({ ...prev, hdr: value[0] }))}
-                    min={0}
-                    max={1}
-                    step={0.1}
-                    className="w-full"
-                  />
-                  <p className="text-xs text-gray-500">
-                    {selectedCategory === "faces"
-                      ? "0-0.1 for portraits"
-                      : selectedCategory === "abstract"
-                        ? "0.3-0.5 for landscapes"
-                        : selectedCategory === "avatar"
-                          ? "0.1-0.3 for avatars"
-                          : "0.2-0.4 for experimental"}
-                  </p>
-                </div>
-
-                <div className="space-y-3">
-                  <label className="text-sm font-medium text-gray-300 flex items-center justify-between">
-                    <span>Tiling Width (Fractality)</span>
-                    <span className="text-amber-400">{settings.tilingWidth}</span>
-                  </label>
-                  <Slider
-                    value={[settings.tilingWidth]}
-                    onValueChange={(value) => setSettings((prev) => ({ ...prev, tilingWidth: value[0] }))}
-                    min={16}
-                    max={256}
-                    step={16}
-                    className="w-full"
-                  />
-                  <p className="text-xs text-gray-500">Lower = higher fractality, more detail (slower)</p>
-                </div>
-
-                <div className="space-y-3">
-                  <label className="text-sm font-medium text-gray-300 flex items-center justify-between">
-                    <span>Tiling Height (Fractality)</span>
-                    <span className="text-amber-400">{settings.tilingHeight}</span>
-                  </label>
-                  <Slider
-                    value={[settings.tilingHeight]}
-                    onValueChange={(value) => setSettings((prev) => ({ ...prev, tilingHeight: value[0] }))}
-                    min={16}
-                    max={256}
-                    step={16}
-                    className="w-full"
-                  />
-                  <p className="text-xs text-gray-500">Lower = higher fractality, more detail (slower)</p>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-300">AI Model</label>
-                <Select
-                  value={settings.model}
-                  onValueChange={(value) => setSettings((prev) => ({ ...prev, model: value }))}
-                >
-                  <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-800 border-gray-700">
-                    <SelectItem value="philz1337x/clarity-upscaler">Clarity Upscaler</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium text-gray-300">Enhancement Prompt (Optional)</label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={generatePrompt}
-                    disabled={isGeneratingPrompt}
-                    className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-500/30 hover:border-purple-500/50 text-purple-300"
-                  >
-                    {isGeneratingPrompt ? (
-                      <>
-                        <Loader2 className="w-3 h-3 mr-2 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <Wand2 className="w-3 h-3 mr-2" />
-                        Generate AI Prompt
-                      </>
-                    )}
-                  </Button>
-                </div>
-                <textarea
-                  value={settings.prompt || ""}
-                  onChange={(e) => setSettings((prev) => ({ ...prev, prompt: e.target.value }))}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm resize-none focus:border-amber-500 focus:outline-none"
-                  rows={3}
-                  placeholder="Click 'Generate AI Prompt' for creative suggestions, or write your own..."
-                />
-                <p className="text-xs text-gray-500">
-                  {selectedCategory === "faces"
-                    ? "AI will generate prompts that preserve facial features and cultural details"
-                    : selectedCategory === "abstract"
-                      ? "AI will generate prompts based on your creativity level"
-                      : selectedCategory === "avatar"
-                        ? "AI will generate prompts that enhance avatar features and artistic style"
-                        : "AI will generate experimental prompts pushing artistic boundaries"}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        <div className="mb-8">
-          <Card className="bg-[#0f0e0d] border border-[#2a241d]">
-            <CardHeader className="space-y-3">
-              <CardTitle className="text-white flex items-center gap-2 text-base md:text-lg">
-                <Sparkles className="w-5 h-5 text-amber-400" />
-                Public Presets
-              </CardTitle>
-              <p className="text-sm text-gray-400">
-                Four simplified presets for the public landing, with the full preset library kept in the app for internal routing.
-              </p>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                {PUBLIC_PRESET_ORDER.map((presetKey) => {
-                  const preset = PUBLIC_PRESET_DETAILS[presetKey]
-                  const isActive = selectedPublicPreset === presetKey
-                  return (
-                    <button
-                      key={presetKey}
-                      onClick={() => {
-                        setSelectedPublicPreset(presetKey)
-                        setSelectedCategory(PUBLIC_PRESET_SETTINGS[presetKey].category)
-                        applyPreset(PUBLIC_PRESET_SETTINGS[presetKey].presetId)
-                      }}
-                      className={`p-5 border text-left transition-colors ${
-                        isActive
-                          ? "border-amber-500 bg-amber-500/10"
-                          : "border-gray-800 bg-gray-900/60 hover:border-amber-500/40"
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="space-y-2">
-                          <p className="text-xs uppercase tracking-[0.3em] text-amber-400/80">{presetKey.replaceAll("_", " ")}</p>
-                          <h3 className="text-lg font-medium text-white">{preset.title}</h3>
-                          <p className="text-sm text-gray-400 leading-6">{preset.description}</p>
-                        </div>
-                        {isActive && <CheckCircle2 className="w-5 h-5 text-amber-400 shrink-0" />}
-                      </div>
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {PUBLIC_PRESET_DETAILS[presetKey].category && (
-                          <span className="text-[11px] uppercase tracking-[0.2em] text-gray-300 bg-white/5 px-2 py-1">
-                            {PUBLIC_PRESET_DETAILS[presetKey].category}
-                          </span>
-                        )}
-                        <span className="text-[11px] uppercase tracking-[0.2em] text-amber-300 bg-amber-500/10 px-2 py-1">
-                          Recommended
-                        </span>
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Presets */}
-        <Card
-          className={`mb-8 hidden ${
-            selectedCategory === "faces"
-              ? "bg-gradient-to-br from-amber-500/5 to-rose-500/5 border-amber-500/20"
-              : selectedCategory === "abstract"
-                ? "bg-gradient-to-br from-purple-500/5 to-pink-500/5 border-purple-500/20"
-                : selectedCategory === "experimental"
-                  ? "bg-gradient-to-br from-cyan-500/5 to-purple-500/5 border-cyan-500/20"
-                  : "bg-gradient-to-br from-pink-500/5 to-orange-500/5 border-pink-500/20"
-          }`}
-        >
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2 text-base md:text-lg">
-              <Sparkles
-                className={`w-5 h-5 ${
-                  selectedCategory === "faces"
-                    ? "text-amber-400"
-                    : selectedCategory === "abstract"
-                      ? "text-purple-400"
-                      : selectedCategory === "experimental"
-                        ? "text-cyan-400"
-                        : "text-pink-400"
-                }`}
-              />
-              {selectedCategory === "faces"
-                ? "Face Enhancement Presets"
-                : selectedCategory === "abstract"
-                  ? "Creative Enhancement Presets"
-                  : selectedCategory === "experimental"
-                    ? "Experimental Presets"
-                    : "Avatar Generation Presets"}
-            </CardTitle>
-            <p className="text-sm text-gray-400">
-              {selectedCategory === "faces"
-                ? "Optimized for portraits, weddings, and people photos"
-                : selectedCategory === "abstract"
-                  ? "Optimized for landscapes, products, and artistic images"
-                  : selectedCategory === "experimental"
-                    ? "Cutting-edge presets that push creative boundaries - use with caution!"
-                    : "Transform your photo into unique avatar styles - perfect for profile pictures and creative expression"}
-            </p>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {currentPresets.map((preset) => (
+        {/* ── STEP 1: Choose a preset ── */}
+        <section className="mb-12">
+          <h2 className="text-2xl font-semibold text-foreground mb-6">
+            1. Choose a <span className="text-[#c8963e]">preset</span>
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {PUBLIC_PRESET_ORDER.map((presetKey) => {
+              const preset = PUBLIC_PRESET_DETAILS[presetKey]
+              const isActive = selectedPublicPreset === presetKey
+              // Map preset keys to available images
+              const presetImages: Record<string, string> = {
+                archive_scan: "/images/landing/L5-clean-before.png",
+                asean_portrait_preserve: "/images/landing/L5-restore-before.png",
+                heritage_restore: "/images/landing/L5-face-before.png",
+                digital_art_upscale: "/images/landing/L5-cultural-before.png",
+              }
+              // Extra description lines for the reference layout
+              const presetSubtext: Record<string, string> = {
+                archive_scan: "Best for digital photos, product visuals, brand assets, social content and general image cleanup.",
+                asean_portrait_preserve: "Best for family archives, vintage portraits, scanned prints and memory preservation.",
+                heritage_restore: "Best for portraits, wedding photos, fashion, beauty, family images and Asian faces.",
+                digital_art_upscale: "Best for heritage buildings, jewelry, artifacts, traditional costumes and historical visuals.",
+              }
+              return (
                 <button
-                  key={preset.id}
-                  onClick={() => applyPreset(preset.id)}
-                  className={`p-6 rounded-xl border-2 transition-all text-left ${
-                    selectedPresetId === preset.id
-                      ? selectedCategory === "faces"
-                        ? "border-amber-500 bg-amber-500/10 shadow-lg shadow-amber-500/20"
-                        : selectedCategory === "abstract"
-                          ? "border-purple-500 bg-purple-500/10 shadow-lg shadow-purple-500/20"
-                          : selectedCategory === "experimental"
-                            ? "border-cyan-500 bg-cyan-500/10 shadow-lg shadow-cyan-500/20"
-                            : "border-pink-500 bg-pink-500/10 shadow-lg shadow-pink-500/20"
-                      : "border-gray-700 bg-gray-800/50 hover:border-gray-600"
+                  key={presetKey}
+                  onClick={() => {
+                    setSelectedPublicPreset(presetKey)
+                    setSelectedCategory(PUBLIC_PRESET_SETTINGS[presetKey].category)
+                    applyPreset(PUBLIC_PRESET_SETTINGS[presetKey].presetId)
+                  }}
+                  className={`flex gap-0 border text-left transition-colors overflow-hidden ${
+                    isActive
+                      ? "border-[#c8963e] bg-[#c8963e]/5"
+                      : "border-white/10 bg-white/[0.03] hover:border-white/20"
                   }`}
                 >
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xl">{preset.icon}</span>
-                        <h3 className="text-base md:text-lg font-bold text-white">{preset.name}</h3>
-                      </div>
-                      {selectedPresetId === preset.id && (
-                        <CheckCircle2
-                          className={`w-6 h-6 ${
-                            selectedCategory === "faces"
-                              ? "text-amber-400"
-                              : selectedCategory === "abstract"
-                                ? "text-purple-400"
-                                : selectedCategory === "experimental"
-                                  ? "text-cyan-400"
-                                  : "text-pink-400"
-                          }`}
-                        />
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-300">{preset.description}</p>
-                    <div className="flex flex-wrap gap-2">
-                      {preset.features.map((feature, idx) => (
-                        <Badge
-                          key={idx}
-                          variant="secondary"
-                          className={
-                            selectedCategory === "faces"
-                              ? "bg-amber-500/20 text-amber-300 text-xs"
-                              : selectedCategory === "abstract"
-                                ? "bg-purple-500/20 text-purple-300 text-xs"
-                                : selectedCategory === "experimental"
-                                  ? "bg-cyan-500/20 text-cyan-300 text-xs"
-                                  : "bg-pink-500/20 text-pink-300 text-xs"
-                          }
-                        >
-                          {feature}
-                        </Badge>
-                      ))}
-                    </div>
-                    {selectedPresetId === preset.id && (
-                      <div
-                        className={`mt-3 pt-3 border-t ${
-                          selectedCategory === "faces"
-                            ? "border-amber-500/20"
-                            : selectedCategory === "abstract"
-                              ? "border-purple-500/20"
-                              : selectedCategory === "experimental"
-                                ? "border-cyan-500/20"
-                                : "border-pink-500/20"
-                        }`}
-                      >
-                        <div
-                          className={`text-xs space-y-1 ${
-                            selectedCategory === "faces"
-                              ? "text-amber-400"
-                              : selectedCategory === "abstract"
-                                ? "text-purple-400"
-                                : selectedCategory === "experimental"
-                                  ? "text-cyan-400"
-                                  : "text-pink-400"
-                          }`}
-                        >
-                          <div>Creativity: {preset.settings.creativity}</div>
-                          <div>Resemblance: {preset.settings.resemblance}</div>
-                          <div>Upscale: {preset.settings.upscaleFactor}x</div>
-                          {preset.settings.hdr > 0 && <div>HDR: {preset.settings.hdr}</div>}
-                        </div>
+                  {/* Image panel */}
+                  <div className="relative w-32 shrink-0 bg-black overflow-hidden">
+                    <img
+                      src={presetImages[presetKey] || "/images/L5-clean-before.png"}
+                      alt={preset.title}
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                  </div>
+                  {/* Text panel */}
+                  <div className="flex-1 p-5 space-y-2 relative">
+                    {isActive && (
+                      <div className="absolute top-4 right-4">
+                        <CheckCircle2 className="w-5 h-5 text-[#c8963e]" />
                       </div>
                     )}
+                    <h3 className="text-base font-semibold text-foreground">{preset.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{preset.description}</p>
+                    <p className="text-sm text-muted-foreground/70 leading-relaxed">{presetSubtext[presetKey]}</p>
                   </div>
                 </button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              )
+            })}
+          </div>
+        </section>
 
-        {/* Info Box */}
-        <Card
-          className={
-            selectedCategory === "faces"
-              ? "mb-8 bg-blue-500/5 border-blue-500/20"
-              : selectedCategory === "abstract"
-                ? "mb-8 bg-purple-500/5 border-purple-500/20"
-                : selectedCategory === "experimental"
-                  ? "mb-8 bg-cyan-500/5 border-cyan-500/20"
-                  : "mb-8 bg-pink-500/5 border-pink-500/20"
-          }
-        >
-          <CardContent className="p-4 flex items-start gap-3">
-            <Info
-              className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
-                selectedCategory === "faces"
-                  ? "text-blue-400"
-                  : selectedCategory === "abstract"
-                    ? "text-purple-400"
-                    : selectedCategory === "experimental"
-                      ? "text-cyan-400"
-                      : "text-pink-400"
-              }`}
-            />
-            <div className="text-sm">
-              {selectedCategory === "faces" ? (
-                <>
-                  <p className="font-medium mb-1 text-blue-300">Face Preservation Active</p>
-                  <p className="text-blue-400/80">
-                    These settings preserve facial features, skin tones, and cultural details without modification.
-                    Perfect for portraits, weddings, and family photos.
-                  </p>
-                </>
-              ) : selectedCategory === "abstract" ? (
-                <>
-                  <p className="font-medium mb-1 text-purple-300">Creative Enhancement Mode</p>
-                  <p className="text-purple-400/80">
-                    Higher creativity settings allow for artistic interpretation and dramatic improvements. Perfect for
-                    landscapes, products, and abstract images.
-                  </p>
-                </>
-              ) : selectedCategory === "experimental" ? (
-                <>
-                  <p className="font-medium mb-1 text-cyan-300">⚠️ Experimental Mode Active</p>
-                  <p className="text-cyan-400/80">
-                    These cutting-edge presets push AI to its limits with extreme creativity and unique effects. Results
-                    may be unpredictable but often spectacular. Best for artistic exploration and creative projects.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <p className="font-medium mb-1 text-pink-300">🎭 Avatar Generation Mode</p>
-                  <p className="text-pink-400/80">
-                    Transform your photo into unique avatar styles using facial analysis. Use camera capture or upload a
-                    photo, then choose from 8 creative avatar styles. Perfect for profile pictures, social media, and
-                    creative expression!
-                  </p>
-                </>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Error Display */}
-        {error && (
-          <Card className="mb-6 bg-red-500/10 border-red-500/50">
-            <CardContent className="p-4 flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-              <p className="text-red-400 text-sm">{error}</p>
-            </CardContent>
-          </Card>
-        )}
-
-        {uploadErrors.length > 0 && (
-          <Card className="mb-6 bg-red-500/10 border-red-500/50">
-            <CardContent className="p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="w-5 h-5 text-red-400" />
-                  <h3 className="text-sm font-medium text-red-400">Upload Errors ({uploadErrors.length})</h3>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setUploadErrors([])}
-                  className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-6 text-xs"
+        {/* ── STEP 2: Choose enhancement mode ── */}
+        <section className="mb-12">
+          <h2 className="text-2xl font-semibold text-foreground mb-6">
+            2. Choose <span className="text-[#c8963e]">enhancement mode</span>
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {ENHANCEMENT_MODES.map((mode) => {
+              const isActive = settings.upscaleFactor === mode.factor
+              return (
+                <button
+                  key={mode.factor}
+                  onClick={() => setSettings((prev) => ({ ...prev, upscaleFactor: mode.factor }))}
+                  className={`relative p-6 border text-left transition-colors ${
+                    isActive
+                      ? "border-[#c8963e] bg-[#c8963e]/5"
+                      : "border-white/10 bg-white/[0.03] hover:border-white/20"
+                  }`}
                 >
-                  Dismiss All
-                </Button>
-              </div>
-              {uploadErrors.map((error) => (
-                <div key={error.id} className="bg-red-500/5 border border-red-500/20 rounded-lg p-3 space-y-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 space-y-1">
-                      <p className="text-sm font-medium text-red-400">{error.error}</p>
-                      <p className="text-xs text-red-400/80">{error.tip}</p>
+                  {isActive && (
+                    <div className="absolute top-4 right-4">
+                      <CheckCircle2 className="w-5 h-5 text-[#c8963e]" />
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setUploadErrors((prev) => prev.filter((e) => e.id !== error.id))}
-                      className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-6 w-6 p-0"
-                    >
-                      ×
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        )}
+                  )}
+                  <p className={`text-xl font-semibold mb-3 ${isActive ? "text-[#c8963e]" : "text-foreground"}`}>
+                    {mode.label}
+                  </p>
+                  <p className="text-sm font-medium text-foreground mb-1">{mode.credits} credits</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{mode.description}</p>
+                </button>
+              )
+            })}
+          </div>
+          {/* Info note */}
+          <div className="mt-4 flex items-start gap-3 border border-white/10 bg-white/[0.02] px-4 py-3">
+            <Info className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Two x2 passes usually stay closer to the original appearance.
+              x4 applies stronger one-step enhancement and may introduce more AI-generated detail.
+            </p>
+          </div>
+        </section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* Column 1: Uploaded */}
-          <Card className="bg-gray-900/50 border-gray-800">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-white flex items-center gap-2">
-                <Upload className="w-5 h-5 text-blue-400" />
-                Uploaded
-                <Badge className="bg-blue-500/20 text-blue-300">{uploadedFiles.length}</Badge>
-              </CardTitle>
-              {uploadedFiles.length > 0 && (
-                <div className="flex items-center gap-2 pt-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={toggleSelectAll}
-                    className="bg-transparent border-gray-700 hover:border-amber-500/50 text-gray-300 text-xs"
-                  >
-                    <Checkbox
-                      checked={selectedFiles.size === uploadedFiles.length && uploadedFiles.length > 0}
-                      className="mr-2"
-                    />
-                    {selectedFiles.size === uploadedFiles.length ? "Deselect All" : "Select All"}
-                  </Button>
-                  {selectedFiles.size > 0 && (
-                    <Button
-                      onClick={handleEnhance}
-                      disabled={isProcessing}
-                      size="sm"
-                      className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black text-xs"
-                    >
-                      <Sparkles className="w-3 h-3 mr-1" />
-                      Enhance ({selectedFiles.size})
-                    </Button>
+        {/* ── STEP 3: Upload image ── */}
+        <section className="mb-12">
+          <h2 className="text-2xl font-semibold text-foreground mb-6">
+            3. Upload <span className="text-[#c8963e]">image</span>
+          </h2>
+
+          {/* Error messages */}
+          {error && (
+            <div className="mb-4 p-4 border border-red-500/30 bg-red-500/5 flex items-start gap-3">
+              <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+              <p className="text-sm text-red-400">{error}</p>
+              <button onClick={() => setError(null)} className="ml-auto text-red-400/60 hover:text-red-400 text-lg leading-none">×</button>
+            </div>
+          )}
+
+          {/* Upload errors */}
+          {uploadErrors.map((ue) => (
+            <div key={ue.id} className="mb-2 p-3 border border-red-500/20 bg-red-500/5 flex items-start gap-3">
+              <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-red-400 font-medium truncate">{ue.fileName}</p>
+                <p className="text-xs text-red-400/70">{ue.tip}</p>
+              </div>
+              <button onClick={() => setUploadErrors((prev) => prev.filter((e) => e.id !== ue.id))} className="text-red-400/60 hover:text-red-400 text-lg leading-none shrink-0">×</button>
+            </div>
+          ))}
+
+          {/* Pipeline: 3 columns */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+            {/* ── Column 1: Uploaded ── */}
+            <div className="border border-white/10 bg-white/[0.02]">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-foreground">Uploaded</span>
+                  {uploadedFiles.length > 0 && (
+                    <span className="text-xs text-muted-foreground bg-white/10 px-2 py-0.5 rounded-full">{uploadedFiles.length}</span>
                   )}
                 </div>
-              )}
-            </CardHeader>
-            <CardContent className="space-y-4 max-h-[600px] overflow-y-auto">
-              {selectedCategory === "avatar" && (
-                <Card className="bg-gradient-to-br from-pink-500/10 to-orange-500/10 border-pink-500/30">
-                  <CardContent className="p-4 space-y-3">
-                    {error && error.includes("Camera") && (
-                      <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 space-y-2">
-                        <div className="flex items-start gap-2">
-                          <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-                          <div className="flex-1 space-y-1">
-                            <p className="text-sm text-red-400 font-medium">{error}</p>
-                            <p className="text-xs text-red-400/80">
-                              To enable camera access:
-                              <br />
-                              1. Click the camera icon in your browser's address bar
-                              <br />
-                              2. Select "Allow" for camera permissions
-                              <br />
-                              3. Refresh the page and try again
-                            </p>
-                          </div>
-                        </div>
-                        <Button
-                          onClick={() => setError(null)}
-                          size="sm"
-                          variant="outline"
-                          className="w-full bg-transparent border-red-500/30 text-red-400 hover:bg-red-500/10 text-xs"
-                        >
-                          Dismiss
-                        </Button>
-                      </div>
-                    )}
-                    {!isCameraActive ? (
-                      <Button
-                        onClick={startCamera}
-                        className="w-full bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600 text-white"
-                      >
-                        <Camera className="w-4 h-4 mr-2" />
-                        Take Photo with Camera
-                      </Button>
-                    ) : (
-                      <>
-                        <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
-                          <video
-                            ref={videoRef}
-                            autoPlay
-                            playsInline
-                            muted
-                            className="w-full h-full object-cover"
-                            style={{ display: "block" }}
-                          />
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            onClick={capturePhoto}
-                            className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white"
-                          >
-                            <Camera className="w-4 h-4 mr-2" />
-                            Capture
-                          </Button>
-                          <Button
-                            onClick={stopCamera}
-                            variant="outline"
-                            className="bg-transparent border-red-500/50 text-red-400 hover:bg-red-500/10"
-                          >
-                            <VideoOff className="w-4 h-4 mr-2" />
-                            Cancel
-                          </Button>
-                        </div>
-                      </>
-                    )}
-                    <canvas ref={canvasRef} className="hidden" />
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Dropzone */}
-              <div
-                {...getRootProps()}
-                className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
-                  isDragActive ? "border-amber-500 bg-amber-500/5" : "border-gray-700 hover:border-gray-600"
-                }`}
-              >
-                <input {...getInputProps()} />
-                <Upload className="w-8 h-8 mx-auto text-gray-500 mb-2" />
-                <p className="text-sm text-gray-400">
-                  {isDragActive
-                    ? "Drop here..."
-                    : selectedCategory === "avatar"
-                      ? "Or upload a photo"
-                      : "Drop or click to upload"}
-                </p>
+                {uploadedFiles.length > 0 && (
+                  <Button
+                    onClick={handleProcessSelected}
+                    disabled={selectedFiles.size === 0 || isProcessing}
+                    size="sm"
+                    className="bg-foreground text-background hover:bg-foreground/90 text-xs h-7 gap-1.5"
+                  >
+                    Process selected
+                    <ArrowRight className="w-3 h-3" />
+                  </Button>
+                )}
               </div>
-
-              {/* Uploaded Files with Analysis */}
-              {uploadedFiles.map((fileWithPreview, index) => {
-                const isSelected = selectedFiles.has(index)
-                const file = fileWithPreview.file
-                const analysis = facialAnalysisResults.get(file.name)
-                const aspectRatio = imageAspectRatios.get(index) || 1
-
-                return (
-                  <div key={index} className="space-y-2">
-                    <Card
-                      className={`bg-gray-800/50 transition-all ${
-                        isSelected ? "border-amber-500 ring-2 ring-amber-500/20" : "border-gray-700"
-                      }`}
-                    >
-                      <CardContent className="p-3">
-                        <div className="flex items-start gap-2 mb-2">
-                          <Checkbox
-                            checked={isSelected}
-                            onCheckedChange={() => toggleFileSelection(index)}
-                            className="mt-1"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium text-white truncate">{file.name}</p>
-                            <p className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeFile(index)}
-                            className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-6 w-6 p-0"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </div>
-                        <div
-                          className={`${getAspectRatioClass(index)} relative bg-gray-900 rounded overflow-hidden cursor-pointer`}
-                          onClick={() => toggleFileSelection(index)}
-                        >
-                          <img
-                            src={fileWithPreview.preview || "/placeholder.svg"}
-                            alt={file.name}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              console.error(`[v0] Failed to load image: ${file.name}`)
-                              e.currentTarget.src = "/placeholder.svg?height=200&width=200"
-                            }}
-                          />
-                          {isSelected && (
-                            <div className="absolute inset-0 bg-amber-500/20 flex items-center justify-center">
-                              <CheckCircle2 className="w-8 h-8 text-amber-400" />
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    {uploadedFilesWithAnalysis[index]?.isAnalyzing && (
-                      <Card className="bg-purple-500/10 border-purple-500/30">
-                        <CardContent className="p-3 flex items-center gap-2">
-                          <Loader2 className="w-4 h-4 text-purple-400 animate-spin" />
-                          <span className="text-sm text-purple-300">Analyzing facial features...</span>
-                        </CardContent>
-                      </Card>
-                    )}
-
-                    {analysis && (
-                      <FacialAnalysisCard
-                        analysis={analysis}
-                        selectedCategory={selectedCategory}
-                        selectedPreset={ALL_PRESETS[selectedPresetId]?.name || ""}
-                      />
-                    )}
+              <div className="p-3 space-y-2">
+                {/* Select all row */}
+                {uploadedFiles.length > 0 && (
+                  <div className="flex items-center gap-2 px-1 pb-1">
+                    <Checkbox
+                      id="select-all"
+                      checked={selectedFiles.size === uploadedFiles.length && uploadedFiles.length > 0}
+                      onCheckedChange={toggleSelectAll}
+                      className="border-white/20"
+                    />
+                    <label htmlFor="select-all" className="text-xs text-muted-foreground cursor-pointer">
+                      Select all
+                    </label>
                   </div>
-                )
-              })}
-            </CardContent>
-          </Card>
+                )}
 
-          {/* Column 2: Processing - with retry button */}
-          <Card className="bg-gray-900/50 border-gray-800">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-white flex items-center gap-2">
-                <Clock className="w-5 h-5 text-amber-400 animate-pulse" />
-                Processing
-                <Badge className="bg-amber-500/20 text-amber-300">{processingImages.length}</Badge>
-              </CardTitle>
-              {processingImages.length > 0 && isProcessing && (
-                <p className="text-xs text-amber-400/80">
-                  Processing {processingImages.length} image{processingImages.length > 1 ? "s" : ""}...
-                </p>
-              )}
-            </CardHeader>
-            <CardContent className="space-y-4 max-h-[600px] overflow-y-auto">
-              {processingImages.length === 0 ? (
-                <div className="text-center py-12">
-                  <ArrowRight className="w-12 h-12 mx-auto text-gray-600 mb-3" />
-                  <p className="text-sm text-gray-500">Images will appear here during enhancement</p>
-                </div>
-              ) : (
-                processingImages.map((img) => (
-                  <Card
-                    key={img.id}
-                    className={`bg-gray-800/50 ${
-                      img.status.includes("Error") || img.status.includes("failed")
-                        ? "border-red-500/30"
-                        : "border-amber-500/30"
+                {/* Uploaded file rows */}
+                {uploadedFiles.map((fileWithPreview, idx) => (
+                  <div
+                    key={idx}
+                    className={`flex items-center gap-3 p-2 border transition-colors ${
+                      selectedFiles.has(idx) ? "border-[#c8963e]/40 bg-[#c8963e]/5" : "border-transparent hover:border-white/10"
                     }`}
                   >
-                    <CardContent className="p-3 space-y-3">
-                      <div
-                        className={`${getAspectRatioClass(processingImages.findIndex((p) => p.id === img.id))} relative bg-gray-900 rounded overflow-hidden`}
-                      >
-                        <img
-                          src={img.preview || "/placeholder.svg"}
-                          alt="Processing"
-                          className={`w-full h-full ${shouldUseContain(processingImages.findIndex((p) => p.id === img.id)) ? "object-contain" : "object-cover"}`}
-                        />
-                        {!img.status.includes("Error") && !img.status.includes("failed") && (
-                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                            <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
-                          </div>
-                        )}
-                        {(img.status.includes("Error") || img.status.includes("failed")) && (
-                          <div className="absolute inset-0 bg-red-500/10 flex items-center justify-center">
-                            <AlertCircle className="w-8 h-8 text-red-400" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-xs">
-                          <span
-                            className={
-                              img.status.includes("Error") || img.status.includes("failed")
-                                ? "text-red-400"
-                                : "text-gray-400"
-                            }
-                          >
-                            {img.status}
-                          </span>
-                          <span className="text-amber-400">{img.progress}%</span>
-                        </div>
-                        <Progress value={img.progress} className="h-1" />
-                        <p className="text-xs text-gray-500 truncate">{img.file.name}</p>
-                        {(img.status.includes("Error") || img.status.includes("failed")) && (
-                          <Button
-                            onClick={() => retryProcessing(img.id)}
-                            size="sm"
-                            variant="outline"
-                            className="w-full bg-transparent border-amber-500/30 text-amber-400 hover:bg-amber-500/10 text-xs h-7"
-                          >
-                            <Loader2 className="w-3 h-3 mr-1" />
-                            Retry
-                          </Button>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </CardContent>
-          </Card>
+                    <Checkbox
+                      checked={selectedFiles.has(idx)}
+                      onCheckedChange={() => toggleFileSelection(idx)}
+                      className="border-white/20 shrink-0"
+                    />
+                    <div className="w-10 h-10 shrink-0 bg-white/5 overflow-hidden">
+                      <img
+                        src={fileWithPreview.preview}
+                        alt={fileWithPreview.file.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-foreground truncate">{fileWithPreview.file.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {(fileWithPreview.file.size / 1024 / 1024).toFixed(2)} MB · {fileWithPreview.file.type.split("/")[1].toUpperCase()}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => removeFile(idx)}
+                      className="text-muted-foreground hover:text-foreground shrink-0"
+                      aria-label="Remove file"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
 
-          {/* Column 3: Processed - with download state */}
-          <Card className="bg-gray-900/50 border-gray-800">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-white flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-green-400" />
-                Processed
-                <Badge className="bg-green-500/20 text-green-300">{enhancedImages.length}</Badge>
-              </CardTitle>
-              {enhancedImages.length > 0 && processingImages.length > 0 && (
-                <p className="text-xs text-green-400/80 flex items-center gap-1">
-                  <Info className="w-3 h-3" />
-                  You can download ready images while others are processing
-                </p>
-              )}
-            </CardHeader>
-            <CardContent className="space-y-4 max-h-[600px] overflow-y-auto">
-              {enhancedImages.length === 0 ? (
-                <div className="text-center py-12">
-                  <CheckCircle2 className="w-12 h-12 mx-auto text-gray-600 mb-3" />
-                  <p className="text-sm text-gray-500">Enhanced images will appear here</p>
-                </div>
-              ) : (
-                enhancedImages.map((img) => (
-                  <Card key={img.id} className="bg-gray-800/50 border-green-500/30">
-                    <CardContent className="p-3 space-y-3">
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="space-y-1">
-                          <p className="text-xs text-gray-500">Original</p>
-                          <div className="aspect-square relative bg-gray-900 rounded overflow-hidden">
-                            <img
-                              src={img.originalPreview || "/placeholder.svg"}
-                              alt="Original"
-                              className="w-full h-full object-cover"
-                              onError={() => console.error("[v0] Failed to load original preview")}
-                            />
-                          </div>
+                {/* Dropzone */}
+                <DropzoneArea
+                  onDrop={onDrop}
+                  getRootProps={getRootProps}
+                  getInputProps={getInputProps}
+                  isDragActive={isDragActive}
+                />
+              </div>
+            </div>
+
+            {/* ── Column 2: Processing ── */}
+            <div className="border border-white/10 bg-white/[0.02]">
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10">
+                <span className="text-sm font-medium text-foreground">Processing</span>
+                {processingImages.length > 0 && (
+                  <span className="text-xs text-muted-foreground bg-white/10 px-2 py-0.5 rounded-full">{processingImages.length}</span>
+                )}
+              </div>
+              <div className="p-3 space-y-3">
+                {processingImages.length === 0 ? (
+                  <div className="py-10 text-center">
+                    <Loader2 className="w-6 h-6 text-muted-foreground/30 mx-auto mb-2" />
+                    <p className="text-xs text-muted-foreground">Now enhancing</p>
+                  </div>
+                ) : (
+                  processingImages.map((img) => (
+                    <div key={img.id} className="border border-white/10 bg-white/[0.02] p-3 space-y-3">
+                      <div className="flex gap-3">
+                        <div className="w-16 h-16 shrink-0 overflow-hidden bg-white/5">
+                          <img src={img.preview} alt={img.file.name} className="w-full h-full object-cover" />
                         </div>
-                        <div className="space-y-1">
-                          <p className="text-xs text-green-400">Enhanced</p>
-                          <div className="aspect-square relative bg-gray-900 rounded overflow-hidden">
-                            {img.imageError ? (
-                              <div className="absolute inset-0 flex flex-col items-center justify-center bg-red-500/10 border border-red-500/30 rounded">
-                                <AlertCircle className="w-8 h-8 text-red-400 mb-2" />
-                                <p className="text-xs text-red-400 text-center px-2">Failed to load</p>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    setEnhancedImages((prev) =>
-                                      prev.map((i) => (i.id === img.id ? { ...i, imageError: false } : i)),
-                                    )
-                                  }}
-                                  className="mt-2 text-xs h-6 bg-transparent border-red-500/30 text-red-400 hover:bg-red-500/10"
-                                >
-                                  Retry
-                                </Button>
-                              </div>
-                            ) : (
-                              <img
-                                src={img.enhanced || "/placeholder.svg"}
-                                alt="Enhanced"
-                                className="w-full h-full object-cover"
-                                onError={() => handleImageError(img.id)}
-                              />
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      <p className="text-xs text-gray-500 truncate">{img.original.name}</p>
-                      {img.imageError && (
-                        <div className="bg-red-500/10 border border-red-500/30 rounded p-2 flex items-start gap-2">
-                          <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-                          <p className="text-xs text-red-400">
-                            Image URL expired. Download immediately after processing to avoid this.
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-foreground truncate font-medium">{img.file.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {(img.file.size / 1024 / 1024).toFixed(2)} MB · {img.file.type.split("/")[1].toUpperCase()}
                           </p>
                         </div>
-                      )}
-                      <div className="flex gap-2">
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-xs text-muted-foreground">
+                          <span>Preset</span>{" "}
+                          <span className="text-foreground">{PUBLIC_PRESET_DETAILS[selectedPublicPreset].title}</span>
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          <span>Mode</span>{" "}
+                          <span className="text-foreground">UPSCALE x{settings.upscaleFactor} (Balanced)</span>
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">{img.status}</span>
+                          <span className="text-xs text-[#c8963e] font-medium">{img.progress}%</span>
+                        </div>
+                        <Progress value={img.progress} className="h-1 bg-white/10 [&>div]:bg-[#c8963e]" />
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Info className="w-3 h-3 text-muted-foreground/60 shrink-0" />
+                        <p className="text-xs text-muted-foreground/60">This may take a few moments.</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* ── Column 3: Processed ── */}
+            <div className="border border-white/10 bg-white/[0.02]">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-foreground">Processed</span>
+                  {enhancedImages.length > 0 && (
+                    <span className="text-xs text-muted-foreground bg-white/10 px-2 py-0.5 rounded-full">{enhancedImages.length}</span>
+                  )}
+                </div>
+                {enhancedImages.length > 1 && (
+                  <button className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1">
+                    <Download className="w-3 h-3" />
+                    Download all
+                  </button>
+                )}
+              </div>
+              <div className="p-3 space-y-3">
+                {enhancedImages.length === 0 ? (
+                  <div className="py-10 text-center">
+                    <CheckCircle2 className="w-6 h-6 text-muted-foreground/30 mx-auto mb-2" />
+                    <p className="text-xs text-muted-foreground">Ready</p>
+                  </div>
+                ) : (
+                  enhancedImages.map((img) => (
+                    <div key={img.id} className="border border-white/10 bg-white/[0.02] p-3 space-y-3">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="w-2 h-2 rounded-full bg-green-400 shrink-0"></span>
+                        <span className="text-xs text-green-400 font-medium">Ready</span>
+                      </div>
+                      <div className="flex gap-3">
+                        <div className="w-16 h-16 shrink-0 overflow-hidden bg-white/5">
+                          {img.imageError ? (
+                            <div className="w-full h-full flex items-center justify-center bg-red-500/10">
+                              <AlertCircle className="w-5 h-5 text-red-400" />
+                            </div>
+                          ) : (
+                            <img
+                              src={img.enhanced}
+                              alt={`Enhanced ${img.original.name}`}
+                              className="w-full h-full object-cover"
+                              onError={() => handleImageError(img.id)}
+                            />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-foreground truncate font-medium">
+                            {img.original.name.replace(/\.[^.]+$/, "")}_enhanced{img.original.name.match(/\.[^.]+$/) ?? ""}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {img.original.type.split("/")[1].toUpperCase()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
                         <Button
                           onClick={() => downloadImage(img.enhanced, img.original.name, img.id)}
-                          size="sm"
-                          className="flex-1 bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/30 text-xs h-8"
                           disabled={img.imageError || downloadingImages.has(img.id)}
+                          size="sm"
+                          variant="outline"
+                          className="flex-1 h-8 text-xs border-white/15 bg-transparent text-foreground hover:bg-white/5 gap-1.5"
                         >
                           {downloadingImages.has(img.id) ? (
-                            <>
-                              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                              Downloading...
-                            </>
+                            <><Loader2 className="w-3 h-3 animate-spin" />Saving…</>
                           ) : (
-                            <>
-                              <Download className="w-3 h-3 mr-1" />
-                              Download
-                            </>
+                            <><Download className="w-3 h-3" />Download</>
                           )}
                         </Button>
                         <Button
-                          variant="ghost"
                           size="sm"
-                          onClick={() => removeEnhancedImage(img.id)}
-                          className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-8 w-8 p-0"
+                          variant="outline"
+                          className="h-8 text-xs border-white/15 bg-transparent text-foreground hover:bg-white/5 gap-1.5 px-3"
                         >
-                          <Trash2 className="w-3 h-3" />
+                          <ImageIcon className="w-3 h-3" />
+                          View
+                        </Button>
+                        <Button
+                          onClick={() => removeEnhancedImage(img.id)}
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 w-8 p-0 text-muted-foreground hover:text-red-400 hover:bg-red-500/10"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
                         </Button>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Features */}
-        <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="bg-gray-900/50 border-gray-800">
-            <CardContent className="p-6 text-center space-y-3">
-              <div className="w-12 h-12 mx-auto bg-amber-500/10 rounded-full flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-amber-400" />
+                    </div>
+                  ))
+                )}
               </div>
-              <h3 className="text-lg font-semibold text-white">18 Specialized Presets</h3>
-              <p className="text-sm text-gray-400">
-                6 for faces, 6 for creative work, 6 experimental, and 6 for avatars - each optimized for specific use
-                cases
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gray-900/50 border-gray-800">
-            <CardContent className="p-6 text-center space-y-3">
-              <div className="w-12 h-12 mx-auto bg-amber-500/10 rounded-full flex items-center justify-center">
-                <Zap className="w-6 h-6 text-amber-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-white">Smart Enhancement</h3>
-              <p className="text-sm text-gray-400">
-                Face mode preserves features, Creative & Experimental modes allow artistic freedom, Avatar mode
-                transforms your photos.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gray-900/50 border-gray-800">
-            <CardContent className="p-6 text-center space-y-3">
-              <div className="w-12 h-12 mx-auto bg-amber-500/10 rounded-full flex items-center justify-center">
-                <ImageIcon className="w-6 h-6 text-amber-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-white">Professional Quality</h3>
-              <p className="text-sm text-gray-400">2-4x upscale with AI-powered detail enhancement</p>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </div>
+        </section>
       </main>
 
       <Footer />
+    </div>
+  )
+}
+
+// ── Extracted Dropzone component to avoid hook-in-render issues ──
+function DropzoneArea({
+  onDrop,
+  getRootProps,
+  getInputProps,
+  isDragActive,
+}: {
+  onDrop: (accepted: File[], rejected: any[]) => void
+  getRootProps: () => Record<string, any>
+  getInputProps: () => Record<string, any>
+  isDragActive: boolean
+}) {
+  return (
+    <div
+      {...getRootProps()}
+      className={`mt-2 border-2 border-dashed p-6 text-center cursor-pointer transition-colors ${
+        isDragActive ? "border-[#c8963e] bg-[#c8963e]/5" : "border-white/10 hover:border-white/20"
+      }`}
+    >
+      <input {...getInputProps()} />
+      <Upload className="w-5 h-5 text-muted-foreground mx-auto mb-2" />
+      <p className="text-sm font-medium text-foreground">Add more images</p>
+      <p className="text-xs text-muted-foreground mt-1">Drag &amp; drop or click to upload</p>
+      <p className="text-xs text-muted-foreground">JPG, PNG, TIFF up to 50MB</p>
     </div>
   )
 }
