@@ -4,27 +4,14 @@ import Link from "next/link"
 import { ArrowRight, Check, Gift, Sparkles, Zap, ChevronDown, type LucideIcon } from "lucide-react"
 import { useState } from "react"
 import { PricingSection } from "@/components/pricing-section"
-
-const creditNotes = [
-  "Use x2 for cleaner digital work when you want a conservative result.",
-  "Use x3 for balanced restoration with more visible repair and detail recovery.",
-  "Use x4 for stronger restoration when the source image is heavily degraded.",
-  "Free credits are included so new users can test the workflow before paying.",
-]
-
-const payg_packs = [
-  { credits: 50, price: 5, per_credit: 0.1 },
-  { credits: 150, price: 12, per_credit: 0.08 },
-  { credits: 450, price: 29, per_credit: 0.064 },
-  { credits: 1500, price: 79, per_credit: 0.053 },
-]
+import { PAYG_CREDIT_PACKS, SUBSCRIPTION_TIERS } from "@/lib/credits"
 
 const faq_items = [
   { q: "What is a credit?", a: "A credit is a unit of processing power. Each enhancement mode costs a set number of credits (x2=6, x3=8, x4=10)." },
   { q: "How many credits does each mode use?", a: "x2 Enhance uses 6 credits, x3 Restore uses 8 credits, and x4 Pro Restore uses 10 credits." },
   { q: "Why choose x2 instead of x4?", a: "x2 stays closer to the original appearance and preserves a more natural look. x4 applies stronger enhancement in one step, which may introduce more AI-generated detail." },
   { q: "Can I use x4 on any plan?", a: "Yes, all plans can use any enhancement mode. Credit availability depends on your plan." },
-  { q: "What is the upload limit?", a: "Free: 2MB, Starter: 10MB, Creator: 15MB, Studio: 30MB, Archive: 50MB+." },
+  { q: "What is the upload limit?", a: "Free: 2MB, Starter: 10MB, Creator: 15MB, Studio: 30MB, Archive: 50MB+ (available on request)." },
   { q: "Do monthly credits roll over?", a: "No, monthly credits reset on your billing date and unused credits do not carry over." },
   { q: "Do PAYG credits expire?", a: "Yes, pay-as-you-go credits are valid for 12 months from purchase." },
   { q: "What happens when I run out of credits?", a: "You can buy additional PAYG credits, upgrade your plan, or wait until your next monthly reset." },
@@ -101,11 +88,11 @@ export default function PricingPage() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-4">
-            {payg_packs.map((pack) => (
-              <div key={pack.credits} className="rounded-2xl border border-white/8 bg-white/[0.03] p-6 text-center">
+            {PAYG_CREDIT_PACKS.map((pack) => (
+              <div key={pack.id} className="rounded-2xl border border-white/8 bg-white/[0.03] p-6 text-center">
                 <p className="text-3xl font-light text-[#f2d18a]">${pack.price}</p>
                 <p className="mt-2 text-sm text-[#c9953d]">{pack.credits} credits</p>
-                <p className="mt-3 text-xs text-[#8f8678]">${pack.per_credit.toFixed(3)} per credit</p>
+                <p className="mt-3 text-xs text-[#8f8678]">${pack.pricePerCredit.toFixed(3)} per credit</p>
               </div>
             ))}
           </div>
