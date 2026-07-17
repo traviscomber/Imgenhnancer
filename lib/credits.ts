@@ -15,52 +15,99 @@ export const CREDIT_COSTS = {
   ANALYZE: 0,
 } as const
 
-// Subscription tiers with monthly allowances
+// Subscription tiers with monthly allowances and complete spec fields
 export const SUBSCRIPTION_TIERS = [
   {
     id: "free",
     name: "Free",
     monthlyCredits: 10,
+    creditsType: "one_time", // Free credits are one-time only
     price: 0,
+    billing: "free",
     maxFileSize: 2, // MB
+    batchLimit: 0, // No batch processing
+    processingQueue: "standard",
+    support: "none",
+    teamWorkflow: false,
+    invoicePayment: false,
+    optionalApi: false,
+    usageRights: "personal",
     description: "Get started with basic enhancements",
-    features: ["10 credits/month", "2MB max file size", "Basic enhancements"],
+    features: ["10 credits (one-time)", "2MB max file size", "Personal use only"],
   },
   {
     id: "starter",
     name: "Starter",
     monthlyCredits: 240,
+    creditsType: "monthly",
     price: 9,
+    billing: "monthly",
     maxFileSize: 10,
+    batchLimit: 0, // No batch
+    processingQueue: "standard",
+    support: "email",
+    teamWorkflow: false,
+    invoicePayment: false,
+    optionalApi: false,
+    usageRights: "personal",
     description: "Perfect for casual users",
-    features: ["240 credits/month (~60 4x enhances)", "10MB max file size", "All enhancements"],
+    features: ["240 credits/month (~40 4x enhances)", "10MB max file size", "Personal use only", "Email support"],
   },
   {
     id: "creator",
     name: "Creator",
     monthlyCredits: 600,
+    creditsType: "monthly",
     price: 19,
+    billing: "monthly",
     maxFileSize: 15,
+    batchLimit: 20, // Up to 20 images per batch
+    processingQueue: "priority",
+    support: "email",
+    teamWorkflow: false,
+    invoicePayment: false,
+    optionalApi: false,
+    usageRights: "small_business", // Small business / commercial light
     description: "Great for content creators",
-    features: ["600 credits/month (~150 4x enhances)", "15MB max file size", "Priority processing"],
+    features: ["600 credits/month (~100 4x enhances)", "15MB max file size", "Batch up to 20 images", "Priority queue", "Small business usage", "Email support"],
+    badge: "most_popular",
   },
   {
     id: "studio",
     name: "Studio",
     monthlyCredits: 1500,
+    creditsType: "monthly",
     price: 39,
+    billing: "monthly",
     maxFileSize: 30,
+    batchLimit: 100, // Up to 100 images per batch
+    processingQueue: "high_priority",
+    support: "priority_email",
+    teamWorkflow: false,
+    invoicePayment: false,
+    optionalApi: false,
+    usageRights: "full_commercial",
     description: "For professional studios",
-    features: ["1500 credits/month (~375 4x enhances)", "30MB max file size", "Priority support"],
+    features: ["1500 credits/month (~250 4x enhances)", "30MB max file size", "Batch up to 100 images", "High priority queue", "Full commercial usage", "Priority support"],
   },
   {
-    id: "business",
+    id: "archive_business",
     name: "Archive / Business",
     monthlyCredits: 3000,
+    creditsType: "monthly",
     price: 99,
-    maxFileSize: 50,
+    billing: "monthly_custom",
+    maxFileSize: 30, // Note: 50MB+ requires special handling
+    maxFileSizeNote: "50MB+ available on request",
+    batchLimit: null, // Custom/unlimited
+    processingQueue: "highest_priority",
+    support: "dedicated",
+    teamWorkflow: true, // Team collaboration features
+    invoicePayment: true, // Invoice-based billing option
+    optionalApi: true, // API access optional
+    usageRights: "institutional",
     description: "For institutional and high-volume professional work",
-    features: ["3000+ credits/month (~750 4x enhances)", "50MB+ max file size", "Dedicated support"],
+    features: ["3000+ credits/month (~500 4x enhances)", "30MB max (50MB+ on request)", "Unlimited batch processing", "Highest priority queue", "Team collaboration", "Institutional usage rights", "Dedicated account manager", "Invoice billing", "Optional API access"],
   },
 ]
 

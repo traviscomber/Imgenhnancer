@@ -10,6 +10,7 @@ import { useState } from "react"
 const mockUser = {
   email: "user@example.com",
   plan: "Creator",
+  planId: "creator",
   planPrice: "$19/month",
   joinDate: "January 2024",
   monthlyCredits: 600,
@@ -17,6 +18,9 @@ const mockUser = {
   paygCredits: 250,
   paygExpires: "July 16, 2027",
   nextReset: "August 19, 2026",
+  maxUploadMb: 15,
+  batchLimit: 20,
+  supportLevel: "email",
 }
 
 export default function ProfilePage() {
