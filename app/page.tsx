@@ -20,6 +20,12 @@ type ComparisonCard = {
   afterAlt: string
 }
 
+type LiveComparisonProps = Pick<ComparisonCard, "beforeImage" | "afterImage" | "beforeAlt" | "afterAlt"> & {
+  className?: string
+  sizes?: string
+  priority?: boolean
+}
+
 type InfoCard = {
   title: string
   copy: string
@@ -204,7 +210,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-[#efe8dc]">
+    <div className="min-h-screen bg-[#050403] text-[#efe8dc]">
       <Hero onTryFree={() => openStudio("hero")} />
       <UploadSection onTryFree={() => openStudio("upload")} />
       <ContextSection />
@@ -256,7 +262,7 @@ function Hero({ onTryFree }: { onTryFree: () => void }) {
             afterImage="/images/landing/comparisons/hero-after-new.png"
             beforeAlt="Original ASEAN portrait"
             afterAlt="Enhanced ASEAN portrait"
-            className="h-[520px] rounded-2xl"
+            className="h-[520px] rounded-[16px]"
             sizes="(min-width: 1024px) 52vw, 100vw"
             priority
           />
@@ -446,24 +452,33 @@ function ContextSection() {
 
 function StepsSection() {
   return (
-    <section className="bg-[#11100e] px-6 py-24 lg:px-16">
+    <section className="bg-[#0b0907] px-6 py-20 lg:px-16 lg:py-24">
       <div className="mx-auto max-w-7xl">
-        <div className="text-center">
-          <h2 className="text-3xl font-light tracking-[0.01em] text-[#f1e5d3] md:text-5xl">Simple. Fast. Effective.</h2>
-          <OrnamentalDivider />
-          <p className="mx-auto max-w-2xl text-sm leading-7 text-[#d4c7b6]">
-            Three easy steps to restore and enhance your images.
+        <div className="grid gap-10 lg:grid-cols-[0.42fr_0.58fr] lg:items-end">
+          <div>
+            <p className="text-xs uppercase tracking-[0.32em] text-[#c9953d]">Restoration flow</p>
+            <h2 className="mt-4 text-3xl font-light tracking-[0.01em] text-[#f1e5d3] md:text-5xl">
+              Upload, choose,
+              <br />
+              restore.
+            </h2>
+          </div>
+          <p className="max-w-2xl text-sm leading-7 text-[#d4c7b6] lg:justify-self-end">
+            Clar1ty should feel like a guided studio: every step tells you what is happening, what result to expect, and where to go next.
           </p>
         </div>
 
-        <div className="mt-12 grid gap-6 md:grid-cols-3">
+        <div className="mt-12 grid gap-4 md:grid-cols-3">
           {stepCards.map(({ title, copy, icon }, index) => (
             <div key={title} className="relative">
-              <article className="h-full rounded-2xl bg-black/70 p-8 text-center shadow-[0_0_0_1px_rgba(255,255,255,0.04)]">
-                <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-2xl border border-[#8a6a40]/60 bg-black/75 p-4 shadow-[0_0_22px_rgba(201,149,61,0.14)]">
-                  <Image src={icon} alt="" width={96} height={96} aria-hidden="true" className="h-16 w-16 object-contain" />
+              <article className="h-full border border-white/10 bg-black/50 p-6 shadow-[0_24px_80px_rgba(0,0,0,0.22)]">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-xs uppercase tracking-[0.24em] text-[#c9953d]">{String(index + 1).padStart(2, "0")}</span>
+                  <div className="flex h-14 w-14 items-center justify-center border border-[#8a6a40]/50 bg-[#12100d] p-3">
+                    <Image src={icon} alt="" width={56} height={56} aria-hidden="true" className="h-8 w-8 object-contain" />
+                  </div>
                 </div>
-                <h3 className="mt-6 text-lg font-medium text-[#f6ebdd]">{title}</h3>
+                <h3 className="mt-10 text-lg font-medium text-[#f6ebdd]">{title}</h3>
                 <p className="mt-4 text-sm leading-7 text-[#d1c3b1]">{copy}</p>
               </article>
               {index < stepCards.length - 1 ? (
@@ -672,9 +687,9 @@ function CollageSection() {
 
 function FinalCTA({ onTryFree }: { onTryFree: () => void }) {
   const securityItems = [
-    { title: "Secure processing", copy: "All images are encrypted and processed safely.", Icon: Shield },
-    { title: "No unnecessary storage", copy: "We save nothing you do not ask us to.", Icon: Lock },
-    { title: "Your images stay yours", copy: "You own your images. Always.", Icon: UserRound },
+    { title: "Clear process", copy: "Understand what is being enhanced before the result is produced.", Icon: Shield },
+    { title: "Controlled workflow", copy: "Upload, review, compare, and download without losing context.", Icon: Lock },
+    { title: "Human result", copy: "Keep faces, texture, and visual memory at the center of the experience.", Icon: UserRound },
   ]
 
   return (
@@ -682,7 +697,7 @@ function FinalCTA({ onTryFree }: { onTryFree: () => void }) {
       <div className="mx-auto max-w-7xl">
         <div className="grid gap-12 rounded-3xl bg-white/[0.03] p-8 lg:grid-cols-[0.95fr_1.05fr] lg:p-12">
           <div className="space-y-5">
-            <p className="text-xs uppercase tracking-[0.35em] text-[#c9953d]">Secure, private, and simple</p>
+            <p className="text-xs uppercase tracking-[0.35em] text-[#c9953d]">A calmer restoration workflow</p>
             {securityItems.map(({ title, copy, Icon }) => (
               <div key={title} className="flex gap-4 rounded-2xl bg-black/28 p-4">
                 <Icon className="mt-1 h-5 w-5 shrink-0 text-[#d7a957]" />
@@ -696,7 +711,7 @@ function FinalCTA({ onTryFree }: { onTryFree: () => void }) {
 
           <div className="flex items-center justify-center rounded-3xl border border-white/8 bg-[#1a1612] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.03)]">
             <div className="max-w-lg text-center">
-              <p className="text-xs uppercase tracking-[0.35em] text-[#c9953d]">Restore more detail. Keep full control.</p>
+              <p className="text-xs uppercase tracking-[0.35em] text-[#c9953d]">Restore more detail. Keep the original feeling.</p>
               <h2 className="mt-6 text-4xl font-light leading-tight text-[#f1e5d3] md:text-5xl">Start enhancing your images today.</h2>
               <p className="mt-6 text-sm leading-7 text-[#d4c7b6]">
               Preserve the details that matter and keep the workflow simple.
@@ -722,7 +737,7 @@ function LiveComparison({
   className = "",
   sizes = "(min-width: 1024px) 45vw, 100vw",
   priority = false,
-}: ComparisonCard & { className?: string; sizes?: string; priority?: boolean }) {
+}: LiveComparisonProps) {
   const [position, setPosition] = useState(50)
   const [isDragging, setIsDragging] = useState(false)
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -764,12 +779,25 @@ function LiveComparison({
       <div className="absolute inset-0" style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}>
         <Image src={beforeImage} alt={beforeAlt} fill sizes={sizes} priority={priority} className="object-cover object-center" />
       </div>
+      <div className="pointer-events-none absolute inset-x-4 top-4 z-20 flex items-center justify-between">
+        <span className="border border-white/15 bg-black/62 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#f3eadf]">
+          Before
+        </span>
+        <span className="border border-[#c9953d]/35 bg-black/62 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#d7a957]">
+          After
+        </span>
+      </div>
       <div className="absolute inset-y-0 z-20" style={{ left: `${position}%` }}>
         <div className="h-full w-px bg-white/75" />
         <button
           type="button"
+          role="slider"
           aria-label="Drag to compare original and upscaled image"
-          className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/60 bg-white/95 px-2 py-1 text-[10px] font-semibold text-black shadow-[0_0_16px_rgba(0,0,0,0.5)]"
+          aria-valuemin={8}
+          aria-valuemax={92}
+          aria-valuenow={Math.round(position)}
+          aria-valuetext={`${Math.round(position)} percent original image visible`}
+          className="absolute top-1/2 flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/70 bg-[#f3eadf] text-[10px] font-semibold text-black shadow-[0_0_16px_rgba(0,0,0,0.5)] transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d7a957] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
           onPointerDown={(event) => {
             event.preventDefault()
             event.stopPropagation()
@@ -777,11 +805,25 @@ function LiveComparison({
             updatePosition(event.clientX)
           }}
           onKeyDown={(event) => {
-            if (event.key === "ArrowLeft") setPosition((current) => Math.max(8, current - 3))
-            if (event.key === "ArrowRight") setPosition((current) => Math.min(92, current + 3))
+            if (event.key === "ArrowLeft") {
+              event.preventDefault()
+              setPosition((current) => Math.max(8, current - 3))
+            }
+            if (event.key === "ArrowRight") {
+              event.preventDefault()
+              setPosition((current) => Math.min(92, current + 3))
+            }
+            if (event.key === "Home") {
+              event.preventDefault()
+              setPosition(8)
+            }
+            if (event.key === "End") {
+              event.preventDefault()
+              setPosition(92)
+            }
           }}
         >
-          <span aria-hidden="true">&lt;&gt;</span>
+          <span aria-hidden="true">↔</span>
         </button>
       </div>
     </div>

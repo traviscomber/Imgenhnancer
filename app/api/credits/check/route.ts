@@ -105,15 +105,7 @@ export async function GET() {
     if (!creditData) {
       console.log("[CREDITS] No credit record found, creating default record for user:", user.id)
 
-      // Check if user is admin
-      const { data: userData } = await supabase
-        .from("users")
-        .select("role")
-        .eq("id", user.id)
-        .maybeSingle()
-
-      const isAdmin = userData?.role === "admin"
-      const defaultCredits = isAdmin ? 999999 : 50
+      const defaultCredits = 50
 
       const { data: newCreditData, error: insertError } = await supabase
         .from("user_credits")

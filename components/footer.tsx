@@ -1,152 +1,107 @@
 "use client"
 
 import Link from "next/link"
-import { Facebook, Instagram, Linkedin, Mail, Twitter } from "lucide-react"
+import { Mail } from "lucide-react"
+import { ClarityLogo } from "@/components/clarity-logo"
+
+const productLinks = [
+  { href: "/enhance", label: "Enhance image" },
+  { href: "/pricing", label: "Pricing" },
+  { href: "/examples", label: "Examples" },
+  { href: "/use-cases", label: "Use cases" },
+] as const
+
+const studioLinks = [
+  { href: "/about", label: "About" },
+  { href: "/faq", label: "FAQ" },
+  { href: "/support", label: "Support" },
+  { href: "/sign-in", label: "Sign in" },
+] as const
+
+const legalLinks = [
+  { href: "/privacy", label: "Privacy" },
+  { href: "/terms", label: "Terms" },
+  { href: "/refund-policy", label: "Refund policy" },
+  { href: "/disclaimer", label: "Disclaimer" },
+] as const
 
 export function Footer() {
   return (
-    <footer className="border-t border-gray-800 bg-gray-900">
-      <div className="container mx-auto px-4 py-12 md:py-16">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-4 md:gap-12">
-          <div className="space-y-4">
-            <h3 className="text-xl font-bold text-white">clar1ty</h3>
-            <p className="text-sm text-gray-400">
-              AI image enhancement for portraits, creators, brands, families and heritage restoration.
+    <footer className="border-t border-white/10 bg-[#050403] text-[#f3eadf]">
+      <div className="clarity-container py-14 md:py-18">
+        <div className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr_0.85fr_0.85fr] lg:gap-12">
+          <div>
+            <Link href="/" className="inline-flex" aria-label="Clar1ty home">
+              <ClarityLogo className="h-10 w-auto" width={150} height={48} />
+            </Link>
+            <p className="mt-6 max-w-sm text-sm leading-7 text-[#c8bcad]">
+              A quiet restoration studio for portraits, archives, creative references, and visual memory.
             </p>
-            <div className="flex gap-4">
-              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 transition-colors hover:text-amber-400">
-                <Facebook className="h-5 w-5" />
-              </a>
-              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 transition-colors hover:text-amber-400">
-                <Twitter className="h-5 w-5" />
-              </a>
-              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 transition-colors hover:text-amber-400">
-                <Instagram className="h-5 w-5" />
-              </a>
-              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 transition-colors hover:text-amber-400">
-                <Linkedin className="h-5 w-5" />
-              </a>
+            <div className="mt-8 border-l border-[#c9953d]/40 pl-4">
+              <p className="text-[11px] uppercase tracking-[0.24em] text-[#c9953d]">Built by N3uralia</p>
+              <p className="mt-2 text-sm leading-7 text-[#918679]">
+                Designed for clarity, cultural detail, and controlled enhancement.
+              </p>
             </div>
           </div>
 
-          <div className="space-y-4">
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-white">Product</h4>
-            <ul className="space-y-3">
-              <li>
-                <Link href="/enhance" className="text-sm text-gray-400 transition-colors hover:text-amber-400">
-                  Upscale
-                </Link>
-              </li>
-              <li>
-                <Link href="/pricing" className="text-sm text-gray-400 transition-colors hover:text-amber-400">
-                  Pricing
-                </Link>
-              </li>
-              <li>
-                <Link href="/about" className="text-sm text-gray-400 transition-colors hover:text-amber-400">
-                  About
-                </Link>
-              </li>
-              <li>
-                <Link href="/faq" className="text-sm text-gray-400 transition-colors hover:text-amber-400">
-                  FAQ
-                </Link>
-              </li>
-              <li>
-                <Link href="/support" className="text-sm text-gray-400 transition-colors hover:text-amber-400">
-                  Support
-                </Link>
-              </li>
-            </ul>
+          <div>
+            <FooterColumn title="Product" links={productLinks} />
           </div>
 
-          <div className="space-y-4">
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-white">Company</h4>
-            <ul className="space-y-3">
-              <li>
-                <Link href="/sign-in" className="text-sm text-gray-400 transition-colors hover:text-amber-400">
-                  Sign in
-                </Link>
-              </li>
-              <li>
-                <Link href="/about" className="text-sm text-gray-400 transition-colors hover:text-amber-400">
-                  About
-                </Link>
-              </li>
-              <li>
-                <Link href="/support" className="text-sm text-gray-400 transition-colors hover:text-amber-400">
-                  Support
-                </Link>
-              </li>
-              <li>
-                <Link href="/faq" className="text-sm text-gray-400 transition-colors hover:text-amber-400">
-                  FAQ
-                </Link>
-              </li>
-            </ul>
-            <div className="border-t border-gray-800 pt-2">
-              <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-amber-400" />
-                <a href="mailto:info@clar1ty.art" className="text-sm text-gray-400 transition-colors hover:text-amber-400">
-                  info@clar1ty.art
-                </a>
-              </div>
-            </div>
+          <div>
+            <FooterColumn title="Studio" links={studioLinks} />
           </div>
 
-          <div className="space-y-4">
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-white">Legal</h4>
-            <ul className="space-y-3">
-              <li>
-                <Link href="/privacy" className="text-sm text-gray-400 transition-colors hover:text-amber-400">
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link href="/terms" className="text-sm text-gray-400 transition-colors hover:text-amber-400">
-                  Terms of Service
-                </Link>
-              </li>
-              <li>
-                <Link href="/disclaimer" className="text-sm text-gray-400 transition-colors hover:text-amber-400">
-                  Disclaimer
-                </Link>
-              </li>
-              <li>
-                <a href="mailto:legal@clar1ty.art" className="text-sm text-gray-400 transition-colors hover:text-amber-400">
-                  Legal Contact
-                </a>
-              </li>
-            </ul>
+          <div>
+            <FooterColumn title="Legal" links={legalLinks} />
+            <a
+              href="mailto:info@clar1ty.art"
+              className="mt-6 inline-flex items-center gap-2 text-sm text-[#c8bcad] transition hover:text-[#d7a957]"
+            >
+              <Mail className="h-4 w-4 text-[#c9953d]" />
+              info@clar1ty.art
+            </a>
           </div>
         </div>
 
-        <div className="mt-12 border-t border-gray-800 pt-8">
-          <div className="flex flex-col items-center gap-4 md:flex-row md:justify-between">
-            <div className="flex flex-col items-center gap-2 text-sm text-gray-400 sm:flex-row">
-              <p>© 2025 clar1ty. All rights reserved.</p>
-              <span className="hidden sm:inline">•</span>
-              <p>
-                Built by{" "}
-                <a
-                  href="https://n3uralia.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-semibold text-amber-400 transition-colors hover:text-amber-300"
-                >
-                  N3uralia
-                </a>
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Mail className="h-4 w-4 text-gray-400" />
-              <a href="mailto:info@clar1ty.art" className="text-sm text-gray-400 transition-colors hover:text-amber-400">
-                info@clar1ty.art
-              </a>
-            </div>
+        <div className="mt-12 border-t border-white/10 pt-7">
+          <div className="flex flex-col gap-4 text-xs uppercase tracking-[0.18em] text-[#918679] md:flex-row md:items-center md:justify-between">
+            <p>© 2026 Clar1ty. All rights reserved.</p>
+            <a
+              href="https://n3uralia.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#c9953d] transition hover:text-[#d7a957]"
+            >
+              N3uralia ecosystem
+            </a>
           </div>
         </div>
       </div>
     </footer>
+  )
+}
+
+function FooterColumn({
+  title,
+  links,
+}: {
+  title: string
+  links: readonly { href: string; label: string }[]
+}) {
+  return (
+    <div>
+      <h4 className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#c9953d]">{title}</h4>
+      <ul className="mt-5 space-y-3">
+        {links.map((item) => (
+          <li key={item.href}>
+            <Link href={item.href} className="text-sm text-[#c8bcad] transition hover:text-[#f3eadf]">
+              {item.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }

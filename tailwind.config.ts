@@ -64,6 +64,23 @@ const config: Config = {
           "900": "#713f12",
           "950": "#422006",
         },
+        clarity: {
+          canvas: "var(--clarity-canvas)",
+          surface: {
+            1: "var(--clarity-surface-1)",
+            2: "var(--clarity-surface-2)",
+            warm: "var(--clarity-surface-warm)",
+          },
+          ink: {
+            DEFAULT: "var(--clarity-ink)",
+            muted: "var(--clarity-ink-muted)",
+            subtle: "var(--clarity-ink-subtle)",
+          },
+          accent: {
+            DEFAULT: "var(--clarity-accent)",
+            hover: "var(--clarity-accent-hover)",
+          },
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
