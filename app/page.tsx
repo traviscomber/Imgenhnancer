@@ -94,7 +94,7 @@ const stepCards = [
 const oneClickCards: (InfoCard & { icon: string; beforeImage: string })[] = [
   {
     title: "Clean Enhance",
-    copy: "Improve clarity, contrast and overall image quality. Best for digital photos, product visuals, brand assets, social content and general image cleanup.",
+    copy: "Clean up everyday digital images, product visuals and brand assets while keeping the file natural enough for practical use.",
     beforeImage: "/images/landing/L5-clean-before.png",
     image: "/images/landing/L5-clean-after.png",
     alt: "Clean enhancement example",
@@ -102,7 +102,7 @@ const oneClickCards: (InfoCard & { icon: string; beforeImage: string })[] = [
   },
   {
     title: "Old Photo Restore",
-    copy: "Restore old, faded, scratched or damaged photographs. Best for family archives, vintage portraits, scanned prints and memory preservation.",
+    copy: "Recover faded prints, scratches and soft detail in family archives without making the restored image feel artificial.",
     beforeImage: "/images/landing/L5-restore-before.png",
     image: "/images/landing/L5-restore-after.png",
     alt: "Old photo restoration example",
@@ -110,7 +110,7 @@ const oneClickCards: (InfoCard & { icon: string; beforeImage: string })[] = [
   },
   {
     title: "Face Detail",
-    copy: "Enhance facial features while keeping a natural appearance. Best for portraits, wedding photos, fashion, beauty, family images and Asian faces.",
+    copy: "Refine portraits, wedding photos and family images with attention to facial structure, expression and skin tone.",
     beforeImage: "/images/landing/L5-face-before.png",
     image: "/images/landing/L5-face-after.png",
     alt: "Face detail enhancement example",
@@ -118,7 +118,7 @@ const oneClickCards: (InfoCard & { icon: string; beforeImage: string })[] = [
   },
   {
     title: "Cultural Detail",
-    copy: "Preserve architecture, traditional ornaments and cultural textures. Best for heritage buildings, jewelry, artifacts, traditional costumes and historical visuals.",
+    copy: "Bring out architecture, ornaments, textiles and artifacts while respecting the cultural details in the source.",
     beforeImage: "/images/landing/L5-cultural-before.png",
     image: "/images/landing/L5-cultural-after.png",
     alt: "Cultural detail enhancement example",
@@ -494,45 +494,67 @@ function StepsSection() {
 
 function OneClickSection() {
   return (
-    <section id="presets" className="bg-black px-6 py-24 lg:px-16">
+    <section id="presets" className="bg-[#050403] px-6 py-24 lg:px-16">
       <div className="mx-auto max-w-7xl">
-        <div className="text-center">
-          <p className="text-xs uppercase tracking-[0.35em] text-[#c9953d]">Presets for every image type</p>
-          <h2 className="mt-4 text-3xl font-light tracking-[0.01em] text-[#f1e5d3] md:text-5xl">
-            One click. <span className="text-[#d7a957]">The right</span>
-            <br />
-            <span className="text-[#d7a957]">enhancement.</span>
-          </h2>
-          <OrnamentalDivider />
-          <p className="mx-auto text-sm leading-7 text-[#d4c7b6]">
-            Different images need different care. Our presets are tuned for specific image types and results.
+        <div className="grid gap-8 lg:grid-cols-[0.42fr_0.58fr] lg:items-end">
+          <div>
+            <p className="text-xs uppercase tracking-[0.35em] text-[#c9953d]">Preset evidence</p>
+            <h2 className="mt-4 text-3xl font-light tracking-[0.01em] text-[#f1e5d3] md:text-5xl">
+              Choose the right
+              <br />
+              restoration lens.
+            </h2>
+          </div>
+          <p className="max-w-2xl text-sm leading-7 text-[#d4c7b6] lg:justify-self-end">
+            Each preset starts from a different kind of source image. The proof should be visible before you upload:
+            cleaner files, restored faces, sharper artwork, and preserved cultural detail.
           </p>
         </div>
 
-        <div className="mt-12 grid gap-5 md:grid-cols-2">
+        <div className="mt-12 grid gap-6 md:grid-cols-2">
           {oneClickCards.map((card, index) => (
             <article
               key={card.title}
-              className={`grid gap-0 overflow-hidden rounded-2xl bg-white/[0.03] shadow-[0_0_0_1px_rgba(255,255,255,0.03)] ${index % 2 === 1 ? "md:grid-cols-[0.95fr_1.05fr]" : "md:grid-cols-[1.05fr_0.95fr]"}`}
+              className="group overflow-hidden border border-[#2a221a] bg-[#0d0a07] shadow-[0_30px_90px_rgba(0,0,0,0.34)] transition-colors hover:border-[#6f5d49]"
             >
-              <div className={`flex items-center p-5 ${index % 2 === 1 ? "md:order-2" : ""}`}>
-                <div>
-                  <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-[#8a6a40]/60 bg-black/75 p-3 shadow-[0_0_22px_rgba(201,149,61,0.12)]">
-                    <Image src={card.icon} alt="" width={72} height={72} aria-hidden="true" className="h-12 w-12 object-contain" />
-                  </div>
-                  <h3 className="mt-3 text-lg font-medium text-[#f6ebdd]">{card.title}</h3>
-                  <p className="mt-3 text-sm leading-7 text-[#d1c3b1]">{card.copy}</p>
+              <div className="relative border-b border-[#2a221a] bg-[#16110d] p-3">
+                <div className="flex items-center justify-between px-1 pb-3 text-[10px] uppercase tracking-[0.28em] text-[#8f8678]">
+                  <span>{String(index + 1).padStart(2, "0")} / preset</span>
+                  <span>Before / After</span>
                 </div>
-              </div>
-              <div className={`relative min-h-[220px] ${index % 2 === 1 ? "md:order-1" : ""}`}>
                 <LiveComparison
                   beforeImage={card.beforeImage}
                   afterImage={card.image}
                   beforeAlt={`${card.title} before image`}
                   afterAlt={card.alt}
-                  className="h-[220px] rounded-none md:h-full"
-                  sizes="(min-width: 768px) 40vw, 92vw"
+                  className="h-[300px] border border-[#3b3025] md:h-[340px]"
+                  sizes="(min-width: 768px) 46vw, 92vw"
                 />
+              </div>
+
+              <div className="grid gap-5 p-5 sm:grid-cols-[auto_1fr] sm:p-6">
+                <div className="flex h-16 w-16 items-center justify-center border border-[#8a6a40]/50 bg-black p-3 shadow-[0_0_26px_rgba(201,149,61,0.12)]">
+                  <Image src={card.icon} alt="" width={72} height={72} aria-hidden="true" className="h-10 w-10 object-contain" />
+                </div>
+                <div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h3 className="text-xl font-medium text-[#f6ebdd]">{card.title}</h3>
+                    <span className="border border-[#c9953d]/30 bg-[#c9953d]/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-[#d7a957]">
+                      Studio preset
+                    </span>
+                  </div>
+                  <p className="mt-3 text-sm leading-7 text-[#d1c3b1]">{card.copy}</p>
+                  <div className="mt-5 grid grid-cols-2 gap-3 text-[11px] uppercase tracking-[0.18em] text-[#8f8678]">
+                    <div className="border border-white/8 bg-black/28 px-3 py-2">
+                      <span className="block text-[#d7a957]">Input</span>
+                      <span className="mt-1 block normal-case tracking-normal text-[#d1c3b1]">Source image</span>
+                    </div>
+                    <div className="border border-white/8 bg-black/28 px-3 py-2">
+                      <span className="block text-[#d7a957]">Output</span>
+                      <span className="mt-1 block normal-case tracking-normal text-[#d1c3b1]">Restored detail</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </article>
           ))}
