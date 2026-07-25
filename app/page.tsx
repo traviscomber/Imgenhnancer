@@ -810,7 +810,7 @@ function LiveComparison({
         </span>
       </div>
       <div className="absolute inset-y-0 z-20" style={{ left: `${position}%` }}>
-        <div className="h-full w-px bg-white/75" />
+        <div className="h-full w-[2px] bg-[#d7a957] shadow-[0_0_0_1px_rgba(5,4,3,0.75),0_0_18px_rgba(201,149,61,0.42)]" />
         <button
           type="button"
           role="slider"
@@ -819,7 +819,7 @@ function LiveComparison({
           aria-valuemax={92}
           aria-valuenow={Math.round(position)}
           aria-valuetext={`${Math.round(position)} percent original image visible`}
-          className="absolute top-1/2 flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/70 bg-[#f3eadf] text-[10px] font-semibold text-black shadow-[0_0_16px_rgba(0,0,0,0.5)] transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d7a957] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+          className="absolute top-1/2 flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center border border-[#d7a957]/80 bg-[#16110d] text-[10px] font-semibold text-[#f0d59c] shadow-[0_0_0_1px_rgba(5,4,3,0.9),0_14px_32px_rgba(0,0,0,0.55),0_0_22px_rgba(201,149,61,0.2)] transition hover:border-[#f0d59c] hover:bg-[#21180f] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d7a957] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
           onPointerDown={(event) => {
             event.preventDefault()
             event.stopPropagation()

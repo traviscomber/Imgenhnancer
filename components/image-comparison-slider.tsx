@@ -115,7 +115,7 @@ export function ImageComparisonSlider({
   return (
     <div
       ref={containerRef}
-      className="relative w-full overflow-hidden rounded-xl shadow-2xl cursor-col-resize touch-none select-none bg-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-600"
+      className="relative w-full cursor-col-resize touch-none select-none overflow-hidden border border-[#6f5d49] bg-[#050403] shadow-[0_28px_90px_rgba(0,0,0,0.55)] focus:outline-none focus:ring-2 focus:ring-[#d7a957] focus:ring-offset-2 focus:ring-offset-[#050403]"
       style={{
         aspectRatio: "16 / 6",
         maxWidth: "100%",
@@ -157,29 +157,26 @@ export function ImageComparisonSlider({
       </div>
 
       {/* Slider Line */}
-      <div
-        className="absolute top-0 bottom-0 w-1 bg-white shadow-lg pointer-events-none z-10"
-        style={{ left: `${sliderPosition}%` }}
-      >
+      <div className="absolute bottom-0 top-0 z-10 w-[2px] bg-[#d7a957] shadow-[0_0_0_1px_rgba(5,4,3,0.75),0_0_18px_rgba(201,149,61,0.42)] pointer-events-none" style={{ left: `${sliderPosition}%` }}>
         {/* Slider Handle */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 bg-white rounded-full shadow-xl flex items-center justify-center pointer-events-auto cursor-col-resize">
+        <div className="pointer-events-auto absolute left-1/2 top-1/2 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 cursor-col-resize items-center justify-center border border-[#d7a957]/80 bg-[#16110d] shadow-[0_0_0_1px_rgba(5,4,3,0.9),0_14px_32px_rgba(0,0,0,0.55),0_0_22px_rgba(201,149,61,0.2)] md:h-12 md:w-12">
           <div className="flex gap-1">
-            <div className="w-0.5 h-4 bg-gray-400 rounded-full" />
-            <div className="w-0.5 h-4 bg-gray-400 rounded-full" />
+            <div className="h-4 w-0.5 bg-[#f0d59c]" />
+            <div className="h-4 w-0.5 bg-[#f0d59c]" />
           </div>
         </div>
       </div>
 
       {/* Labels */}
-      <div className="absolute top-4 left-4 px-3 py-1.5 bg-black/60 backdrop-blur-sm text-white text-xs md:text-sm rounded-full font-medium">
+      <div className="absolute left-4 top-4 border border-[#6f5d49]/70 bg-[#050403]/78 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-[#f3eadf] backdrop-blur-sm md:text-sm">
         {beforeLabel}
       </div>
-      <div className="absolute top-4 right-4 px-3 py-1.5 bg-black/60 backdrop-blur-sm text-white text-xs md:text-sm rounded-full font-medium">
+      <div className="absolute right-4 top-4 border border-[#c9953d]/45 bg-[#050403]/78 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-[#d7a957] backdrop-blur-sm md:text-sm">
         {afterLabel}
       </div>
 
       {/* Mobile Instruction */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-black/60 backdrop-blur-sm text-white text-xs rounded-full md:hidden">
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 border border-[#6f5d49]/70 bg-[#050403]/78 px-3 py-1.5 text-xs uppercase tracking-[0.14em] text-[#f0d59c] backdrop-blur-sm md:hidden">
         Swipe to compare
       </div>
     </div>

@@ -71,11 +71,11 @@ export function ImageComparisonHybrid({
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(5,4,3,0.18),transparent_35%,transparent_65%,rgba(5,4,3,0.18))]" />
 
         <div className="absolute inset-y-0 z-20" style={{ left: `calc(${position}% - 1px)` }}>
-          <div className="h-full w-px bg-[#e5c37b]/80" />
+          <div className="h-full w-[2px] bg-[#d7a957] shadow-[0_0_0_1px_rgba(5,4,3,0.75),0_0_18px_rgba(201,149,61,0.42)]" />
           <button
             type="button"
             aria-label="Image comparison slider"
-            className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 h-8 w-8 border border-[#e5c37b]/70 bg-[#18130e] text-[#e5c37b] shadow-[0_0_0_1px_rgba(0,0,0,0.45)]"
+            className="absolute top-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 border border-[#d7a957]/80 bg-[#16110d] text-[#f0d59c] shadow-[0_0_0_1px_rgba(5,4,3,0.9),0_14px_32px_rgba(0,0,0,0.55),0_0_22px_rgba(201,149,61,0.2)]"
             onPointerDown={(event) => {
               event.preventDefault()
               setIsDragging(true)
@@ -92,8 +92,8 @@ export function ImageComparisonHybrid({
         </div>
 
         <div className="absolute bottom-3 left-3 z-20 flex gap-2 text-[10px] uppercase tracking-[0.28em] text-[#f0e4d0]">
-          <span className="border border-white/10 bg-black/60 px-2 py-1">{beforeLabel}</span>
-          <span className="border border-white/10 bg-black/60 px-2 py-1">{afterLabel}</span>
+          <span className="border border-[#6f5d49]/70 bg-[#050403]/78 px-2 py-1">{beforeLabel}</span>
+          <span className="border border-[#c9953d]/45 bg-[#050403]/78 px-2 py-1 text-[#d7a957]">{afterLabel}</span>
         </div>
       </div>
     </div>
