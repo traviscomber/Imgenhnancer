@@ -11,7 +11,6 @@ import { Progress } from "@/components/ui/progress"
 import { Slider } from "@/components/ui/slider"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Footer } from "@/components/footer"
 import {
   Upload,
   Download,
@@ -2133,7 +2132,6 @@ export default function EnhancePage() {
         </section>
       </main>
 
-      <Footer />
     </div>
   )
 }
