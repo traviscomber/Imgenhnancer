@@ -10,6 +10,7 @@ import { Suspense } from "react"
 import { OrganizationSchema } from "@/components/schemas/organization-schema"
 import { SoftwareAppSchema } from "@/components/schemas/software-app-schema"
 import { Navbar } from "@/components/navbar"
+import { Footer } from "@/components/footer"
 
 const montserrat = Montserrat({ subsets: ["latin"], variable: "--font-montserrat" })
 
@@ -154,6 +155,7 @@ export default function RootLayout({
           <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
             <Navbar />
             {children}
+            <Footer />
             <Toaster />
             <Analytics />
             <SpeedInsights />

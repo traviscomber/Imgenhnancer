@@ -1,11 +1,21 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
+import { createClient } from "@/lib/supabase/server"
 import { checkFreeUpscaleAvailability, useFreeUpscale } from "@/lib/free-upscale"
 import { GLOBAL_RESTORATION_PROMPT } from "@/lib/presets"
 
 export async function POST(req: NextRequest) {
   try {
     console.log("🚀 Enhancement request received")
+
+    const supabase = await createClient()
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
+    }
 
     // Check for API token
     if (!process.env.REPLICATE_API_TOKEN) {
@@ -19,7 +29,13 @@ export async function POST(req: NextRequest) {
     // Parse form data
     const formData = await req.formData()
     const imageFile = formData.get("image") as File
-    const userId = formData.get("user_id") as string
+    const submittedUserId = formData.get("user_id") as string | null
+
+    if (submittedUserId && submittedUserId !== user.id) {
+      return NextResponse.json({ success: false, error: "Invalid user context" }, { status: 403 })
+    }
+
+    const userId = user.id
 
     if (!imageFile) {
       console.error("❌ No image file provided")

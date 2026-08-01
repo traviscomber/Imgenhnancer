@@ -51,7 +51,7 @@ export async function login(email: string, password: string): Promise<{ user: Us
           .eq("user_id", existingUser.id)
           .maybeSingle()
 
-        const creditsToTransfer = existingCredits?.credits || 999999
+        const creditsToTransfer = existingCredits?.credits || 0
 
         await supabase.from("user_credits").delete().eq("user_id", existingUser.id)
 
@@ -131,7 +131,7 @@ export async function getUser(): Promise<User | null> {
   return {
     id: session.user.id,
     email: session.user.email!,
-    role: userData?.role || (session.user.email === "admin@clarity.art" ? "admin" : "user"),
+    role: userData?.role || "user",
   }
 }
 
@@ -144,7 +144,7 @@ function userFromSession(session: { user: { id: string; email?: string } }): Use
   return {
     id: session.user.id,
     email: session.user.email!,
-    role: session.user.email === "admin@clarity.art" ? "admin" : "user",
+    role: "user",
   }
 }
 

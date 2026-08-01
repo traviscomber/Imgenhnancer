@@ -20,6 +20,12 @@ type ComparisonCard = {
   afterAlt: string
 }
 
+type LiveComparisonProps = Pick<ComparisonCard, "beforeImage" | "afterImage" | "beforeAlt" | "afterAlt"> & {
+  className?: string
+  sizes?: string
+  priority?: boolean
+}
+
 type InfoCard = {
   title: string
   copy: string
@@ -88,7 +94,7 @@ const stepCards = [
 const oneClickCards: (InfoCard & { icon: string; beforeImage: string })[] = [
   {
     title: "Clean Enhance",
-    copy: "Improve clarity, contrast and overall image quality. Best for digital photos, product visuals, brand assets, social content and general image cleanup.",
+    copy: "Clean up everyday digital images, product visuals and brand assets while keeping the file natural enough for practical use.",
     beforeImage: "/images/landing/L5-clean-before.png",
     image: "/images/landing/L5-clean-after.png",
     alt: "Clean enhancement example",
@@ -96,7 +102,7 @@ const oneClickCards: (InfoCard & { icon: string; beforeImage: string })[] = [
   },
   {
     title: "Old Photo Restore",
-    copy: "Restore old, faded, scratched or damaged photographs. Best for family archives, vintage portraits, scanned prints and memory preservation.",
+    copy: "Recover faded prints, scratches and soft detail in family archives without making the restored image feel artificial.",
     beforeImage: "/images/landing/L5-restore-before.png",
     image: "/images/landing/L5-restore-after.png",
     alt: "Old photo restoration example",
@@ -104,7 +110,7 @@ const oneClickCards: (InfoCard & { icon: string; beforeImage: string })[] = [
   },
   {
     title: "Face Detail",
-    copy: "Enhance facial features while keeping a natural appearance. Best for portraits, wedding photos, fashion, beauty, family images and Asian faces.",
+    copy: "Refine portraits, wedding photos and family images with attention to facial structure, expression and skin tone.",
     beforeImage: "/images/landing/L5-face-before.png",
     image: "/images/landing/L5-face-after.png",
     alt: "Face detail enhancement example",
@@ -112,7 +118,7 @@ const oneClickCards: (InfoCard & { icon: string; beforeImage: string })[] = [
   },
   {
     title: "Cultural Detail",
-    copy: "Preserve architecture, traditional ornaments and cultural textures. Best for heritage buildings, jewelry, artifacts, traditional costumes and historical visuals.",
+    copy: "Bring out architecture, ornaments, textiles and artifacts while respecting the cultural details in the source.",
     beforeImage: "/images/landing/L5-cultural-before.png",
     image: "/images/landing/L5-cultural-after.png",
     alt: "Cultural detail enhancement example",
@@ -204,7 +210,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-[#efe8dc]">
+    <div className="min-h-screen bg-[#050403] text-[#efe8dc]">
       <Hero onTryFree={() => openStudio("hero")} />
       <UploadSection onTryFree={() => openStudio("upload")} />
       <ContextSection />
@@ -256,7 +262,7 @@ function Hero({ onTryFree }: { onTryFree: () => void }) {
             afterImage="/images/landing/comparisons/hero-after-new.png"
             beforeAlt="Original ASEAN portrait"
             afterAlt="Enhanced ASEAN portrait"
-            className="h-[520px] rounded-2xl"
+            className="h-[520px] rounded-[16px]"
             sizes="(min-width: 1024px) 52vw, 100vw"
             priority
           />
@@ -446,24 +452,33 @@ function ContextSection() {
 
 function StepsSection() {
   return (
-    <section className="bg-[#11100e] px-6 py-24 lg:px-16">
+    <section className="bg-[#0b0907] px-6 py-20 lg:px-16 lg:py-24">
       <div className="mx-auto max-w-7xl">
-        <div className="text-center">
-          <h2 className="text-3xl font-light tracking-[0.01em] text-[#f1e5d3] md:text-5xl">Simple. Fast. Effective.</h2>
-          <OrnamentalDivider />
-          <p className="mx-auto max-w-2xl text-sm leading-7 text-[#d4c7b6]">
-            Three easy steps to restore and enhance your images.
+        <div className="grid gap-10 lg:grid-cols-[0.42fr_0.58fr] lg:items-end">
+          <div>
+            <p className="text-xs uppercase tracking-[0.32em] text-[#c9953d]">Restoration flow</p>
+            <h2 className="mt-4 text-3xl font-light tracking-[0.01em] text-[#f1e5d3] md:text-5xl">
+              Upload, choose,
+              <br />
+              restore.
+            </h2>
+          </div>
+          <p className="max-w-2xl text-sm leading-7 text-[#d4c7b6] lg:justify-self-end">
+            Clar1ty should feel like a guided studio: every step tells you what is happening, what result to expect, and where to go next.
           </p>
         </div>
 
-        <div className="mt-12 grid gap-6 md:grid-cols-3">
+        <div className="mt-12 grid gap-4 md:grid-cols-3">
           {stepCards.map(({ title, copy, icon }, index) => (
             <div key={title} className="relative">
-              <article className="h-full rounded-2xl bg-black/70 p-8 text-center shadow-[0_0_0_1px_rgba(255,255,255,0.04)]">
-                <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-2xl border border-[#8a6a40]/60 bg-black/75 p-4 shadow-[0_0_22px_rgba(201,149,61,0.14)]">
-                  <Image src={icon} alt="" width={96} height={96} aria-hidden="true" className="h-16 w-16 object-contain" />
+              <article className="h-full border border-white/10 bg-black/50 p-6 shadow-[0_24px_80px_rgba(0,0,0,0.22)]">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-xs uppercase tracking-[0.24em] text-[#c9953d]">{String(index + 1).padStart(2, "0")}</span>
+                  <div className="flex h-14 w-14 items-center justify-center border border-[#8a6a40]/50 bg-[#12100d] p-3">
+                    <Image src={icon} alt="" width={56} height={56} aria-hidden="true" className="h-8 w-8 object-contain" />
+                  </div>
                 </div>
-                <h3 className="mt-6 text-lg font-medium text-[#f6ebdd]">{title}</h3>
+                <h3 className="mt-10 text-lg font-medium text-[#f6ebdd]">{title}</h3>
                 <p className="mt-4 text-sm leading-7 text-[#d1c3b1]">{copy}</p>
               </article>
               {index < stepCards.length - 1 ? (
@@ -479,45 +494,67 @@ function StepsSection() {
 
 function OneClickSection() {
   return (
-    <section id="presets" className="bg-black px-6 py-24 lg:px-16">
+    <section id="presets" className="bg-[#050403] px-6 py-24 lg:px-16">
       <div className="mx-auto max-w-7xl">
-        <div className="text-center">
-          <p className="text-xs uppercase tracking-[0.35em] text-[#c9953d]">Presets for every image type</p>
-          <h2 className="mt-4 text-3xl font-light tracking-[0.01em] text-[#f1e5d3] md:text-5xl">
-            One click. <span className="text-[#d7a957]">The right</span>
-            <br />
-            <span className="text-[#d7a957]">enhancement.</span>
-          </h2>
-          <OrnamentalDivider />
-          <p className="mx-auto text-sm leading-7 text-[#d4c7b6]">
-            Different images need different care. Our presets are tuned for specific image types and results.
+        <div className="grid gap-8 lg:grid-cols-[0.42fr_0.58fr] lg:items-end">
+          <div>
+            <p className="text-xs uppercase tracking-[0.35em] text-[#c9953d]">Preset evidence</p>
+            <h2 className="mt-4 text-3xl font-light tracking-[0.01em] text-[#f1e5d3] md:text-5xl">
+              Choose the right
+              <br />
+              restoration lens.
+            </h2>
+          </div>
+          <p className="max-w-2xl text-sm leading-7 text-[#d4c7b6] lg:justify-self-end">
+            Each preset starts from a different kind of source image. The proof should be visible before you upload:
+            cleaner files, restored faces, sharper artwork, and preserved cultural detail.
           </p>
         </div>
 
-        <div className="mt-12 grid gap-5 md:grid-cols-2">
+        <div className="mt-12 grid gap-6 md:grid-cols-2">
           {oneClickCards.map((card, index) => (
             <article
               key={card.title}
-              className={`grid gap-0 overflow-hidden rounded-2xl bg-white/[0.03] shadow-[0_0_0_1px_rgba(255,255,255,0.03)] ${index % 2 === 1 ? "md:grid-cols-[0.95fr_1.05fr]" : "md:grid-cols-[1.05fr_0.95fr]"}`}
+              className="group overflow-hidden border border-[#2a221a] bg-[#0d0a07] shadow-[0_30px_90px_rgba(0,0,0,0.34)] transition-colors hover:border-[#6f5d49]"
             >
-              <div className={`flex items-center p-5 ${index % 2 === 1 ? "md:order-2" : ""}`}>
-                <div>
-                  <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-[#8a6a40]/60 bg-black/75 p-3 shadow-[0_0_22px_rgba(201,149,61,0.12)]">
-                    <Image src={card.icon} alt="" width={72} height={72} aria-hidden="true" className="h-12 w-12 object-contain" />
-                  </div>
-                  <h3 className="mt-3 text-lg font-medium text-[#f6ebdd]">{card.title}</h3>
-                  <p className="mt-3 text-sm leading-7 text-[#d1c3b1]">{card.copy}</p>
+              <div className="relative border-b border-[#2a221a] bg-[#16110d] p-3">
+                <div className="flex items-center justify-between px-1 pb-3 text-[10px] uppercase tracking-[0.28em] text-[#8f8678]">
+                  <span>{String(index + 1).padStart(2, "0")} / preset</span>
+                  <span>Before / After</span>
                 </div>
-              </div>
-              <div className={`relative min-h-[220px] ${index % 2 === 1 ? "md:order-1" : ""}`}>
                 <LiveComparison
                   beforeImage={card.beforeImage}
                   afterImage={card.image}
                   beforeAlt={`${card.title} before image`}
                   afterAlt={card.alt}
-                  className="h-[220px] rounded-none md:h-full"
-                  sizes="(min-width: 768px) 40vw, 92vw"
+                  className="h-[300px] border border-[#3b3025] md:h-[340px]"
+                  sizes="(min-width: 768px) 46vw, 92vw"
                 />
+              </div>
+
+              <div className="grid gap-5 p-5 sm:grid-cols-[auto_1fr] sm:p-6">
+                <div className="flex h-16 w-16 items-center justify-center border border-[#8a6a40]/50 bg-black p-3 shadow-[0_0_26px_rgba(201,149,61,0.12)]">
+                  <Image src={card.icon} alt="" width={72} height={72} aria-hidden="true" className="h-10 w-10 object-contain" />
+                </div>
+                <div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h3 className="text-xl font-medium text-[#f6ebdd]">{card.title}</h3>
+                    <span className="border border-[#c9953d]/30 bg-[#c9953d]/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-[#d7a957]">
+                      Studio preset
+                    </span>
+                  </div>
+                  <p className="mt-3 text-sm leading-7 text-[#d1c3b1]">{card.copy}</p>
+                  <div className="mt-5 grid grid-cols-2 gap-3 text-[11px] uppercase tracking-[0.18em] text-[#8f8678]">
+                    <div className="border border-white/8 bg-black/28 px-3 py-2">
+                      <span className="block text-[#d7a957]">Input</span>
+                      <span className="mt-1 block normal-case tracking-normal text-[#d1c3b1]">Source image</span>
+                    </div>
+                    <div className="border border-white/8 bg-black/28 px-3 py-2">
+                      <span className="block text-[#d7a957]">Output</span>
+                      <span className="mt-1 block normal-case tracking-normal text-[#d1c3b1]">Restored detail</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </article>
           ))}
@@ -672,9 +709,9 @@ function CollageSection() {
 
 function FinalCTA({ onTryFree }: { onTryFree: () => void }) {
   const securityItems = [
-    { title: "Secure processing", copy: "All images are encrypted and processed safely.", Icon: Shield },
-    { title: "No unnecessary storage", copy: "We save nothing you do not ask us to.", Icon: Lock },
-    { title: "Your images stay yours", copy: "You own your images. Always.", Icon: UserRound },
+    { title: "Clear process", copy: "Understand what is being enhanced before the result is produced.", Icon: Shield },
+    { title: "Controlled workflow", copy: "Upload, review, compare, and download without losing context.", Icon: Lock },
+    { title: "Human result", copy: "Keep faces, texture, and visual memory at the center of the experience.", Icon: UserRound },
   ]
 
   return (
@@ -682,7 +719,7 @@ function FinalCTA({ onTryFree }: { onTryFree: () => void }) {
       <div className="mx-auto max-w-7xl">
         <div className="grid gap-12 rounded-3xl bg-white/[0.03] p-8 lg:grid-cols-[0.95fr_1.05fr] lg:p-12">
           <div className="space-y-5">
-            <p className="text-xs uppercase tracking-[0.35em] text-[#c9953d]">Secure, private, and simple</p>
+            <p className="text-xs uppercase tracking-[0.35em] text-[#c9953d]">A calmer restoration workflow</p>
             {securityItems.map(({ title, copy, Icon }) => (
               <div key={title} className="flex gap-4 rounded-2xl bg-black/28 p-4">
                 <Icon className="mt-1 h-5 w-5 shrink-0 text-[#d7a957]" />
@@ -696,7 +733,7 @@ function FinalCTA({ onTryFree }: { onTryFree: () => void }) {
 
           <div className="flex items-center justify-center rounded-3xl border border-white/8 bg-[#1a1612] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.03)]">
             <div className="max-w-lg text-center">
-              <p className="text-xs uppercase tracking-[0.35em] text-[#c9953d]">Restore more detail. Keep full control.</p>
+              <p className="text-xs uppercase tracking-[0.35em] text-[#c9953d]">Restore more detail. Keep the original feeling.</p>
               <h2 className="mt-6 text-4xl font-light leading-tight text-[#f1e5d3] md:text-5xl">Start enhancing your images today.</h2>
               <p className="mt-6 text-sm leading-7 text-[#d4c7b6]">
               Preserve the details that matter and keep the workflow simple.
@@ -722,7 +759,7 @@ function LiveComparison({
   className = "",
   sizes = "(min-width: 1024px) 45vw, 100vw",
   priority = false,
-}: ComparisonCard & { className?: string; sizes?: string; priority?: boolean }) {
+}: LiveComparisonProps) {
   const [position, setPosition] = useState(50)
   const [isDragging, setIsDragging] = useState(false)
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -764,12 +801,25 @@ function LiveComparison({
       <div className="absolute inset-0" style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}>
         <Image src={beforeImage} alt={beforeAlt} fill sizes={sizes} priority={priority} className="object-cover object-center" />
       </div>
+      <div className="pointer-events-none absolute inset-x-4 top-4 z-20 flex items-center justify-between">
+        <span className="border border-white/15 bg-black/62 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#f3eadf]">
+          Before
+        </span>
+        <span className="border border-[#c9953d]/35 bg-black/62 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#d7a957]">
+          After
+        </span>
+      </div>
       <div className="absolute inset-y-0 z-20" style={{ left: `${position}%` }}>
-        <div className="h-full w-px bg-white/75" />
+        <div className="h-full w-[2px] bg-[#d7a957] shadow-[0_0_0_1px_rgba(5,4,3,0.75),0_0_18px_rgba(201,149,61,0.42)]" />
         <button
           type="button"
+          role="slider"
           aria-label="Drag to compare original and upscaled image"
-          className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/60 bg-white/95 px-2 py-1 text-[10px] font-semibold text-black shadow-[0_0_16px_rgba(0,0,0,0.5)]"
+          aria-valuemin={8}
+          aria-valuemax={92}
+          aria-valuenow={Math.round(position)}
+          aria-valuetext={`${Math.round(position)} percent original image visible`}
+          className="absolute top-1/2 flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center border border-[#d7a957]/80 bg-[#16110d] text-[10px] font-semibold text-[#f0d59c] shadow-[0_0_0_1px_rgba(5,4,3,0.9),0_14px_32px_rgba(0,0,0,0.55),0_0_22px_rgba(201,149,61,0.2)] transition hover:border-[#f0d59c] hover:bg-[#21180f] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d7a957] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
           onPointerDown={(event) => {
             event.preventDefault()
             event.stopPropagation()
@@ -777,11 +827,25 @@ function LiveComparison({
             updatePosition(event.clientX)
           }}
           onKeyDown={(event) => {
-            if (event.key === "ArrowLeft") setPosition((current) => Math.max(8, current - 3))
-            if (event.key === "ArrowRight") setPosition((current) => Math.min(92, current + 3))
+            if (event.key === "ArrowLeft") {
+              event.preventDefault()
+              setPosition((current) => Math.max(8, current - 3))
+            }
+            if (event.key === "ArrowRight") {
+              event.preventDefault()
+              setPosition((current) => Math.min(92, current + 3))
+            }
+            if (event.key === "Home") {
+              event.preventDefault()
+              setPosition(8)
+            }
+            if (event.key === "End") {
+              event.preventDefault()
+              setPosition(92)
+            }
           }}
         >
-          <span aria-hidden="true">&lt;&gt;</span>
+          <span aria-hidden="true">↔</span>
         </button>
       </div>
     </div>

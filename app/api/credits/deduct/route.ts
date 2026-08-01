@@ -32,7 +32,11 @@ export async function POST(request: Request) {
 
     let creditsNeeded: number
     if (amount !== undefined && amount !== null) {
-      creditsNeeded = amount
+      creditsNeeded = Number(amount)
+
+      if (!Number.isInteger(creditsNeeded) || creditsNeeded <= 0 || creditsNeeded > 1000) {
+        return NextResponse.json({ error: "Invalid credit amount" }, { status: 400 })
+      }
     } else if (operation) {
       creditsNeeded = calculateCreditsNeeded(operation, upscaleFactor)
     } else {
