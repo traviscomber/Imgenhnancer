@@ -83,7 +83,7 @@ export async function login(email: string, password: string): Promise<{ user: Us
         const { error: insertError } = await supabase.from("users").insert({
           id: data.user.id,
           email: data.user.email!,
-          role: email === "admin@clarity.art" ? "admin" : "user",
+          role: email === "admin@clar1ty.art" ? "admin" : "user",
         })
 
         if (insertError) {
@@ -97,7 +97,7 @@ export async function login(email: string, password: string): Promise<{ user: Us
     const user: User = {
       id: data.user.id,
       email: data.user.email!,
-      role: userData?.role || (email === "admin@clarity.art" ? "admin" : "user"),
+      role: userData?.role || (email === "admin@clar1ty.art" ? "admin" : "user"),
     }
 
     console.log("[v0] Login complete, user:", user)

@@ -50,7 +50,7 @@ export default function SignInPage() {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 type="email"
-                placeholder="admin@clarity.art"
+                placeholder="admin@clar1ty.art"
                 className="clarity-input rounded-none"
                 autoComplete="email"
               />
