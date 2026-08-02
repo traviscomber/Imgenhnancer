@@ -1,0 +1,95 @@
+name: Apply hero slider hotfix
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Patch pointer capture lifecycle
+        shell: python
+        run: |
+          from pathlib import Path
+
+          page = Path('app/page.tsx')
+          content = page.read_text()
+
+          old_container = '''      onPointerDown={(event) => {
+          setIsDragging(true)
+          updatePosition(event.clientX)
+        }}
+      >'''
+          new_container = '''      onPointerDown={(event) => {
+          event.preventDefault()
+          event.currentTarget.setPointerCapture(event.pointerId)
+          setIsDragging(true)
+          updatePosition(event.clientX)
+        }}
+        onPointerUp={(event) => {
+          if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+            event.currentTarget.releasePointerCapture(event.pointerId)
+          }
+          setIsDragging(false)
+        }}
+        onPointerCancel={(event) => {
+          if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+            event.currentTarget.releasePointerCapture(event.pointerId)
+          }
+          setIsDragging(false)
+        }}
+      >'''
+
+          old_handle = '''          onPointerDown={(event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            setIsDragging(true)
+            updatePosition(event.clientX)
+          }}'''
+          new_handle = '''          onPointerDown={(event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            event.currentTarget.setPointerCapture(event.pointerId)
+            setIsDragging(true)
+            updatePosition(event.clientX)
+          }}
+          onPointerUp={(event) => {
+            if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+              event.currentTarget.releasePointerCapture(event.pointerId)
+            }
+            setIsDragging(false)
+          }}
+          onPointerCancel={(event) => {
+            if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+              event.currentTarget.releasePointerCapture(event.pointerId)
+            }
+            setIsDragging(false)
+          }}'''
+
+          if content.count(old_container) != 1:
+            raise SystemExit('Expected container pointer handler was not found exactly once')
+          if content.count(old_handle) != 1:
+            raise SystemExit('Expected slider handle pointer handler was not found exactly once')
+
+          content = content.replace(old_container, new_container)
+          content = content.replace(old_handle, new_handle)
+          page.write_text(content)
+
+          Path('.github/workflows/slider-hotfix.yml').unlink()
+
+      - name: Commit applied fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/page.tsx .github/workflows/slider-hotfix.yml
+          git commit -m "fix: restore reliable hero comparison dragging"
+          git push origin main
