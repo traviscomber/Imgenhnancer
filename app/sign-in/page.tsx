@@ -15,22 +15,27 @@ export default function SignInPage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (loading) return
+
     setError("")
     setLoading(true)
 
-    // Sign in on the client so the browser Supabase client owns the session.
-    // This keeps it in sync with useAuth() and persists inside the v0 iframe.
-    const { user, error: loginError } = await login(email.trim(), password.trim())
+    try {
+      const { user, error: loginError } = await login(email, password)
 
-    if (loginError || !user) {
-      setError(loginError || "Login failed")
+      if (loginError || !user) {
+        setError(loginError || "Login failed")
+        return
+      }
+
+      router.replace("/enhance")
+      router.refresh()
+    } catch (loginFailure) {
+      console.error("[sign-in] Unexpected failure", loginFailure)
+      setError("Unable to sign in. Please try again.")
+    } finally {
       setLoading(false)
-      return
     }
-
-    console.log("[v0] Login successful, redirecting...")
-    router.push("/enhance")
-    router.refresh()
   }
 
   return (
@@ -53,6 +58,9 @@ export default function SignInPage() {
                 placeholder="admin@clar1ty.art"
                 className="clarity-input rounded-none"
                 autoComplete="email"
+                inputMode="email"
+                required
+                disabled={loading}
               />
             </label>
             <label className="block space-y-2">
@@ -64,6 +72,8 @@ export default function SignInPage() {
                 placeholder="Enter password"
                 className="clarity-input rounded-none"
                 autoComplete="current-password"
+                required
+                disabled={loading}
               />
             </label>
             <div className="flex items-center justify-between gap-3 text-sm text-[#bca98d]">
@@ -75,11 +85,15 @@ export default function SignInPage() {
                 Forgot password?
               </Link>
             </div>
-            {error ? <p className="text-sm text-[#ef8f7f]">{error}</p> : null}
+            {error ? (
+              <p role="alert" className="text-sm text-[#ef8f7f]">
+                {error}
+              </p>
+            ) : null}
             <button
               type="submit"
               disabled={loading}
-              className="h-12 w-full rounded-none bg-[#c9953d] text-sm font-semibold uppercase tracking-[0.12em] text-black transition hover:bg-[#d7a957] disabled:opacity-60"
+              className="h-12 w-full rounded-none bg-[#c9953d] text-sm font-semibold uppercase tracking-[0.12em] text-black transition hover:bg-[#d7a957] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? "Signing in..." : "Sign in"}
             </button>
@@ -91,7 +105,7 @@ export default function SignInPage() {
               Continue with Google
             </button>
             <p className="text-center text-sm text-[#bca98d]">
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <Link href="/sign-up" className="text-[#d7a957] transition hover:text-white">
                 Sign up
               </Link>
