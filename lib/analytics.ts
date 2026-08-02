@@ -1,4 +1,5 @@
 import { track } from "@vercel/analytics"
+import "@/lib/hero-slider-runtime"
 
 // Analytics event types
 export type AnalyticsEvent =
@@ -24,7 +25,6 @@ export function getGeoLocation(): {
 } {
   if (typeof window === "undefined") return {}
 
-  // Try to get from Cloudflare headers (works on Vercel with Cloudflare)
   const country = (globalThis as any).__CLOUDFLARE_COUNTRY || undefined
   const continent = (globalThis as any).__CLOUDFLARE_CONTINENT || undefined
 
@@ -34,7 +34,6 @@ export function getGeoLocation(): {
   }
 }
 
-// Track language switch for GEO + language analytics
 export function trackLanguageSwitch(language: "en" | "es", previousLanguage?: "en" | "es") {
   const geo = getGeoLocation()
   trackEvent("language_switched", {
@@ -45,7 +44,6 @@ export function trackLanguageSwitch(language: "en" | "es", previousLanguage?: "e
   })
 }
 
-// Track custom events with properties
 export function trackEvent(event: AnalyticsEvent, properties?: Record<string, any>) {
   try {
     track(event, properties)
@@ -55,7 +53,6 @@ export function trackEvent(event: AnalyticsEvent, properties?: Record<string, an
   }
 }
 
-// Track image upload
 export function trackImageUpload(fileCount: number, totalSize: number) {
   trackEvent("image_uploaded", {
     file_count: fileCount,
@@ -63,7 +60,6 @@ export function trackImageUpload(fileCount: number, totalSize: number) {
   })
 }
 
-// Track preset selection
 export function trackPresetSelection(presetId: string, category: string) {
   trackEvent("preset_selected", {
     preset_id: presetId,
@@ -71,7 +67,6 @@ export function trackPresetSelection(presetId: string, category: string) {
   })
 }
 
-// Track category switch
 export function trackCategorySwitch(fromCategory: string, toCategory: string) {
   trackEvent("category_switched", {
     from: fromCategory,
@@ -79,7 +74,6 @@ export function trackCategorySwitch(fromCategory: string, toCategory: string) {
   })
 }
 
-// Track enhancement start
 export function trackEnhancementStart(settings: {
   model: string
   upscaleFactor: number
@@ -91,7 +85,6 @@ export function trackEnhancementStart(settings: {
   trackEvent("enhancement_started", settings)
 }
 
-// Track enhancement completion
 export function trackEnhancementComplete(
   processingTime: string,
   fileCount: number,
@@ -108,7 +101,6 @@ export function trackEnhancementComplete(
   })
 }
 
-// Track enhancement failure
 export function trackEnhancementFailure(error: string, settings: Record<string, any>) {
   trackEvent("enhancement_failed", {
     error_message: error,
@@ -116,7 +108,6 @@ export function trackEnhancementFailure(error: string, settings: Record<string, 
   })
 }
 
-// Track image download
 export function trackImageDownload(filename: string, settings: Record<string, any>) {
   trackEvent("image_downloaded", {
     filename,
@@ -124,14 +115,12 @@ export function trackImageDownload(filename: string, settings: Record<string, an
   })
 }
 
-// Track advanced settings interaction
 export function trackAdvancedSettings(opened: boolean) {
   trackEvent("advanced_settings_opened", {
     opened,
   })
 }
 
-// Track slider interaction
 export function trackSliderInteraction(sliderType: string, page: string) {
   trackEvent("slider_interacted", {
     slider_type: sliderType,
@@ -139,7 +128,6 @@ export function trackSliderInteraction(sliderType: string, page: string) {
   })
 }
 
-// Track CTA clicks
 export function trackCTAClick(ctaLocation: string, ctaText: string) {
   trackEvent("cta_clicked", {
     location: ctaLocation,
@@ -147,7 +135,6 @@ export function trackCTAClick(ctaLocation: string, ctaText: string) {
   })
 }
 
-// Track example views
 export function trackExampleView(exampleType: string, tab: string) {
   trackEvent("example_viewed", {
     example_type: exampleType,
