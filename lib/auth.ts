@@ -1,7 +1,7 @@
 "use client"
 
 import { createClient } from "@/lib/supabase/client"
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 
 export interface User {
   id: string
@@ -9,142 +9,114 @@ export interface User {
   role: string
 }
 
-export async function login(email: string, password: string): Promise<{ user: User | null; error: string | null }> {
+const ADMIN_EMAILS = new Set(["admin@clar1ty.art", "admin@clarity.art"])
+
+function normalizeEmail(email: string | undefined | null): string {
+  return (email ?? "").trim().toLowerCase()
+}
+
+function fallbackRole(email: string): string {
+  return ADMIN_EMAILS.has(normalizeEmail(email)) ? "admin" : "user"
+}
+
+async function readProfileRole(userId: string): Promise<string | null> {
   const supabase = createClient()
-
-  console.log("[v0] Attempting Supabase login for:", email)
-
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  })
+  const { data, error } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", userId)
+    .maybeSingle()
 
   if (error) {
-    console.error("[v0] Supabase auth error:", error)
-    console.error("[v0] Error details - status:", error.status, "code:", error.code, "message:", error.message)
-    return { user: null, error: error.message }
+    console.warn("[auth] Profile role unavailable; using safe fallback", error.message)
+    return null
   }
 
-  if (data.user) {
-    console.log("[v0] Supabase auth successful, fetching user data")
+  return typeof data?.role === "string" ? data.role : null
+}
 
-    const { data: userData, error: userError } = await supabase
-      .from("users")
-      .select("role")
-      .eq("id", data.user.id)
-      .maybeSingle()
+export async function login(
+  email: string,
+  password: string,
+): Promise<{ user: User | null; error: string | null }> {
+  const supabase = createClient()
+  const normalizedEmail = normalizeEmail(email)
 
-    if (!userData && !userError) {
-      console.log("[v0] User not found by ID, checking by email...")
-      const { data: existingUser } = await supabase
-        .from("users")
-        .select("id, role")
-        .eq("email", data.user.email!)
-        .maybeSingle()
-
-      if (existingUser) {
-        console.log("[v0] Found user with different ID, migrating data...")
-
-        const { data: existingCredits } = await supabase
-          .from("user_credits")
-          .select("credits")
-          .eq("user_id", existingUser.id)
-          .maybeSingle()
-
-        const creditsToTransfer = existingCredits?.credits || 0
-
-        await supabase.from("user_credits").delete().eq("user_id", existingUser.id)
-
-        await supabase.from("users").delete().eq("id", existingUser.id)
-
-        await supabase.from("users").insert({
-          id: data.user.id,
-          email: data.user.email!,
-          role: existingUser.role,
-        })
-
-        await supabase.from("user_credits").insert({
-          user_id: data.user.id,
-          credits: creditsToTransfer,
-        })
-
-        console.log("[v0] Successfully migrated user data to new ID")
-
-        const user: User = {
-          id: data.user.id,
-          email: data.user.email!,
-          role: existingUser.role,
-        }
-
-        console.log("[v0] Login complete, user:", user)
-        return { user, error: null }
-      } else {
-        console.log("[v0] User not found, creating new record...")
-        const { error: insertError } = await supabase.from("users").insert({
-          id: data.user.id,
-          email: data.user.email!,
-          role: (email === "admin@clar1ty.art" || email === "admin@clarity.art") ? "admin" : "user",
-        })
-
-        if (insertError) {
-          console.error("[v0] Error creating user record:", insertError)
-        }
-      }
-    } else if (userError) {
-      console.error("[v0] Error fetching user data:", userError)
-    }
-
-    const user: User = {
-      id: data.user.id,
-      email: data.user.email!,
-      role: userData?.role || ((email === "admin@clar1ty.art" || email === "admin@clarity.art") ? "admin" : "user"),
-    }
-
-    console.log("[v0] Login complete, user:", user)
-    return { user, error: null }
+  if (!normalizedEmail || !password) {
+    return { user: null, error: "Email and password are required" }
   }
 
-  return { user: null, error: "Login failed" }
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: normalizedEmail,
+      password,
+    })
+
+    if (error) {
+      return { user: null, error: error.message }
+    }
+
+    if (!data.user) {
+      return { user: null, error: "Login failed" }
+    }
+
+    // Authentication must never depend on browser-side profile writes. Profile
+    // creation/migration belongs in a server-side trigger or protected admin API.
+    const role =
+      (await readProfileRole(data.user.id)) ??
+      fallbackRole(data.user.email ?? normalizedEmail)
+
+    return {
+      user: {
+        id: data.user.id,
+        email: normalizeEmail(data.user.email ?? normalizedEmail),
+        role,
+      },
+      error: null,
+    }
+  } catch (error) {
+    console.error("[auth] Unexpected login failure", error)
+    return {
+      user: null,
+      error: error instanceof Error ? error.message : "Unable to sign in",
+    }
+  }
 }
 
 export async function logout(): Promise<void> {
   const supabase = createClient()
-  await supabase.auth.signOut()
+  const { error } = await supabase.auth.signOut()
+  if (error) throw error
 }
 
 export async function getUser(): Promise<User | null> {
   const supabase = createClient()
-
-  // getSession() reads from local storage — no network call, instant
   const {
     data: { session },
   } = await supabase.auth.getSession()
 
   if (!session?.user) return null
 
-  const { data: userData } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", session.user.id)
-    .maybeSingle()
+  const email = normalizeEmail(session.user.email)
+  const role = (await readProfileRole(session.user.id)) ?? fallbackRole(email)
 
   return {
     id: session.user.id,
-    email: session.user.email!,
-    role: userData?.role || "user",
+    email,
+    role,
   }
 }
 
 export async function isAuthenticated(): Promise<boolean> {
-  const user = await getUser()
-  return user !== null
+  return (await getUser()) !== null
 }
 
 function userFromSession(session: { user: { id: string; email?: string } }): User {
+  const email = normalizeEmail(session.user.email)
   return {
     id: session.user.id,
-    email: session.user.email!,
-    role: "user",
+    email,
+    role: fallbackRole(email),
   }
 }
 
@@ -158,31 +130,25 @@ export function useAuth() {
 
     const applySession = (session: { user: { id: string; email?: string } } | null) => {
       if (!isMounted) return
-      if (session?.user) {
-        setUser(userFromSession(session))
-        // Enrich role from DB in the background (non-blocking)
-        supabase
-          .from("users")
-          .select("role")
-          .eq("id", session.user.id)
-          .maybeSingle()
-          .then(({ data }) => {
-            if (isMounted && data?.role) {
-              setUser((prev) => (prev ? { ...prev, role: data.role } : prev))
-            }
-          })
-      } else {
+
+      if (!session?.user) {
         setUser(null)
+        setLoading(false)
+        return
       }
+
+      const initialUser = userFromSession(session)
+      setUser(initialUser)
       setLoading(false)
+
+      readProfileRole(session.user.id).then((role) => {
+        if (!isMounted || !role) return
+        setUser((current) => (current ? { ...current, role } : current))
+      })
     }
 
-    // 1) Read the session from the cookie immediately — this is synchronous
-    //    storage access, so it resolves the logged-in state without waiting
-    //    for any network token refresh.
     supabase.auth.getSession().then(({ data }) => applySession(data.session))
 
-    // 2) Keep listening for future changes (login, logout, token refresh).
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => applySession(session))
