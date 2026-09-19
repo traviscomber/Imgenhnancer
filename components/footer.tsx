@@ -38,7 +38,7 @@ export function Footer() {
               A quiet restoration studio for portraits, archives, creative references, and visual memory.
             </p>
             <div className="mt-8 border-l border-[#c9953d]/40 pl-4">
-              <p className="text-[11px] uppercase tracking-[0.24em] text-[#c9953d]">Built by N3uralia</p>
+              <a href="https://www.n3uralia.com" target="_blank" rel="noopener noreferrer" className="text-[11px] uppercase tracking-[0.24em] text-[#c9953d] transition hover:text-[#d7a957]">Built by N3uralia</a>
               <p className="mt-2 text-sm leading-7 text-[#918679]">
                 Designed for clarity, cultural detail, and controlled enhancement.
               </p>
@@ -69,7 +69,7 @@ export function Footer() {
           <div className="flex flex-col gap-4 text-xs uppercase tracking-[0.18em] text-[#918679] md:flex-row md:items-center md:justify-between">
             <p>© 2026 Clar1ty. All rights reserved.</p>
             <a
-              href="https://n3uralia.com"
+              href="https://www.n3uralia.com"
               target="_blank"
               rel="noopener noreferrer"
               className="text-[#c9953d] transition hover:text-[#d7a957]"
