@@ -37,7 +37,7 @@ export default function DisclaimerPage() {
               <h2 className="text-2xl font-bold text-red-400">2. LIMITATION OF LIABILITY</h2>
               <div className="space-y-3 text-gray-300">
                 <p>
-                  TO THE MAXIMUM EXTENT PERMITTED BY CHILEAN LAW, IN NO EVENT SHALL CLAR1TY, N3URALIA GROUP, OR THEIR OFFICERS BE LIABLE FOR:
+                  TO THE MAXIMUM EXTENT PERMITTED BY CHILEAN LAW, IN NO EVENT SHALL CLAR1TY, NEURALIA, OR THEIR OFFICERS BE LIABLE FOR:
                 </p>
                 <ul className="space-y-2 list-disc list-inside">
                   <li>Lost or corrupted images (whether before, during, or after enhancement)</li>
